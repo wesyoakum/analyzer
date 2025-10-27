@@ -46,8 +46,11 @@ export function drawWaveContours(svg, {
 
   // Y range from contours and layers
   const vmaxFromContours = Math.PI * Hmax / Math.max(Tmin, 1e-9);
-  const vmaxFromLayers = layerSpeeds.reduce((max, { v_ms }) => (v_ms > max ? v_ms : max), 0);
-  const autoVmax = Math.max(vmaxFromContours, vmaxFromLayers) * 1.05 || 1;
+  let maxLayerSpeed = 0;
+  for (const { v_ms } of layerSpeeds) {
+    if (v_ms > maxLayerSpeed) maxLayerSpeed = v_ms;
+  }
+  const autoVmax = Math.max(vmaxFromContours, maxLayerSpeed) * 1.05 || 1;
   const Vmax = explicitVmax ?? autoVmax;
 
   const W = svg.viewBox.baseVal.width || svg.clientWidth || 1000;
