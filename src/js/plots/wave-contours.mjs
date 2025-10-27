@@ -9,6 +9,7 @@ import { niceTicks, svgEl, svgPathFromPoints } from '../utils.mjs';
  * @param {'electric'|'hydraulic'} opts.scenario   - which layer speeds to plot
  * @param {number} opts.Tmin                       - min period (s)
  * @param {number} opts.Tmax                       - max period (s)
+ * @param {number} opts.speedMax                   - optional max speed for y-axis (m/s)
  * @param {number} opts.Hmax                       - max wave height (m, peak-to-trough)
  * @param {Array<Object>} opts.elLayers            - electric layer rows (for scenario='electric')
  * @param {Array<Object>} opts.hyLayers            - hydraulic layer rows (for scenario='hydraulic')
@@ -18,6 +19,8 @@ export function drawWaveContours(svg, {
   Tmin = 4,
   Tmax = 20,
   Hmax = 6,
+  speedMax = null,
+
   elLayers = [],
   hyLayers = []
 } = {}) {
@@ -26,6 +29,7 @@ export function drawWaveContours(svg, {
   Tmin = Math.max(0.1, +Tmin || 4);
   Tmax = Math.max(Tmin + 0.1, +Tmax || 20);
   Hmax = Math.max(0.5, +Hmax || 6);
+  const explicitVmax = Number.isFinite(+speedMax) ? Math.max(0.1, +speedMax) : null;
 
   // layer speeds in m/s (start-of-layer)
   let layerSpeeds = [];
@@ -42,8 +46,8 @@ export function drawWaveContours(svg, {
 
   // Y range from contours and layers
   const vmaxFromContours = Math.PI * Hmax / Math.max(Tmin, 1e-9);
-  const vmaxFromLayers = layerSpeeds.length ? Math.max(...layerSpeeds.map(x => x.v_ms)) : 0;
-  const Vmax = Math.max(vmaxFromContours, vmaxFromLayers) * 1.05 || 1;
+  const autoVmax = Math.max(vmaxFromContours, vmaxFromLayers) * 1.05 || 1;
+  const Vmax = explicitVmax ?? autoVmax;
 
   const W = svg.viewBox.baseVal.width || svg.clientWidth || 1000;
   const H = svg.viewBox.baseVal.height || svg.clientHeight || 540;

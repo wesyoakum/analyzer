@@ -44,7 +44,7 @@ document.addEventListener('DOMContentLoaded', () => {
   // Wave plot controls
   q('wave_redraw').addEventListener('click', () => redrawPlots());
   q('wave_scenario').addEventListener('change', () => redrawPlots());
-  ['wave_tmin', 'wave_tmax', 'wave_hmax'].forEach(id => q(id).addEventListener('change', () => redrawPlots()));
+  ['wave_tmin', 'wave_tmax', 'wave_vmax', 'wave_hmax'].forEach(id => q(id).addEventListener('change', () => redrawPlots()));
 
   // Depth plot controls
   q('depth_redraw').addEventListener('click', () => redrawPlots());
@@ -231,6 +231,7 @@ function redrawPlots() {
     scenario: q('wave_scenario').value,                   // 'electric' | 'hydraulic'
     Tmin: parseFloat(q('wave_tmin').value) || 4,
     Tmax: parseFloat(q('wave_tmax').value) || 20,
+    speedMax: parseFloat(q('wave_vmax').value),
     Hmax: parseFloat(q('wave_hmax').value) || 6,
     elLayers: lastElLayer,
     hyLayers: lastHyLayer
