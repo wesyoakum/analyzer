@@ -58,10 +58,210 @@
     <button class="tab-btn" data-target="panel-depth">Depth Profiles</button>
   </div>
 
-  <!-- Panels -->
-  <!-- (same markup from before for electric, hydraulic, wave, depth) -->
-  <!-- trimmed for brevity but keep your previous full content -->
+  <!-- ELECTRIC PANEL -->
+  <div id="panel-electric" class="panel active">
+    <div class="card">
+      <div class="section-title">Electric Inputs</div>
+      <div class="row">
+        <label>Motor max RPM <input id="motor_max_rpm" type="number" step="1" value="1800"></label>
+        <label>Motor power per motor (hp) <input id="motor_hp" type="number" step="0.1" value="150"></label>
+        <label>Motor max torque per motor (N·m) <input id="motor_tmax" type="number" step="0.1" value="230"></label>
+      </div>
+      <div class="dim">Per-wrap: required tension → drum torque → per-motor torque. RPM limited by hp and capped by max RPM. Line speed from drum dia & ratios. Available tension from motor torque cap.</div>
+    </div>
 
+    <div class="card">
+      <div class="section-title">Electric — Layer Table</div>
+      <div class="btnbar">
+        <button id="csv_el_layer" type="button" disabled>Download CSV — Electric Layer</button>
+      </div>
+      <table>
+        <thead>
+          <tr>
+            <th title="layer_no">L#<br>(–)</th>
+            <th title="layer_dia_in">D<sub>layer</sub><br>(in)</th>
+            <th title="pre_on_drum_m">pre_on<br>(m)</th>
+            <th title="pre_deployed_m">pre_dep<br>(m)</th>
+            <th title="post_on_drum_m">post_on<br>(m)</th>
+            <th title="post_deployed_m">post_dep<br>(m)</th>
+            <th title="max_tension_kgf">T<sub>max</sub><br>(kgf)</th>
+            <th title="max_torque_Nm">τ<sub>max</sub><br>(N·m)</th>
+            <th title="max_motor_torque_Nm">τ<sub>m,max</sub><br>(N·m)</th>
+            <th title="motor_rpm_at_start">n<sub>m,start</sub><br>(rpm)</th>
+            <th title="line_speed_at_start_mpm">v<sub>start</sub><br>(m/min)</th>
+            <th title="avail_tension_kgf_at_start">T<sub>avail,start</sub><br>(kgf)</th>
+          </tr>
+        </thead>
+        <tbody id="tbody_el_layer"></tbody>
+      </table>
+    </div>
+
+    <div class="card">
+      <div class="section-title">Electric — Wraps Table</div>
+      <div class="btnbar">
+        <button id="csv_el_wraps" type="button" disabled>Download CSV — Electric Wraps</button>
+      </div>
+      <table>
+        <thead>
+          <tr>
+            <th title="wrap_no">W#<br>(–)</th>
+            <th title="layer_no">L#<br>(–)</th>
+            <th title="layer_dia_in">D<sub>layer</sub><br>(in)</th>
+            <th title="wrap_len_in">L<sub>wrap</sub><br>(in)</th>
+            <th title="pre_spooled_len_m">pre_spool<br>(m)</th>
+            <th title="spooled_len_m">on_drum<br>(m)</th>
+            <th title="deployed_len_m">dep<br>(m)</th>
+            <th title="tension_kgf">T<br>(kgf)</th>
+            <th title="torque_Nm">τ<br>(N·m)</th>
+            <th title="motor_torque_Nm">τ<sub>m</sub><br>(N·m)</th>
+            <th title="motor_rpm">n<sub>m</sub><br>(rpm)</th>
+            <th title="line_speed_mpm">v<br>(m/min)</th>
+            <th title="avail_tension_kgf">T<sub>avail</sub><br>(kgf)</th>
+          </tr>
+        </thead>
+        <tbody id="tbody_el_wraps"></tbody>
+      </table>
+    </div>
+  </div>
+
+  <!-- HYDRAULIC PANEL -->
+  <div id="panel-hydraulic" class="panel">
+    <div class="card">
+      <div class="section-title">Hydraulic Inputs</div>
+      <div class="row">
+        <label># Pump strings <input id="h_pump_strings" type="number" step="1" value="2"></label>
+        <label>Elec hp per string (nameplate) <input id="h_emotor_hp" type="number" step="0.1" value="75"></label>
+        <label>Electro-hydraulic efficiency <input id="h_emotor_eff" type="number" step="0.01" value="0.85"></label>
+        <label>Pump rpm (elec motor rpm) <input id="h_emotor_rpm" type="number" step="1" value="1780"></label>
+      </div>
+      <div class="row">
+        <label>Pump displacement (cc/rev) <input id="h_pump_cc" type="number" step="0.1" value="210"></label>
+        <label>System max pressure (psi) <input id="h_max_psi" type="number" step="1" value="3500"></label>
+        <label>Hyd motor displacement (cc/rev) <input id="h_hmot_cc" type="number" step="0.1" value="55"></label>
+        <label>Hyd motor max rpm <input id="h_hmot_rpm_max" type="number" step="1" value="3500"></label>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="section-title">Hydraulic — Layer Table</div>
+      <div class="btnbar">
+        <button id="csv_hy_layer" type="button" disabled>Download CSV — Hydraulic Layer</button>
+      </div>
+      <table>
+        <thead>
+          <tr>
+            <th title="layer_no">L#<br>(–)</th>
+            <th title="layer_dia_in">D<sub>layer</sub><br>(in)</th>
+            <th title="pre_on_drum_m">pre_on<br>(m)</th>
+            <th title="pre_deployed_m">pre_dep<br>(m)</th>
+            <th title="post_on_drum_m">post_on<br>(m)</th>
+            <th title="post_deployed_m">post_dep<br>(m)</th>
+            <th title="hyd_P_required_psi">P<sub>req</sub><br>(psi)</th>
+            <th title="hyd_speed_power_mpm">v<sub>P</sub><br>(m/min)</th>
+            <th title="hyd_speed_flow_mpm">v<sub>Q</sub><br>(m/min)</th>
+            <th title="hyd_speed_available_mpm">v<sub>avail</sub><br>(m/min)</th>
+            <th title="hyd_hp_used_at_available">HP<sub>hyd_used</sub><br>(hp)</th>
+            <th title="elec_input_hp_used">HP<sub>elec_in</sub><br>(hp)</th>
+            <th title="hyd_drum_torque_at_maxP_Nm">τ<sub>drum@Pmax</sub><br>(N·m)</th>
+            <th title="hyd_avail_tension_kgf_at_start">T<sub>avail,start</sub><br>(kgf)</th>
+          </tr>
+        </thead>
+        <tbody id="tbody_hy_layer"></tbody>
+      </table>
+    </div>
+
+    <div class="card">
+      <div class="section-title">Hydraulic — Wraps Table</div>
+      <div class="btnbar">
+        <button id="csv_hy_wraps" type="button" disabled>Download CSV — Hydraulic Wraps</button>
+      </div>
+      <table>
+        <thead>
+          <tr>
+            <th title="wrap_no">W#<br>(–)</th>
+            <th title="layer_no">L#<br>(–)</th>
+            <th title="layer_dia_in">D<sub>layer</sub><br>(in)</th>
+            <th title="wrap_len_in">L<sub>wrap</sub><br>(in)</th>
+            <th title="pre_spooled_len_m">pre_spool<br>(m)</th>
+            <th title="spooled_len_m">on_drum<br>(m)</th>
+            <th title="deployed_len_m">dep<br>(m)</th>
+            <th title="hyd_P_required_psi">P<sub>req</sub><br>(psi)</th>
+            <th title="hyd_speed_power_mpm">v<sub>P</sub><br>(m/min)</th>
+            <th title="hyd_speed_flow_mpm">v<sub>Q</sub><br>(m/min)</th>
+            <th title="hyd_speed_available_mpm">v<sub>avail</sub><br>(m/min)</th>
+            <th title="hyd_hp_used_at_available">HP<sub>hyd_used</sub><br>(hp)</th>
+            <th title="elec_input_hp_used">HP<sub>elec_in</sub><br>(hp)</th>
+            <th title="hyd_drum_torque_maxP_Nm">τ<sub>drum@Pmax</sub><br>(N·m)</th>
+            <th title="hyd_avail_tension_kgf">T<sub>avail</sub><br>(kgf)</th>
+          </tr>
+        </thead>
+        <tbody id="tbody_hy_wraps"></tbody>
+      </table>
+    </div>
+  </div>
+
+  <!-- WAVE CONTOUR PANEL -->
+  <div id="panel-wave" class="panel">
+    <div class="card">
+      <div class="section-title">Wave Contours — Speed vs Period with Height Lines</div>
+      <div class="row">
+        <label>Scenario
+          <select id="wave_scenario">
+            <option value="electric" selected>Electric (start-of-layer line speed)</option>
+            <option value="hydraulic">Hydraulic (start-of-layer available speed)</option>
+          </select>
+        </label>
+        <label>T min (s) <input id="wave_tmin" type="number" step="0.1" value="4"></label>
+        <label>T max (s) <input id="wave_tmax" type="number" step="0.1" value="20"></label>
+        <label>H max (m) <input id="wave_hmax" type="number" step="0.1" value="6"></label>
+        <button id="wave_redraw" type="button">Redraw</button>
+      </div>
+      <div class="dim">Contours: v(T) = π·H / T. Black solid = whole meters; black dashed = half meters. Gray horizontals = layer speeds (selected scenario).</div>
+      <div class="plotwrap">
+        <svg id="wave_svg" width="1000" height="540" viewBox="0 0 1000 540"></svg>
+      </div>
+      <div class="legend">
+        <div class="legitem"><span class="swatch"></span><span>H = integer m</span></div>
+        <div class="legitem"><span class="swatch dashed"></span><span>H = 0.5 m offsets</span></div>
+        <div class="legitem"><span class="swatch gray"></span><span>Layer speed (scenario)</span></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- DEPTH PROFILES PANEL -->
+  <div id="panel-depth" class="panel">
+    <div class="card">
+      <div class="section-title">Depth Profiles</div>
+      <div class="row">
+        <label>Scenario
+          <select id="depth_scenario">
+            <option value="electric" selected>Electric (start-of-layer values)</option>
+            <option value="hydraulic">Hydraulic (start-of-layer values)</option>
+          </select>
+        </label>
+        <button id="depth_redraw" type="button">Redraw</button>
+      </div>
+
+      <div class="twocol">
+        <div class="col">
+          <div class="section-title">Available Speed vs Depth</div>
+          <div class="plotwrap">
+            <svg id="depth_speed_svg" viewBox="0 0 1000 380"></svg>
+          </div>
+          <div class="subtitle">X: Depth (m) · Y: Speed (m/s) · Gray step = layer start value held across layer depth.</div>
+        </div>
+        <div class="col">
+          <div class="section-title">Tension vs Depth</div>
+          <div class="plotwrap">
+            <svg id="depth_tension_svg" viewBox="0 0 1000 380"></svg>
+          </div>
+          <div class="subtitle">X: Depth (m) · Y: Tension (kgf) · Black = required · Gray step = available.</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Main app script -->
   <script type="module" src="./js/main.mjs"></script>
 </body>
 </html>
