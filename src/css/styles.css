@@ -131,6 +131,7 @@ button:focus {
 
 .worksheet {
   width: 100%;
+    max-width: 720px;
   border-collapse: collapse;
   margin: 0 0 12px;
   background: var(--paper);

@@ -91,10 +91,6 @@ function drawSpeedProfile(svg, segments, maxDepth, maxSpeed) {
     const x0 = sx(S.depth_end);
     const x1 = sx(S.depth_start);
     svg.appendChild(svgEl('line', { x1: x0, y1: y, x2: x1, y2: y, stroke: '#999', 'stroke-width': 2 }));
-    if (S.label) {
-      svg.appendChild(svgEl('text', { x: x1 - 3, y: y - 4, 'text-anchor': 'end', 'font-size': '11', fill: '#666' }))
-         .textContent = S.label;
-    }
   });
 
   // zero line
@@ -154,10 +150,6 @@ function drawTensionProfile(svg, segments, maxDepth, maxTension, payload_kg, cab
     const x0 = sx(S.depth_end);
     const x1 = sx(S.depth_start);
     svg.appendChild(svgEl('line', { x1: x0, y1: y, x2: x1, y2: y, stroke: '#999', 'stroke-width': 2 }));
-    if (S.label) {
-      svg.appendChild(svgEl('text', { x: x1 - 3, y: y - 4, 'text-anchor': 'end', 'font-size': '11', fill: '#666' }))
-         .textContent = S.label;
-    }
   });
 
   svg.appendChild(svgEl('line', { x1: ML, y1: sy(0), x2: W - MR, y2: sy(0), stroke: '#bbb', 'stroke-dasharray': '4 4' }));
