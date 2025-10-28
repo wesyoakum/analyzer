@@ -19,7 +19,7 @@ import {
   rowsToHydraulicLayer, projectHydraulicWraps, renderHydraulicTables
 } from './hydraulic.mjs';
 
-import { drawWaveContours } from './plots/wave-contours.mjs';
+import { drawWaveContours, drawWaveHeightContours } from './plots/wave-contours.mjs';
 import { drawDepthProfiles } from './plots/depth-profiles.mjs';
 
 // ---- App state for plots/tables ----
@@ -227,7 +227,7 @@ function computeAll() {
 // ---- Plot redraw helper (uses decoupled plotting modules) ----
 function redrawPlots() {
   // Wave contours
-  drawWaveContours(q('wave_svg'), {
+  const waveOpts = {
     scenario: q('wave_scenario').value,                   // 'electric' | 'hydraulic'
     Tmin: parseFloat(q('wave_tmin').value) || 4,
     Tmax: parseFloat(q('wave_tmax').value) || 20,
@@ -235,7 +235,9 @@ function redrawPlots() {
     Hmax: parseFloat(q('wave_hmax').value) || 6,
     elLayers: lastElLayer,
     hyLayers: lastHyLayer
-  });
+  };
+  drawWaveContours(q('wave_svg'), waveOpts);
+  drawWaveHeightContours(q('wave_svg_height'), waveOpts);
 
   // Depth profiles
   drawDepthProfiles(q('depth_speed_svg'), q('depth_tension_svg'), {
@@ -248,6 +250,6 @@ function redrawPlots() {
 }
 
 function clearPlots() {
-  const svgs = [q('wave_svg'), q('depth_speed_svg'), q('depth_tension_svg')];
+  const svgs = [q('wave_svg'), q('wave_svg_height'), q('depth_speed_svg'), q('depth_tension_svg')];
   svgs.forEach(svg => { if (!svg) return; while (svg.firstChild) svg.removeChild(svg.firstChild); });
 }

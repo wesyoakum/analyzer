@@ -60,7 +60,7 @@ function drawSpeedProfile(svg, layers, maxDepth, maxSpeed) {
 
   const ML = 64, MR = 18, MT = 18, MB = 46;
   const W = svg.viewBox.baseVal.width || svg.clientWidth || 1000;
-  const H = svg.viewBox.baseVal.height || svg.clientHeight || 380;
+  const H = svg.viewBox.baseVal.height || svg.clientHeight || 540;
   const innerW = W - ML - MR, innerH = H - MT - MB;
 
   const sx = d => ML + (d / Math.max(1e-9, maxDepth)) * innerW;       // X depth
@@ -86,7 +86,7 @@ function drawSpeedProfile(svg, layers, maxDepth, maxSpeed) {
 
   svg.appendChild(svgEl('text', { x: ML + innerW / 2, y: H - 4, 'text-anchor': 'middle', 'font-size': '12', fill: '#444' }))
      .textContent = 'Depth (m)';
-  svg.appendChild(svgEl('text', {
+@@ -90,51 +90,51 @@ function drawSpeedProfile(svg, layers, maxDepth, maxSpeed) {
     x: 18, y: MT + innerH / 2, transform: `rotate(-90,18,${MT + innerH / 2})`,
     'text-anchor': 'middle', 'font-size': '12', fill: '#444'
   })).textContent = 'Speed (m/s)';
@@ -112,7 +112,7 @@ function drawTensionProfile(svg, layers, maxDepth, maxTension, payload_kg, cable
 
   const ML = 64, MR = 18, MT = 18, MB = 46;
   const W = svg.viewBox.baseVal.width || svg.clientWidth || 1000;
-  const H = svg.viewBox.baseVal.height || svg.clientHeight || 380;
+  const H = svg.viewBox.baseVal.height || svg.clientHeight || 540;
   const innerW = W - ML - MR, innerH = H - MT - MB;
 
   const sx = d => ML + (d / Math.max(1e-9, maxDepth)) * innerW;        // X depth
