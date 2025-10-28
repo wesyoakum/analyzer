@@ -1,4 +1,4 @@
-// ===== plots/depth-profiles.mjs â€” Speed vs Depth & Tension vs Depth (DOM-agnostic) =====
+// ===== plots/depth-profiles.mjs — Speed vs Depth & Tension vs Depth (DOM-agnostic) =====
 import { niceTicks, svgEl } from '../utils.mjs';
 
 /**
@@ -8,54 +8,44 @@ import { niceTicks, svgEl } from '../utils.mjs';
  * @param {SVGSVGElement} svgTension
  * @param {Object} opts
  * @param {'electric'|'hydraulic'} opts.scenario
- * @param {Array<Object>} opts.elLayers
- * @param {Array<Object>} opts.hyLayers
+ * @param {Array<Object>} opts.elWraps
+ * @param {Array<Object>} opts.hyWraps
  * @param {number} opts.payload_kg
  * @param {number} opts.cable_w_kgpm
  */
 export function drawDepthProfiles(svgSpeed, svgTension, {
   scenario = 'electric',
-  elLayers = [],
-  hyLayers = [],
+  elWraps = [],
+  hyWraps = [],
   payload_kg = 0,
   cable_w_kgpm = 0
 } = {}) {
-  // Build layer intervals [depth_start, depth_end] with values
-  let layers = [];
-  if (scenario === 'electric') {
-    layers = (elLayers || []).map(L => ({
-      layer_no: L.layer_no,
-      depth_start: L.pre_deployed_m,
-      depth_end:   L.post_deployed_m,
-      speed_ms: (Number.isFinite(+L.line_speed_at_start_mpm) ? (+L.line_speed_at_start_mpm) / 60 : null),
-      avail_tension_kgf: (Number.isFinite(+L.avail_tension_kgf_at_start) ? +L.avail_tension_kgf_at_start : null)
-    }));
-  } else {
-    layers = (hyLayers || []).map(L => ({
-      layer_no: L.layer_no,
-      depth_start: L.pre_deployed_m,
-      depth_end:   L.post_deployed_m,
-      speed_ms: (Number.isFinite(+L.hyd_speed_available_mpm) ? (+L.hyd_speed_available_mpm) / 60 : null),
-      avail_tension_kgf: (Number.isFinite(+L.hyd_avail_tension_kgf_at_start) ? +L.hyd_avail_tension_kgf_at_start : null)
-    }));
-  }
+  const wraps = (scenario === 'electric') ? (elWraps || []) : (hyWraps || []);
+  const speedField = (scenario === 'electric') ? 'line_speed_mpm' : 'hyd_speed_available_mpm';
+  const tensionField = (scenario === 'electric') ? 'avail_tension_kgf' : 'hyd_avail_tension_kgf';
+
+  // Build wrap intervals [depth_start, depth_end] with values
+  const segments = wrapsToDepthSegments(wraps, speedField, tensionField);
+
   // Sort deep to shallow by start depth
-  layers.sort((a, b) => b.depth_start - a.depth_start);
+  segments.sort((a, b) => (b.depth_start || 0) - (a.depth_start || 0));
 
   // Extents
-  const maxDepth = layers.length ? Math.max(...layers.map(L => L.depth_start)) : 0;
-  const maxSpeed = Math.max(1, ...layers.map(L => L.speed_ms || 0));
-  const maxAvailT = Math.max(0, ...layers.map(L => L.avail_tension_kgf || 0));
+  const maxDepth = segments.length
+    ? Math.max(...segments.map(S => Math.max(S.depth_start || 0, S.depth_end || 0)))
+    : 0;
+  const maxSpeed = Math.max(1, ...segments.map(S => S.speed_ms || 0));
+  const maxAvailT = Math.max(0, ...segments.map(S => S.avail_tension_kgf || 0));
   const maxReqT = payload_kg + cable_w_kgpm * maxDepth;
   const maxTension = Math.max(maxReqT, maxAvailT) * 1.05 || 1;
 
   // Render both
-  drawSpeedProfile(svgSpeed, layers, maxDepth, maxSpeed);
-  drawTensionProfile(svgTension, layers, maxDepth, maxTension, payload_kg, cable_w_kgpm);
+  drawSpeedProfile(svgSpeed, segments, maxDepth, maxSpeed);
+  drawTensionProfile(svgTension, segments, maxDepth, maxTension, payload_kg, cable_w_kgpm);
 }
 
 // ---------- Speed vs Depth ----------
-function drawSpeedProfile(svg, layers, maxDepth, maxSpeed) {
+function drawSpeedProfile(svg, segments, maxDepth, maxSpeed) {
   while (svg.firstChild) svg.removeChild(svg.firstChild);
 
   const ML = 64, MR = 18, MT = 18, MB = 46;
@@ -91,15 +81,17 @@ function drawSpeedProfile(svg, layers, maxDepth, maxSpeed) {
     'text-anchor': 'middle', 'font-size': '12', fill: '#444'
   })).textContent = 'Speed (m/s)';
 
-  // step plot (gray) across each layer interval
-  layers.forEach(L => {
-    if (!Number.isFinite(L.speed_ms)) return;
-    const y = sy(L.speed_ms);
-    const x0 = sx(L.depth_end);
-    const x1 = sx(L.depth_start);
+  // step plot (gray) across each wrap interval
+  segments.forEach(S => {
+    if (!Number.isFinite(S.speed_ms)) return;
+    const y = sy(S.speed_ms);
+    const x0 = sx(S.depth_end);
+    const x1 = sx(S.depth_start);
     svg.appendChild(svgEl('line', { x1: x0, y1: y, x2: x1, y2: y, stroke: '#999', 'stroke-width': 2 }));
-    svg.appendChild(svgEl('text', { x: x1 - 3, y: y - 4, 'text-anchor': 'end', 'font-size': '11', fill: '#666' }))
-       .textContent = `L${L.layer_no}`;
+    if (S.label) {
+      svg.appendChild(svgEl('text', { x: x1 - 3, y: y - 4, 'text-anchor': 'end', 'font-size': '11', fill: '#666' }))
+         .textContent = S.label;
+    }
   });
 
   // zero line
@@ -107,7 +99,7 @@ function drawSpeedProfile(svg, layers, maxDepth, maxSpeed) {
 }
 
 // ---------- Tension vs Depth ----------
-function drawTensionProfile(svg, layers, maxDepth, maxTension, payload_kg, cable_w_kgpm) {
+function drawTensionProfile(svg, segments, maxDepth, maxTension, payload_kg, cable_w_kgpm) {
   while (svg.firstChild) svg.removeChild(svg.firstChild);
 
   const ML = 64, MR = 18, MT = 18, MB = 46;
@@ -152,15 +144,17 @@ function drawTensionProfile(svg, layers, maxDepth, maxTension, payload_kg, cable
   }
   svg.appendChild(svgEl('path', { d: pathFrom(pts), fill: 'none', stroke: '#000', 'stroke-width': 2 }));
 
-  // available tension as gray steps across each layer interval
-  layers.forEach(L => {
-    if (!Number.isFinite(L.avail_tension_kgf)) return;
-    const y = sy(L.avail_tension_kgf);
-    const x0 = sx(L.depth_end);
-    const x1 = sx(L.depth_start);
+  // available tension as gray steps across each wrap interval
+  segments.forEach(S => {
+    if (!Number.isFinite(S.avail_tension_kgf)) return;
+    const y = sy(S.avail_tension_kgf);
+    const x0 = sx(S.depth_end);
+    const x1 = sx(S.depth_start);
     svg.appendChild(svgEl('line', { x1: x0, y1: y, x2: x1, y2: y, stroke: '#999', 'stroke-width': 2 }));
-    svg.appendChild(svgEl('text', { x: x1 - 3, y: y - 4, 'text-anchor': 'end', 'font-size': '11', fill: '#666' }))
-       .textContent = `L${L.layer_no}`;
+    if (S.label) {
+      svg.appendChild(svgEl('text', { x: x1 - 3, y: y - 4, 'text-anchor': 'end', 'font-size': '11', fill: '#666' }))
+         .textContent = S.label;
+    }
   });
 
   svg.appendChild(svgEl('line', { x1: ML, y1: sy(0), x2: W - MR, y2: sy(0), stroke: '#bbb', 'stroke-dasharray': '4 4' }));
@@ -171,4 +165,56 @@ function drawTensionProfile(svg, layers, maxDepth, maxTension, payload_kg, cable
     for (let i = 1; i < pts.length; i++) d += ` L ${pts[i][0]} ${pts[i][1]}`;
     return d;
   }
+}
+
+function wrapsToDepthSegments(wraps, speedField, tensionField) {
+  /** @type {Array<Object>} */
+  const segments = [];
+  let fallbackStart = null;
+
+  for (const wrap of wraps) {
+    if (!wrap) continue;
+    const totalLen = Number.isFinite(wrap.total_cable_len_m) ? wrap.total_cable_len_m : null;
+    const preOn = Number.isFinite(wrap.pre_spooled_len_m) ? wrap.pre_spooled_len_m : null;
+    const depthEnd = Number.isFinite(wrap.deployed_len_m) ? wrap.deployed_len_m : null;
+
+    if (!Number.isFinite(depthEnd)) {
+      fallbackStart = null;
+      continue;
+    }
+
+    let depthStart = null;
+    if (Number.isFinite(totalLen) && Number.isFinite(preOn)) {
+      depthStart = totalLen - preOn;
+    } else if (Number.isFinite(fallbackStart)) {
+      depthStart = fallbackStart;
+    }
+
+    if (!Number.isFinite(depthStart)) {
+      depthStart = depthEnd;
+    }
+
+    if (depthStart < depthEnd) {
+      const tmp = depthStart;
+      depthStart = depthEnd;
+      depthEnd = tmp;
+    }
+
+    const speedVal = Number.isFinite(wrap[speedField]) ? wrap[speedField] : null;
+    const tensionVal = Number.isFinite(wrap[tensionField]) ? wrap[tensionField] : null;
+
+    segments.push({
+      depth_start: depthStart,
+      depth_end: depthEnd,
+      speed_ms: Number.isFinite(speedVal) ? speedVal / 60 : null,
+      avail_tension_kgf: Number.isFinite(tensionVal) ? tensionVal : null,
+      label: Number.isFinite(wrap.wrap_no)
+        ? `W${wrap.wrap_no}`
+        : (Number.isFinite(wrap.layer_no) ? `L${wrap.layer_no}` : '')
+    });
+
+    fallbackStart = depthEnd;
+  }
+
+  return segments;
 }

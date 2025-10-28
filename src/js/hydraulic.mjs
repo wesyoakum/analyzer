@@ -74,6 +74,7 @@ export function projectHydraulicWraps(rows) {
     pre_spooled_len_m: r.pre_spooled_len_m,
     spooled_len_m: r.spooled_len_m,
     deployed_len_m: r.deployed_len_m,
+    total_cable_len_m: r.total_cable_len_m,
     hyd_P_required_psi: r.hyd_P_required_psi,
     hyd_speed_power_mpm: r.hyd_speed_power_mpm,
     hyd_speed_flow_mpm: r.hyd_speed_flow_mpm,

@@ -92,6 +92,7 @@ export function projectElectricWraps(rows) {
     pre_spooled_len_m: r.pre_spooled_len_m,
     spooled_len_m: r.spooled_len_m,
     deployed_len_m: r.deployed_len_m,
+    total_cable_len_m: r.total_cable_len_m,
     tension_kgf: r.tension_kgf,
     torque_Nm: r.torque_Nm,
     motor_torque_Nm: r.motor_torque_Nm,

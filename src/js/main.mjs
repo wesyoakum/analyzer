@@ -234,7 +234,7 @@ function computeAll() {
 
 // ---- Plot redraw helper (uses decoupled plotting modules) ----
 function redrawPlots() {
-  // Wave contours (optional — skip if controls/SVGs absent)
+    // Wave contours (optional - skip if controls/SVGs absent)
   const waveScenarioEl = /** @type {HTMLSelectElement|null} */ (document.getElementById('wave_scenario'));
   const waveTminEl = /** @type {HTMLInputElement|null} */ (document.getElementById('wave_tmin'));
   const waveTmaxEl = /** @type {HTMLInputElement|null} */ (document.getElementById('wave_tmax'));
@@ -258,7 +258,7 @@ function redrawPlots() {
     drawWaveHeightContours(waveSvgHeight, waveOpts);
   }
 
-  // Depth profiles (optional — skip if controls/SVGs absent)
+  // Depth profiles (optional - skip if controls/SVGs absent)
   const depthScenarioEl = /** @type {HTMLSelectElement|null} */ (document.getElementById('depth_scenario'));
   const depthSpeedSvg = /** @type {SVGSVGElement|null} */ (document.getElementById('depth_speed_svg'));
   const depthTensionSvg = /** @type {SVGSVGElement|null} */ (document.getElementById('depth_tension_svg'));
@@ -266,8 +266,8 @@ function redrawPlots() {
   if (depthScenarioEl && depthSpeedSvg && depthTensionSvg) {
     drawDepthProfiles(depthSpeedSvg, depthTensionSvg, {
       scenario: depthScenarioEl.value || 'electric',       // 'electric' | 'hydraulic'
-      elLayers: lastElLayer,
-      hyLayers: lastHyLayer,
+      elWraps: lastElWraps,
+      hyWraps: lastHyWraps,
       payload_kg: read('payload_kg'),
       cable_w_kgpm: read('c_w_kgpm')
     });
