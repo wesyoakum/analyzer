@@ -1,4 +1,4 @@
-const DEFAULT_STORAGE_KEY = 'analyzer.inputs.v1';
+const DEFAULT_STORAGE_KEY = 'analyzer.inputs.v2';
 const SKIP_INPUT_TYPES = new Set([
   'button',
   'file',
