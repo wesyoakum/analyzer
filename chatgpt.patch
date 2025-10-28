@@ -1,463 +1,539 @@
-diff --git a/src/css/styles.css b/src/css/styles.css
-index a834191a0d1e607b5f0908f48b10022e2ef9eded..29eb3e78ebda7284ee5ac6bc433f076cde7ecf7b 100644
---- a/src/css/styles.css
-+++ b/src/css/styles.css
-@@ -1,35 +1,423 @@
--body { font-family: system-ui, -apple-system, Segoe UI, Roboto, Arial; margin: 24px; }
--h1 { margin-top: 0; }
--.row { display: flex; gap: 12px; align-items: center; flex-wrap: wrap; margin-bottom: 12px; }
--input, select, button { font-size: 14px; padding: 6px 8px; }
--table { border-collapse: collapse; width: 100%; margin-top: 10px; table-layout: auto; }
--th, td { border: 1px solid #ccc; padding: 6px 8px; font-variant-numeric: tabular-nums; white-space: nowrap; }
--td { text-align: right; }
--th { text-align: center; white-space: normal; }
--th:first-child, td:first-child { text-align: left; }
--th[title] { cursor: help; }
--#err { color: #b00020; white-space: pre-wrap; margin-top: 8px; }
--#status { margin-left: 8px; }
--.tabs { display: flex; gap: 8px; margin-top: 18px; margin-bottom: 6px; flex-wrap: wrap; }
--.tab-btn { padding: 6px 10px; border: 1px solid #ccc; background: #f7f7f7; cursor: pointer; }
--.tab-btn.active { background: #e8f0ff; border-color: #7da6ff; font-weight: 600; }
--.panel { display: none; }
--.panel.active { display: block; }
--.card { border: 1px solid #ccc; padding: 10px; margin-top: 10px; }
--.dim { color: #666; }
--.section-title { font-weight:700; margin-top: 18px; }
--.btnbar { display:flex; gap:10px; align-items:center; flex-wrap:wrap; margin-top:6px;}
--.plotwrap { overflow-x:auto; }
--svg { background:#fff; border:1px solid #ccc; border-radius:6px; display:block; }
--.legend { display:flex; flex-wrap:wrap; gap:8px 14px; margin-top:8px; align-items:center; }
--.legitem { display:flex; align-items:center; gap:6px; font-size: 13px; color:#333; }
--.swatch { width:22px; height:0; border-top:2px solid #000; display:inline-block; }
--.swatch.dashed { border-top-style: dashed; }
--.swatch.gray { border-top-color:#999; }
--.twocol { display:flex; flex-wrap:wrap; gap:16px; }
--.col { flex:1 1 460px; min-width: 360px; }
--.col svg { width: 100%; height: auto; }
--.subtitle { margin: 4px 0 6px; font-size: 13px; color:#555; }
--.plot-title { font-weight: 600; margin: 6px 0 4px; }
--.waveplots .legend { margin-top: 10px; }
--.waveplots .dim { margin-bottom: 6px; }
-+:root {
-+  --paper: #ffffff;
-+  --paper-background: #eef2f8;
-+  --paper-line-strong: #c4ccdd;
-+  --paper-line-soft: #dfe4ef;
-+  --ink-900: #142238;
-+  --ink-700: #2f3b54;
-+  --ink-500: #55637d;
-+  --accent: #2c56a3;
-+  --accent-light: #edf2ff;
-+}
-+
-+* {
-+  box-sizing: border-box;
-+}
-+
-+body {
-+  margin: 0;
-+  padding: 0;
-+  font-family: "Inter", "Segoe UI", system-ui, -apple-system, BlinkMacSystemFont, "Roboto", "Helvetica Neue", Arial, sans-serif;
-+  line-height: 1.5;
-+  color: var(--ink-900);
-+  background: var(--paper-background);
-+}
-+
-+.sheet {
-+  max-width: 1200px;
-+  margin: 32px auto 64px;
-+  background: var(--paper);
-+  border: 1px solid var(--paper-line-strong);
-+  box-shadow: 0 18px 42px rgba(20, 34, 56, 0.14);
-+  padding: 32px 40px 48px;
-+}
-+
-+h1 {
-+  margin: 0 0 24px;
-+  font-size: 28px;
-+  letter-spacing: 0.02em;
-+}
-+
-+.section-title {
-+  font-size: 18px;
-+  font-weight: 600;
-+  color: var(--ink-900);
-+  margin: 0 0 14px;
-+  letter-spacing: 0.01em;
-+}
-+
-+#err {
-+  color: #b00020;
-+  white-space: pre-wrap;
-+  margin-top: 8px;
-+}
-+
-+#status {
-+  margin-left: 4px;
-+  color: var(--ink-500);
-+  font-style: italic;
-+}
-+
-+.card {
-+  background: rgba(255, 255, 255, 0.96);
-+  border: 1px solid var(--paper-line-strong);
-+  padding: 20px 24px;
-+  margin-top: 28px;
-+  box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.65);
-+}
-+
-+.card:first-of-type {
-+  margin-top: 0;
-+}
-+
-+.actions .btnbar {
-+  margin-top: 12px;
-+}
-+
-+.btnbar {
-+  display: flex;
-+  gap: 12px;
-+  align-items: center;
-+  flex-wrap: wrap;
-+}
-+
-+button {
-+  font: inherit;
-+  padding: 8px 16px;
-+  border-radius: 6px;
-+  border: 1px solid var(--accent);
-+  background: linear-gradient(180deg, #f9fbff 0%, #dfe8ff 100%);
-+  color: var(--ink-900);
-+  cursor: pointer;
-+  transition: background 0.15s ease, transform 0.1s ease;
-+}
-+
-+button:disabled {
-+  opacity: 0.55;
-+  cursor: not-allowed;
-+}
-+
-+button:not(:disabled):hover {
-+  background: linear-gradient(180deg, #ffffff 0%, #cfdaff 100%);
-+}
-+
-+button:not(:disabled):active {
-+  transform: translateY(1px);
-+}
-+
-+input,
-+select {
-+  font: inherit;
-+  padding: 6px 8px;
-+  border-radius: 4px;
-+  border: 1px solid var(--paper-line-strong);
-+  background: #f7f9ff;
-+  box-shadow: inset 0 1px 2px rgba(17, 32, 58, 0.1);
-+  color: var(--ink-900);
-+}
-+
-+input:focus,
-+select:focus,
-+button:focus {
-+  outline: 2px solid var(--accent-light);
-+  outline-offset: 1px;
-+}
-+
-+.table-title {
-+  margin: 8px 0 0;
-+  font-size: 16px;
-+  font-weight: 600;
-+}
-+
-+.worksheet {
-+  width: 100%;
-+  border-collapse: collapse;
-+  margin: 0 0 12px;
-+  background: var(--paper);
-+}
-+
-+.worksheet thead th {
-+  text-transform: uppercase;
-+  font-size: 12px;
-+  letter-spacing: 0.06em;
-+  background: var(--accent-light);
-+  color: var(--ink-700);
-+  border: 1px solid var(--paper-line-strong);
-+  padding: 8px 10px;
-+  text-align: left;
-+}
-+
-+.worksheet tbody th,
-+.worksheet tbody td {
-+  border: 1px solid var(--paper-line-strong);
-+  padding: 8px 10px;
-+}
-+
-+.worksheet tbody th {
-+  font-weight: 600;
-+  text-align: left;
-+  color: var(--ink-900);
-+}
-+
-+.worksheet td.units {
-+  width: 110px;
-+  text-align: center;
-+  color: var(--ink-500);
-+  font-weight: 500;
-+}
-+
-+.worksheet td.value {
-+  width: 240px;
-+}
-+
-+.worksheet.compact td.value,
-+.worksheet.compact td.units {
-+  width: auto;
-+}
-+
-+.worksheet td.value input,
-+.worksheet td.value select {
-+  width: 100%;
-+}
-+
-+.worksheet .note td {
-+  background: #f6f8fd;
-+  font-style: italic;
-+  color: var(--ink-500);
-+}
-+
-+.worksheet .button-cell {
-+  text-align: center;
-+}
-+
-+nav.tabs {
-+  display: flex;
-+  gap: 12px;
-+  margin-top: 32px;
-+  padding: 0 0 0 4px;
-+  border-bottom: 2px solid var(--paper-line-strong);
-+  flex-wrap: wrap;
-+}
-+
-+.tab-btn {
-+  padding: 10px 18px;
-+  border: 1px solid var(--paper-line-strong);
-+  border-bottom: none;
-+  border-radius: 10px 10px 0 0;
-+  background: #f6f8fd;
-+  color: var(--ink-700);
-+  font-weight: 600;
-+  cursor: pointer;
-+  box-shadow: 0 3px 0 rgba(20, 34, 56, 0.12);
-+}
-+
-+.tab-btn.active {
-+  background: var(--paper);
-+  color: var(--ink-900);
-+  box-shadow: none;
-+  position: relative;
-+  top: 2px;
-+}
-+
-+.panel {
-+  display: none;
-+  padding-top: 18px;
-+}
-+
-+.panel.active {
-+  display: block;
-+}
-+
-+.panel .card:first-of-type {
-+  margin-top: 0;
-+}
-+
-+table {
-+  border-collapse: collapse;
-+  width: 100%;
-+  margin-top: 16px;
-+  table-layout: auto;
-+  background: var(--paper);
-+}
-+
-+th,
-+td {
-+  border: 1px solid var(--paper-line-strong);
-+  padding: 6px 8px;
-+  font-variant-numeric: tabular-nums;
-+  white-space: nowrap;
-+}
-+
-+td {
-+  text-align: right;
-+}
-+
-+.worksheet td {
-+  text-align: left;
-+  white-space: normal;
-+}
-+
-+th {
-+  text-align: center;
-+  white-space: normal;
-+  color: var(--ink-700);
-+  background: #f2f5ff;
-+}
-+
-+th:first-child,
-+td:first-child {
-+  text-align: left;
-+}
-+
-+th[title] {
-+  cursor: help;
-+}
-+
-+.plotwrap {
-+  overflow-x: auto;
-+}
-+
-+.plotwrap svg {
-+  background-color: #ffffff;
-+  border: 1px solid var(--paper-line-strong);
-+  box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.6);
-+  display: block;
-+  background-image: linear-gradient(0deg, rgba(76, 102, 146, 0.18) 1px, transparent 1px),
-+    linear-gradient(90deg, rgba(76, 102, 146, 0.18) 1px, transparent 1px),
-+    linear-gradient(0deg, rgba(76, 102, 146, 0.08) 1px, transparent 1px),
-+    linear-gradient(90deg, rgba(76, 102, 146, 0.08) 1px, transparent 1px);
-+  background-size: 40px 40px, 40px 40px, 8px 8px, 8px 8px;
-+}
-+
-+.legend {
-+  display: flex;
-+  flex-wrap: wrap;
-+  gap: 8px 14px;
-+  margin-top: 10px;
-+  align-items: center;
-+  color: var(--ink-700);
-+}
-+
-+.legitem {
-+  display: flex;
-+  align-items: center;
-+  gap: 6px;
-+  font-size: 13px;
-+}
-+
-+.swatch {
-+  width: 22px;
-+  height: 0;
-+  border-top: 2px solid #244f9e;
-+  display: inline-block;
-+}
-+
-+.swatch.dashed {
-+  border-top-style: dashed;
-+}
-+
-+.swatch.gray {
-+  border-top-color: #9aa5bc;
-+}
-+
-+.twocol {
-+  display: flex;
-+  flex-wrap: wrap;
-+  gap: 24px;
-+}
-+
-+.col {
-+  flex: 1 1 460px;
-+  min-width: 360px;
-+}
-+
-+.col svg {
-+  width: 100%;
-+  height: auto;
-+}
-+
-+.subtitle {
-+  margin: 8px 0 0;
-+  font-size: 13px;
-+  color: var(--ink-500);
-+}
-+
-+.plot-title {
-+  font-weight: 600;
-+  margin: 12px 0 6px;
-+}
-+
-+.waveplots .legend {
-+  margin-top: 12px;
-+}
-+
-+.waveplots .dim {
-+  margin-bottom: 6px;
-+}
-+
-+.dim {
-+  color: var(--ink-500);
-+}
-+
-+@media (max-width: 720px) {
-+  .sheet {
-+    padding: 24px 20px 36px;
-+  }
-+
-+  nav.tabs {
-+    padding-left: 0;
-+  }
-+
-+  .worksheet td.units,
-+  .worksheet td.value {
-+    width: auto;
-+  }
-+}
-+
-+@media print {
-+  body {
-+    background: #ffffff;
-+  }
-+
-+  .sheet {
-+    margin: 0;
-+    box-shadow: none;
-+    border-color: #000000;
-+    padding: 18mm 18mm 22mm;
-+  }
-+
-+  nav.tabs,
-+  .btnbar button,
-+  .button-row,
-+  #status {
-+    display: none !important;
-+  }
-+
-+  .panel {
-+    display: block !important;
-+    padding-top: 0;
-+  }
-+
-+  .card {
-+    break-inside: avoid;
-+    border-color: #000000;
-+    box-shadow: none;
-+    margin-top: 18px;
-+    background: #ffffff;
-+  }
-+
-+  .worksheet thead th {
-+    background: #dfe3ef !important;
-+  }
-+
-+  th {
-+    background: #dfe3ef !important;
-+  }
-+
-+  input,
-+  select {
-+    background: #ffffff;
-+    box-shadow: none;
-+    border-color: #000000;
-+  }
-+}
+diff --git a/src/index.html b/src/index.html
+index 16a58d909d0bbdfc2a21449c3b3e73661b4c0741..b0a0a491130d730631faae80a69aa39fb8848c83 100644
+--- a/src/index.html
++++ b/src/index.html
+@@ -1,91 +1,179 @@
+ <!doctype html>
+ <html lang="en">
+ <head>
+   <meta charset="utf-8" />
+   <title>Winch — Electric & Hydraulic + Wave Contours + Depth Profiles</title>
+   <meta name="viewport" content="width=device-width, initial-scale=1" />
+   <link rel="stylesheet" href="./css/styles.css" />
+ </head>
+ <body>
+-  <h1>Winch — Electric & Hydraulic (separated) + Wave Contours + Depth Profiles</h1>
+-  <div id="err"></div>
++  <div class="sheet">
++    <h1>Winch — Electric & Hydraulic (separated) + Wave Contours + Depth Profiles</h1>
++    <div id="err"></div>
+ 
+-  <!-- Shared geometry -->
+-  <div class="card">
+-    <div class="section-title">Drum & Cable Geometry (shared)</div>
+-    <div class="row">
+-      <label>Cable Dia (mm) <input id="c_mm" type="number" step="0.1" value="30"></label>
+-      <label>Operating Depth (m) <input id="depth_m" type="number" step="1" value="3000"></label>
+-      <label>Dead End (m) <input id="dead_m" type="number" step="0.1" value="100"></label>
+-      <label>Core Dia (in) <input id="core_in" type="number" step="0.001" value="64"></label>
+-      <label>FTF (in) <input id="ftf_in" type="number" step="0.001" value="116"></label>
+-      <label>Lebus Thk (in) <input id="lebus_in" type="number" step="0.001" value="0.625"></label>
+-    </div>
+-    <div class="row">
+-      <label>Packing <input id="pack" type="number" step="0.001" value="0.877"></label>
+-      <label>Wraps per layer (override) <input id="wraps_override" type="number" step="0.5" placeholder="auto"></label>
+-      <span class="dim">Leave blank or set to 0 to use calculated wraps (always truncated to .0/.5).</span>
+-    </div>
+-    <div class="row">
+-      <label>Gear Ratio 1 (reduction) <input id="gr1" type="number" step="0.1" value="20"></label>
+-      <label>Gear Ratio 2 (reduction) <input id="gr2" type="number" step="0.1" value="5"></label>
+-      <label># Drive Motors (mechanical) <input id="motors" type="number" step="1" value="6"></label>
+-      <span class="dim">Used by both Electric & Hydraulic for torque split and rpm mapping.</span>
+-    </div>
+-    <div class="row">
+-      <label>Cable wt in water (kg/m) <input id="c_w_kgpm" type="number" step="0.01" value="3.8"></label>
+-      <label>Payload in water (kg) <input id="payload_kg" type="number" step="1" value="8000"></label>
+-      <span class="dim">T(kgf) = payload + cable_w·deployed (static).</span>
+-    </div>
+-  </div>
++    <!-- Shared geometry -->
++    <section class="card">
++      <h2 class="section-title">Section 1: Drum &amp; Cable Geometry (Shared)</h2>
++      <table class="worksheet">
++        <thead>
++          <tr>
++            <th scope="col">Parameter</th>
++            <th scope="col" class="units">Units</th>
++            <th scope="col" class="value">Input</th>
++          </tr>
++        </thead>
++        <tbody>
++          <tr>
++            <th scope="row"><label for="c_mm">Cable Dia</label></th>
++            <td class="units">mm</td>
++            <td class="value"><input id="c_mm" type="number" step="0.1" value="30"></td>
++          </tr>
++          <tr>
++            <th scope="row"><label for="depth_m">Operating Depth</label></th>
++            <td class="units">m</td>
++            <td class="value"><input id="depth_m" type="number" step="1" value="3000"></td>
++          </tr>
++          <tr>
++            <th scope="row"><label for="dead_m">Dead End</label></th>
++            <td class="units">m</td>
++            <td class="value"><input id="dead_m" type="number" step="0.1" value="100"></td>
++          </tr>
++          <tr>
++            <th scope="row"><label for="core_in">Core Dia</label></th>
++            <td class="units">in</td>
++            <td class="value"><input id="core_in" type="number" step="0.001" value="64"></td>
++          </tr>
++          <tr>
++            <th scope="row"><label for="ftf_in">Flange to Flange (FTF)</label></th>
++            <td class="units">in</td>
++            <td class="value"><input id="ftf_in" type="number" step="0.001" value="116"></td>
++          </tr>
++          <tr>
++            <th scope="row"><label for="lebus_in">Lebus Thickness</label></th>
++            <td class="units">in</td>
++            <td class="value"><input id="lebus_in" type="number" step="0.001" value="0.625"></td>
++          </tr>
++          <tr>
++            <th scope="row"><label for="pack">Packing Factor</label></th>
++            <td class="units">–</td>
++            <td class="value"><input id="pack" type="number" step="0.001" value="0.877"></td>
++          </tr>
++          <tr>
++            <th scope="row"><label for="wraps_override">Wraps per Layer (override)</label></th>
++            <td class="units">wraps</td>
++            <td class="value"><input id="wraps_override" type="number" step="0.5" placeholder="auto"></td>
++          </tr>
++          <tr class="note">
++            <td colspan="3" class="dim">Leave blank or set to 0 to use calculated wraps (always truncated to .0/.5).</td>
++          </tr>
++          <tr>
++            <th scope="row"><label for="gr1">Gear Ratio 1 (reduction)</label></th>
++            <td class="units">–</td>
++            <td class="value"><input id="gr1" type="number" step="0.1" value="20"></td>
++          </tr>
++          <tr>
++            <th scope="row"><label for="gr2">Gear Ratio 2 (reduction)</label></th>
++            <td class="units">–</td>
++            <td class="value"><input id="gr2" type="number" step="0.1" value="5"></td>
++          </tr>
++          <tr>
++            <th scope="row"><label for="motors"># Drive Motors (mechanical)</label></th>
++            <td class="units">count</td>
++            <td class="value"><input id="motors" type="number" step="1" value="6"></td>
++          </tr>
++          <tr class="note">
++            <td colspan="3" class="dim">Used by both Electric &amp; Hydraulic for torque split and RPM mapping.</td>
++          </tr>
++          <tr>
++            <th scope="row"><label for="c_w_kgpm">Cable Weight in Water</label></th>
++            <td class="units">kg/m</td>
++            <td class="value"><input id="c_w_kgpm" type="number" step="0.01" value="3.8"></td>
++          </tr>
++          <tr>
++            <th scope="row"><label for="payload_kg">Payload in Water</label></th>
++            <td class="units">kg</td>
++            <td class="value"><input id="payload_kg" type="number" step="1" value="8000"></td>
++          </tr>
++          <tr class="note">
++            <td colspan="3" class="dim">T(kgf) = payload + cable weight × deployed length (static).</td>
++          </tr>
++        </tbody>
++      </table>
++    </section>
+ 
+-  <!-- Compute -->
+-  <div class="btnbar">
+-    <button id="go" type="button">Compute</button>
+-    <span id="status">idle</span>
+-  </div>
++    <!-- Compute -->
++    <section class="card actions">
++      <h2 class="section-title">Run Analysis</h2>
++      <div class="btnbar">
++        <button id="go" type="button">Compute</button>
++        <span id="status">idle</span>
++      </div>
++    </section>
+ 
+-  <!-- Tabs -->
+-  <div class="tabs">
+-    <button class="tab-btn active" data-target="panel-electric">Electric</button>
+-    <button class="tab-btn" data-target="panel-hydraulic">Hydraulic</button>
+-    <button class="tab-btn" data-target="panel-wave">Wave Contours</button>
+-    <button class="tab-btn" data-target="panel-depth">Depth Profiles</button>
+-  </div>
++    <!-- Tabs -->
++    <nav class="tabs" aria-label="Results sections">
++      <button class="tab-btn active" data-target="panel-electric">Electric</button>
++      <button class="tab-btn" data-target="panel-hydraulic">Hydraulic</button>
++      <button class="tab-btn" data-target="panel-wave">Wave Contours</button>
++      <button class="tab-btn" data-target="panel-depth">Depth Profiles</button>
++    </nav>
+ 
+   <!-- ELECTRIC PANEL -->
+   <div id="panel-electric" class="panel active">
+-    <div class="card">
+-      <div class="section-title">Electric Inputs</div>
+-      <div class="row">
+-        <label>Motor max RPM <input id="motor_max_rpm" type="number" step="1" value="1800"></label>
+-        <label>Motor power per motor (hp) <input id="motor_hp" type="number" step="0.1" value="150"></label>
+-        <label>Motor max torque per motor (N·m) <input id="motor_tmax" type="number" step="0.1" value="230"></label>
+-      </div>
+-      <div class="dim">Per-wrap: required tension → drum torque → per-motor torque. RPM limited by hp and capped by max RPM. Line speed from drum dia & ratios. Available tension from motor torque cap.</div>
+-    </div>
++    <section class="card">
++      <h2 class="section-title">Section 2: Electric Inputs</h2>
++      <table class="worksheet">
++        <thead>
++          <tr>
++            <th scope="col">Parameter</th>
++            <th scope="col" class="units">Units</th>
++            <th scope="col" class="value">Input</th>
++          </tr>
++        </thead>
++        <tbody>
++          <tr>
++            <th scope="row"><label for="motor_max_rpm">Motor max RPM</label></th>
++            <td class="units">rpm</td>
++            <td class="value"><input id="motor_max_rpm" type="number" step="1" value="1800"></td>
++          </tr>
++          <tr>
++            <th scope="row"><label for="motor_hp">Motor power per motor</label></th>
++            <td class="units">hp</td>
++            <td class="value"><input id="motor_hp" type="number" step="0.1" value="150"></td>
++          </tr>
++          <tr>
++            <th scope="row"><label for="motor_tmax">Motor max torque per motor</label></th>
++            <td class="units">N·m</td>
++            <td class="value"><input id="motor_tmax" type="number" step="0.1" value="230"></td>
++          </tr>
++          <tr class="note">
++            <td colspan="3" class="dim">Per-wrap: required tension → drum torque → per-motor torque. RPM limited by hp and capped by max RPM. Line speed from drum dia &amp; ratios. Available tension from motor torque cap.</td>
++          </tr>
++        </tbody>
++      </table>
++    </section>
+ 
+     <div class="card">
+       <div class="section-title">Electric — Layer Table</div>
+       <div class="btnbar">
+         <button id="csv_el_layer" type="button" disabled>Download CSV — Electric Layer</button>
+       </div>
+       <table>
+         <thead>
+           <tr>
+             <th title="layer_no">L#<br>(–)</th>
+             <th title="layer_dia_in">D<sub>layer</sub><br>(in)</th>
+             <th title="pre_on_drum_m">pre_on<br>(m)</th>
+             <th title="pre_deployed_m">pre_dep<br>(m)</th>
+             <th title="post_on_drum_m">post_on<br>(m)</th>
+             <th title="post_deployed_m">post_dep<br>(m)</th>
+             <th title="max_tension_kgf">T<sub>max</sub><br>(kgf)</th>
+             <th title="max_torque_Nm">τ<sub>max</sub><br>(N·m)</th>
+             <th title="max_motor_torque_Nm">τ<sub>m,max</sub><br>(N·m)</th>
+             <th title="motor_rpm_at_start">n<sub>m,start</sub><br>(rpm)</th>
+             <th title="line_speed_at_start_mpm">v<sub>start</sub><br>(m/min)</th>
+             <th title="avail_tension_kgf_at_start">T<sub>avail,start</sub><br>(kgf)</th>
+           </tr>
+         </thead>
+         <tbody id="tbody_el_layer"></tbody>
+       </table>
+@@ -99,65 +187,104 @@
+       <table>
+         <thead>
+           <tr>
+             <th title="wrap_no">W#<br>(–)</th>
+             <th title="layer_no">L#<br>(–)</th>
+             <th title="layer_dia_in">D<sub>layer</sub><br>(in)</th>
+             <th title="wrap_len_in">L<sub>wrap</sub><br>(in)</th>
+             <th title="pre_spooled_len_m">pre_spool<br>(m)</th>
+             <th title="spooled_len_m">on_drum<br>(m)</th>
+             <th title="deployed_len_m">dep<br>(m)</th>
+             <th title="tension_kgf">T<br>(kgf)</th>
+             <th title="torque_Nm">τ<br>(N·m)</th>
+             <th title="motor_torque_Nm">τ<sub>m</sub><br>(N·m)</th>
+             <th title="motor_rpm">n<sub>m</sub><br>(rpm)</th>
+             <th title="line_speed_mpm">v<br>(m/min)</th>
+             <th title="avail_tension_kgf">T<sub>avail</sub><br>(kgf)</th>
+           </tr>
+         </thead>
+         <tbody id="tbody_el_wraps"></tbody>
+       </table>
+     </div>
+   </div>
+ 
+   <!-- HYDRAULIC PANEL -->
+   <div id="panel-hydraulic" class="panel">
+-    <div class="card">
+-      <div class="section-title">Hydraulic Inputs</div>
+-      <div class="row">
+-        <label># Pump strings <input id="h_pump_strings" type="number" step="1" value="2"></label>
+-        <label>Elec hp per string (nameplate) <input id="h_emotor_hp" type="number" step="0.1" value="75"></label>
+-        <label>Electro-hydraulic efficiency <input id="h_emotor_eff" type="number" step="0.01" value="0.85"></label>
+-        <label>Pump rpm (elec motor rpm) <input id="h_emotor_rpm" type="number" step="1" value="1780"></label>
+-      </div>
+-      <div class="row">
+-        <label>Pump displacement (cc/rev) <input id="h_pump_cc" type="number" step="0.1" value="210"></label>
+-        <label>System max pressure (psi) <input id="h_max_psi" type="number" step="1" value="3500"></label>
+-        <label>Hyd motor displacement (cc/rev) <input id="h_hmot_cc" type="number" step="0.1" value="55"></label>
+-        <label>Hyd motor max rpm <input id="h_hmot_rpm_max" type="number" step="1" value="3500"></label>
+-      </div>
+-    </div>
++    <section class="card">
++      <h2 class="section-title">Section 3: Hydraulic Inputs</h2>
++      <table class="worksheet">
++        <thead>
++          <tr>
++            <th scope="col">Parameter</th>
++            <th scope="col" class="units">Units</th>
++            <th scope="col" class="value">Input</th>
++          </tr>
++        </thead>
++        <tbody>
++          <tr>
++            <th scope="row"><label for="h_pump_strings"># Pump strings</label></th>
++            <td class="units">count</td>
++            <td class="value"><input id="h_pump_strings" type="number" step="1" value="2"></td>
++          </tr>
++          <tr>
++            <th scope="row"><label for="h_emotor_hp">Electric hp per string (nameplate)</label></th>
++            <td class="units">hp</td>
++            <td class="value"><input id="h_emotor_hp" type="number" step="0.1" value="75"></td>
++          </tr>
++          <tr>
++            <th scope="row"><label for="h_emotor_eff">Electro-hydraulic efficiency</label></th>
++            <td class="units">–</td>
++            <td class="value"><input id="h_emotor_eff" type="number" step="0.01" value="0.85"></td>
++          </tr>
++          <tr>
++            <th scope="row"><label for="h_emotor_rpm">Pump RPM (electric motor RPM)</label></th>
++            <td class="units">rpm</td>
++            <td class="value"><input id="h_emotor_rpm" type="number" step="1" value="1780"></td>
++          </tr>
++          <tr>
++            <th scope="row"><label for="h_pump_cc">Pump displacement</label></th>
++            <td class="units">cc/rev</td>
++            <td class="value"><input id="h_pump_cc" type="number" step="0.1" value="210"></td>
++          </tr>
++          <tr>
++            <th scope="row"><label for="h_max_psi">System max pressure</label></th>
++            <td class="units">psi</td>
++            <td class="value"><input id="h_max_psi" type="number" step="1" value="3500"></td>
++          </tr>
++          <tr>
++            <th scope="row"><label for="h_hmot_cc">Hydraulic motor displacement</label></th>
++            <td class="units">cc/rev</td>
++            <td class="value"><input id="h_hmot_cc" type="number" step="0.1" value="55"></td>
++          </tr>
++          <tr>
++            <th scope="row"><label for="h_hmot_rpm_max">Hydraulic motor max RPM</label></th>
++            <td class="units">rpm</td>
++            <td class="value"><input id="h_hmot_rpm_max" type="number" step="1" value="3500"></td>
++          </tr>
++        </tbody>
++      </table>
++    </section>
+ 
+     <div class="card">
+       <div class="section-title">Hydraulic — Layer Table</div>
+       <div class="btnbar">
+         <button id="csv_hy_layer" type="button" disabled>Download CSV — Hydraulic Layer</button>
+       </div>
+       <table>
+         <thead>
+           <tr>
+             <th title="layer_no">L#<br>(–)</th>
+             <th title="layer_dia_in">D<sub>layer</sub><br>(in)</th>
+             <th title="pre_on_drum_m">pre_on<br>(m)</th>
+             <th title="pre_deployed_m">pre_dep<br>(m)</th>
+             <th title="post_on_drum_m">post_on<br>(m)</th>
+             <th title="post_deployed_m">post_dep<br>(m)</th>
+             <th title="hyd_P_required_psi">P<sub>req</sub><br>(psi)</th>
+             <th title="hyd_speed_power_mpm">v<sub>P</sub><br>(m/min)</th>
+             <th title="hyd_speed_flow_mpm">v<sub>Q</sub><br>(m/min)</th>
+             <th title="hyd_speed_available_mpm">v<sub>avail</sub><br>(m/min)</th>
+             <th title="hyd_hp_used_at_available">HP<sub>hyd_used</sub><br>(hp)</th>
+             <th title="elec_input_hp_used">HP<sub>elec_in</sub><br>(hp)</th>
+             <th title="hyd_drum_torque_at_maxP_Nm">τ<sub>drum@Pmax</sub><br>(N·m)</th>
+             <th title="hyd_avail_tension_kgf_at_start">T<sub>avail,start</sub><br>(kgf)</th>
+           </tr>
+         </thead>
+@@ -175,106 +302,153 @@
+           <tr>
+             <th title="wrap_no">W#<br>(–)</th>
+             <th title="layer_no">L#<br>(–)</th>
+             <th title="layer_dia_in">D<sub>layer</sub><br>(in)</th>
+             <th title="wrap_len_in">L<sub>wrap</sub><br>(in)</th>
+             <th title="pre_spooled_len_m">pre_spool<br>(m)</th>
+             <th title="spooled_len_m">on_drum<br>(m)</th>
+             <th title="deployed_len_m">dep<br>(m)</th>
+             <th title="hyd_P_required_psi">P<sub>req</sub><br>(psi)</th>
+             <th title="hyd_speed_power_mpm">v<sub>P</sub><br>(m/min)</th>
+             <th title="hyd_speed_flow_mpm">v<sub>Q</sub><br>(m/min)</th>
+             <th title="hyd_speed_available_mpm">v<sub>avail</sub><br>(m/min)</th>
+             <th title="hyd_hp_used_at_available">HP<sub>hyd_used</sub><br>(hp)</th>
+             <th title="elec_input_hp_used">HP<sub>elec_in</sub><br>(hp)</th>
+             <th title="hyd_drum_torque_maxP_Nm">τ<sub>drum@Pmax</sub><br>(N·m)</th>
+             <th title="hyd_avail_tension_kgf">T<sub>avail</sub><br>(kgf)</th>
+           </tr>
+         </thead>
+         <tbody id="tbody_hy_wraps"></tbody>
+       </table>
+     </div>
+   </div>
+ 
+   <!-- WAVE CONTOUR PANEL -->
+   <div id="panel-wave" class="panel">
+-     <div class="card">
+-      <div class="section-title">Wave Contours</div>
+-      <div class="row">
+-        <label>Scenario
+-          <select id="wave_scenario">
+-            <option value="electric" selected>Electric (start-of-layer line speed)</option>
+-            <option value="hydraulic">Hydraulic (start-of-layer available speed)</option>
+-          </select>
+-        </label>
+-        <label>T min (s) <input id="wave_tmin" type="number" step="0.1" value="4"></label>
+-        <label>T max (s) <input id="wave_tmax" type="number" step="0.1" value="20"></label>
+-        <label>Speed max (m/s) <input id="wave_vmax" type="number" step="0.1" placeholder="auto"></label>
+-        <label>H max (m) <input id="wave_hmax" type="number" step="0.1" value="6"></label>
+-        <button id="wave_redraw" type="button">Redraw</button>
+-      </div>
++     <section class="card">
++      <h2 class="section-title">Wave Contours</h2>
++      <table class="worksheet compact">
++        <thead>
++          <tr>
++            <th scope="col">Parameter</th>
++            <th scope="col" class="units">Units</th>
++            <th scope="col" class="value">Input</th>
++          </tr>
++        </thead>
++        <tbody>
++          <tr>
++            <th scope="row"><label for="wave_scenario">Scenario</label></th>
++            <td class="units">–</td>
++            <td class="value">
++              <select id="wave_scenario">
++                <option value="electric" selected>Electric (start-of-layer line speed)</option>
++                <option value="hydraulic">Hydraulic (start-of-layer available speed)</option>
++              </select>
++            </td>
++          </tr>
++          <tr>
++            <th scope="row"><label for="wave_tmin">T min</label></th>
++            <td class="units">s</td>
++            <td class="value"><input id="wave_tmin" type="number" step="0.1" value="4"></td>
++          </tr>
++          <tr>
++            <th scope="row"><label for="wave_tmax">T max</label></th>
++            <td class="units">s</td>
++            <td class="value"><input id="wave_tmax" type="number" step="0.1" value="20"></td>
++          </tr>
++          <tr>
++            <th scope="row"><label for="wave_vmax">Speed max</label></th>
++            <td class="units">m/s</td>
++            <td class="value"><input id="wave_vmax" type="number" step="0.1" placeholder="auto"></td>
++          </tr>
++          <tr>
++            <th scope="row"><label for="wave_hmax">H max</label></th>
++            <td class="units">m</td>
++            <td class="value"><input id="wave_hmax" type="number" step="0.1" value="6"></td>
++          </tr>
++          <tr class="note button-row">
++            <td colspan="3" class="value button-cell"><button id="wave_redraw" type="button">Redraw contours</button></td>
++          </tr>
++        </tbody>
++      </table>
+       <div class="twocol waveplots">
+         <div class="col">
+           <div class="plot-title">Speed vs Period with Height Lines</div>
+           <div class="dim">Contours: v(T) = π·H / T. Black solid = whole meters; black dashed = half meters. Gray horizontals = layer speeds (selected scenario).</div>
+           <div class="plotwrap">
+             <svg id="wave_svg" width="1000" height="540" viewBox="0 0 1000 540"></svg>
+           </div>
+           <div class="legend">
+             <div class="legitem"><span class="swatch"></span><span>H = integer m</span></div>
+             <div class="legitem"><span class="swatch dashed"></span><span>H = 0.5 m offsets</span></div>
+             <div class="legitem"><span class="swatch gray"></span><span>Layer speed (scenario)</span></div>
+           </div>
+         </div>
+         <div class="col">
+           <div class="plot-title">Wave Height vs Period with Speed Lines</div>
+           <div class="dim">Contours: H(T) = v·T / π for each layer speed. Solid/dashed horizontals = reference wave heights.</div>
+           <div class="plotwrap">
+             <svg id="wave_svg_height" width="1000" height="540" viewBox="0 0 1000 540"></svg>
+           </div>
+           <div class="legend">
+             <div class="legitem"><span class="swatch gray"></span><span>Layer speed iso-line</span></div>
+             <div class="legitem"><span class="swatch"></span><span>H = integer m</span></div>
+             <div class="legitem"><span class="swatch dashed"></span><span>H = 0.5 m offsets</span></div>
+           </div>
+         </div>
+       </div>
+-    </div>
++    </section>
+   </div>
+ 
+   <!-- DEPTH PROFILES PANEL -->
+   <div id="panel-depth" class="panel">
+-    <div class="card">
+-      <div class="section-title">Depth Profiles</div>
+-      <div class="row">
+-        <label>Scenario
+-          <select id="depth_scenario">
+-            <option value="electric" selected>Electric (start-of-layer values)</option>
+-            <option value="hydraulic">Hydraulic (start-of-layer values)</option>
+-          </select>
+-        </label>
+-        <button id="depth_redraw" type="button">Redraw</button>
+-      </div>
++    <section class="card">
++      <h2 class="section-title">Depth Profiles</h2>
++      <table class="worksheet compact">
++        <thead>
++          <tr>
++            <th scope="col">Parameter</th>
++            <th scope="col" class="units">Units</th>
++            <th scope="col" class="value">Input</th>
++          </tr>
++        </thead>
++        <tbody>
++          <tr>
++            <th scope="row"><label for="depth_scenario">Scenario</label></th>
++            <td class="units">–</td>
++            <td class="value">
++              <select id="depth_scenario">
++                <option value="electric" selected>Electric (start-of-layer values)</option>
++                <option value="hydraulic">Hydraulic (start-of-layer values)</option>
++              </select>
++            </td>
++          </tr>
++          <tr class="note button-row">
++            <td colspan="3" class="value button-cell"><button id="depth_redraw" type="button">Redraw profiles</button></td>
++          </tr>
++        </tbody>
++      </table>
+ 
+       <div class="twocol">
+         <div class="col">
+           <div class="section-title">Available Speed vs Depth</div>
+           <div class="plotwrap">
+             <svg id="depth_speed_svg" viewBox="0 0 1000 540"></svg>
+           </div>
+           <div class="subtitle">X: Depth (m) · Y: Speed (m/s) · Gray step = layer start value held across layer depth.</div>
+         </div>
+         <div class="col">
+           <div class="section-title">Tension vs Depth</div>
+           <div class="plotwrap">
+             <svg id="depth_tension_svg" viewBox="0 0 1000 540"></svg>
+           </div>
+           <div class="subtitle">X: Depth (m) · Y: Tension (kgf) · Black = required · Gray step = available.</div>
+         </div>
+       </div>
+-    </div>
++    </section>
+   </div>
+ 
+-  <!-- Main app script -->
+-  <script type="module" src="./js/main.mjs"></script>
++    <!-- Main app script -->
++    <script type="module" src="./js/main.mjs"></script>
++  </div>
+ </body>
+ </html>
