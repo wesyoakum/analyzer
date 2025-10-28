@@ -1,35 +1,423 @@
-body { font-family: system-ui, -apple-system, Segoe UI, Roboto, Arial; margin: 24px; }
-h1 { margin-top: 0; }
-.row { display: flex; gap: 12px; align-items: center; flex-wrap: wrap; margin-bottom: 12px; }
-input, select, button { font-size: 14px; padding: 6px 8px; }
-table { border-collapse: collapse; width: 100%; margin-top: 10px; table-layout: auto; }
-th, td { border: 1px solid #ccc; padding: 6px 8px; font-variant-numeric: tabular-nums; white-space: nowrap; }
-td { text-align: right; }
-th { text-align: center; white-space: normal; }
-th:first-child, td:first-child { text-align: left; }
-th[title] { cursor: help; }
-#err { color: #b00020; white-space: pre-wrap; margin-top: 8px; }
-#status { margin-left: 8px; }
-.tabs { display: flex; gap: 8px; margin-top: 18px; margin-bottom: 6px; flex-wrap: wrap; }
-.tab-btn { padding: 6px 10px; border: 1px solid #ccc; background: #f7f7f7; cursor: pointer; }
-.tab-btn.active { background: #e8f0ff; border-color: #7da6ff; font-weight: 600; }
-.panel { display: none; }
-.panel.active { display: block; }
-.card { border: 1px solid #ccc; padding: 10px; margin-top: 10px; }
-.dim { color: #666; }
-.section-title { font-weight:700; margin-top: 18px; }
-.btnbar { display:flex; gap:10px; align-items:center; flex-wrap:wrap; margin-top:6px;}
-.plotwrap { overflow-x:auto; }
-svg { background:#fff; border:1px solid #ccc; border-radius:6px; display:block; }
-.legend { display:flex; flex-wrap:wrap; gap:8px 14px; margin-top:8px; align-items:center; }
-.legitem { display:flex; align-items:center; gap:6px; font-size: 13px; color:#333; }
-.swatch { width:22px; height:0; border-top:2px solid #000; display:inline-block; }
-.swatch.dashed { border-top-style: dashed; }
-.swatch.gray { border-top-color:#999; }
-.twocol { display:flex; flex-wrap:wrap; gap:16px; }
-.col { flex:1 1 460px; min-width: 360px; }
-.col svg { width: 100%; height: auto; }
-.subtitle { margin: 4px 0 6px; font-size: 13px; color:#555; }
-.plot-title { font-weight: 600; margin: 6px 0 4px; }
-.waveplots .legend { margin-top: 10px; }
-.waveplots .dim { margin-bottom: 6px; }
+:root {
+  --paper: #ffffff;
+  --paper-background: #eef2f8;
+  --paper-line-strong: #c4ccdd;
+  --paper-line-soft: #dfe4ef;
+  --ink-900: #142238;
+  --ink-700: #2f3b54;
+  --ink-500: #55637d;
+  --accent: #2c56a3;
+  --accent-light: #edf2ff;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+  padding: 0;
+  font-family: "Inter", "Segoe UI", system-ui, -apple-system, BlinkMacSystemFont, "Roboto", "Helvetica Neue", Arial, sans-serif;
+  line-height: 1.5;
+  color: var(--ink-900);
+  background: var(--paper-background);
+}
+
+.sheet {
+  max-width: 1200px;
+  margin: 32px auto 64px;
+  background: var(--paper);
+  border: 1px solid var(--paper-line-strong);
+  box-shadow: 0 18px 42px rgba(20, 34, 56, 0.14);
+  padding: 32px 40px 48px;
+}
+
+h1 {
+  margin: 0 0 24px;
+  font-size: 28px;
+  letter-spacing: 0.02em;
+}
+
+.section-title {
+  font-size: 18px;
+  font-weight: 600;
+  color: var(--ink-900);
+  margin: 0 0 14px;
+  letter-spacing: 0.01em;
+}
+
+#err {
+  color: #b00020;
+  white-space: pre-wrap;
+  margin-top: 8px;
+}
+
+#status {
+  margin-left: 4px;
+  color: var(--ink-500);
+  font-style: italic;
+}
+
+.card {
+  background: rgba(255, 255, 255, 0.96);
+  border: 1px solid var(--paper-line-strong);
+  padding: 20px 24px;
+  margin-top: 28px;
+  box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.65);
+}
+
+.card:first-of-type {
+  margin-top: 0;
+}
+
+.actions .btnbar {
+  margin-top: 12px;
+}
+
+.btnbar {
+  display: flex;
+  gap: 12px;
+  align-items: center;
+  flex-wrap: wrap;
+}
+
+button {
+  font: inherit;
+  padding: 8px 16px;
+  border-radius: 6px;
+  border: 1px solid var(--accent);
+  background: linear-gradient(180deg, #f9fbff 0%, #dfe8ff 100%);
+  color: var(--ink-900);
+  cursor: pointer;
+  transition: background 0.15s ease, transform 0.1s ease;
+}
+
+button:disabled {
+  opacity: 0.55;
+  cursor: not-allowed;
+}
+
+button:not(:disabled):hover {
+  background: linear-gradient(180deg, #ffffff 0%, #cfdaff 100%);
+}
+
+button:not(:disabled):active {
+  transform: translateY(1px);
+}
+
+input,
+select {
+  font: inherit;
+  padding: 6px 8px;
+  border-radius: 4px;
+  border: 1px solid var(--paper-line-strong);
+  background: #f7f9ff;
+  box-shadow: inset 0 1px 2px rgba(17, 32, 58, 0.1);
+  color: var(--ink-900);
+}
+
+input:focus,
+select:focus,
+button:focus {
+  outline: 2px solid var(--accent-light);
+  outline-offset: 1px;
+}
+
+.table-title {
+  margin: 8px 0 0;
+  font-size: 16px;
+  font-weight: 600;
+}
+
+.worksheet {
+  width: 100%;
+  border-collapse: collapse;
+  margin: 0 0 12px;
+  background: var(--paper);
+}
+
+.worksheet thead th {
+  text-transform: uppercase;
+  font-size: 12px;
+  letter-spacing: 0.06em;
+  background: var(--accent-light);
+  color: var(--ink-700);
+  border: 1px solid var(--paper-line-strong);
+  padding: 8px 10px;
+  text-align: left;
+}
+
+.worksheet tbody th,
+.worksheet tbody td {
+  border: 1px solid var(--paper-line-strong);
+  padding: 8px 10px;
+}
+
+.worksheet tbody th {
+  font-weight: 600;
+  text-align: left;
+  color: var(--ink-900);
+}
+
+.worksheet td.units {
+  width: 110px;
+  text-align: center;
+  color: var(--ink-500);
+  font-weight: 500;
+}
+
+.worksheet td.value {
+  width: 240px;
+}
+
+.worksheet.compact td.value,
+.worksheet.compact td.units {
+  width: auto;
+}
+
+.worksheet td.value input,
+.worksheet td.value select {
+  width: 100%;
+}
+
+.worksheet .note td {
+  background: #f6f8fd;
+  font-style: italic;
+  color: var(--ink-500);
+}
+
+.worksheet .button-cell {
+  text-align: center;
+}
+
+nav.tabs {
+  display: flex;
+  gap: 12px;
+  margin-top: 32px;
+  padding: 0 0 0 4px;
+  border-bottom: 2px solid var(--paper-line-strong);
+  flex-wrap: wrap;
+}
+
+.tab-btn {
+  padding: 10px 18px;
+  border: 1px solid var(--paper-line-strong);
+  border-bottom: none;
+  border-radius: 10px 10px 0 0;
+  background: #f6f8fd;
+  color: var(--ink-700);
+  font-weight: 600;
+  cursor: pointer;
+  box-shadow: 0 3px 0 rgba(20, 34, 56, 0.12);
+}
+
+.tab-btn.active {
+  background: var(--paper);
+  color: var(--ink-900);
+  box-shadow: none;
+  position: relative;
+  top: 2px;
+}
+
+.panel {
+  display: none;
+  padding-top: 18px;
+}
+
+.panel.active {
+  display: block;
+}
+
+.panel .card:first-of-type {
+  margin-top: 0;
+}
+
+table {
+  border-collapse: collapse;
+  width: 100%;
+  margin-top: 16px;
+  table-layout: auto;
+  background: var(--paper);
+}
+
+th,
+td {
+  border: 1px solid var(--paper-line-strong);
+  padding: 6px 8px;
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+}
+
+td {
+  text-align: right;
+}
+
+.worksheet td {
+  text-align: left;
+  white-space: normal;
+}
+
+th {
+  text-align: center;
+  white-space: normal;
+  color: var(--ink-700);
+  background: #f2f5ff;
+}
+
+th:first-child,
+td:first-child {
+  text-align: left;
+}
+
+th[title] {
+  cursor: help;
+}
+
+.plotwrap {
+  overflow-x: auto;
+}
+
+.plotwrap svg {
+  background-color: #ffffff;
+  border: 1px solid var(--paper-line-strong);
+  box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.6);
+  display: block;
+  background-image: linear-gradient(0deg, rgba(76, 102, 146, 0.18) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(76, 102, 146, 0.18) 1px, transparent 1px),
+    linear-gradient(0deg, rgba(76, 102, 146, 0.08) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(76, 102, 146, 0.08) 1px, transparent 1px);
+  background-size: 40px 40px, 40px 40px, 8px 8px, 8px 8px;
+}
+
+.legend {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px 14px;
+  margin-top: 10px;
+  align-items: center;
+  color: var(--ink-700);
+}
+
+.legitem {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 13px;
+}
+
+.swatch {
+  width: 22px;
+  height: 0;
+  border-top: 2px solid #244f9e;
+  display: inline-block;
+}
+
+.swatch.dashed {
+  border-top-style: dashed;
+}
+
+.swatch.gray {
+  border-top-color: #9aa5bc;
+}
+
+.twocol {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 24px;
+}
+
+.col {
+  flex: 1 1 460px;
+  min-width: 360px;
+}
+
+.col svg {
+  width: 100%;
+  height: auto;
+}
+
+.subtitle {
+  margin: 8px 0 0;
+  font-size: 13px;
+  color: var(--ink-500);
+}
+
+.plot-title {
+  font-weight: 600;
+  margin: 12px 0 6px;
+}
+
+.waveplots .legend {
+  margin-top: 12px;
+}
+
+.waveplots .dim {
+  margin-bottom: 6px;
+}
+
+.dim {
+  color: var(--ink-500);
+}
+
+@media (max-width: 720px) {
+  .sheet {
+    padding: 24px 20px 36px;
+  }
+
+  nav.tabs {
+    padding-left: 0;
+  }
+
+  .worksheet td.units,
+  .worksheet td.value {
+    width: auto;
+  }
+}
+
+@media print {
+  body {
+    background: #ffffff;
+  }
+
+  .sheet {
+    margin: 0;
+    box-shadow: none;
+    border-color: #000000;
+    padding: 18mm 18mm 22mm;
+  }
+
+  nav.tabs,
+  .btnbar button,
+  .button-row,
+  #status {
+    display: none !important;
+  }
+
+  .panel {
+    display: block !important;
+    padding-top: 0;
+  }
+
+  .card {
+    break-inside: avoid;
+    border-color: #000000;
+    box-shadow: none;
+    margin-top: 18px;
+    background: #ffffff;
+  }
+
+  .worksheet thead th {
+    background: #dfe3ef !important;
+  }
+
+  th {
+    background: #dfe3ef !important;
+  }
+
+  input,
+  select {
+    background: #ffffff;
+    box-shadow: none;
+    border-color: #000000;
+  }
+}
