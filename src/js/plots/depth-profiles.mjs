@@ -86,7 +86,7 @@ function drawSpeedProfile(svg, layers, maxDepth, maxSpeed) {
 
   svg.appendChild(svgEl('text', { x: ML + innerW / 2, y: H - 4, 'text-anchor': 'middle', 'font-size': '12', fill: '#444' }))
      .textContent = 'Depth (m)';
-@@ -90,51 +90,51 @@ function drawSpeedProfile(svg, layers, maxDepth, maxSpeed) {
+  svg.appendChild(svgEl('text', {
     x: 18, y: MT + innerH / 2, transform: `rotate(-90,18,${MT + innerH / 2})`,
     'text-anchor': 'middle', 'font-size': '12', fill: '#444'
   })).textContent = 'Speed (m/s)';
