@@ -9,6 +9,8 @@ import {
   line_speed_mpm_from_motor_rpm, hp_from_psi_and_gpm
 } from './utils.mjs';
 
+import { setupInputPersistence } from './persist-inputs.mjs';
+
 import { calcLayers } from './layer-engine.mjs';
 
 import {
@@ -28,6 +30,8 @@ let lastHyLayer = [], lastHyWraps = [];
 
 // ---- Wire up events once DOM is ready ----
 document.addEventListener('DOMContentLoaded', () => {
+  setupInputPersistence();
+
   // Compute button
   q('go').addEventListener('click', computeAll);
 
