@@ -1,4 +1,4 @@
-// ===== plots/wave-contours.mjs — Wave contour plots (DOM-agnostic) =====
+// ===== plots/wave-contours.mjs â€” Wave contour plots (DOM-agnostic) =====
 import { niceTicks, svgEl, svgPathFromPoints } from '../utils.mjs';
 
 /**
@@ -124,17 +124,45 @@ function renderWavePlot(svg, {
       svg.appendChild(lbl);
     });
   } else {
-    // reference horizontal lines for wave height every 0.5 m
-    for (let Hm = Hstep; Hm <= Hmax + 1e-9; Hm += Hstep) {
-      const Y = sy(Hm);
-      svg.appendChild(svgEl('line', {
-        x1: ML, y1: Y, x2: W - MR, y2: Y,
-        stroke: '#000', 'stroke-width': 1.2,
-        'stroke-dasharray': (Math.abs(Hm - Math.round(Hm)) < 1e-9) ? '0' : '6 6'
+    // iso-speed contour lines (H = v·T / π) for integer and half-integer speeds
+    const speedStep = 0.5;
+    const maxIsoSpeed = Math.PI * Hmax / Math.max(Tmin, 1e-9);
+    for (let v = speedStep; v <= maxIsoSpeed + 1e-9; v += speedStep) {
+      const TmaxForLine = Math.min(Tmax, (Hmax * Math.PI) / Math.max(v, 1e-12));
+      if (TmaxForLine <= Tmin + 1e-6) continue;
+
+      const pts = [];
+      const samples = 200;
+      for (let i = 0; i <= samples; i++) {
+        const T = Tmin + (TmaxForLine - Tmin) * i / samples;
+        const Hline = (v * T) / Math.PI;
+        pts.push([sx(T), sy(Hline)]);
+      }
+
+      const isIntegerSpeed = Math.abs(v - Math.round(v)) < 1e-9;
+      svg.appendChild(svgEl('path', {
+        d: svgPathFromPoints(pts),
+        fill: 'none',
+        stroke: '#bbb',
+        'stroke-width': isIntegerSpeed ? 1.4 : 1,
+        'stroke-dasharray': isIntegerSpeed ? '0' : '6 6'
       }));
+
+      const lastPt = pts[pts.length - 1];
+      if (lastPt) {
+        const lbl = svgEl('text', {
+          x: lastPt[0] + 4,
+          y: lastPt[1] - 4,
+          'text-anchor': 'start',
+          'font-size': '10',
+          fill: '#888'
+        });
+        lbl.textContent = `${v.toFixed(1)} m/s`;
+        svg.appendChild(lbl);
+      }
     }
 
-    // contour lines for each layer speed (H = v·T / π)
+    // contour lines for each layer speed (H = vÂ·T / Ï€)
     layerSpeeds.forEach(L => {
       if (!Number.isFinite(L.v_ms) || L.v_ms <= 0) return;
       const TmaxForLine = Math.min(Tmax, (Hmax * Math.PI) / Math.max(L.v_ms, 1e-12));
