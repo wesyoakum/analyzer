@@ -269,8 +269,8 @@ function redrawPlots() {
       elWraps: lastElWraps,
       hyWraps: lastHyWraps,
       payload_kg: read('payload_kg'),
-      cable_w_kgpm: read('c_w_kgpm')
-    });
+      cable_w_kgpm: read('c_w_kgpm'),
+      dead_end_m: read('dead_m')    });
   }
 }
 

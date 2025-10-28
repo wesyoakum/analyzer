@@ -1,4 +1,4 @@
-// ===== plots/depth-profiles.mjs — Speed vs Depth & Tension vs Depth (DOM-agnostic) =====
+// ===== plots/depth-profiles.mjs  Speed vs Depth & Tension vs Depth (DOM-agnostic) =====
 import { niceTicks, svgEl } from '../utils.mjs';
 
 /**
@@ -12,20 +12,23 @@ import { niceTicks, svgEl } from '../utils.mjs';
  * @param {Array<Object>} opts.hyWraps
  * @param {number} opts.payload_kg
  * @param {number} opts.cable_w_kgpm
+ * @param {number} [opts.dead_end_m=0]
  */
 export function drawDepthProfiles(svgSpeed, svgTension, {
   scenario = 'electric',
   elWraps = [],
   hyWraps = [],
   payload_kg = 0,
-  cable_w_kgpm = 0
+  cable_w_kgpm = 0,
+  dead_end_m = 0
 } = {}) {
   const wraps = (scenario === 'electric') ? (elWraps || []) : (hyWraps || []);
   const speedField = (scenario === 'electric') ? 'line_speed_mpm' : 'hyd_speed_available_mpm';
   const tensionField = (scenario === 'electric') ? 'avail_tension_kgf' : 'hyd_avail_tension_kgf';
 
   // Build wrap intervals [depth_start, depth_end] with values
-  const segments = wrapsToDepthSegments(wraps, speedField, tensionField);
+  const deadEnd = Number.isFinite(dead_end_m) ? Math.max(0, dead_end_m) : 0;
+  const segments = wrapsToDepthSegments(wraps, speedField, tensionField, deadEnd);
 
   // Sort deep to shallow by start depth
   segments.sort((a, b) => (b.depth_start || 0) - (a.depth_start || 0));
@@ -167,7 +170,7 @@ function drawTensionProfile(svg, segments, maxDepth, maxTension, payload_kg, cab
   }
 }
 
-function wrapsToDepthSegments(wraps, speedField, tensionField) {
+function wrapsToDepthSegments(wraps, speedField, tensionField, deadEnd = 0) {
   /** @type {Array<Object>} */
   const segments = [];
   let fallbackStart = null;
@@ -176,7 +179,7 @@ function wrapsToDepthSegments(wraps, speedField, tensionField) {
     if (!wrap) continue;
     const totalLen = Number.isFinite(wrap.total_cable_len_m) ? wrap.total_cable_len_m : null;
     const preOn = Number.isFinite(wrap.pre_spooled_len_m) ? wrap.pre_spooled_len_m : null;
-    const depthEnd = Number.isFinite(wrap.deployed_len_m) ? wrap.deployed_len_m : null;
+    let depthEnd = Number.isFinite(wrap.deployed_len_m) ? wrap.deployed_len_m : null;
 
     if (!Number.isFinite(depthEnd)) {
       fallbackStart = null;
@@ -200,6 +203,14 @@ function wrapsToDepthSegments(wraps, speedField, tensionField) {
       depthEnd = tmp;
     }
 
+    const toDepth = (v) => {
+      if (!Number.isFinite(v)) return 0;
+      const adj = v - deadEnd;
+      return +Math.max(0, adj).toFixed(3);
+    };
+    depthStart = toDepth(depthStart);
+    depthEnd = toDepth(depthEnd);
+
     const speedVal = Number.isFinite(wrap[speedField]) ? wrap[speedField] : null;
     const tensionVal = Number.isFinite(wrap[tensionField]) ? wrap[tensionField] : null;
 
@@ -213,7 +224,7 @@ function wrapsToDepthSegments(wraps, speedField, tensionField) {
         : (Number.isFinite(wrap.layer_no) ? `L${wrap.layer_no}` : '')
     });
 
-    fallbackStart = depthEnd;
+    fallbackStart = depthEnd + deadEnd;
   }
 
   return segments;
