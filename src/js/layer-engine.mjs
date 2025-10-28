@@ -12,8 +12,7 @@ import { IN_PER_MM, M_PER_IN, truncToHalf, isWhole } from './utils.mjs';
  * @property {number} flange_to_flange_in
  * @property {number} lebus_thk_in
  * @property {number} [packing_factor=0.877]   // radial growth per layer = cable_dia * packing_factor
- * @property {'half'|'floor'} [wraps_trunc_policy='half'] // 'half' = truncate to .0/.5, 'floor' = integer floor
- * @property {boolean} [even_layer_wraps_minus_one=true]  // if max wraps is integer: even layers get wraps-1
+ * @property {number} [wraps_per_layer_override]          // >0 uses manual wraps per layer, else auto-calculated
  */
 
 /**
@@ -51,8 +50,7 @@ export function calcLayers(cfg) {
     flange_to_flange_in,
     lebus_thk_in,
     packing_factor = 0.877,
-    wraps_trunc_policy = 'half',
-    even_layer_wraps_minus_one = true
+    wraps_per_layer_override
   } = cfg;
 
   const must = [
@@ -68,10 +66,14 @@ export function calcLayers(cfg) {
 
   const cable_len_m = operating_depth_m + dead_end_m;
 
-  // Max wraps per layer: width / cable_dia, with chosen truncation policy
+  // Max wraps per layer: width / cable_dia, always truncated to .0/.5 unless overridden
   const raw_wraps = flange_to_flange_in / cable_dia_in;
-  const max_wraps_per_layer =
-    wraps_trunc_policy === 'half' ? truncToHalf(raw_wraps) : Math.floor(raw_wraps);
+  const calc_wraps = truncToHalf(raw_wraps);
+  const has_override = Number.isFinite(wraps_per_layer_override) && wraps_per_layer_override > 0;
+  const max_wraps_per_layer = has_override ? wraps_per_layer_override : calc_wraps;
+  if (!Number.isFinite(max_wraps_per_layer) || max_wraps_per_layer <= 0) {
+    throw new Error('Wraps per layer must be > 0.');
+  }
 
   // Bare drum diameter includes lebus thickness + one cable diameter (as per prior logic)
   const bare_drum_dia_in = core_dia_in + 2 * lebus_thk_in + cable_dia_in;
@@ -88,9 +90,8 @@ export function calcLayers(cfg) {
   while (spooled_len_m + 1e-12 < cable_len_m) {
     let wraps_this_layer = max_wraps_per_layer;
 
-    // If max wraps is an integer and the policy applies, reduce even layers by 1
+    // If max wraps is an integer, reduce even layers by 1
     if (
-      even_layer_wraps_minus_one &&
       isWhole(max_wraps_per_layer) &&
       (layer_no % 2 === 0)
     ) {

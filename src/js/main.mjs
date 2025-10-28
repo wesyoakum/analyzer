@@ -63,6 +63,11 @@ function computeAll() {
 
   try {
     // Geometry & load inputs
+        const wraps_override_input = read('wraps_override');
+    const wraps_per_layer_override = (
+      Number.isFinite(wraps_override_input) && wraps_override_input > 0
+    ) ? wraps_override_input : undefined;
+
     const cfg = {
       cable_dia_mm: read('c_mm'),
       operating_depth_m: read('depth_m'),
@@ -71,8 +76,7 @@ function computeAll() {
       flange_to_flange_in: read('ftf_in'),
       lebus_thk_in: read('lebus_in'),
       packing_factor: read('pack'),
-      wraps_trunc_policy: q('policy').value,
-      even_layer_wraps_minus_one: q('evenMinus').checked
+      wraps_per_layer_override
     };
     const payload_kg = read('payload_kg');
     const cable_w_kgpm = read('c_w_kgpm');
