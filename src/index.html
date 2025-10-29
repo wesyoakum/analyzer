@@ -2,27 +2,34 @@
 <html lang="en">
 <head>
   <meta charset="utf-8" />
-  <title>Winch — Electric & Hydraulic + Wave Contours + Depth Profiles</title>
+  <title>Winch Analyzer</title>
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <link rel="stylesheet" href="./css/styles.css" />
 </head>
 <body>
   <div class="sheet">
-    <h1>Winch — Electric & Hydraulic (separated) + Wave Contours + Depth Profiles</h1>
+    <header class="page-header">
+      <img src="./assets/winch-header.png" alt="TekMarines winch diagram" class="page-header__image" />
+      <h1 class="page-title">Winch Analyzer</h1>
+    </header>
     <div id="err"></div>
 
     <!-- Shared geometry -->
-    <section class="card">
-      <h2 class="section-title">Drum and Cable</h2>
-      <table class="worksheet">
-        <thead>
-          <tr>
-            <th scope="col">Parameter</th>
-            <th scope="col" class="value">Input</th>
-            <th scope="col" class="units">Units</th>
-          </tr>
-        </thead>
-        <tbody>
+    <details class="card collapsible" open>
+      <summary class="collapsible-summary">
+        <h2 class="section-title">Drum and Cable</h2>
+        <span class="collapsible-hint" aria-hidden="true"></span>
+      </summary>
+      <div class="collapsible-body">
+        <table class="worksheet">
+          <thead>
+            <tr>
+              <th scope="col">Parameter</th>
+              <th scope="col" class="value">Input</th>
+              <th scope="col" class="units">Units</th>
+            </tr>
+          </thead>
+          <tbody>
           <tr>
             <th scope="row">
               <label class="param-label" for="c_mm" data-code="c_mm">Cable Diameter <span class="symbol" aria-hidden="true">d<sub>c</sub></span></label>
@@ -124,8 +131,9 @@
             <td colspan="3" class="dim">T(kgf) = payload + cable weight × deployed length (static).</td>
           </tr>
         </tbody>
-      </table>
-    </section>
+        </table>
+      </div>
+    </details>
 
     <!-- Compute -->
     <section class="card actions">

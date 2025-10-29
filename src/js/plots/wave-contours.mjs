@@ -96,6 +96,14 @@ function renderWavePlot(svg, {
 
   const Hstep = 0.5;
 
+  const accentColor = (() => {
+    if (typeof window !== 'undefined' && typeof document !== 'undefined' && window.getComputedStyle) {
+      const val = window.getComputedStyle(document.documentElement).getPropertyValue('--accent');
+      if (val) return val.trim();
+    }
+    return '#2c56a3';
+  })();
+
   if (mode === 'speed') {
     // contour lines for H from 0.5 to Hmax in 0.5 m step
     for (let Hm = Hstep; Hm <= Hmax + 1e-9; Hm += Hstep) {
@@ -109,17 +117,23 @@ function renderWavePlot(svg, {
       svg.appendChild(svgEl('path', {
         d: svgPathFromPoints(pts),
         fill: 'none',
-        stroke: '#000',
+        stroke: '#999',
         'stroke-width': 1.5,
         'stroke-dasharray': (Math.abs(Hm - Math.round(Hm)) < 1e-9) ? '0' : '6 6'
       }));
     }
 
-    // horizontal gray lines for each layer speed
+    // horizontal lines for each layer speed
     layerSpeeds.forEach(L => {
       const Y = sy(L.v_ms);
-      svg.appendChild(svgEl('line', { x1: ML, y1: Y, x2: W - MR, y2: Y, stroke: '#999', 'stroke-width': 1.5 }));
-      const lbl = svgEl('text', { x: W - MR - 2, y: Y - 3, 'text-anchor': 'end', 'font-size': '11', fill: '#666' });
+      svg.appendChild(svgEl('line', { x1: ML, y1: Y, x2: W - MR, y2: Y, stroke: accentColor, 'stroke-width': 1.5 }));
+      const lbl = svgEl('text', {
+        x: W - MR - 2,
+        y: Y - 3,
+        'text-anchor': 'end',
+        'font-size': '11',
+        fill: accentColor
+      });
       lbl.textContent = `L${L.layer_no} (${L.v_ms.toFixed(2)} m/s)`;
       svg.appendChild(lbl);
     });
@@ -178,7 +192,7 @@ function renderWavePlot(svg, {
       svg.appendChild(svgEl('path', {
         d: svgPathFromPoints(pts),
         fill: 'none',
-        stroke: '#999',
+        stroke: accentColor,
         'stroke-width': 1.6
       }));
 
@@ -189,7 +203,7 @@ function renderWavePlot(svg, {
           y: lastPt[1] - 6,
           'text-anchor': 'end',
           'font-size': '11',
-          fill: '#666'
+          fill: accentColor
         });
         lbl.textContent = `L${L.layer_no} (${L.v_ms.toFixed(2)} m/s)`;
         svg.appendChild(lbl);
