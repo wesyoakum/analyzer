@@ -42,7 +42,7 @@ body {
 }
 
 .page-header__image {
-  width: min(280px, 100%);
+  width: auto;
   height: auto;
 }
 
