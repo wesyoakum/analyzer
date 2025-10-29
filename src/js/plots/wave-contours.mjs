@@ -67,24 +67,6 @@ function renderWavePlot(svg, {
   // frame
   svg.appendChild(svgEl('rect', { x: ML, y: MT, width: innerW, height: innerH, fill: '#fff', stroke: '#ccc' }));
 
-  // grid & ticks
-  const xt = niceTicks(Tmin, Tmax, 8).ticks;
-  const yt = niceTicks(0, yMax, 6).ticks;
-  xt.forEach(tx => {
-    const X = sx(tx);
-    svg.appendChild(svgEl('line', { x1: X, y1: MT, x2: X, y2: H - MB, stroke: '#eee' }));
-    const t = svgEl('text', { x: X, y: H - 8, 'text-anchor': 'middle', 'font-size': '12', fill: '#444' });
-    t.textContent = (Math.round(tx * 100) / 100).toString();
-    svg.appendChild(t);
-  });
-  yt.forEach(v => {
-    const Y = sy(v);
-    svg.appendChild(svgEl('line', { x1: ML, y1: Y, x2: W - MR, y2: Y, stroke: '#eee' }));
-    const t = svgEl('text', { x: ML - 6, y: Y + 4, 'text-anchor': 'end', 'font-size': '12', fill: '#444' });
-    t.textContent = (Math.round(v * 100) / 100).toString();
-    svg.appendChild(t);
-  });
-
   // axis labels
   svg.appendChild(svgEl('text', { x: ML + innerW / 2, y: H - 4, 'text-anchor': 'middle', 'font-size': '12', fill: '#444' }))
      .textContent = 'Period T (s)';
