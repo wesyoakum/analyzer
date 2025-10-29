@@ -32,6 +32,13 @@ let lastHyLayer = [], lastHyWraps = [];
 document.addEventListener('DOMContentLoaded', () => {
   setupInputPersistence();
 
+  document.querySelectorAll('.param-label').forEach(label => {
+    const code = label.dataset.code;
+    if (code) {
+      label.setAttribute('title', code);
+    }
+  });
+
   // Compute button
   q('go').addEventListener('click', computeAll);
 
@@ -119,7 +126,14 @@ function computeAll() {
     const torque_at_drum_maxP_factor = Math.max(gr1, 1) * Math.max(gr2, 1) * Math.max(motors, 1);
 
     // Generate wraps from geometry
-    const { rows } = calcLayers(cfg);
+    const { rows, meta } = calcLayers(cfg);
+
+    const wrapsNoteEl = /** @type {HTMLTableCellElement|null} */ (document.getElementById('wraps_note'));
+    if (wrapsNoteEl) {
+      const calcWraps = meta && Number.isFinite(meta.wraps_per_layer_calc) ? meta.wraps_per_layer_calc : undefined;
+      const display = (typeof calcWraps === 'number') ? calcWraps.toFixed(1) : '–';
+      wrapsNoteEl.textContent = `Leave blank or set to 0 to use calculated wraps (always truncated to .0/.5). Auto-calculated wraps per layer: ${display}.`;
+    }
 
     // Per-wrap calculations (electric + hydraulic)
     for (const r of rows) {
@@ -218,8 +232,7 @@ function computeAll() {
     renderHydraulicTables(lastHyLayer, lastHyWraps, q('tbody_hy_layer'), q('tbody_hy_wraps'));
 
     // ---- Update status ----
-    const wrapsCount = Math.max(lastElWraps.length, lastHyWraps.length);
-    q('status').textContent = `ok — layers(E/H): ${lastElLayer.length}/${lastHyLayer.length}, wraps: ${wrapsCount}`;
+    q('status').textContent = 'results updated';
 
     // ---- Draw plots ----
     redrawPlots();

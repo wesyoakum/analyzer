@@ -70,8 +70,34 @@ h1 {
   margin-top: 0;
 }
 
-.actions .btnbar {
-  margin-top: 12px;
+.card-header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 16px;
+  margin-bottom: 12px;
+}
+
+.card-header .section-title {
+  margin: 0;
+}
+
+.card-header-actions {
+  margin-left: auto;
+  display: flex;
+  justify-content: flex-end;
+  align-items: center;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+
+.actions .card-header {
+  align-items: center;
+  margin-bottom: 0;
+}
+
+.actions .card-header-actions {
+  gap: 8px;
 }
 
 .btnbar {
@@ -79,6 +105,110 @@ h1 {
   gap: 12px;
   align-items: center;
   flex-wrap: wrap;
+}
+
+.param-label {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  cursor: help;
+}
+
+.param-label::before,
+.param-label::after {
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.15s ease;
+}
+
+.param-label::after {
+  content: attr(data-code);
+  position: absolute;
+  bottom: calc(100% + 8px);
+  left: 0;
+  background: var(--ink-900);
+  color: #ffffff;
+  font-size: 12px;
+  padding: 4px 8px;
+  border-radius: 4px;
+  white-space: nowrap;
+  box-shadow: 0 6px 18px rgba(20, 34, 56, 0.18);
+  z-index: 10;
+}
+
+.param-label::before {
+  content: '';
+  position: absolute;
+  bottom: calc(100% + 2px);
+  left: 12px;
+  border-width: 6px 6px 0 6px;
+  border-style: solid;
+  border-color: var(--ink-900) transparent transparent transparent;
+  z-index: 9;
+}
+
+.param-label:hover::before,
+.param-label:hover::after,
+.param-label:focus-visible::before,
+.param-label:focus-visible::after {
+  opacity: 1;
+}
+
+.symbol {
+  font-weight: 600;
+  color: var(--accent);
+  font-variant-numeric: normal;
+}
+
+.collapsible {
+  padding: 0;
+}
+
+.collapsible-summary {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  cursor: pointer;
+  list-style: none;
+  padding: 20px 24px;
+  margin: 0;
+  border-bottom: 1px solid var(--paper-line-strong);
+}
+
+.collapsible-summary .section-title {
+  margin: 0;
+}
+
+.collapsible-summary::-webkit-details-marker,
+.collapsible-summary::marker {
+  display: none;
+}
+
+.collapsible-hint {
+  font-size: 13px;
+  color: var(--ink-500);
+}
+
+.collapsible-hint::after {
+  content: 'Expand';
+}
+
+.collapsible[open] .collapsible-hint::after {
+  content: 'Collapse';
+}
+
+.collapsible-body {
+  padding: 0 24px 24px;
+}
+
+.collapsible-body > .btnbar {
+  margin-top: 18px;
+}
+
+.collapsible-body > table {
+  margin-top: 16px;
 }
 
 button {

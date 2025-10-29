@@ -37,9 +37,9 @@ import { IN_PER_MM, M_PER_IN, truncToHalf, isWhole } from './utils.mjs';
 
 /**
  * Generate wrap rows for a given drum + cable setup.
- * Returns { rows, summary }.
+ * Returns { rows, summary, meta }.
  * @param {LayerEngineConfig} cfg
- * @returns {{ rows: WrapRow[], summary: LayerSummary }}
+ * @returns {{ rows: WrapRow[], summary: LayerSummary, meta: { wraps_per_layer_calc: number, wraps_per_layer_used: number } }}
  */
 export function calcLayers(cfg) {
   const {
@@ -129,6 +129,11 @@ export function calcLayers(cfg) {
   const total_layers = rows.length ? rows[rows.length - 1].layer_no : 0;
   const full_drum_dia_in = rows.length ? rows[rows.length - 1].layer_dia_in : bare_drum_dia_in;
 
+  const meta = {
+    wraps_per_layer_calc: +calc_wraps.toFixed(1),
+    wraps_per_layer_used: +max_wraps_per_layer.toFixed(1)
+  };
+
   return {
     rows,
     summary: {
@@ -136,6 +141,7 @@ export function calcLayers(cfg) {
       full_drum_dia_in,
       total_wraps: wrap_no,
       cable_len_m: +cable_len_m.toFixed(3)
-    }
+    },
+    meta
   };
 }
