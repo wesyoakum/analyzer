@@ -434,6 +434,39 @@ th[title] {
   background-size: 40px 40px, 40px 40px, 8px 8px, 8px 8px;
 }
 
+.plot-panel {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.plot-panel__heading {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.plot-panel__heading > div {
+  flex: 1;
+}
+
+.plot-panel__toggle {
+  padding: 4px 10px;
+  min-width: 0;
+  font-size: 14px;
+  line-height: 1;
+}
+
+.plot-column {
+  position: relative;
+}
+
+.plot-column.is-expanded {
+  flex: 1 1 100%;
+  min-width: 100%;
+}
+
 .legend {
   display: flex;
   flex-wrap: wrap;
@@ -461,8 +494,20 @@ th[title] {
   border-top-style: dashed;
 }
 
+.swatch.accent {
+  border-top-color: var(--accent);
+}
+
 .swatch.gray {
   border-top-color: #9aa5bc;
+}
+
+.swatch.light {
+  border-top-color: #c3cada;
+}
+
+.swatch.red {
+  border-top-color: #c65353;
 }
 
 .twocol {
@@ -474,6 +519,7 @@ th[title] {
 .col {
   flex: 1 1 460px;
   min-width: 360px;
+  transition: flex-basis 0.2s ease;
 }
 
 .col svg {
@@ -492,12 +538,37 @@ th[title] {
   margin: 12px 0 6px;
 }
 
+.plot-panel__heading .plot-title {
+  margin: 0 0 6px;
+}
+
+.plot-panel__heading .dim {
+  margin: 0;
+}
+
+.legend--compact {
+  gap: 6px 12px;
+  font-size: 13px;
+}
+
 .waveplots .legend {
   margin-top: 12px;
 }
 
 .waveplots .dim {
   margin-bottom: 6px;
+}
+
+.waveplots {
+  margin-bottom: 24px;
+}
+
+.depth-plots {
+  margin-bottom: 24px;
+}
+
+.depth-controls {
+  margin-top: 0;
 }
 
 .dim {

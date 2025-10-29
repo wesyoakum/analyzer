@@ -25,6 +25,14 @@ function renderWavePlot(svg, {
   elLayers = [],
   hyLayers = []
 } = {}, mode = 'speed') {
+  if (svg._waveHoverHandlers) {
+    const { move, leave } = svg._waveHoverHandlers;
+    svg.removeEventListener('pointermove', move);
+    svg.removeEventListener('pointerleave', leave);
+    svg.removeEventListener('pointerenter', move);
+    delete svg._waveHoverHandlers;
+  }
+
   while (svg.firstChild) svg.removeChild(svg.firstChild);
 
   Tmin = Math.max(0.1, +Tmin || 4);
@@ -104,6 +112,8 @@ function renderWavePlot(svg, {
     return '#2c56a3';
   })();
 
+  let hoverLayer = null;
+
   if (mode === 'speed') {
     // contour lines for H from 0.5 to Hmax in 0.5 m step
     for (let Hm = Hstep; Hm <= Hmax + 1e-9; Hm += Hstep) {
@@ -137,6 +147,61 @@ function renderWavePlot(svg, {
       lbl.textContent = `L${L.layer_no} (${L.v_ms.toFixed(2)} m/s)`;
       svg.appendChild(lbl);
     });
+
+    hoverLayer = svgEl('g', { 'pointer-events': 'none' });
+    const hoverLine = svgEl('line', {
+      x1: ML,
+      x2: ML,
+      y1: MT,
+      y2: H - MB,
+      stroke: accentColor,
+      'stroke-width': 1.5,
+      'stroke-dasharray': '6 4',
+      opacity: 0
+    });
+    const hoverLabel = svgEl('text', {
+      x: ML,
+      y: H - MB + 20,
+      'text-anchor': 'middle',
+      'font-size': '12',
+      fill: accentColor,
+      opacity: 0
+    });
+    hoverLayer.appendChild(hoverLine);
+    hoverLayer.appendChild(hoverLabel);
+    svg.appendChild(hoverLayer);
+
+    const clamp = (val, min, max) => Math.min(Math.max(val, min), max);
+    const updateHover = evt => {
+      const rect = svg.getBoundingClientRect();
+      const localX = evt.clientX - rect.left;
+      if (localX < ML || localX > W - MR) {
+        hoverLine.setAttribute('opacity', '0');
+        hoverLabel.setAttribute('opacity', '0');
+        return;
+      }
+
+      const clampedX = clamp(localX, ML, W - MR);
+      const T = Tmin + ((clampedX - ML) / Math.max(innerW, 1e-9)) * (Tmax - Tmin);
+      hoverLine.setAttribute('x1', clampedX);
+      hoverLine.setAttribute('x2', clampedX);
+      hoverLine.setAttribute('opacity', '1');
+
+      const displayT = Math.round(T * 10) / 10;
+      hoverLabel.setAttribute('x', clampedX);
+      hoverLabel.textContent = `${displayT.toFixed(1)} sec`;
+      hoverLabel.setAttribute('opacity', '1');
+    };
+
+    const hideHover = () => {
+      hoverLine.setAttribute('opacity', '0');
+      hoverLabel.setAttribute('opacity', '0');
+    };
+
+    svg.addEventListener('pointermove', updateHover);
+    svg.addEventListener('pointerenter', updateHover);
+    svg.addEventListener('pointerleave', hideHover);
+    svg._waveHoverHandlers = { move: updateHover, leave: hideHover };
   } else {
     // iso-speed contour lines (H = v·T / π) for integer and half-integer speeds
     const speedStep = 0.5;
@@ -213,4 +278,5 @@ function renderWavePlot(svg, {
 
   // zero line
   svg.appendChild(svgEl('line', { x1: ML, y1: sy(0), x2: W - MR, y2: sy(0), stroke: '#bbb', 'stroke-dasharray': '4 4' }));
+  if (hoverLayer) svg.appendChild(hoverLayer);
 }

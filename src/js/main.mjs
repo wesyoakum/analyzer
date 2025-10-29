@@ -32,6 +32,8 @@ let lastHyLayer = [], lastHyWraps = [];
 document.addEventListener('DOMContentLoaded', () => {
   setupInputPersistence();
 
+  setupPlotResizeToggles();
+
   document.querySelectorAll('.param-label').forEach(label => {
     const code = label.dataset.code;
     if (code) {
@@ -64,6 +66,22 @@ document.addEventListener('DOMContentLoaded', () => {
   // Initial compute
   q('go').click();
 });
+
+function setupPlotResizeToggles() {
+  const toggles = document.querySelectorAll('[data-plot-toggle]');
+  toggles.forEach(btn => {
+    const col = btn.closest('.plot-column');
+    if (!col) return;
+    const initialExpanded = col.classList.contains('is-expanded');
+    btn.textContent = initialExpanded ? '[-]' : '[+]';
+    btn.setAttribute('aria-expanded', initialExpanded ? 'true' : 'false');
+    btn.addEventListener('click', () => {
+      const expanded = col.classList.toggle('is-expanded');
+      btn.textContent = expanded ? '[-]' : '[+]';
+      btn.setAttribute('aria-expanded', expanded ? 'true' : 'false');
+    });
+  });
+}
 
 // ---- Core compute + render ----
 function computeAll() {
