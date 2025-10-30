@@ -184,29 +184,15 @@ export function renderDrumVisualization(rows, summary, cfg, meta) {
     };
   });
 
-  const outerRectHeightPx = Math.max(0, Math.max(full_drum_dia_in || 0, derivedOuterRadiusIn * 2) * scale);
-  if (outerRectHeightPx > 0 && widthPx > 0) {
-    const outerFill = mixRgb(accentLightRgb, paperRgb, 0.3);
-    svg.appendChild(svgEl('rect', {
-      x: spoolLeft.toFixed(2),
-      y: (centerY - outerRectHeightPx / 2).toFixed(2),
-      width: widthPx.toFixed(2),
-      height: outerRectHeightPx.toFixed(2),
-      fill: rgbToCss(outerFill, 0.5),
-      stroke: rgbToCss(accentRgb, 0.45),
-      'stroke-width': 1.6
-    }));
-  }
-
   if (coreHeightPx > 0 && coreWidthPx > 0) {
     svg.appendChild(svgEl('rect', {
       x: spoolLeft.toFixed(2),
       y: (centerY - coreHeightPx / 2).toFixed(2),
       width: coreWidthPx.toFixed(2),
       height: coreHeightPx.toFixed(2),
-      fill: rgbToCss(ink900Rgb, 0.48),
+      fill: 'none',
       stroke: rgbToCss(ink900Rgb, 0.72),
-      'stroke-width': 1.2
+      'stroke-width': 1
     }));
   }
 
@@ -251,7 +237,7 @@ export function renderDrumVisualization(rows, summary, cfg, meta) {
           r: cableRadiusPx.toFixed(2),
           fill: style.fillColor,
           stroke: style.strokeColor,
-          'stroke-width': 1.4
+          'stroke-width': 1
         }));
 
         svg.appendChild(svgEl('circle', {
@@ -260,7 +246,7 @@ export function renderDrumVisualization(rows, summary, cfg, meta) {
           r: cableRadiusPx.toFixed(2),
           fill: style.fillColor,
           stroke: style.strokeColor,
-          'stroke-width': 1.4
+          'stroke-width': 1
         }));
       }
     });

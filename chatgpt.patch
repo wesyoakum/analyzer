@@ -1,55 +1,8 @@
 diff --git a/src/js/drum-visual.mjs b/src/js/drum-visual.mjs
-index bf049811aabd57ed03d520284bf90c6b1fa36a60..9214070413dd23207ebe88846baacec94a44dd3f 100644
+index 9214070413dd23207ebe88846baacec94a44dd3f..fb8e433c1dcc17048989be0e5d778416c1f7573f 100644
 --- a/src/js/drum-visual.mjs
 +++ b/src/js/drum-visual.mjs
-@@ -118,54 +118,60 @@ export function renderDrumVisualization(rows, summary, cfg, meta) {
- 
-   const { total_layers, total_wraps, cable_len_m, full_drum_dia_in } = summary;
-   const {
-     cable_dia_mm,
-     core_dia_in,
-     flange_to_flange_in,
-     lebus_thk_in
-   } = cfg;
- 
-   const cable_dia_in = Math.max(0, (cable_dia_mm || 0) * IN_PER_MM);
- 
-   while (svg.firstChild) svg.removeChild(svg.firstChild);
- 
-   const styles = getComputedStyle(document.documentElement);
-   const accentRgb = parseCssColor(cssVar(styles, '--accent', FALLBACK_HEX.accent), FALLBACK_COLORS.accent);
-   const accentLightRgb = parseCssColor(cssVar(styles, '--accent-light', FALLBACK_HEX.accentLight), FALLBACK_COLORS.accentLight);
-   const ink700Rgb = parseCssColor(cssVar(styles, '--ink-700', FALLBACK_HEX.ink700), FALLBACK_COLORS.ink700);
-   const ink900Rgb = parseCssColor(cssVar(styles, '--ink-900', FALLBACK_HEX.ink900), FALLBACK_COLORS.ink900);
-   const paperRgb = parseCssColor(cssVar(styles, '--paper', FALLBACK_HEX.paper), FALLBACK_COLORS.paper);
- 
-   const uniqueLayers = [];
-   const seen = new Set();
-   for (const row of rows) {
-     if (seen.has(row.layer_no)) continue;
-     seen.add(row.layer_no);
--    uniqueLayers.push({ layer_no: row.layer_no, outer_dia_in: row.layer_dia_in });
-+    uniqueLayers.push({ layer_no: row.layer_no, center_dia_in: row.layer_dia_in });
-   }
--  
--  const derivedOuterRadiusIn = Math.max(0, (core_dia_in || 0) / 2 + (lebus_thk_in || 0) + cable_dia_in * uniqueLayers.length);
-+
-+  const maxCenterlineRadiusIn = uniqueLayers.reduce((max, layer) => {
-+    const radius = Number.isFinite(layer.center_dia_in) ? layer.center_dia_in / 2 : 0;
-+    return Math.max(max, radius);
-+  }, 0);
-+  const derivedOuterRadiusIn = maxCenterlineRadiusIn > 0
-+    ? maxCenterlineRadiusIn + (cable_dia_in > 0 ? cable_dia_in / 2 : 0)
-+    : Math.max(0, (core_dia_in || 0) / 2 + (lebus_thk_in || 0) + (cable_dia_in > 0 ? cable_dia_in / 2 : 0));
-   const outerDiaIn = Math.max(
-     Math.max(full_drum_dia_in || 0, derivedOuterRadiusIn * 2),
-     core_dia_in || 0,
-     cable_dia_in || 0,
-     1
-   );
-   const heightIn = outerDiaIn;
-   const scale = heightIn > 0 ? (SVG_BASE_HEIGHT - 2 * SVG_MARGIN) / heightIn : 1;
-   const widthIn = Math.max(flange_to_flange_in || 0, cable_dia_in || 0, 1);
+@@ -162,127 +162,113 @@ export function renderDrumVisualization(rows, summary, cfg, meta) {
    const widthPx = widthIn * scale;
    const heightPx = heightIn * scale;
    const viewWidth = widthPx + SVG_MARGIN * 2;
@@ -66,18 +19,40 @@ index bf049811aabd57ed03d520284bf90c6b1fa36a60..9214070413dd23207ebe88846baacec9
  
    const layerStyles = uniqueLayers.map((layer, idx) => {
      const t = uniqueLayers.length > 1 ? idx / (uniqueLayers.length - 1) : 0;
-@@ -193,72 +199,71 @@ export function renderDrumVisualization(rows, summary, cfg, meta) {
-   }
+     const baseColor = mixRgb(accentRgb, accentLightRgb, 0.25 + 0.55 * t);
+     const fillColor = mixRgb(baseColor, paperRgb, 0.55);
+     return {
+       layer_no: layer.layer_no,
+       fillColor: rgbToCss(fillColor, 0.82),
+       strokeColor: rgbToCss(baseColor, 0.94)
+     };
+   });
  
+-  const outerRectHeightPx = Math.max(0, Math.max(full_drum_dia_in || 0, derivedOuterRadiusIn * 2) * scale);
+-  if (outerRectHeightPx > 0 && widthPx > 0) {
+-    const outerFill = mixRgb(accentLightRgb, paperRgb, 0.3);
+-    svg.appendChild(svgEl('rect', {
+-      x: spoolLeft.toFixed(2),
+-      y: (centerY - outerRectHeightPx / 2).toFixed(2),
+-      width: widthPx.toFixed(2),
+-      height: outerRectHeightPx.toFixed(2),
+-      fill: rgbToCss(outerFill, 0.5),
+-      stroke: rgbToCss(accentRgb, 0.45),
+-      'stroke-width': 1.6
+-    }));
+-  }
+-
    if (coreHeightPx > 0 && coreWidthPx > 0) {
      svg.appendChild(svgEl('rect', {
        x: spoolLeft.toFixed(2),
        y: (centerY - coreHeightPx / 2).toFixed(2),
        width: coreWidthPx.toFixed(2),
        height: coreHeightPx.toFixed(2),
-       fill: rgbToCss(ink900Rgb, 0.48),
+-      fill: rgbToCss(ink900Rgb, 0.48),
++      fill: 'none',
        stroke: rgbToCss(ink900Rgb, 0.72),
-       'stroke-width': 1.2
+-      'stroke-width': 1.2
++      'stroke-width': 1
      }));
    }
  
@@ -92,8 +67,6 @@ index bf049811aabd57ed03d520284bf90c6b1fa36a60..9214070413dd23207ebe88846baacec9
      'stroke-dasharray': '6 6'
    }));
  
--  const coreRadiusIn = Math.max(0, (core_dia_in || 0) / 2);
--  const lebusOffsetIn = Math.max(0, (lebus_thk_in || 0));
    const cableRadiusPx = cable_dia_in > 0 ? (cable_dia_in / 2) * scale : 0;
    const cablePitchPx = cable_dia_in > 0 ? cable_dia_in * scale : 0;
  
@@ -107,16 +80,14 @@ index bf049811aabd57ed03d520284bf90c6b1fa36a60..9214070413dd23207ebe88846baacec9
        const wraps = wrapsByLayer.get(layer.layer_no) || 0;
        if (wraps <= 0) return;
        const style = layerStyles[idx];
--      const centerOffsetIn = coreRadiusIn + lebusOffsetIn + (idx + 0.5) * cable_dia_in;
-+      const centerOffsetIn = Number.isFinite(layer.center_dia_in) ? layer.center_dia_in / 2 : 0;
+       const centerOffsetIn = Number.isFinite(layer.center_dia_in) ? layer.center_dia_in / 2 : 0;
        const centerOffsetPx = centerOffsetIn * scale;
-+      const layerPhasePx = (layer.layer_no % 2 === 0) ? cablePitchPx / 2 : 0;
+       const layerPhasePx = (layer.layer_no % 2 === 0) ? cablePitchPx / 2 : 0;
        const topY = centerY - centerOffsetPx;
        const bottomY = centerY + centerOffsetPx;
  
        for (let w = 0; w < wraps; w++) {
--        const cx = spoolLeft + cableRadiusPx + w * cablePitchPx;
-+        const cx = spoolLeft + cableRadiusPx + layerPhasePx + w * cablePitchPx;
+         const cx = spoolLeft + cableRadiusPx + layerPhasePx + w * cablePitchPx;
          if (cx - cableRadiusPx < spoolLeft - 1e-3) continue;
          if (cx + cableRadiusPx > spoolRight + 1e-3) continue;
  
@@ -126,7 +97,8 @@ index bf049811aabd57ed03d520284bf90c6b1fa36a60..9214070413dd23207ebe88846baacec9
            r: cableRadiusPx.toFixed(2),
            fill: style.fillColor,
            stroke: style.strokeColor,
-           'stroke-width': 1.4
+-          'stroke-width': 1.4
++          'stroke-width': 1
          }));
  
          svg.appendChild(svgEl('circle', {
@@ -135,10 +107,30 @@ index bf049811aabd57ed03d520284bf90c6b1fa36a60..9214070413dd23207ebe88846baacec9
            r: cableRadiusPx.toFixed(2),
            fill: style.fillColor,
            stroke: style.strokeColor,
-           'stroke-width': 1.4
+-          'stroke-width': 1.4
++          'stroke-width': 1
          }));
        }
      });
    }
  
    // Summary & accessibility copy
+   const cableLenDigits = cable_len_m >= 1000 ? 0 : cable_len_m >= 10 ? 1 : 2;
+   const cableDiaDigits = cable_dia_mm >= 50 ? 0 : cable_dia_mm >= 10 ? 1 : 2;
+   const layerWord = total_layers === 1 ? 'layer' : 'layers';
+   const wrapWord = total_wraps === 1 ? 'wrap' : 'wraps';
+   const summaryLine = `${fmt(cable_len_m, cableLenDigits)} m of ${fmt(cable_dia_mm, cableDiaDigits)} mm cable on ${fmt(total_layers, 0)} ${layerWord} with ${fmt(total_wraps, 0)} total ${wrapWord}`;
+   const wrapsPerLayer = meta && Number.isFinite(meta.wraps_per_layer_used)
+     ? ` (≈${fmt(meta.wraps_per_layer_used, 1)} wraps per layer)`
+     : '';
+   const geometryParts = [
+     `core Ø ${fmt(core_dia_in, 2)} in`,
+     `flange-to-flange ${fmt(flange_to_flange_in, 2)} in`,
+     `Lebus liner ${fmt(lebus_thk_in, 3)} in`,
+     `full drum Ø ${fmt(full_drum_dia_in, 2)} in`
+   ];
+   const geometryLine = `Drum geometry: ${geometryParts.join(', ')}.`;
+   const summaryPlain = `${summaryLine}${wrapsPerLayer}. ${geometryLine}`;
+ 
+   summaryEl.innerHTML = `<strong>${summaryLine}${wrapsPerLayer}.</strong> ${geometryLine}`;
+   titleEl.textContent = `Winch drum cross-section with ${fmt(total_layers, 0)} ${layerWord}`;

@@ -394,6 +394,7 @@ nav.tabs {
   display: block;
   width: 100%;
   height: auto;
+  max-height: 490px;
   max-width: none;
   background: none;
   border: none;
