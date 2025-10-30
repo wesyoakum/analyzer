@@ -239,6 +239,47 @@
       </section>
 
       <section class="card">
+        <h2 class="section-title">Section 1: Drive Configuration</h2>
+        <table class="worksheet compact">
+          <thead>
+            <tr>
+              <th scope="col">Parameter</th>
+              <th scope="col" class="value">Input</th>
+              <th scope="col" class="units">Units</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <th scope="row">
+                <span class="param-label" data-code="drive_modes">Enabled Drive Types</span>
+              </th>
+              <td class="value">
+                <div class="toggle-group">
+                  <label for="drive_electric_enabled"><input id="drive_electric_enabled" type="checkbox" checked> Electric</label>
+                  <label for="drive_hydraulic_enabled"><input id="drive_hydraulic_enabled" type="checkbox" checked> Hydraulic</label>
+                </div>
+              </td>
+              <td class="units">–</td>
+            </tr>
+            <tr>
+              <th scope="row">
+                <label class="param-label" for="system_select" data-code="system_select">Predefined Winch System</label>
+              </th>
+              <td class="value">
+                <select id="system_select">
+                  <option value="">Custom (manual input)</option>
+                </select>
+              </td>
+              <td class="units">–</td>
+            </tr>
+            <tr class="note">
+              <td colspan="3" class="dim">Selecting a system populates drum geometry, drivetrain, and component selections automatically. Editing any populated field clears the system selection.</td>
+            </tr>
+          </tbody>
+        </table>
+      </section>
+
+      <section class="card" data-drive-scope="electric">
         <h2 class="section-title">Section 1: Electric Inputs</h2>
         <table class="worksheet">
           <thead>
@@ -291,7 +332,7 @@
         </table>
       </section>
 
-      <section class="card">
+      <section class="card" data-drive-scope="hydraulic">
         <h2 class="section-title">Section 1: Hydraulic Inputs</h2>
         <table class="worksheet">
           <thead>
@@ -501,7 +542,7 @@
         <p class="drum-summary" id="drum_summary"></p>
       </div>
 
-      <div class="card">
+      <div class="card" data-drive-scope="electric">
         <div class="section-title">Section 3: Electric Layer Table</div>
         <div class="btnbar">
           <button id="csv_el_layer" type="button" disabled>Download CSV — Electric Layer</button>
@@ -527,7 +568,7 @@
         </table>
       </div>
 
-      <details class="card collapsible">
+      <details class="card collapsible" data-drive-scope="electric">
         <summary class="collapsible-summary">
           <span class="section-title">Section 3: Electric Wraps Table</span>
           <span class="collapsible-hint" aria-hidden="true"></span>
@@ -559,7 +600,7 @@
         </div>
       </details>
 
-      <div class="card">
+      <div class="card" data-drive-scope="hydraulic">
         <div class="section-title">Section 3: Hydraulic Layer Table</div>
         <div class="btnbar">
           <button id="csv_hy_layer" type="button" disabled>Download CSV — Hydraulic Layer</button>
@@ -587,7 +628,7 @@
         </table>
       </div>
 
-      <details class="card collapsible">
+      <details class="card collapsible" data-drive-scope="hydraulic">
         <summary class="collapsible-summary">
           <span class="section-title">Section 3: Hydraulic Wraps Table</span>
           <span class="collapsible-hint" aria-hidden="true"></span>

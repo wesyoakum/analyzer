@@ -130,6 +130,24 @@ body {
   flex-wrap: wrap;
 }
 
+.toggle-group {
+  display: flex;
+  gap: 16px;
+  flex-wrap: wrap;
+  align-items: center;
+}
+
+.toggle-group label {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  font-weight: 500;
+}
+
+.is-hidden {
+  display: none !important;
+}
+
 .param-label {
   position: relative;
   display: inline-flex;

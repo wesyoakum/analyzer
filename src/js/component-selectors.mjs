@@ -4,21 +4,46 @@
  * @typedef {Object} ComponentOption
  * @property {string} pn
  * @property {string} [description]
- * @property {number} [gear_ratio_stage1]
- * @property {number} [gear_ratio_stage2]
- * @property {number} [motor_max_rpm]
- * @property {number} [motor_hp]
- * @property {number} [motor_tmax_Nm]
- * @property {number} [pump_disp_cc]
- * @property {number} [pump_max_psi]
- * @property {number} [hyd_motor_disp_cc]
- * @property {number} [hyd_motor_max_rpm]
+ * @property {number|string|boolean} [gear_ratio_stage1]
+ * @property {number|string|boolean} [gear_ratio_stage2]
+ * @property {number|string|boolean} [motor_max_rpm]
+ * @property {number|string|boolean} [motor_hp]
+ * @property {number|string|boolean} [motor_tmax_Nm]
+ * @property {number|string|boolean} [pump_disp_cc]
+ * @property {number|string|boolean} [pump_max_psi]
+ * @property {number|string|boolean} [hyd_motor_disp_cc]
+ * @property {number|string|boolean} [hyd_motor_max_rpm]
+ * @property {number|string|boolean} [core_in]
+ * @property {number|string|boolean} [ftf_in]
+ * @property {number|string|boolean} [lebus_in]
+ * @property {number|string|boolean} [pack]
+ * @property {number|string|boolean} [motors]
+ * @property {number|string|boolean} [h_pump_strings]
+ * @property {string} [gearbox_select]
+ * @property {string} [electric_motor_select]
+ * @property {string} [hydraulic_pump_select]
+ * @property {string} [hydraulic_motor_select]
  */
 
+/**
+ * @typedef {Object} SelectConfig
+ * @property {string} selectId
+ * @property {ComponentOption[]} options
+ * @property {Record<string, keyof ComponentOption>} fieldMap
+ * @property {boolean} [initialSkipEvents]
+ */
+
+/** @type {SelectConfig[]} */
 const SELECT_CONFIGS = [
   {
     selectId: 'gearbox_select',
     options: [
+      {
+        pn: 'GB-123',
+        description: 'Single stage 20:1 (overall)',
+        gear_ratio_stage1: 20,
+        gear_ratio_stage2: 1
+      },
       {
         pn: 'GB-2050',
         description: 'Planetary 20:1 × 5:1 (100:1 overall)',
@@ -127,6 +152,52 @@ const SELECT_CONFIGS = [
       h_hmot_cc: 'hyd_motor_disp_cc',
       h_hmot_rpm_max: 'hyd_motor_max_rpm'
     }
+  },
+  {
+    selectId: 'system_select',
+    options: [
+      {
+        pn: 'WINCH-513',
+        description: 'Placeholder 513 Winch system',
+        core_in: 70.5,
+        ftf_in: 118,
+        lebus_in: 0.75,
+        pack: 0.88,
+        motors: 6,
+        h_pump_strings: 2,
+        gearbox_select: 'GB-123',
+        electric_motor_select: 'EM-200-4P',
+        hydraulic_pump_select: 'HP-210A',
+        hydraulic_motor_select: 'HM-1580'
+      },
+      {
+        pn: 'WINCH-900',
+        description: 'Placeholder 900 Winch system',
+        core_in: 82,
+        ftf_in: 132,
+        lebus_in: 0.6,
+        pack: 0.9,
+        motors: 4,
+        h_pump_strings: 3,
+        gearbox_select: 'GB-2050',
+        electric_motor_select: 'EM-250-6P',
+        hydraulic_pump_select: 'HP-250C',
+        hydraulic_motor_select: 'HM-2090'
+      }
+    ],
+    fieldMap: {
+      core_in: 'core_in',
+      ftf_in: 'ftf_in',
+      lebus_in: 'lebus_in',
+      pack: 'pack',
+      motors: 'motors',
+      h_pump_strings: 'h_pump_strings',
+      gearbox_select: 'gearbox_select',
+      electric_motor_select: 'electric_motor_select',
+      hydraulic_pump_select: 'hydraulic_pump_select',
+      hydraulic_motor_select: 'hydraulic_motor_select'
+    },
+    initialSkipEvents: false
   }
 ];
 
@@ -140,7 +211,7 @@ function describeOption(config, option) {
 
 function attachWatcher(inputId) {
   if (watchedInputs.has(inputId)) return;
-  const el = /** @type {HTMLInputElement|null} */ (document.getElementById(inputId));
+  const el = /** @type {HTMLElement|null} */ (document.getElementById(inputId));
   if (!el) return;
   const handler = () => {
     if (el.dataset.componentSuppress === '1') return;
@@ -154,8 +225,22 @@ function attachWatcher(inputId) {
       selectEl.dispatchEvent(new Event('change', { bubbles: true }));
     }
   };
-  el.addEventListener('input', handler);
-  el.addEventListener('change', handler);
+  if (el instanceof HTMLInputElement) {
+    const type = el.type;
+    if (type === 'checkbox' || type === 'radio' || type === 'range' || type === 'color') {
+      el.addEventListener('change', handler);
+    } else {
+      el.addEventListener('input', handler);
+      el.addEventListener('change', handler);
+    }
+  } else if (el instanceof HTMLSelectElement) {
+    el.addEventListener('change', handler);
+  } else if (el instanceof HTMLTextAreaElement) {
+    el.addEventListener('input', handler);
+    el.addEventListener('change', handler);
+  } else {
+    el.addEventListener('change', handler);
+  }
   watchedInputs.add(inputId);
 }
 
@@ -166,7 +251,7 @@ function applySelection(config, pn, { skipEvents = false } = {}) {
   const fieldEntries = Object.entries(config.fieldMap);
   if (!option) {
     fieldEntries.forEach(([inputId]) => {
-      const inputEl = /** @type {HTMLInputElement|null} */ (document.getElementById(inputId));
+      const inputEl = /** @type {HTMLElement|null} */ (document.getElementById(inputId));
       if (!inputEl) return;
       if (inputEl.dataset.componentSelect === config.selectId) {
         delete inputEl.dataset.componentSelect;
@@ -177,17 +262,33 @@ function applySelection(config, pn, { skipEvents = false } = {}) {
   }
 
   fieldEntries.forEach(([inputId, optionKey]) => {
-    const inputEl = /** @type {HTMLInputElement|null} */ (document.getElementById(inputId));
+    const inputEl = /** @type {HTMLElement|null} */ (document.getElementById(inputId));
     if (!inputEl) return;
     const value = option[optionKey];
     if (value == null) return;
     inputEl.dataset.componentSelect = config.selectId;
     inputEl.dataset.componentPn = option.pn;
     inputEl.dataset.componentSuppress = '1';
-    inputEl.value = String(value);
+    if (inputEl instanceof HTMLInputElement) {
+      if (inputEl.type === 'checkbox') {
+        inputEl.checked = Boolean(value);
+      } else {
+        inputEl.value = String(value);
+      }
+    } else if (inputEl instanceof HTMLSelectElement || inputEl instanceof HTMLTextAreaElement) {
+      inputEl.value = String(value);
+    } else {
+      inputEl.textContent = String(value);
+    }
     if (!skipEvents) {
-      inputEl.dispatchEvent(new Event('input', { bubbles: true }));
-      inputEl.dispatchEvent(new Event('change', { bubbles: true }));
+      if (inputEl instanceof HTMLInputElement) {
+        if (inputEl.type !== 'checkbox' && inputEl.type !== 'radio' && inputEl.type !== 'range' && inputEl.type !== 'color') {
+          inputEl.dispatchEvent(new Event('input', { bubbles: true }));
+        }
+        inputEl.dispatchEvent(new Event('change', { bubbles: true }));
+      } else {
+        inputEl.dispatchEvent(new Event('change', { bubbles: true }));
+      }
     }
     delete inputEl.dataset.componentSuppress;
   });
@@ -198,6 +299,7 @@ export function setupComponentSelectors() {
     const selectEl = /** @type {HTMLSelectElement|null} */ (document.getElementById(config.selectId));
     if (!selectEl) return;
     const initialValue = selectEl.value;
+    const { initialSkipEvents = true } = config;
 
     // Populate the select list
     // Clear any existing dynamic options while preserving the first custom option
@@ -229,7 +331,7 @@ export function setupComponentSelectors() {
 
     // Apply persisted selection if present
     if (selectEl.value) {
-      applySelection(config, selectEl.value, { skipEvents: true });
+      applySelection(config, selectEl.value, { skipEvents: initialSkipEvents });
     }
   });
 }
