@@ -196,26 +196,31 @@ export function renderDrumVisualization(rows, summary, cfg, meta) {
   const coreHeightPx = Math.max(0, (core_dia_in || 0) * scale);
   const coreWidthPx = Math.max(0, (flange_to_flange_in || 0) * scale);
 
+   const strokeWidth = 0.85;
+  const strokeWidthAttr = strokeWidth.toFixed(3);
+
   if (coreHeightPx > 0 && coreWidthPx > 0) {
     svg.appendChild(svgEl('rect', {
-      class: 'drum-stroke drum-core',
       x: spoolLeft.toFixed(2),
       y: (centerY - coreHeightPx / 2).toFixed(2),
       width: coreWidthPx.toFixed(2),
       height: coreHeightPx.toFixed(2),
       fill: 'none',
-      stroke: rgbToCss(ink900Rgb, 0.72)
+      stroke: rgbToCss(ink900Rgb, 0.72),
+      'stroke-width': strokeWidthAttr,
+      'vector-effect': 'non-scaling-stroke'
     }));
   }
 
   const axisColor = rgbToCss(ink700Rgb, 0.18);
   svg.appendChild(svgEl('line', {
-    class: 'drum-stroke drum-axis',
     x1: spoolLeft.toFixed(2),
     y1: centerY.toFixed(2),
     x2: spoolRight.toFixed(2),
     y2: centerY.toFixed(2),
     stroke: axisColor,
+    'stroke-width': strokeWidthAttr,
+    'vector-effect': 'non-scaling-stroke',
     'stroke-dasharray': '6 6'
   }));
 
@@ -242,21 +247,23 @@ export function renderDrumVisualization(rows, summary, cfg, meta) {
         if (cx + cableRadiusPx > spoolRight + 1e-3) continue;
 
         svg.appendChild(svgEl('circle', {
-          class: 'drum-stroke drum-wrap',
           cx: cx.toFixed(2),
           cy: topY.toFixed(2),
           r: cableRadiusPx.toFixed(2),
           fill: layer.fillColor,
-          stroke: layer.strokeColor
+          stroke: layer.strokeColor,
+          'stroke-width': strokeWidthAttr,
+          'vector-effect': 'non-scaling-stroke'
         }));
 
         svg.appendChild(svgEl('circle', {
-          class: 'drum-stroke drum-wrap',
           cx: cx.toFixed(2),
           cy: bottomY.toFixed(2),
           r: cableRadiusPx.toFixed(2),
           fill: layer.fillColor,
-          stroke: layer.strokeColor
+          stroke: layer.strokeColor,
+          'stroke-width': strokeWidthAttr,
+          'vector-effect': 'non-scaling-stroke'
         }));
       }
     });

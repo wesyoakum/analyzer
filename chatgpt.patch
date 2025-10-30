@@ -1,8 +1,10 @@
 diff --git a/src/js/drum-visual.mjs b/src/js/drum-visual.mjs
-index 8b620a57eecb73b74c8be63f831899645d33744a..f80632e5818b290cc5c83a34466109eb9e5427a8 100644
+index 8b620a57eecb73b74c8be63f831899645d33744a..01e947d22ea87729ef500f7f0836abfc462463e6 100644
 --- a/src/js/drum-visual.mjs
 +++ b/src/js/drum-visual.mjs
-@@ -176,109 +176,109 @@ export function renderDrumVisualization(rows, summary, cfg, meta) {
+@@ -174,111 +174,118 @@ export function renderDrumVisualization(rows, summary, cfg, meta) {
+     : 0;
+   const outerDiaIn = Math.max(
      summaryOuterDiaIn,
      derivedOuterRadiusIn * 2,
      core_dia_in || 0,
@@ -26,29 +28,33 @@ index 8b620a57eecb73b74c8be63f831899645d33744a..f80632e5818b290cc5c83a34466109eb
    const coreHeightPx = Math.max(0, (core_dia_in || 0) * scale);
    const coreWidthPx = Math.max(0, (flange_to_flange_in || 0) * scale);
  
++  const strokeWidth = 0.85;
++  const strokeWidthAttr = strokeWidth.toFixed(3);
++
    if (coreHeightPx > 0 && coreWidthPx > 0) {
      svg.appendChild(svgEl('rect', {
-+      class: 'drum-stroke drum-core',
        x: spoolLeft.toFixed(2),
        y: (centerY - coreHeightPx / 2).toFixed(2),
        width: coreWidthPx.toFixed(2),
        height: coreHeightPx.toFixed(2),
        fill: 'none',
--      stroke: rgbToCss(ink900Rgb, 0.72),
+       stroke: rgbToCss(ink900Rgb, 0.72),
 -      'stroke-width': 1
-+      stroke: rgbToCss(ink900Rgb, 0.72)
++      'stroke-width': strokeWidthAttr,
++      'vector-effect': 'non-scaling-stroke'
      }));
    }
  
    const axisColor = rgbToCss(ink700Rgb, 0.18);
    svg.appendChild(svgEl('line', {
-+    class: 'drum-stroke drum-axis',
      x1: spoolLeft.toFixed(2),
      y1: centerY.toFixed(2),
      x2: spoolRight.toFixed(2),
      y2: centerY.toFixed(2),
      stroke: axisColor,
 -    'stroke-width': 1,
++    'stroke-width': strokeWidthAttr,
++    'vector-effect': 'non-scaling-stroke',
      'stroke-dasharray': '6 6'
    }));
  
@@ -75,25 +81,25 @@ index 8b620a57eecb73b74c8be63f831899645d33744a..f80632e5818b290cc5c83a34466109eb
          if (cx + cableRadiusPx > spoolRight + 1e-3) continue;
  
          svg.appendChild(svgEl('circle', {
-+          class: 'drum-stroke drum-wrap',
            cx: cx.toFixed(2),
            cy: topY.toFixed(2),
            r: cableRadiusPx.toFixed(2),
            fill: layer.fillColor,
--          stroke: layer.strokeColor,
+           stroke: layer.strokeColor,
 -          'stroke-width': 1
-+          stroke: layer.strokeColor
++          'stroke-width': strokeWidthAttr,
++          'vector-effect': 'non-scaling-stroke'
          }));
  
          svg.appendChild(svgEl('circle', {
-+          class: 'drum-stroke drum-wrap',
            cx: cx.toFixed(2),
            cy: bottomY.toFixed(2),
            r: cableRadiusPx.toFixed(2),
            fill: layer.fillColor,
--          stroke: layer.strokeColor,
+           stroke: layer.strokeColor,
 -          'stroke-width': 1
-+          stroke: layer.strokeColor
++          'stroke-width': strokeWidthAttr,
++          'vector-effect': 'non-scaling-stroke'
          }));
        }
      });
