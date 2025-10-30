@@ -1,11 +1,65 @@
 diff --git a/src/js/drum-visual.mjs b/src/js/drum-visual.mjs
-index 307c4e4aa97a637466183b24d47c3d4f8668652c..6bcc42832bdd9584dbb1c7aa631169e6c8c6707d 100644
+index 307c4e4aa97a637466183b24d47c3d4f8668652c..2d235171286513d872f225ea4333383d4d46719c 100644
 --- a/src/js/drum-visual.mjs
 +++ b/src/js/drum-visual.mjs
-@@ -157,90 +157,99 @@ export function renderDrumVisualization(rows, summary, cfg, meta) {
+@@ -1,28 +1,28 @@
+ // ===== drum-visual.mjs — render drum cross-section + summary =====
+ 
+-import { svgEl } from './utils.mjs';
++import { svgEl, IN_PER_MM } from './utils.mjs';
+ 
+ const FALLBACK_COLORS = {
+   accent: { r: 44, g: 86, b: 163 },
+   accentLight: { r: 237, g: 242, b: 255 },
+   ink500: { r: 85, g: 99, b: 125 },
+   ink700: { r: 47, g: 59, b: 84 },
+   ink900: { r: 20, g: 34, b: 56 },
+   paper: { r: 255, g: 255, b: 255 }
+ };
+ 
+ const FALLBACK_HEX = {
+   accent: '#2c56a3',
+   accentLight: '#edf2ff',
+   ink500: '#55637d',
+   ink700: '#2f3b54',
+   ink900: '#142238',
+   paper: '#ffffff'
+ };
+ 
+ const SVG_SIZE = 320;
+ const SVG_MARGIN = 26;
+ 
+ /**
+  * Parse a CSS color string into RGB components.
+  * Supports #rgb[a], #rrggbb[aa], and rgb()/rgba().
+@@ -135,214 +135,224 @@ function createLayerItem(color, label, value) {
+   return li;
+ }
+ 
+ export function renderDrumVisualization(rows, summary, cfg, meta) {
+   const svg = /** @type {SVGSVGElement|null} */ (document.getElementById('drum_visual_svg'));
+   const summaryEl = /** @type {HTMLParagraphElement|null} */ (document.getElementById('drum_summary'));
+   const metricsEl = /** @type {HTMLDivElement|null} */ (document.getElementById('drum_metrics'));
+   const layerListEl = /** @type {HTMLOListElement|null} */ (document.getElementById('drum_layer_list'));
+   const titleEl = /** @type {SVGTitleElement|null} */ (document.getElementById('drum_visual_title'));
+ 
+   if (!svg || !summaryEl || !metricsEl || !layerListEl || !titleEl) return;
+ 
+   if (!rows || !rows.length || !summary || !cfg) {
+     emptyState(summaryEl, metricsEl, layerListEl, titleEl, svg);
+     return;
+   }
+ 
+   const { total_layers, total_wraps, cable_len_m, full_drum_dia_in } = summary;
+   const {
+     cable_dia_mm,
+     core_dia_in,
+     flange_to_flange_in,
      lebus_thk_in
    } = cfg;
  
++  const cable_dia_in = Math.max(0, (cable_dia_mm || 0) * IN_PER_MM);
++
    svg.setAttribute('viewBox', `0 0 ${SVG_SIZE} ${SVG_SIZE}`);
    while (svg.firstChild) svg.removeChild(svg.firstChild);
    metricsEl.textContent = '';
@@ -14,7 +68,7 @@ index 307c4e4aa97a637466183b24d47c3d4f8668652c..6bcc42832bdd9584dbb1c7aa631169e6
    const styles = getComputedStyle(document.documentElement);
    const accentRgb = parseCssColor(cssVar(styles, '--accent', FALLBACK_HEX.accent), FALLBACK_COLORS.accent);
    const accentLightRgb = parseCssColor(cssVar(styles, '--accent-light', FALLBACK_HEX.accentLight), FALLBACK_COLORS.accentLight);
-   const ink500Rgb = parseCssColor(cssVar(styles, '--ink-500', FALLBACK_HEX.ink500), FALLBACK_COLORS.ink500);
+-  const ink500Rgb = parseCssColor(cssVar(styles, '--ink-500', FALLBACK_HEX.ink500), FALLBACK_COLORS.ink500);
    const ink700Rgb = parseCssColor(cssVar(styles, '--ink-700', FALLBACK_HEX.ink700), FALLBACK_COLORS.ink700);
    const ink900Rgb = parseCssColor(cssVar(styles, '--ink-900', FALLBACK_HEX.ink900), FALLBACK_COLORS.ink900);
    const paperRgb = parseCssColor(cssVar(styles, '--paper', FALLBACK_HEX.paper), FALLBACK_COLORS.paper);
@@ -30,7 +84,8 @@ index 307c4e4aa97a637466183b24d47c3d4f8668652c..6bcc42832bdd9584dbb1c7aa631169e6
  
 -  const maxRadiusIn = (full_drum_dia_in || 0) / 2;
 -  const scale = maxRadiusIn > 0 ? (SVG_SIZE / 2 - SVG_MARGIN) / maxRadiusIn : 1;
-+  const maxRadiusIn = Math.max(0, (full_drum_dia_in || 0) / 2);
++  const derivedOuterRadiusIn = Math.max(0, (core_dia_in || 0) / 2 + (lebus_thk_in || 0) + cable_dia_in * uniqueLayers.length);
++  const maxRadiusIn = Math.max(0, Math.max((full_drum_dia_in || 0) / 2, derivedOuterRadiusIn));
 +  const halfWidthIn = Math.max(0, (flange_to_flange_in || 0) / 2);
 +  const maxExtentHalfIn = Math.max(maxRadiusIn, halfWidthIn);
 +  const scale = maxExtentHalfIn > 0 ? (SVG_SIZE / 2 - SVG_MARGIN) / maxExtentHalfIn : 1;
@@ -90,57 +145,112 @@ index 307c4e4aa97a637466183b24d47c3d4f8668652c..6bcc42832bdd9584dbb1c7aa631169e6
    }
  
    const coreRadius = Math.max(0, (core_dia_in || 0) / 2 * scale);
-   const lebusOuterRadius = Math.max(0, (core_dia_in + 2 * (lebus_thk_in || 0)) / 2 * scale);
+-  const lebusOuterRadius = Math.max(0, (core_dia_in + 2 * (lebus_thk_in || 0)) / 2 * scale);
 +  const coreHeightPx = coreRadius * 2;
 +  const coreWidthPx = Math.max(0, (flange_to_flange_in || 0) * scale);
  
-   const layerVisuals = uniqueLayers.map((layer, idx) => {
+-  const layerVisuals = uniqueLayers.map((layer, idx) => {
++  const layerStyles = uniqueLayers.map((layer, idx) => {
      const t = uniqueLayers.length > 1 ? idx / (uniqueLayers.length - 1) : 0;
      const baseColor = mixRgb(accentRgb, accentLightRgb, 0.25 + 0.55 * t);
      const fillColor = mixRgb(baseColor, paperRgb, 0.55);
-     const outerRadius = Math.max(0, (layer.outer_dia_in || 0) / 2 * scale);
+-    const outerRadius = Math.max(0, (layer.outer_dia_in || 0) / 2 * scale);
      return {
        layer_no: layer.layer_no,
-       outerRadius,
+-      outerRadius,
        fillColor: rgbToCss(fillColor, 0.82),
        strokeColor: rgbToCss(baseColor, 0.94)
      };
    });
  
-   // Filled discs from outermost to innermost to emulate rings.
-   layerVisuals
-     .slice()
-     .sort((a, b) => b.outerRadius - a.outerRadius)
-     .forEach(layer => {
-       svg.appendChild(svgEl('circle', {
-         cx: center,
-         cy: center,
-         r: layer.outerRadius.toFixed(2),
-         fill: layer.fillColor,
-         stroke: 'none'
-@@ -257,55 +266,56 @@ export function renderDrumVisualization(rows, summary, cfg, meta) {
-       r: Math.max(0, layer.outerRadius).toFixed(2),
-       fill: 'none',
-       stroke: layer.strokeColor,
-       'stroke-width': 1.6
-     }));
-   });
+-  // Filled discs from outermost to innermost to emulate rings.
+-  layerVisuals
+-    .slice()
+-    .sort((a, b) => b.outerRadius - a.outerRadius)
+-    .forEach(layer => {
+-      svg.appendChild(svgEl('circle', {
+-        cx: center,
+-        cy: center,
+-        r: layer.outerRadius.toFixed(2),
+-        fill: layer.fillColor,
+-        stroke: 'none'
+-      }));
+-    });
+-
+   axisEls.forEach(el => svg.appendChild(el));
  
-   // Lebus liner (dashed ring) if thickness exists.
-   if (lebusOuterRadius > coreRadius + 0.5) {
-     const inner = coreRadius;
-     const outer = lebusOuterRadius;
-     const mid = (inner + outer) / 2;
-     const strokeWidth = Math.max(outer - inner, 0.8);
-     svg.appendChild(svgEl('circle', {
-       cx: center,
-       cy: center,
-       r: mid.toFixed(2),
-       fill: 'none',
-       stroke: rgbToCss(ink500Rgb, 0.55),
-       'stroke-width': strokeWidth.toFixed(2),
-       'stroke-dasharray': '10 6'
-     }));
+-  // Outlines for each layer to keep edges crisp.
+-  layerVisuals.forEach(layer => {
+-    svg.appendChild(svgEl('circle', {
+-      cx: center,
+-      cy: center,
+-      r: Math.max(0, layer.outerRadius).toFixed(2),
+-      fill: 'none',
+-      stroke: layer.strokeColor,
+-      'stroke-width': 1.6
+-    }));
+-  });
++  const cableRadiusPx = cable_dia_in > 0 ? (cable_dia_in / 2) * scale : 0;
++  const cablePitchPx = cable_dia_in > 0 ? cable_dia_in * scale : 0;
++  const lebusOffsetPx = Math.max(0, (lebus_thk_in || 0) * scale);
++  const rectTop = center - coreHeightPx / 2;
++  const rectBottom = center + coreHeightPx / 2;
++  const rectLeft = center - coreWidthPx / 2;
++  const rectRight = rectLeft + coreWidthPx;
+ 
+-  // Lebus liner (dashed ring) if thickness exists.
+-  if (lebusOuterRadius > coreRadius + 0.5) {
+-    const inner = coreRadius;
+-    const outer = lebusOuterRadius;
+-    const mid = (inner + outer) / 2;
+-    const strokeWidth = Math.max(outer - inner, 0.8);
+-    svg.appendChild(svgEl('circle', {
+-      cx: center,
+-      cy: center,
+-      r: mid.toFixed(2),
+-      fill: 'none',
+-      stroke: rgbToCss(ink500Rgb, 0.55),
+-      'stroke-width': strokeWidth.toFixed(2),
+-      'stroke-dasharray': '10 6'
+-    }));
++  const wrapsByLayer = new Map();
++  for (const row of rows) {
++    wrapsByLayer.set(row.layer_no, (wrapsByLayer.get(row.layer_no) || 0) + 1);
++  }
++
++  if (cableRadiusPx > 0 && cablePitchPx > 0 && coreWidthPx > 0) {
++    uniqueLayers.forEach((layer, idx) => {
++      const wraps = wrapsByLayer.get(layer.layer_no) || 0;
++      if (wraps <= 0) return;
++      const style = layerStyles[idx];
++      const centerOffsetPx = lebusOffsetPx + cableRadiusPx + idx * cablePitchPx;
++      const topY = rectTop - centerOffsetPx;
++      const bottomY = rectBottom + centerOffsetPx;
++
++      for (let w = 0; w < wraps; w++) {
++        const cx = rectLeft + cableRadiusPx + w * cablePitchPx;
++        if (cx - cableRadiusPx < rectLeft - 1e-3) continue;
++        if (cx + cableRadiusPx > rectRight + 1e-3) continue;
++
++        svg.appendChild(svgEl('circle', {
++          cx: cx.toFixed(2),
++          cy: topY.toFixed(2),
++          r: cableRadiusPx.toFixed(2),
++          fill: style.fillColor,
++          stroke: style.strokeColor,
++          'stroke-width': 1.4
++        }));
++
++        svg.appendChild(svgEl('circle', {
++          cx: cx.toFixed(2),
++          cy: bottomY.toFixed(2),
++          r: cableRadiusPx.toFixed(2),
++          fill: style.fillColor,
++          stroke: style.strokeColor,
++          'stroke-width': 1.4
++        }));
++      }
++    });
    }
  
    // Core fill.
@@ -180,3 +290,44 @@ index 307c4e4aa97a637466183b24d47c3d4f8668652c..6bcc42832bdd9584dbb1c7aa631169e6
      metricsEl.appendChild(createMetric(label, value));
    }
  
+   // Wraps per layer list
+-  const wrapsByLayer = new Map();
+-  for (const row of rows) {
+-    wrapsByLayer.set(row.layer_no, (wrapsByLayer.get(row.layer_no) || 0) + 1);
+-  }
+-
+-  layerVisuals.forEach(layer => {
++  uniqueLayers.forEach((layer, idx) => {
+     const wraps = wrapsByLayer.get(layer.layer_no) || 0;
++    const style = layerStyles[idx];
+     const label = `Layer ${layer.layer_no}`;
+     const value = `${fmt(wraps, 0)} ${wraps === 1 ? 'wrap' : 'wraps'}`;
+-    const li = createLayerItem(layer.strokeColor, label, value);
+-    const outerDiaIn = scale > 0 ? (layer.outerRadius / scale) * 2 : 0;
++    const li = createLayerItem(style.strokeColor, label, value);
++    const outerDiaIn = layer.outer_dia_in || 0;
+     li.title = `Layer ${layer.layer_no}: outer diameter ${fmt(outerDiaIn, 2)} in`;
+     layerListEl.appendChild(li);
+   });
+ 
+   // Summary & accessibility copy
+   const layerWord = total_layers === 1 ? 'layer' : 'layers';
+   const wrapWord = total_wraps === 1 ? 'wrap' : 'wraps';
+   const summaryLine = `${fmt(cable_len_m, cableLenDigits)} m of ${fmt(cable_dia_mm, cableDiaDigits)} mm cable on ${fmt(total_layers, 0)} ${layerWord} with ${fmt(total_wraps, 0)} total ${wrapWord}`;
+   const geometryParts = [
+     `core Ø ${fmt(core_dia_in, 2)} in`,
+     `flange-to-flange ${fmt(flange_to_flange_in, 2)} in`,
+     `Lebus liner ${fmt(lebus_thk_in, 3)} in`,
+     `full drum Ø ${fmt(full_drum_dia_in, 2)} in`
+   ];
+   const summaryPlain = `${summaryLine}. Drum geometry: ${geometryParts.join(', ')}.`;
+ 
+   summaryEl.innerHTML = `<strong>${summaryLine}.</strong> Drum geometry: ${geometryParts.join(', ')}.`;
+   titleEl.textContent = `Winch drum cross-section with ${fmt(total_layers, 0)} ${layerWord}`;
+   svg.setAttribute('aria-label', summaryPlain);
+ }
+ 
+ export function clearDrumVisualization() {
+   const svg = /** @type {SVGSVGElement|null} */ (document.getElementById('drum_visual_svg'));
+   const summaryEl = /** @type {HTMLParagraphElement|null} */ (document.getElementById('drum_summary'));
+   const metricsEl = /** @type {HTMLDivElement|null} */ (document.getElementById('drum_metrics'));

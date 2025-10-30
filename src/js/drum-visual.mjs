@@ -1,6 +1,6 @@
 // ===== drum-visual.mjs — render drum cross-section + summary =====
 
-import { svgEl } from './utils.mjs';
+import { svgEl, IN_PER_MM } from './utils.mjs';
 
 const FALLBACK_COLORS = {
   accent: { r: 44, g: 86, b: 163 },
@@ -157,6 +157,8 @@ export function renderDrumVisualization(rows, summary, cfg, meta) {
     lebus_thk_in
   } = cfg;
 
+  const cable_dia_in = Math.max(0, (cable_dia_mm || 0) * IN_PER_MM);
+
   svg.setAttribute('viewBox', `0 0 ${SVG_SIZE} ${SVG_SIZE}`);
   while (svg.firstChild) svg.removeChild(svg.firstChild);
   metricsEl.textContent = '';
@@ -177,9 +179,9 @@ export function renderDrumVisualization(rows, summary, cfg, meta) {
     seen.add(row.layer_no);
     uniqueLayers.push({ layer_no: row.layer_no, outer_dia_in: row.layer_dia_in });
   }
-  uniqueLayers.sort((a, b) => a.layer_no - b.layer_no);
-
-  const maxRadiusIn = Math.max(0, (full_drum_dia_in || 0) / 2);
+  
+  const derivedOuterRadiusIn = Math.max(0, (core_dia_in || 0) / 2 + (lebus_thk_in || 0) + cable_dia_in * uniqueLayers.length);
+  const maxRadiusIn = Math.max(0, Math.max((full_drum_dia_in || 0) / 2, derivedOuterRadiusIn));
   const halfWidthIn = Math.max(0, (flange_to_flange_in || 0) / 2);
   const maxExtentHalfIn = Math.max(maxRadiusIn, halfWidthIn);
   const scale = maxExtentHalfIn > 0 ? (SVG_SIZE / 2 - SVG_MARGIN) / maxExtentHalfIn : 1;
@@ -229,7 +231,7 @@ export function renderDrumVisualization(rows, summary, cfg, meta) {
   const coreHeightPx = coreRadius * 2;
   const coreWidthPx = Math.max(0, (flange_to_flange_in || 0) * scale);
 
-  const layerVisuals = uniqueLayers.map((layer, idx) => {
+  const layerStyles = uniqueLayers.map((layer, idx) => {
     const t = uniqueLayers.length > 1 ? idx / (uniqueLayers.length - 1) : 0;
     const baseColor = mixRgb(accentRgb, accentLightRgb, 0.25 + 0.55 * t);
     const fillColor = mixRgb(baseColor, paperRgb, 0.55);
@@ -242,49 +244,54 @@ export function renderDrumVisualization(rows, summary, cfg, meta) {
     };
   });
 
-  // Filled discs from outermost to innermost to emulate rings.
-  layerVisuals
-    .slice()
-    .sort((a, b) => b.outerRadius - a.outerRadius)
-    .forEach(layer => {
-      svg.appendChild(svgEl('circle', {
-        cx: center,
-        cy: center,
-        r: layer.outerRadius.toFixed(2),
-        fill: layer.fillColor,
-        stroke: 'none'
-      }));
-    });
-
   axisEls.forEach(el => svg.appendChild(el));
 
-  // Outlines for each layer to keep edges crisp.
-  layerVisuals.forEach(layer => {
-    svg.appendChild(svgEl('circle', {
-      cx: center,
-      cy: center,
-      r: Math.max(0, layer.outerRadius).toFixed(2),
-      fill: 'none',
-      stroke: layer.strokeColor,
-      'stroke-width': 1.6
-    }));
-  });
+  const cableRadiusPx = cable_dia_in > 0 ? (cable_dia_in / 2) * scale : 0;
+  const cablePitchPx = cable_dia_in > 0 ? cable_dia_in * scale : 0;
+  const lebusOffsetPx = Math.max(0, (lebus_thk_in || 0) * scale);
+  const rectTop = center - coreHeightPx / 2;
+  const rectBottom = center + coreHeightPx / 2;
+  const rectLeft = center - coreWidthPx / 2;
+  const rectRight = rectLeft + coreWidthPx;
+  
+  const wrapsByLayer = new Map();
+  for (const row of rows) {
+    wrapsByLayer.set(row.layer_no, (wrapsByLayer.get(row.layer_no) || 0) + 1);
+  }
 
-  // Lebus liner (dashed ring) if thickness exists.
-  if (lebusOuterRadius > coreRadius + 0.5) {
-    const inner = coreRadius;
-    const outer = lebusOuterRadius;
-    const mid = (inner + outer) / 2;
-    const strokeWidth = Math.max(outer - inner, 0.8);
-    svg.appendChild(svgEl('circle', {
-      cx: center,
-      cy: center,
-      r: mid.toFixed(2),
-      fill: 'none',
-      stroke: rgbToCss(ink500Rgb, 0.55),
-      'stroke-width': strokeWidth.toFixed(2),
-      'stroke-dasharray': '10 6'
-    }));
+  if (cableRadiusPx > 0 && cablePitchPx > 0 && coreWidthPx > 0) {
+    uniqueLayers.forEach((layer, idx) => {
+      const wraps = wrapsByLayer.get(layer.layer_no) || 0;
+      if (wraps <= 0) return;
+      const style = layerStyles[idx];
+      const centerOffsetPx = lebusOffsetPx + cableRadiusPx + idx * cablePitchPx;
+      const topY = rectTop - centerOffsetPx;
+      const bottomY = rectBottom + centerOffsetPx;
+
+      for (let w = 0; w < wraps; w++) {
+        const cx = rectLeft + cableRadiusPx + w * cablePitchPx;
+        if (cx - cableRadiusPx < rectLeft - 1e-3) continue;
+        if (cx + cableRadiusPx > rectRight + 1e-3) continue;
+
+        svg.appendChild(svgEl('circle', {
+          cx: cx.toFixed(2),
+          cy: topY.toFixed(2),
+          r: cableRadiusPx.toFixed(2),
+          fill: style.fillColor,
+          stroke: style.strokeColor,
+          'stroke-width': 1.4
+        }));
+
+        svg.appendChild(svgEl('circle', {
+          cx: cx.toFixed(2),
+          cy: bottomY.toFixed(2),
+          r: cableRadiusPx.toFixed(2),
+          fill: style.fillColor,
+          stroke: style.strokeColor,
+          'stroke-width': 1.4
+        }));
+      }
+    });
   }
 
   // Core fill.
@@ -320,17 +327,13 @@ export function renderDrumVisualization(rows, summary, cfg, meta) {
   }
 
   // Wraps per layer list
-  const wrapsByLayer = new Map();
-  for (const row of rows) {
-    wrapsByLayer.set(row.layer_no, (wrapsByLayer.get(row.layer_no) || 0) + 1);
-  }
-
-  layerVisuals.forEach(layer => {
+  uniqueLayers.forEach((layer, idx) => {
     const wraps = wrapsByLayer.get(layer.layer_no) || 0;
+    const style = layerStyles[idx];
     const label = `Layer ${layer.layer_no}`;
     const value = `${fmt(wraps, 0)} ${wraps === 1 ? 'wrap' : 'wraps'}`;
-    const li = createLayerItem(layer.strokeColor, label, value);
-    const outerDiaIn = scale > 0 ? (layer.outerRadius / scale) * 2 : 0;
+    const li = createLayerItem(style.strokeColor, label, value);
+    const outerDiaIn = layer.outer_dia_in || 0;
     li.title = `Layer ${layer.layer_no}: outer diameter ${fmt(outerDiaIn, 2)} in`;
     layerListEl.appendChild(li);
   });
