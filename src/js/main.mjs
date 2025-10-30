@@ -34,15 +34,14 @@ document.addEventListener('DOMContentLoaded', () => {
 
   setupPlotResizeToggles();
 
+  setupAutoRecompute();
+
   document.querySelectorAll('.param-label').forEach(label => {
     const code = label.dataset.code;
     if (code) {
       label.setAttribute('title', code);
     }
   });
-
-  // Compute button
-  q('go').addEventListener('click', computeAll);
 
   // Tabs
   document.querySelectorAll('.tab-btn').forEach(b => {
@@ -64,7 +63,7 @@ document.addEventListener('DOMContentLoaded', () => {
   q('depth_scenario').addEventListener('change', () => redrawPlots());
 
   // Initial compute
-  q('go').click();
+  computeAll();
 });
 
 function setupPlotResizeToggles() {
@@ -83,12 +82,37 @@ function setupPlotResizeToggles() {
   });
 }
 
+function setupAutoRecompute() {
+  const inputs = Array.from(document.querySelectorAll('input, select, textarea'));
+  if (!inputs.length) return;
+
+  const handler = () => computeAll();
+
+  inputs.forEach(el => {
+    if (el.tagName === 'SELECT') {
+      el.addEventListener('change', handler);
+      return;
+    }
+
+    if (el.tagName === 'INPUT') {
+      const type = el.type;
+      if (type === 'checkbox' || type === 'radio' || type === 'range' || type === 'color') {
+        el.addEventListener('change', handler);
+        return;
+      }
+    }
+
+    el.addEventListener('input', handler);
+    el.addEventListener('change', handler);
+  });
+}
+
 // ---- Core compute + render ----
 function computeAll() {
   const errBox = q('err');
-  const status = q('status');
+  const status = /** @type {HTMLElement|null} */ (document.getElementById('status'));
   errBox.textContent = '';
-  status.textContent = 'computing…';
+  if (status) status.textContent = 'computing…';
 
   try {
     // Geometry & load inputs
@@ -250,14 +274,14 @@ function computeAll() {
     renderHydraulicTables(lastHyLayer, lastHyWraps, q('tbody_hy_layer'), q('tbody_hy_wraps'));
 
     // ---- Update status ----
-    q('status').textContent = 'results updated';
+    if (status) status.textContent = 'results updated';
 
     // ---- Draw plots ----
     redrawPlots();
   } catch (e) {
     console.error(e);
     q('err').textContent = 'ERROR: ' + (e && e.message ? e.message : e);
-    q('status').textContent = 'error';
+    if (status) status.textContent = 'error';
     lastElLayer = lastElWraps = lastHyLayer = lastHyWraps = [];
     clearPlots();
   }

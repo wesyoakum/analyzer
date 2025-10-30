@@ -66,12 +66,6 @@ body {
   margin-top: 8px;
 }
 
-#status {
-  margin-left: 4px;
-  color: var(--ink-500);
-  font-style: italic;
-}
-
 .card {
   background: rgba(255, 255, 255, 0.96);
   border: 1px solid var(--paper-line-strong);
@@ -598,8 +592,7 @@ th[title] {
 
   nav.tabs,
   .btnbar button,
-  .button-row,
-  #status {
+  .button-row {
     display: none !important;
   }
 
