@@ -392,9 +392,9 @@ nav.tabs {
 
 .drum-visual__svg {
   display: block;
-  width: 90%;
+  width: 100%;
   height: auto;
-  max-height: none;
+  max-height: 1000px;
   max-width: none;
   background: none;
   border: none;
