@@ -23,6 +23,7 @@ import {
 
 import { drawWaveContours, drawWaveHeightContours } from './plots/wave-contours.mjs';
 import { drawDepthProfiles } from './plots/depth-profiles.mjs';
+import { setupComponentSelectors } from './component-selectors.mjs';
 
 // ---- App state for plots/tables ----
 let lastElLayer = [], lastElWraps = [];
@@ -31,6 +32,8 @@ let lastHyLayer = [], lastHyWraps = [];
 // ---- Wire up events once DOM is ready ----
 document.addEventListener('DOMContentLoaded', () => {
   setupInputPersistence();
+
+  setupComponentSelectors();
 
   setupPlotResizeToggles();
 

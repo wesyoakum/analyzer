@@ -91,6 +91,20 @@
           </tr>
           <tr>
             <th scope="row">
+              <label class="param-label" for="gearbox_select" data-code="gearbox_select">Gearbox Part Number</label>
+            </th>
+            <td class="value">
+              <select id="gearbox_select">
+                <option value="">Custom (manual input)</option>
+              </select>
+            </td>
+            <td class="units">–</td>
+          </tr>
+          <tr class="note">
+            <td colspan="3" class="dim">Selecting a gearbox fills Gear Ratio 1 and Gear Ratio 2 automatically. Editing either ratio clears the selection.</td>
+          </tr>
+          <tr>
+            <th scope="row">
               <label class="param-label" for="gr1" data-code="gr1">Gear Ratio 1 <span class="symbol" aria-hidden="true">G<sub>1</sub></span></label>
             </th>
             <td class="value"><input id="gr1" type="number" step="0.1" value="20"></td>
@@ -156,6 +170,20 @@
           </tr>
         </thead>
         <tbody>
+          <tr>
+            <th scope="row">
+              <label class="param-label" for="electric_motor_select" data-code="electric_motor_select">Electric Motor Part Number</label>
+            </th>
+            <td class="value">
+              <select id="electric_motor_select">
+                <option value="">Custom (manual input)</option>
+              </select>
+            </td>
+            <td class="units">–</td>
+          </tr>
+          <tr class="note">
+            <td colspan="3" class="dim">Selecting a motor fills the maximum speed, rated power, and maximum torque inputs automatically. Adjusting any of those values clears the selection.</td>
+          </tr>
           <tr>
             <th scope="row">
               <label class="param-label" for="motor_max_rpm" data-code="motor_max_rpm">Motor Maximum Speed <span class="symbol" aria-hidden="true">ω<sub>m,max</sub></span></label>
@@ -286,6 +314,20 @@
           </tr>
           <tr>
             <th scope="row">
+              <label class="param-label" for="hydraulic_pump_select" data-code="hydraulic_pump_select">Hydraulic Pump Part Number</label>
+            </th>
+            <td class="value">
+              <select id="hydraulic_pump_select">
+                <option value="">Custom (manual input)</option>
+              </select>
+            </td>
+            <td class="units">–</td>
+          </tr>
+          <tr class="note">
+            <td colspan="3" class="dim">Selecting a pump fills the displacement and maximum pressure inputs automatically. Editing either value clears the selection.</td>
+          </tr>
+          <tr>
+            <th scope="row">
               <label class="param-label" for="h_pump_cc" data-code="h_pump_cc">Pump Displacement <span class="symbol" aria-hidden="true">q<sub>pump</sub></span></label>
             </th>
             <td class="value"><input id="h_pump_cc" type="number" step="0.1" value="210"></td>
@@ -297,6 +339,20 @@
             </th>
             <td class="value"><input id="h_max_psi" type="number" step="1" value="3500"></td>
             <td class="units">psi</td>
+          </tr>
+          <tr>
+            <th scope="row">
+              <label class="param-label" for="hydraulic_motor_select" data-code="hydraulic_motor_select">Hydraulic Motor Part Number</label>
+            </th>
+            <td class="value">
+              <select id="hydraulic_motor_select">
+                <option value="">Custom (manual input)</option>
+              </select>
+            </td>
+            <td class="units">–</td>
+          </tr>
+          <tr class="note">
+            <td colspan="3" class="dim">Selecting a motor fills the hydraulic motor displacement and maximum speed inputs automatically. Adjusting either value clears the selection.</td>
           </tr>
           <tr>
             <th scope="row">

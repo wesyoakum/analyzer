@@ -1,8 +1,19 @@
 diff --git a/src/js/main.mjs b/src/js/main.mjs
-index f3e6f09a643d2131df3e21f83bcb0c7f6a70a291..7a081caaaba4c606d4544816207ffa1deabd8862 100644
+index 7a081caaaba4c606d4544816207ffa1deabd8862..b7bf146b39e26360ec4392ef1117545658304a80 100644
 --- a/src/js/main.mjs
 +++ b/src/js/main.mjs
-@@ -12,105 +12,129 @@ import {
+@@ -1,59 +1,62 @@
+ // ===== main.mjs — app bootstrap, compute, render, plots =====
+ 
+ import {
+   q, read,
+   G, W_PER_HP, PSI_TO_PA, CC_PER_GAL, M_PER_IN,
+   tension_kgf, elec_available_tension_kgf,
+   gpm_from_cc_rev_and_rpm, rpm_from_gpm_and_disp,
+   psi_from_torque_and_disp_Nm_cc, torque_per_motor_from_pressure_Pa,
+   line_speed_mpm_from_motor_rpm, hp_from_psi_and_gpm
+ } from './utils.mjs';
+ 
  import { setupInputPersistence } from './persist-inputs.mjs';
  
  import { calcLayers } from './layer-engine.mjs';
@@ -17,6 +28,7 @@ index f3e6f09a643d2131df3e21f83bcb0c7f6a70a291..7a081caaaba4c606d4544816207ffa1d
  
  import { drawWaveContours, drawWaveHeightContours } from './plots/wave-contours.mjs';
  import { drawDepthProfiles } from './plots/depth-profiles.mjs';
++import { setupComponentSelectors } from './component-selectors.mjs';
  
  // ---- App state for plots/tables ----
  let lastElLayer = [], lastElWraps = [];
@@ -26,10 +38,12 @@ index f3e6f09a643d2131df3e21f83bcb0c7f6a70a291..7a081caaaba4c606d4544816207ffa1d
  document.addEventListener('DOMContentLoaded', () => {
    setupInputPersistence();
  
++  setupComponentSelectors();
++
    setupPlotResizeToggles();
  
-+  setupAutoRecompute();
-+
+   setupAutoRecompute();
+ 
    document.querySelectorAll('.param-label').forEach(label => {
      const code = label.dataset.code;
      if (code) {
@@ -37,9 +51,6 @@ index f3e6f09a643d2131df3e21f83bcb0c7f6a70a291..7a081caaaba4c606d4544816207ffa1d
      }
    });
  
--  // Compute button
--  q('go').addEventListener('click', computeAll);
--
    // Tabs
    document.querySelectorAll('.tab-btn').forEach(b => {
      b.addEventListener('click', () => {
@@ -54,148 +65,3 @@ index f3e6f09a643d2131df3e21f83bcb0c7f6a70a291..7a081caaaba4c606d4544816207ffa1d
    q('wave_redraw').addEventListener('click', () => redrawPlots());
    q('wave_scenario').addEventListener('change', () => redrawPlots());
    ['wave_tmin', 'wave_tmax', 'wave_vmax', 'wave_hmax'].forEach(id => q(id).addEventListener('change', () => redrawPlots()));
- 
-   // Depth plot controls
-   q('depth_redraw').addEventListener('click', () => redrawPlots());
-   q('depth_scenario').addEventListener('change', () => redrawPlots());
- 
-   // Initial compute
--  q('go').click();
-+  computeAll();
- });
- 
- function setupPlotResizeToggles() {
-   const toggles = document.querySelectorAll('[data-plot-toggle]');
-   toggles.forEach(btn => {
-     const col = btn.closest('.plot-column');
-     if (!col) return;
-     const initialExpanded = col.classList.contains('is-expanded');
-     btn.textContent = initialExpanded ? '[-]' : '[+]';
-     btn.setAttribute('aria-expanded', initialExpanded ? 'true' : 'false');
-     btn.addEventListener('click', () => {
-       const expanded = col.classList.toggle('is-expanded');
-       btn.textContent = expanded ? '[-]' : '[+]';
-       btn.setAttribute('aria-expanded', expanded ? 'true' : 'false');
-     });
-   });
- }
- 
-+function setupAutoRecompute() {
-+  const inputs = Array.from(document.querySelectorAll('input, select, textarea'));
-+  if (!inputs.length) return;
-+
-+  const handler = () => computeAll();
-+
-+  inputs.forEach(el => {
-+    if (el.tagName === 'SELECT') {
-+      el.addEventListener('change', handler);
-+      return;
-+    }
-+
-+    if (el.tagName === 'INPUT') {
-+      const type = el.type;
-+      if (type === 'checkbox' || type === 'radio' || type === 'range' || type === 'color') {
-+        el.addEventListener('change', handler);
-+        return;
-+      }
-+    }
-+
-+    el.addEventListener('input', handler);
-+    el.addEventListener('change', handler);
-+  });
-+}
-+
- // ---- Core compute + render ----
- function computeAll() {
-   const errBox = q('err');
--  const status = q('status');
-+  const status = /** @type {HTMLElement|null} */ (document.getElementById('status'));
-   errBox.textContent = '';
--  status.textContent = 'computing…';
-+  if (status) status.textContent = 'computing…';
- 
-   try {
-     // Geometry & load inputs
-         const wraps_override_input = read('wraps_override');
-     const wraps_per_layer_override = (
-       Number.isFinite(wraps_override_input) && wraps_override_input > 0
-     ) ? wraps_override_input : undefined;
- 
-     const cfg = {
-       cable_dia_mm: read('c_mm'),
-       operating_depth_m: read('depth_m'),
-       dead_end_m: read('dead_m'),
-       core_dia_in: read('core_in'),
-       flange_to_flange_in: read('ftf_in'),
-       lebus_thk_in: read('lebus_in'),
-       packing_factor: read('pack'),
-       wraps_per_layer_override
-     };
-     const payload_kg = read('payload_kg');
-     const cable_w_kgpm = read('c_w_kgpm');
- 
-     // Shared drivetrain
-     const gr1 = read('gr1');
-     const gr2 = read('gr2');
-     const motors = read('motors');
-@@ -228,58 +252,58 @@ function computeAll() {
-       } else {
-         speed_power_mpm = speed_flow_mpm;
-         speed_avail_mpm = speed_flow_mpm;
-         hp_used_at_available = 0;
-       }
- 
-       r.hyd_P_required_psi = Math.round(P_req_psi);
-       r.hyd_speed_power_mpm = +speed_power_mpm.toFixed(2);
-       r.hyd_speed_flow_mpm = +speed_flow_mpm.toFixed(2);
-       r.hyd_speed_available_mpm = +speed_avail_mpm.toFixed(2);
-       r.hyd_hp_used_at_available = +hp_used_at_available.toFixed(2);
-       r.hyd_elec_input_hp_used = +((h_emotor_eff > 0 ? r.hyd_hp_used_at_available / h_emotor_eff : 0)).toFixed(2);
-     }
- 
-     // ---- Aggregate into per-layer tables ----
-     lastElLayer = rowsToElectricLayer(rows, payload_kg, cable_w_kgpm, gr1, gr2, motors);
-     lastHyLayer = rowsToHydraulicLayer(rows);
-     lastElWraps = projectElectricWraps(rows);
-     lastHyWraps = projectHydraulicWraps(rows);
- 
-     // ---- Render tables ----
-     renderElectricTables(lastElLayer, lastElWraps, q('tbody_el_layer'), q('tbody_el_wraps'));
-     renderHydraulicTables(lastHyLayer, lastHyWraps, q('tbody_hy_layer'), q('tbody_hy_wraps'));
- 
-     // ---- Update status ----
--    q('status').textContent = 'results updated';
-+    if (status) status.textContent = 'results updated';
- 
-     // ---- Draw plots ----
-     redrawPlots();
-   } catch (e) {
-     console.error(e);
-     q('err').textContent = 'ERROR: ' + (e && e.message ? e.message : e);
--    q('status').textContent = 'error';
-+    if (status) status.textContent = 'error';
-     lastElLayer = lastElWraps = lastHyLayer = lastHyWraps = [];
-     clearPlots();
-   }
- }
- 
- // ---- Plot redraw helper (uses decoupled plotting modules) ----
- function redrawPlots() {
-     // Wave contours (optional - skip if controls/SVGs absent)
-   const waveScenarioEl = /** @type {HTMLSelectElement|null} */ (document.getElementById('wave_scenario'));
-   const waveTminEl = /** @type {HTMLInputElement|null} */ (document.getElementById('wave_tmin'));
-   const waveTmaxEl = /** @type {HTMLInputElement|null} */ (document.getElementById('wave_tmax'));
-   const waveVmaxEl = /** @type {HTMLInputElement|null} */ (document.getElementById('wave_vmax'));
-   const waveHmaxEl = /** @type {HTMLInputElement|null} */ (document.getElementById('wave_hmax'));
-   const waveSvg = /** @type {SVGSVGElement|null} */ (document.getElementById('wave_svg'));
-   const waveSvgHeight = /** @type {SVGSVGElement|null} */ (document.getElementById('wave_svg_height'));
- 
-   if (waveScenarioEl && waveTminEl && waveTmaxEl && waveHmaxEl && waveSvg && waveSvgHeight) {
-     const parseInput = (el) => parseFloat((el.value || '').replace(',', '.'));
-     const waveOpts = {
-       scenario: waveScenarioEl.value || 'electric',
-       Tmin: parseInput(waveTminEl) || 4,
-       Tmax: parseInput(waveTmaxEl) || 20,
-       speedMax: waveVmaxEl ? parseInput(waveVmaxEl) : undefined,
-       Hmax: parseInput(waveHmaxEl) || 6,
-       elLayers: lastElLayer,
