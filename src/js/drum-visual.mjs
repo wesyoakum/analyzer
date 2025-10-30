@@ -121,10 +121,12 @@ export function renderDrumVisualization(rows, summary, cfg, meta) {
     cable_dia_mm,
     core_dia_in,
     flange_to_flange_in,
-    lebus_thk_in
+    lebus_thk_in,
+    packing_factor
   } = cfg;
 
   const cable_dia_in = Math.max(0, (cable_dia_mm || 0) * IN_PER_MM);
+  const packingFactor = Number.isFinite(packing_factor) ? Math.max(packing_factor, 0) : 0.877;
 
   while (svg.firstChild) svg.removeChild(svg.firstChild);
 
@@ -140,18 +142,39 @@ export function renderDrumVisualization(rows, summary, cfg, meta) {
   for (const row of rows) {
     if (seen.has(row.layer_no)) continue;
     seen.add(row.layer_no);
-    uniqueLayers.push({ layer_no: row.layer_no, center_dia_in: row.layer_dia_in });
+    uniqueLayers.push({ layer_no: row.layer_no });
   }
 
-  const maxCenterlineRadiusIn = uniqueLayers.reduce((max, layer) => {
-    const radius = Number.isFinite(layer.center_dia_in) ? layer.center_dia_in / 2 : 0;
-    return Math.max(max, radius);
-  }, 0);
-  const derivedOuterRadiusIn = maxCenterlineRadiusIn > 0
-    ? maxCenterlineRadiusIn + (cable_dia_in > 0 ? cable_dia_in / 2 : 0)
-    : Math.max(0, (core_dia_in || 0) / 2 + (lebus_thk_in || 0) + (cable_dia_in > 0 ? cable_dia_in / 2 : 0));
+  const baseRadiusIn = Math.max(0,
+    (core_dia_in || 0) / 2 +
+    (lebus_thk_in || 0) +
+    (cable_dia_in > 0 ? cable_dia_in / 2 : 0)
+  );
+
+  const layersForViz = uniqueLayers.map((layer, idx) => {
+    const zeroBased = Math.max(0, layer.layer_no - 1);
+    const centerRadiusIn = baseRadiusIn + zeroBased * cable_dia_in * packingFactor;
+    const t = uniqueLayers.length > 1 ? idx / (uniqueLayers.length - 1) : 0;
+    const baseColor = mixRgb(accentRgb, accentLightRgb, 0.25 + 0.55 * t);
+    const fillColor = mixRgb(baseColor, paperRgb, 0.55);
+    return {
+      layer_no: layer.layer_no,
+      center_radius_in: centerRadiusIn,
+      fillColor: rgbToCss(fillColor, 0.82),
+      strokeColor: rgbToCss(baseColor, 0.94)
+    };
+  });
+
+  const maxCenterRadiusIn = layersForViz.length
+    ? layersForViz.reduce((max, layer) => Math.max(max, layer.center_radius_in), 0)
+    : baseRadiusIn;
+  const derivedOuterRadiusIn = maxCenterRadiusIn + (cable_dia_in > 0 ? cable_dia_in / 2 : 0);
+  const summaryOuterDiaIn = Number.isFinite(full_drum_dia_in)
+    ? full_drum_dia_in + (cable_dia_in || 0)
+    : 0;
   const outerDiaIn = Math.max(
-    Math.max(full_drum_dia_in || 0, derivedOuterRadiusIn * 2),
+    summaryOuterDiaIn,
+    derivedOuterRadiusIn * 2,
     core_dia_in || 0,
     cable_dia_in || 0,
     1
@@ -172,17 +195,6 @@ export function renderDrumVisualization(rows, summary, cfg, meta) {
 
   const coreHeightPx = Math.max(0, (core_dia_in || 0) * scale);
   const coreWidthPx = Math.max(0, (flange_to_flange_in || 0) * scale);
-
-  const layerStyles = uniqueLayers.map((layer, idx) => {
-    const t = uniqueLayers.length > 1 ? idx / (uniqueLayers.length - 1) : 0;
-    const baseColor = mixRgb(accentRgb, accentLightRgb, 0.25 + 0.55 * t);
-    const fillColor = mixRgb(baseColor, paperRgb, 0.55);
-    return {
-      layer_no: layer.layer_no,
-      fillColor: rgbToCss(fillColor, 0.82),
-      strokeColor: rgbToCss(baseColor, 0.94)
-    };
-  });
 
   if (coreHeightPx > 0 && coreWidthPx > 0) {
     svg.appendChild(svgEl('rect', {
@@ -216,12 +228,10 @@ export function renderDrumVisualization(rows, summary, cfg, meta) {
   }
 
   if (cableRadiusPx > 0 && cablePitchPx > 0 && coreWidthPx > 0) {
-    uniqueLayers.forEach((layer, idx) => {
+    layersForViz.forEach(layer => {
       const wraps = wrapsByLayer.get(layer.layer_no) || 0;
       if (wraps <= 0) return;
-      const style = layerStyles[idx];
-      const centerOffsetIn = Number.isFinite(layer.center_dia_in) ? layer.center_dia_in / 2 : 0;
-      const centerOffsetPx = centerOffsetIn * scale;
+      const centerOffsetPx = layer.center_radius_in * scale;
       const layerPhasePx = (layer.layer_no % 2 === 0) ? cablePitchPx / 2 : 0;
       const topY = centerY - centerOffsetPx;
       const bottomY = centerY + centerOffsetPx;
@@ -235,8 +245,8 @@ export function renderDrumVisualization(rows, summary, cfg, meta) {
           cx: cx.toFixed(2),
           cy: topY.toFixed(2),
           r: cableRadiusPx.toFixed(2),
-          fill: style.fillColor,
-          stroke: style.strokeColor,
+          fill: layer.fillColor,
+          stroke: layer.strokeColor,
           'stroke-width': 1
         }));
 
@@ -244,8 +254,8 @@ export function renderDrumVisualization(rows, summary, cfg, meta) {
           cx: cx.toFixed(2),
           cy: bottomY.toFixed(2),
           r: cableRadiusPx.toFixed(2),
-          fill: style.fillColor,
-          stroke: style.strokeColor,
+          fill: layer.fillColor,
+          stroke: layer.strokeColor,
           'stroke-width': 1
         }));
       }

@@ -1,8 +1,104 @@
 diff --git a/src/js/drum-visual.mjs b/src/js/drum-visual.mjs
-index 9214070413dd23207ebe88846baacec94a44dd3f..fb8e433c1dcc17048989be0e5d778416c1f7573f 100644
+index fb8e433c1dcc17048989be0e5d778416c1f7573f..8b620a57eecb73b74c8be63f831899645d33744a 100644
 --- a/src/js/drum-visual.mjs
 +++ b/src/js/drum-visual.mjs
-@@ -162,127 +162,113 @@ export function renderDrumVisualization(rows, summary, cfg, meta) {
+@@ -99,175 +99,185 @@ function emptyState(summaryEl, titleEl, svg) {
+   if (titleEl) titleEl.textContent = 'Winch drum cross-section (awaiting inputs)';
+   if (svg) svg.setAttribute('aria-label', 'Winch drum cross-section awaiting inputs');
+   if (summaryEl) summaryEl.textContent = 'Enter drum and cable inputs to view the drum visualization.';
+   if (svg) {
+     while (svg.firstChild) svg.removeChild(svg.firstChild);
+   }
+ }
+ 
+ export function renderDrumVisualization(rows, summary, cfg, meta) {
+   const svg = /** @type {SVGSVGElement|null} */ (document.getElementById('drum_visual_svg'));
+   const summaryEl = /** @type {HTMLParagraphElement|null} */ (document.getElementById('drum_summary'));
+   const titleEl = /** @type {SVGTitleElement|null} */ (document.getElementById('drum_visual_title'));
+ 
+   if (!svg || !summaryEl || !titleEl) return;
+ 
+   if (!rows || !rows.length || !summary || !cfg) {
+     emptyState(summaryEl, titleEl, svg);
+     return;
+   }
+ 
+   const { total_layers, total_wraps, cable_len_m, full_drum_dia_in } = summary;
+   const {
+     cable_dia_mm,
+     core_dia_in,
+     flange_to_flange_in,
+-    lebus_thk_in
++    lebus_thk_in,
++    packing_factor
+   } = cfg;
+ 
+   const cable_dia_in = Math.max(0, (cable_dia_mm || 0) * IN_PER_MM);
++  const packingFactor = Number.isFinite(packing_factor) ? Math.max(packing_factor, 0) : 0.877;
+ 
+   while (svg.firstChild) svg.removeChild(svg.firstChild);
+ 
+   const styles = getComputedStyle(document.documentElement);
+   const accentRgb = parseCssColor(cssVar(styles, '--accent', FALLBACK_HEX.accent), FALLBACK_COLORS.accent);
+   const accentLightRgb = parseCssColor(cssVar(styles, '--accent-light', FALLBACK_HEX.accentLight), FALLBACK_COLORS.accentLight);
+   const ink700Rgb = parseCssColor(cssVar(styles, '--ink-700', FALLBACK_HEX.ink700), FALLBACK_COLORS.ink700);
+   const ink900Rgb = parseCssColor(cssVar(styles, '--ink-900', FALLBACK_HEX.ink900), FALLBACK_COLORS.ink900);
+   const paperRgb = parseCssColor(cssVar(styles, '--paper', FALLBACK_HEX.paper), FALLBACK_COLORS.paper);
+ 
+   const uniqueLayers = [];
+   const seen = new Set();
+   for (const row of rows) {
+     if (seen.has(row.layer_no)) continue;
+     seen.add(row.layer_no);
+-    uniqueLayers.push({ layer_no: row.layer_no, center_dia_in: row.layer_dia_in });
++    uniqueLayers.push({ layer_no: row.layer_no });
+   }
+ 
+-  const maxCenterlineRadiusIn = uniqueLayers.reduce((max, layer) => {
+-    const radius = Number.isFinite(layer.center_dia_in) ? layer.center_dia_in / 2 : 0;
+-    return Math.max(max, radius);
+-  }, 0);
+-  const derivedOuterRadiusIn = maxCenterlineRadiusIn > 0
+-    ? maxCenterlineRadiusIn + (cable_dia_in > 0 ? cable_dia_in / 2 : 0)
+-    : Math.max(0, (core_dia_in || 0) / 2 + (lebus_thk_in || 0) + (cable_dia_in > 0 ? cable_dia_in / 2 : 0));
++  const baseRadiusIn = Math.max(0,
++    (core_dia_in || 0) / 2 +
++    (lebus_thk_in || 0) +
++    (cable_dia_in > 0 ? cable_dia_in / 2 : 0)
++  );
++
++  const layersForViz = uniqueLayers.map((layer, idx) => {
++    const zeroBased = Math.max(0, layer.layer_no - 1);
++    const centerRadiusIn = baseRadiusIn + zeroBased * cable_dia_in * packingFactor;
++    const t = uniqueLayers.length > 1 ? idx / (uniqueLayers.length - 1) : 0;
++    const baseColor = mixRgb(accentRgb, accentLightRgb, 0.25 + 0.55 * t);
++    const fillColor = mixRgb(baseColor, paperRgb, 0.55);
++    return {
++      layer_no: layer.layer_no,
++      center_radius_in: centerRadiusIn,
++      fillColor: rgbToCss(fillColor, 0.82),
++      strokeColor: rgbToCss(baseColor, 0.94)
++    };
++  });
++
++  const maxCenterRadiusIn = layersForViz.length
++    ? layersForViz.reduce((max, layer) => Math.max(max, layer.center_radius_in), 0)
++    : baseRadiusIn;
++  const derivedOuterRadiusIn = maxCenterRadiusIn + (cable_dia_in > 0 ? cable_dia_in / 2 : 0);
++  const summaryOuterDiaIn = Number.isFinite(full_drum_dia_in)
++    ? full_drum_dia_in + (cable_dia_in || 0)
++    : 0;
+   const outerDiaIn = Math.max(
+-    Math.max(full_drum_dia_in || 0, derivedOuterRadiusIn * 2),
++    summaryOuterDiaIn,
++    derivedOuterRadiusIn * 2,
+     core_dia_in || 0,
+     cable_dia_in || 0,
+     1
+   );
+   const heightIn = outerDiaIn;
+   const scale = heightIn > 0 ? (SVG_BASE_HEIGHT - 2 * SVG_MARGIN) / heightIn : 1;
+   const widthIn = Math.max(flange_to_flange_in || 0, cable_dia_in || 0, 1);
    const widthPx = widthIn * scale;
    const heightPx = heightIn * scale;
    const viewWidth = widthPx + SVG_MARGIN * 2;
@@ -17,30 +113,16 @@ index 9214070413dd23207ebe88846baacec94a44dd3f..fb8e433c1dcc17048989be0e5d778416
    const coreHeightPx = Math.max(0, (core_dia_in || 0) * scale);
    const coreWidthPx = Math.max(0, (flange_to_flange_in || 0) * scale);
  
-   const layerStyles = uniqueLayers.map((layer, idx) => {
-     const t = uniqueLayers.length > 1 ? idx / (uniqueLayers.length - 1) : 0;
-     const baseColor = mixRgb(accentRgb, accentLightRgb, 0.25 + 0.55 * t);
-     const fillColor = mixRgb(baseColor, paperRgb, 0.55);
-     return {
-       layer_no: layer.layer_no,
-       fillColor: rgbToCss(fillColor, 0.82),
-       strokeColor: rgbToCss(baseColor, 0.94)
-     };
-   });
- 
--  const outerRectHeightPx = Math.max(0, Math.max(full_drum_dia_in || 0, derivedOuterRadiusIn * 2) * scale);
--  if (outerRectHeightPx > 0 && widthPx > 0) {
--    const outerFill = mixRgb(accentLightRgb, paperRgb, 0.3);
--    svg.appendChild(svgEl('rect', {
--      x: spoolLeft.toFixed(2),
--      y: (centerY - outerRectHeightPx / 2).toFixed(2),
--      width: widthPx.toFixed(2),
--      height: outerRectHeightPx.toFixed(2),
--      fill: rgbToCss(outerFill, 0.5),
--      stroke: rgbToCss(accentRgb, 0.45),
--      'stroke-width': 1.6
--    }));
--  }
+-  const layerStyles = uniqueLayers.map((layer, idx) => {
+-    const t = uniqueLayers.length > 1 ? idx / (uniqueLayers.length - 1) : 0;
+-    const baseColor = mixRgb(accentRgb, accentLightRgb, 0.25 + 0.55 * t);
+-    const fillColor = mixRgb(baseColor, paperRgb, 0.55);
+-    return {
+-      layer_no: layer.layer_no,
+-      fillColor: rgbToCss(fillColor, 0.82),
+-      strokeColor: rgbToCss(baseColor, 0.94)
+-    };
+-  });
 -
    if (coreHeightPx > 0 && coreWidthPx > 0) {
      svg.appendChild(svgEl('rect', {
@@ -48,11 +130,9 @@ index 9214070413dd23207ebe88846baacec94a44dd3f..fb8e433c1dcc17048989be0e5d778416
        y: (centerY - coreHeightPx / 2).toFixed(2),
        width: coreWidthPx.toFixed(2),
        height: coreHeightPx.toFixed(2),
--      fill: rgbToCss(ink900Rgb, 0.48),
-+      fill: 'none',
+       fill: 'none',
        stroke: rgbToCss(ink900Rgb, 0.72),
--      'stroke-width': 1.2
-+      'stroke-width': 1
+       'stroke-width': 1
      }));
    }
  
@@ -76,12 +156,14 @@ index 9214070413dd23207ebe88846baacec94a44dd3f..fb8e433c1dcc17048989be0e5d778416
    }
  
    if (cableRadiusPx > 0 && cablePitchPx > 0 && coreWidthPx > 0) {
-     uniqueLayers.forEach((layer, idx) => {
+-    uniqueLayers.forEach((layer, idx) => {
++    layersForViz.forEach(layer => {
        const wraps = wrapsByLayer.get(layer.layer_no) || 0;
        if (wraps <= 0) return;
-       const style = layerStyles[idx];
-       const centerOffsetIn = Number.isFinite(layer.center_dia_in) ? layer.center_dia_in / 2 : 0;
-       const centerOffsetPx = centerOffsetIn * scale;
+-      const style = layerStyles[idx];
+-      const centerOffsetIn = Number.isFinite(layer.center_dia_in) ? layer.center_dia_in / 2 : 0;
+-      const centerOffsetPx = centerOffsetIn * scale;
++      const centerOffsetPx = layer.center_radius_in * scale;
        const layerPhasePx = (layer.layer_no % 2 === 0) ? cablePitchPx / 2 : 0;
        const topY = centerY - centerOffsetPx;
        const bottomY = centerY + centerOffsetPx;
@@ -95,20 +177,22 @@ index 9214070413dd23207ebe88846baacec94a44dd3f..fb8e433c1dcc17048989be0e5d778416
            cx: cx.toFixed(2),
            cy: topY.toFixed(2),
            r: cableRadiusPx.toFixed(2),
-           fill: style.fillColor,
-           stroke: style.strokeColor,
--          'stroke-width': 1.4
-+          'stroke-width': 1
+-          fill: style.fillColor,
+-          stroke: style.strokeColor,
++          fill: layer.fillColor,
++          stroke: layer.strokeColor,
+           'stroke-width': 1
          }));
  
          svg.appendChild(svgEl('circle', {
            cx: cx.toFixed(2),
            cy: bottomY.toFixed(2),
            r: cableRadiusPx.toFixed(2),
-           fill: style.fillColor,
-           stroke: style.strokeColor,
--          'stroke-width': 1.4
-+          'stroke-width': 1
+-          fill: style.fillColor,
+-          stroke: style.strokeColor,
++          fill: layer.fillColor,
++          stroke: layer.strokeColor,
+           'stroke-width': 1
          }));
        }
      });
@@ -133,4 +217,3 @@ index 9214070413dd23207ebe88846baacec94a44dd3f..fb8e433c1dcc17048989be0e5d778416
    const summaryPlain = `${summaryLine}${wrapsPerLayer}. ${geometryLine}`;
  
    summaryEl.innerHTML = `<strong>${summaryLine}${wrapsPerLayer}.</strong> ${geometryLine}`;
-   titleEl.textContent = `Winch drum cross-section with ${fmt(total_layers, 0)} ${layerWord}`;
