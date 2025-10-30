@@ -233,4 +233,3 @@ export function setupComponentSelectors() {
     }
   });
 }
-src/js/main.mjs
