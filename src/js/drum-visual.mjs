@@ -1,4 +1,4 @@
-// ===== drum-visual.mjs — render drum cross-section + summary =====
+// ===== drum-visual.mjs â€” render drum cross-section + summary =====
 
 import { svgEl, IN_PER_MM } from './utils.mjs';
 
@@ -95,57 +95,24 @@ function fmt(value, digits = 0) {
   return value.toLocaleString('en-US', { maximumFractionDigits: digits });
 }
 
-function emptyState(summaryEl, metricsEl, layersEl, titleEl, svg) {
+function emptyState(summaryEl, titleEl, svg) {
   if (titleEl) titleEl.textContent = 'Winch drum cross-section (awaiting inputs)';
   if (svg) svg.setAttribute('aria-label', 'Winch drum cross-section awaiting inputs');
   if (summaryEl) summaryEl.textContent = 'Enter drum and cable inputs to view the drum visualization.';
-  if (metricsEl) metricsEl.textContent = '';
-  if (layersEl) layersEl.textContent = '';
   if (svg) {
     while (svg.firstChild) svg.removeChild(svg.firstChild);
   }
 }
 
-function createMetric(label, value) {
-  const wrap = document.createElement('div');
-  wrap.className = 'metric';
-  const lab = document.createElement('div');
-  lab.className = 'metric__label';
-  lab.textContent = label;
-  const val = document.createElement('div');
-  val.className = 'metric__value';
-  val.textContent = value;
-  wrap.append(lab, val);
-  return wrap;
-}
-
-function createLayerItem(color, label, value) {
-  const li = document.createElement('li');
-  li.className = 'drum-layer-list__item';
-  const swatch = document.createElement('span');
-  swatch.className = 'drum-layer-list__swatch';
-  swatch.style.backgroundColor = color;
-  const labelEl = document.createElement('span');
-  labelEl.className = 'drum-layer-list__label';
-  labelEl.textContent = label;
-  const valueEl = document.createElement('span');
-  valueEl.className = 'drum-layer-list__value';
-  valueEl.textContent = value;
-  li.append(swatch, labelEl, valueEl);
-  return li;
-}
-
 export function renderDrumVisualization(rows, summary, cfg, meta) {
   const svg = /** @type {SVGSVGElement|null} */ (document.getElementById('drum_visual_svg'));
   const summaryEl = /** @type {HTMLParagraphElement|null} */ (document.getElementById('drum_summary'));
-  const metricsEl = /** @type {HTMLDivElement|null} */ (document.getElementById('drum_metrics'));
-  const layerListEl = /** @type {HTMLOListElement|null} */ (document.getElementById('drum_layer_list'));
   const titleEl = /** @type {SVGTitleElement|null} */ (document.getElementById('drum_visual_title'));
 
-  if (!svg || !summaryEl || !metricsEl || !layerListEl || !titleEl) return;
+  if (!svg || !summaryEl || !titleEl) return;
 
   if (!rows || !rows.length || !summary || !cfg) {
-    emptyState(summaryEl, metricsEl, layerListEl, titleEl, svg);
+    emptyState(summaryEl, titleEl, svg);
     return;
   }
 
@@ -161,8 +128,6 @@ export function renderDrumVisualization(rows, summary, cfg, meta) {
 
   svg.setAttribute('viewBox', `0 0 ${SVG_SIZE} ${SVG_SIZE}`);
   while (svg.firstChild) svg.removeChild(svg.firstChild);
-  metricsEl.textContent = '';
-  layerListEl.textContent = '';
 
   const styles = getComputedStyle(document.documentElement);
   const accentRgb = parseCssColor(cssVar(styles, '--accent', FALLBACK_HEX.accent), FALLBACK_COLORS.accent);
@@ -282,7 +247,7 @@ export function renderDrumVisualization(rows, summary, cfg, meta) {
           'stroke-width': 1.4
         }));
 
-        svg.appendChild(svgEl('circle', {
+         svg.appendChild(svgEl('circle', {
           cx: cx.toFixed(2),
           cy: bottomY.toFixed(2),
           r: cableRadiusPx.toFixed(2),
@@ -307,50 +272,25 @@ export function renderDrumVisualization(rows, summary, cfg, meta) {
     }));
   }
 
-  // Metrics grid
+  // Summary & accessibility copy
   const cableLenDigits = cable_len_m >= 1000 ? 0 : cable_len_m >= 10 ? 1 : 2;
   const cableDiaDigits = cable_dia_mm >= 50 ? 0 : cable_dia_mm >= 10 ? 1 : 2;
-  const metrics = [
-    ['Cable on drum', `${fmt(cable_len_m, cableLenDigits)} m`],
-    ['Cable Ø', `${fmt(cable_dia_mm, cableDiaDigits)} mm`],
-    ['Layers', fmt(total_layers, 0)],
-    ['Total wraps', fmt(total_wraps, 0)],
-    ['Wraps / layer', meta && Number.isFinite(meta.wraps_per_layer_used) ? fmt(meta.wraps_per_layer_used, 1) : '–'],
-    ['Full drum Ø', `${fmt(full_drum_dia_in, 2)} in`],
-    ['Core Ø', `${fmt(core_dia_in, 2)} in`],
-    ['Lebus liner', `${fmt(lebus_thk_in, 3)} in`],
-    ['Flange-to-flange', `${fmt(flange_to_flange_in, 2)} in`]
-  ];
-
-  for (const [label, value] of metrics) {
-    metricsEl.appendChild(createMetric(label, value));
-  }
-
-  // Wraps per layer list
-  uniqueLayers.forEach((layer, idx) => {
-    const wraps = wrapsByLayer.get(layer.layer_no) || 0;
-    const style = layerStyles[idx];
-    const label = `Layer ${layer.layer_no}`;
-    const value = `${fmt(wraps, 0)} ${wraps === 1 ? 'wrap' : 'wraps'}`;
-    const li = createLayerItem(style.strokeColor, label, value);
-    const outerDiaIn = layer.outer_dia_in || 0;
-    li.title = `Layer ${layer.layer_no}: outer diameter ${fmt(outerDiaIn, 2)} in`;
-    layerListEl.appendChild(li);
-  });
-
-  // Summary & accessibility copy
   const layerWord = total_layers === 1 ? 'layer' : 'layers';
   const wrapWord = total_wraps === 1 ? 'wrap' : 'wraps';
   const summaryLine = `${fmt(cable_len_m, cableLenDigits)} m of ${fmt(cable_dia_mm, cableDiaDigits)} mm cable on ${fmt(total_layers, 0)} ${layerWord} with ${fmt(total_wraps, 0)} total ${wrapWord}`;
+  const wrapsPerLayer = meta && Number.isFinite(meta.wraps_per_layer_used)
+    ? ` (≈${fmt(meta.wraps_per_layer_used, 1)} wraps per layer)`
+    : '';
   const geometryParts = [
     `core Ø ${fmt(core_dia_in, 2)} in`,
     `flange-to-flange ${fmt(flange_to_flange_in, 2)} in`,
     `Lebus liner ${fmt(lebus_thk_in, 3)} in`,
     `full drum Ø ${fmt(full_drum_dia_in, 2)} in`
   ];
-  const summaryPlain = `${summaryLine}. Drum geometry: ${geometryParts.join(', ')}.`;
+  const geometryLine = `Drum geometry: ${geometryParts.join(', ')}.`;
+  const summaryPlain = `${summaryLine}${wrapsPerLayer}. ${geometryLine}`;
 
-  summaryEl.innerHTML = `<strong>${summaryLine}.</strong> Drum geometry: ${geometryParts.join(', ')}.`;
+  summaryEl.innerHTML = `<strong>${summaryLine}${wrapsPerLayer}.</strong> ${geometryLine}`;
   titleEl.textContent = `Winch drum cross-section with ${fmt(total_layers, 0)} ${layerWord}`;
   svg.setAttribute('aria-label', summaryPlain);
 }
@@ -358,10 +298,8 @@ export function renderDrumVisualization(rows, summary, cfg, meta) {
 export function clearDrumVisualization() {
   const svg = /** @type {SVGSVGElement|null} */ (document.getElementById('drum_visual_svg'));
   const summaryEl = /** @type {HTMLParagraphElement|null} */ (document.getElementById('drum_summary'));
-  const metricsEl = /** @type {HTMLDivElement|null} */ (document.getElementById('drum_metrics'));
-  const layerListEl = /** @type {HTMLOListElement|null} */ (document.getElementById('drum_layer_list'));
   const titleEl = /** @type {SVGTitleElement|null} */ (document.getElementById('drum_visual_title'));
-  if (svg && summaryEl && metricsEl && layerListEl && titleEl) {
-    emptyState(summaryEl, metricsEl, layerListEl, titleEl, svg);
+  if (svg && summaryEl && titleEl) {
+    emptyState(summaryEl, titleEl, svg);
   }
 }
