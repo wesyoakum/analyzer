@@ -1,132 +1,182 @@
-diff --git a/src/js/main.mjs b/src/js/main.mjs
-index 916a0596ecdbd34cb8821dd537a56039676d4d68..93859553b6ffb329b5c24a68e64a060b309ce07c 100644
---- a/src/js/main.mjs
-+++ b/src/js/main.mjs
-@@ -176,51 +176,51 @@ function computeAll() {
-     const motor_tmax = read('motor_tmax');
-     const P_per_motor_W = (Number.isFinite(motor_hp) ? motor_hp : 0) * W_PER_HP;
+diff --git a/src/js/drum-visual.mjs b/src/js/drum-visual.mjs
+index 307c4e4aa97a637466183b24d47c3d4f8668652c..6bcc42832bdd9584dbb1c7aa631169e6c8c6707d 100644
+--- a/src/js/drum-visual.mjs
++++ b/src/js/drum-visual.mjs
+@@ -157,90 +157,99 @@ export function renderDrumVisualization(rows, summary, cfg, meta) {
+     lebus_thk_in
+   } = cfg;
  
-     // Hydraulic inputs
-     const h_strings = read('h_pump_strings');
-     const h_emotor_hp = read('h_emotor_hp');
-     const h_emotor_eff = read('h_emotor_eff'); // electro-hydraulic efficiency
-     const h_emotor_rpm = read('h_emotor_rpm');
-     const h_pump_cc = read('h_pump_cc');
-     const h_max_psi = read('h_max_psi');
-     const h_hmot_cc = read('h_hmot_cc');
-     const h_hmot_rpm_cap = read('h_hmot_rpm_max');
+   svg.setAttribute('viewBox', `0 0 ${SVG_SIZE} ${SVG_SIZE}`);
+   while (svg.firstChild) svg.removeChild(svg.firstChild);
+   metricsEl.textContent = '';
+   layerListEl.textContent = '';
  
-     // Usable hydraulic hp & flow from pump strings
-     const hp_str_usable = h_emotor_hp * h_emotor_eff;
-     const hp_tot_usable = hp_str_usable * h_strings;
-     const q_str_gpm = gpm_from_cc_rev_and_rpm(h_pump_cc, h_emotor_rpm);
-     const q_tot_gpm = q_str_gpm * h_strings;
+   const styles = getComputedStyle(document.documentElement);
+   const accentRgb = parseCssColor(cssVar(styles, '--accent', FALLBACK_HEX.accent), FALLBACK_COLORS.accent);
+   const accentLightRgb = parseCssColor(cssVar(styles, '--accent-light', FALLBACK_HEX.accentLight), FALLBACK_COLORS.accentLight);
+   const ink500Rgb = parseCssColor(cssVar(styles, '--ink-500', FALLBACK_HEX.ink500), FALLBACK_COLORS.ink500);
+   const ink700Rgb = parseCssColor(cssVar(styles, '--ink-700', FALLBACK_HEX.ink700), FALLBACK_COLORS.ink700);
+   const ink900Rgb = parseCssColor(cssVar(styles, '--ink-900', FALLBACK_HEX.ink900), FALLBACK_COLORS.ink900);
+   const paperRgb = parseCssColor(cssVar(styles, '--paper', FALLBACK_HEX.paper), FALLBACK_COLORS.paper);
  
-     // Max-pressure torque per hydraulic motor and at drum (pressure-limited)
-     const dP_Pa = h_max_psi * PSI_TO_PA;
-     const torque_per_hmotor_maxP = torque_per_motor_from_pressure_Pa(dP_Pa, h_hmot_cc); // N·m per motor at max P
-     const torque_at_drum_maxP_factor = Math.max(gr1, 1) * Math.max(gr2, 1) * Math.max(motors, 1);
- 
-     // Generate wraps from geometry
--    const { rows, meta } = calcLayers(cfg);
-+    const { rows, summary, meta } = calcLayers(cfg);
- 
-     const wrapsNoteEl = /** @type {HTMLTableCellElement|null} */ (document.getElementById('wraps_note'));
-     if (wrapsNoteEl) {
-       const calcWraps = meta && Number.isFinite(meta.wraps_per_layer_calc) ? meta.wraps_per_layer_calc : undefined;
-       const display = (typeof calcWraps === 'number') ? calcWraps.toFixed(1) : '–';
-       wrapsNoteEl.textContent = `Leave blank or set to 0 to use calculated wraps (always truncated to .0/.5). Auto-calculated wraps per layer: ${display}.`;
-     }
- 
-     // Per-wrap calculations (electric + hydraulic)
-     for (const r of rows) {
-       // Base tension and torque at drum
-       r.tension_kgf = tension_kgf(r.deployed_len_m, payload_kg, cable_w_kgpm);
-       const tension_N = r.tension_kgf * G;
-       const radius_m = (r.layer_dia_in * M_PER_IN) / 2;
-       r.torque_Nm = +(tension_N * radius_m).toFixed(1);
- 
-       // ----- ELECTRIC per wrap -----
-       const motorTorque_e = r.torque_Nm / (denom_mech || 1);
-       r.motor_torque_Nm = +motorTorque_e.toFixed(2);
- 
-       // RPM limited by available power per motor and capped by motor max rpm
-       let rpm_power_e = 0;
-       if (P_per_motor_W > 0 && motorTorque_e > 0) {
-         rpm_power_e = (P_per_motor_W / motorTorque_e) * 60 / (2 * Math.PI);
-       } else if (P_per_motor_W > 0 && motorTorque_e === 0) {
-@@ -271,70 +271,74 @@ function computeAll() {
-         speed_avail_mpm = Math.min(speed_power_mpm, speed_flow_mpm);
- 
-         // Power used at the actual available speed
-         const D_m = r.layer_dia_in * M_PER_IN;
-         const drum_rpm_needed = speed_avail_mpm / (Math.PI * D_m);
-         const motor_rpm_needed = drum_rpm_needed * (Math.max(gr1, 1) * Math.max(gr2, 1));
-         const gpm_per_motor_needed = (motor_rpm_needed * h_hmot_cc) / CC_PER_GAL;
-         const gpm_total_needed = Math.max(motors, 1) * gpm_per_motor_needed;
-         const gpm_used = Math.min(gpm_total_needed, q_tot_gpm);
-         hp_used_at_available = hp_from_psi_and_gpm(P_power_psi, gpm_used);
-         if (hp_used_at_available > hp_tot_usable) hp_used_at_available = hp_tot_usable;
-       } else {
-         speed_power_mpm = speed_flow_mpm;
-         speed_avail_mpm = speed_flow_mpm;
-         hp_used_at_available = 0;
-       }
- 
-       r.hyd_P_required_psi = Math.round(P_req_psi);
-       r.hyd_speed_power_mpm = +speed_power_mpm.toFixed(2);
-       r.hyd_speed_flow_mpm = +speed_flow_mpm.toFixed(2);
-       r.hyd_speed_available_mpm = +speed_avail_mpm.toFixed(2);
-       r.hyd_hp_used_at_available = +hp_used_at_available.toFixed(2);
-       r.hyd_elec_input_hp_used = +((h_emotor_eff > 0 ? r.hyd_hp_used_at_available / h_emotor_eff : 0)).toFixed(2);
-     }
- 
-+    // ---- Drum visualization ----
-+    renderDrumVisualization(rows, summary, cfg, meta);
-+
-     // ---- Aggregate into per-layer tables ----
-     lastElLayer = rowsToElectricLayer(rows, payload_kg, cable_w_kgpm, gr1, gr2, motors);
-     lastHyLayer = rowsToHydraulicLayer(rows);
-     lastElWraps = projectElectricWraps(rows);
-     lastHyWraps = projectHydraulicWraps(rows);
- 
-     // ---- Render tables ----
-     renderElectricTables(lastElLayer, lastElWraps, q('tbody_el_layer'), q('tbody_el_wraps'));
-     renderHydraulicTables(lastHyLayer, lastHyWraps, q('tbody_hy_layer'), q('tbody_hy_wraps'));
- 
-     // ---- Update status ----
-     if (status) status.textContent = 'results updated';
- 
-     // ---- Draw plots ----
-     redrawPlots();
-   } catch (e) {
-     console.error(e);
-     q('err').textContent = 'ERROR: ' + (e && e.message ? e.message : e);
-     if (status) status.textContent = 'error';
-     lastElLayer = lastElWraps = lastHyLayer = lastHyWraps = [];
-+    clearDrumVisualization();
-     clearPlots();
+   const uniqueLayers = [];
+   const seen = new Set();
+   for (const row of rows) {
+     if (seen.has(row.layer_no)) continue;
+     seen.add(row.layer_no);
+     uniqueLayers.push({ layer_no: row.layer_no, outer_dia_in: row.layer_dia_in });
    }
- }
+   uniqueLayers.sort((a, b) => a.layer_no - b.layer_no);
  
- // ---- Plot redraw helper (uses decoupled plotting modules) ----
- function redrawPlots() {
-     // Wave contours (optional - skip if controls/SVGs absent)
-   const waveScenarioEl = /** @type {HTMLSelectElement|null} */ (document.getElementById('wave_scenario'));
-   const waveTminEl = /** @type {HTMLInputElement|null} */ (document.getElementById('wave_tmin'));
-   const waveTmaxEl = /** @type {HTMLInputElement|null} */ (document.getElementById('wave_tmax'));
-   const waveVmaxEl = /** @type {HTMLInputElement|null} */ (document.getElementById('wave_vmax'));
-   const waveHmaxEl = /** @type {HTMLInputElement|null} */ (document.getElementById('wave_hmax'));
-   const waveSvg = /** @type {SVGSVGElement|null} */ (document.getElementById('wave_svg'));
-   const waveSvgHeight = /** @type {SVGSVGElement|null} */ (document.getElementById('wave_svg_height'));
+-  const maxRadiusIn = (full_drum_dia_in || 0) / 2;
+-  const scale = maxRadiusIn > 0 ? (SVG_SIZE / 2 - SVG_MARGIN) / maxRadiusIn : 1;
++  const maxRadiusIn = Math.max(0, (full_drum_dia_in || 0) / 2);
++  const halfWidthIn = Math.max(0, (flange_to_flange_in || 0) / 2);
++  const maxExtentHalfIn = Math.max(maxRadiusIn, halfWidthIn);
++  const scale = maxExtentHalfIn > 0 ? (SVG_SIZE / 2 - SVG_MARGIN) / maxExtentHalfIn : 1;
+   const center = SVG_SIZE / 2;
+   const maxRadiusPx = Math.max(0, maxRadiusIn * scale);
++  const halfWidthPx = Math.max(0, halfWidthIn * scale);
++  const axisHorizontalExtent = Math.max(maxRadiusPx, halfWidthPx);
++  const axisVerticalExtent = maxRadiusPx;
  
-   if (waveScenarioEl && waveTminEl && waveTmaxEl && waveHmaxEl && waveSvg && waveSvgHeight) {
-     const parseInput = (el) => parseFloat((el.value || '').replace(',', '.'));
-     const waveOpts = {
-       scenario: waveScenarioEl.value || 'electric',
-       Tmin: parseInput(waveTminEl) || 4,
-       Tmax: parseInput(waveTmaxEl) || 20,
-       speedMax: waveVmaxEl ? parseInput(waveVmaxEl) : undefined,
-       Hmax: parseInput(waveHmaxEl) || 6,
-       elLayers: lastElLayer,
-       hyLayers: lastHyLayer
+   const axisEls = [];
+-  if (maxRadiusPx > 0) {
+-    const outerFill = mixRgb(accentLightRgb, paperRgb, 0.25);
+-    svg.appendChild(svgEl('circle', {
+-      cx: center,
+-      cy: center,
+-      r: maxRadiusPx.toFixed(2),
+-      fill: rgbToCss(outerFill, 0.9),
+-      stroke: rgbToCss(accentRgb, 0.4),
+-      'stroke-width': 2
+-    }));
++  if (maxRadiusPx > 0 || halfWidthPx > 0) {
++    if (maxRadiusPx > 0) {
++      const outerFill = mixRgb(accentLightRgb, paperRgb, 0.25);
++      svg.appendChild(svgEl('circle', {
++        cx: center,
++        cy: center,
++        r: maxRadiusPx.toFixed(2),
++        fill: rgbToCss(outerFill, 0.9),
++        stroke: rgbToCss(accentRgb, 0.4),
++        'stroke-width': 2
++      }));
++    }
+ 
+     const axisColor = rgbToCss(ink700Rgb, 0.18);
+     axisEls.push(svgEl('line', {
+-      x1: (center - maxRadiusPx).toFixed(2),
++      x1: (center - axisHorizontalExtent).toFixed(2),
+       y1: center.toFixed(2),
+-      x2: (center + maxRadiusPx).toFixed(2),
++      x2: (center + axisHorizontalExtent).toFixed(2),
+       y2: center.toFixed(2),
+       stroke: axisColor,
+       'stroke-width': 1,
+       'stroke-dasharray': '6 6'
+     }));
+     axisEls.push(svgEl('line', {
+       x1: center.toFixed(2),
+-      y1: (center - maxRadiusPx).toFixed(2),
++      y1: (center - axisVerticalExtent).toFixed(2),
+       x2: center.toFixed(2),
+-      y2: (center + maxRadiusPx).toFixed(2),
++      y2: (center + axisVerticalExtent).toFixed(2),
+       stroke: axisColor,
+       'stroke-width': 1,
+       'stroke-dasharray': '6 6'
+     }));
+   }
+ 
+   const coreRadius = Math.max(0, (core_dia_in || 0) / 2 * scale);
+   const lebusOuterRadius = Math.max(0, (core_dia_in + 2 * (lebus_thk_in || 0)) / 2 * scale);
++  const coreHeightPx = coreRadius * 2;
++  const coreWidthPx = Math.max(0, (flange_to_flange_in || 0) * scale);
+ 
+   const layerVisuals = uniqueLayers.map((layer, idx) => {
+     const t = uniqueLayers.length > 1 ? idx / (uniqueLayers.length - 1) : 0;
+     const baseColor = mixRgb(accentRgb, accentLightRgb, 0.25 + 0.55 * t);
+     const fillColor = mixRgb(baseColor, paperRgb, 0.55);
+     const outerRadius = Math.max(0, (layer.outer_dia_in || 0) / 2 * scale);
+     return {
+       layer_no: layer.layer_no,
+       outerRadius,
+       fillColor: rgbToCss(fillColor, 0.82),
+       strokeColor: rgbToCss(baseColor, 0.94)
+     };
+   });
+ 
+   // Filled discs from outermost to innermost to emulate rings.
+   layerVisuals
+     .slice()
+     .sort((a, b) => b.outerRadius - a.outerRadius)
+     .forEach(layer => {
+       svg.appendChild(svgEl('circle', {
+         cx: center,
+         cy: center,
+         r: layer.outerRadius.toFixed(2),
+         fill: layer.fillColor,
+         stroke: 'none'
+@@ -257,55 +266,56 @@ export function renderDrumVisualization(rows, summary, cfg, meta) {
+       r: Math.max(0, layer.outerRadius).toFixed(2),
+       fill: 'none',
+       stroke: layer.strokeColor,
+       'stroke-width': 1.6
+     }));
+   });
+ 
+   // Lebus liner (dashed ring) if thickness exists.
+   if (lebusOuterRadius > coreRadius + 0.5) {
+     const inner = coreRadius;
+     const outer = lebusOuterRadius;
+     const mid = (inner + outer) / 2;
+     const strokeWidth = Math.max(outer - inner, 0.8);
+     svg.appendChild(svgEl('circle', {
+       cx: center,
+       cy: center,
+       r: mid.toFixed(2),
+       fill: 'none',
+       stroke: rgbToCss(ink500Rgb, 0.55),
+       'stroke-width': strokeWidth.toFixed(2),
+       'stroke-dasharray': '10 6'
+     }));
+   }
+ 
+   // Core fill.
+-  if (coreRadius > 0) {
+-    svg.appendChild(svgEl('circle', {
+-      cx: center,
+-      cy: center,
+-      r: coreRadius.toFixed(2),
++  if (coreRadius > 0 && coreWidthPx > 0) {
++    svg.appendChild(svgEl('rect', {
++      x: (center - coreWidthPx / 2).toFixed(2),
++      y: (center - coreHeightPx / 2).toFixed(2),
++      width: coreWidthPx.toFixed(2),
++      height: coreHeightPx.toFixed(2),
+       fill: rgbToCss(ink900Rgb, 0.5),
+       stroke: rgbToCss(ink900Rgb, 0.7),
+       'stroke-width': 1
+     }));
+   }
+ 
+   // Metrics grid
+   const cableLenDigits = cable_len_m >= 1000 ? 0 : cable_len_m >= 10 ? 1 : 2;
+   const cableDiaDigits = cable_dia_mm >= 50 ? 0 : cable_dia_mm >= 10 ? 1 : 2;
+   const metrics = [
+     ['Cable on drum', `${fmt(cable_len_m, cableLenDigits)} m`],
+     ['Cable Ø', `${fmt(cable_dia_mm, cableDiaDigits)} mm`],
+     ['Layers', fmt(total_layers, 0)],
+     ['Total wraps', fmt(total_wraps, 0)],
+     ['Wraps / layer', meta && Number.isFinite(meta.wraps_per_layer_used) ? fmt(meta.wraps_per_layer_used, 1) : '–'],
+     ['Full drum Ø', `${fmt(full_drum_dia_in, 2)} in`],
+     ['Core Ø', `${fmt(core_dia_in, 2)} in`],
+     ['Lebus liner', `${fmt(lebus_thk_in, 3)} in`],
+     ['Flange-to-flange', `${fmt(flange_to_flange_in, 2)} in`]
+   ];
+ 
+   for (const [label, value] of metrics) {
+     metricsEl.appendChild(createMetric(label, value));
+   }
+ 

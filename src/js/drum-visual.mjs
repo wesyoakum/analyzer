@@ -179,28 +179,35 @@ export function renderDrumVisualization(rows, summary, cfg, meta) {
   }
   uniqueLayers.sort((a, b) => a.layer_no - b.layer_no);
 
-  const maxRadiusIn = (full_drum_dia_in || 0) / 2;
-  const scale = maxRadiusIn > 0 ? (SVG_SIZE / 2 - SVG_MARGIN) / maxRadiusIn : 1;
+  const maxRadiusIn = Math.max(0, (full_drum_dia_in || 0) / 2);
+  const halfWidthIn = Math.max(0, (flange_to_flange_in || 0) / 2);
+  const maxExtentHalfIn = Math.max(maxRadiusIn, halfWidthIn);
+  const scale = maxExtentHalfIn > 0 ? (SVG_SIZE / 2 - SVG_MARGIN) / maxExtentHalfIn : 1;
   const center = SVG_SIZE / 2;
   const maxRadiusPx = Math.max(0, maxRadiusIn * scale);
+  const halfWidthPx = Math.max(0, halfWidthIn * scale);
+  const axisHorizontalExtent = Math.max(maxRadiusPx, halfWidthPx);
+  const axisVerticalExtent = maxRadiusPx;
 
   const axisEls = [];
-  if (maxRadiusPx > 0) {
-    const outerFill = mixRgb(accentLightRgb, paperRgb, 0.25);
-    svg.appendChild(svgEl('circle', {
-      cx: center,
-      cy: center,
-      r: maxRadiusPx.toFixed(2),
-      fill: rgbToCss(outerFill, 0.9),
-      stroke: rgbToCss(accentRgb, 0.4),
-      'stroke-width': 2
-    }));
+  if (maxRadiusPx > 0 || halfWidthPx > 0) {
+    if (maxRadiusPx > 0) {
+      const outerFill = mixRgb(accentLightRgb, paperRgb, 0.25);
+      svg.appendChild(svgEl('circle', {
+        cx: center,
+        cy: center,
+        r: maxRadiusPx.toFixed(2),
+        fill: rgbToCss(outerFill, 0.9),
+        stroke: rgbToCss(accentRgb, 0.4),
+        'stroke-width': 2
+      }));
+    }
 
     const axisColor = rgbToCss(ink700Rgb, 0.18);
     axisEls.push(svgEl('line', {
-      x1: (center - maxRadiusPx).toFixed(2),
+      x1: (center - axisHorizontalExtent).toFixed(2),
       y1: center.toFixed(2),
-      x2: (center + maxRadiusPx).toFixed(2),
+      x2: (center + axisHorizontalExtent).toFixed(2),
       y2: center.toFixed(2),
       stroke: axisColor,
       'stroke-width': 1,
@@ -208,9 +215,9 @@ export function renderDrumVisualization(rows, summary, cfg, meta) {
     }));
     axisEls.push(svgEl('line', {
       x1: center.toFixed(2),
-      y1: (center - maxRadiusPx).toFixed(2),
+      y1: (center - axisVerticalExtent).toFixed(2),
       x2: center.toFixed(2),
-      y2: (center + maxRadiusPx).toFixed(2),
+      y2: (center + axisVerticalExtent).toFixed(2),
       stroke: axisColor,
       'stroke-width': 1,
       'stroke-dasharray': '6 6'
@@ -219,6 +226,8 @@ export function renderDrumVisualization(rows, summary, cfg, meta) {
 
   const coreRadius = Math.max(0, (core_dia_in || 0) / 2 * scale);
   const lebusOuterRadius = Math.max(0, (core_dia_in + 2 * (lebus_thk_in || 0)) / 2 * scale);
+  const coreHeightPx = coreRadius * 2;
+  const coreWidthPx = Math.max(0, (flange_to_flange_in || 0) * scale);
 
   const layerVisuals = uniqueLayers.map((layer, idx) => {
     const t = uniqueLayers.length > 1 ? idx / (uniqueLayers.length - 1) : 0;
@@ -279,11 +288,12 @@ export function renderDrumVisualization(rows, summary, cfg, meta) {
   }
 
   // Core fill.
-  if (coreRadius > 0) {
-    svg.appendChild(svgEl('circle', {
-      cx: center,
-      cy: center,
-      r: coreRadius.toFixed(2),
+  if (coreRadius > 0 && coreWidthPx > 0) {
+    svg.appendChild(svgEl('rect', {
+      x: (center - coreWidthPx / 2).toFixed(2),
+      y: (center - coreHeightPx / 2).toFixed(2),
+      width: coreWidthPx.toFixed(2),
+      height: coreHeightPx.toFixed(2),
       fill: rgbToCss(ink900Rgb, 0.5),
       stroke: rgbToCss(ink900Rgb, 0.7),
       'stroke-width': 1
