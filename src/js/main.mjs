@@ -198,7 +198,7 @@ function computeAll() {
     const torque_at_drum_maxP_factor = Math.max(gr1, 1) * Math.max(gr2, 1) * Math.max(motors, 1);
 
     // Generate wraps from geometry
-    const { rows, meta } = calcLayers(cfg);
+    const { rows, summary, meta } = calcLayers(cfg);
 
     const wrapsNoteEl = /** @type {HTMLTableCellElement|null} */ (document.getElementById('wraps_note'));
     if (wrapsNoteEl) {
@@ -293,6 +293,9 @@ function computeAll() {
       r.hyd_elec_input_hp_used = +((h_emotor_eff > 0 ? r.hyd_hp_used_at_available / h_emotor_eff : 0)).toFixed(2);
     }
 
+    // ---- Drum visualization ----
+    renderDrumVisualization(rows, summary, cfg, meta);
+
     // ---- Aggregate into per-layer tables ----
     lastElLayer = rowsToElectricLayer(rows, payload_kg, cable_w_kgpm, gr1, gr2, motors);
     lastHyLayer = rowsToHydraulicLayer(rows);
@@ -313,6 +316,7 @@ function computeAll() {
     q('err').textContent = 'ERROR: ' + (e && e.message ? e.message : e);
     if (status) status.textContent = 'error';
     lastElLayer = lastElWraps = lastHyLayer = lastHyWraps = [];
+    clearDrumVisualization();
     clearPlots();
   }
 }

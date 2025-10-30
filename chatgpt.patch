@@ -1,60 +1,8 @@
 diff --git a/src/js/main.mjs b/src/js/main.mjs
-index b7bf146b39e26360ec4392ef1117545658304a80..50cd648e340dfe0f90c5ebae79fafc7dc2abf9d7 100644
+index 916a0596ecdbd34cb8821dd537a56039676d4d68..93859553b6ffb329b5c24a68e64a060b309ce07c 100644
 --- a/src/js/main.mjs
 +++ b/src/js/main.mjs
-@@ -2,50 +2,51 @@
- 
- import {
-   q, read,
-   G, W_PER_HP, PSI_TO_PA, CC_PER_GAL, M_PER_IN,
-   tension_kgf, elec_available_tension_kgf,
-   gpm_from_cc_rev_and_rpm, rpm_from_gpm_and_disp,
-   psi_from_torque_and_disp_Nm_cc, torque_per_motor_from_pressure_Pa,
-   line_speed_mpm_from_motor_rpm, hp_from_psi_and_gpm
- } from './utils.mjs';
- 
- import { setupInputPersistence } from './persist-inputs.mjs';
- 
- import { calcLayers } from './layer-engine.mjs';
- 
- import {
-   rowsToElectricLayer, projectElectricWraps, renderElectricTables
- } from './electric.mjs';
- 
- import {
-   rowsToHydraulicLayer, projectHydraulicWraps, renderHydraulicTables
- } from './hydraulic.mjs';
- 
- import { drawWaveContours, drawWaveHeightContours } from './plots/wave-contours.mjs';
- import { drawDepthProfiles } from './plots/depth-profiles.mjs';
- import { setupComponentSelectors } from './component-selectors.mjs';
-+import { renderDrumVisualization, clearDrumVisualization } from './drum-visual.mjs';
- 
- // ---- App state for plots/tables ----
- let lastElLayer = [], lastElWraps = [];
- let lastHyLayer = [], lastHyWraps = [];
- 
- // ---- Wire up events once DOM is ready ----
- document.addEventListener('DOMContentLoaded', () => {
-   setupInputPersistence();
- 
-   setupComponentSelectors();
- 
-   setupPlotResizeToggles();
- 
-   setupAutoRecompute();
- 
-   document.querySelectorAll('.param-label').forEach(label => {
-     const code = label.dataset.code;
-     if (code) {
-       label.setAttribute('title', code);
-     }
-   });
- 
-   // Tabs
-   document.querySelectorAll('.tab-btn').forEach(b => {
-     b.addEventListener('click', () => {
-@@ -149,51 +150,51 @@ function computeAll() {
+@@ -176,51 +176,51 @@ function computeAll() {
      const motor_tmax = read('motor_tmax');
      const P_per_motor_W = (Number.isFinite(motor_hp) ? motor_hp : 0) * W_PER_HP;
  
@@ -107,7 +55,7 @@ index b7bf146b39e26360ec4392ef1117545658304a80..50cd648e340dfe0f90c5ebae79fafc7d
        if (P_per_motor_W > 0 && motorTorque_e > 0) {
          rpm_power_e = (P_per_motor_W / motorTorque_e) * 60 / (2 * Math.PI);
        } else if (P_per_motor_W > 0 && motorTorque_e === 0) {
-@@ -244,70 +245,73 @@ function computeAll() {
+@@ -271,70 +271,74 @@ function computeAll() {
          speed_avail_mpm = Math.min(speed_power_mpm, speed_flow_mpm);
  
          // Power used at the actual available speed
@@ -133,6 +81,7 @@ index b7bf146b39e26360ec4392ef1117545658304a80..50cd648e340dfe0f90c5ebae79fafc7d
        r.hyd_elec_input_hp_used = +((h_emotor_eff > 0 ? r.hyd_hp_used_at_available / h_emotor_eff : 0)).toFixed(2);
      }
  
++    // ---- Drum visualization ----
 +    renderDrumVisualization(rows, summary, cfg, meta);
 +
      // ---- Aggregate into per-layer tables ----
