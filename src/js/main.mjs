@@ -39,6 +39,8 @@ document.addEventListener('DOMContentLoaded', () => {
 
   setupAutoRecompute();
 
+  updateBuildIndicator();
+
   document.querySelectorAll('.param-label').forEach(label => {
     const code = label.dataset.code;
     if (code) {
@@ -68,6 +70,30 @@ document.addEventListener('DOMContentLoaded', () => {
   // Initial compute
   computeAll();
 });
+
+function updateBuildIndicator() {
+  const indicator = /** @type {HTMLElement|null} */ (document.getElementById('build-info'));
+  if (!indicator) return;
+
+  const lastModified = new Date(document.lastModified);
+  if (Number.isNaN(lastModified.getTime())) {
+    indicator.textContent = `Updated ${document.lastModified}`;
+    return;
+  }
+
+  const formatter = new Intl.DateTimeFormat('en-US', {
+    year: 'numeric',
+    month: 'short',
+    day: '2-digit',
+    hour: '2-digit',
+    minute: '2-digit',
+    second: '2-digit',
+    hour12: false,
+    timeZone: 'UTC'
+  });
+
+  indicator.textContent = `Updated ${formatter.format(lastModified)} UTC`;
+}
 
 function setupPlotResizeToggles() {
   const toggles = document.querySelectorAll('[data-plot-toggle]');
