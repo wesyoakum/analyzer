@@ -140,10 +140,16 @@ export function renderDrumVisualization(rows, summary, cfg, meta) {
   for (const row of rows) {
     if (seen.has(row.layer_no)) continue;
     seen.add(row.layer_no);
-    uniqueLayers.push({ layer_no: row.layer_no, outer_dia_in: row.layer_dia_in });
+    uniqueLayers.push({ layer_no: row.layer_no, center_dia_in: row.layer_dia_in });
   }
-  
-  const derivedOuterRadiusIn = Math.max(0, (core_dia_in || 0) / 2 + (lebus_thk_in || 0) + cable_dia_in * uniqueLayers.length);
+
+  const maxCenterlineRadiusIn = uniqueLayers.reduce((max, layer) => {
+    const radius = Number.isFinite(layer.center_dia_in) ? layer.center_dia_in / 2 : 0;
+    return Math.max(max, radius);
+  }, 0);
+  const derivedOuterRadiusIn = maxCenterlineRadiusIn > 0
+    ? maxCenterlineRadiusIn + (cable_dia_in > 0 ? cable_dia_in / 2 : 0)
+    : Math.max(0, (core_dia_in || 0) / 2 + (lebus_thk_in || 0) + (cable_dia_in > 0 ? cable_dia_in / 2 : 0));
   const outerDiaIn = Math.max(
     Math.max(full_drum_dia_in || 0, derivedOuterRadiusIn * 2),
     core_dia_in || 0,
@@ -215,8 +221,6 @@ export function renderDrumVisualization(rows, summary, cfg, meta) {
     'stroke-dasharray': '6 6'
   }));
 
-  const coreRadiusIn = Math.max(0, (core_dia_in || 0) / 2);
-  const lebusOffsetIn = Math.max(0, (lebus_thk_in || 0));
   const cableRadiusPx = cable_dia_in > 0 ? (cable_dia_in / 2) * scale : 0;
   const cablePitchPx = cable_dia_in > 0 ? cable_dia_in * scale : 0;
 
@@ -230,13 +234,14 @@ export function renderDrumVisualization(rows, summary, cfg, meta) {
       const wraps = wrapsByLayer.get(layer.layer_no) || 0;
       if (wraps <= 0) return;
       const style = layerStyles[idx];
-      const centerOffsetIn = coreRadiusIn + lebusOffsetIn + (idx + 0.5) * cable_dia_in;
+      const centerOffsetIn = Number.isFinite(layer.center_dia_in) ? layer.center_dia_in / 2 : 0;
       const centerOffsetPx = centerOffsetIn * scale;
+      const layerPhasePx = (layer.layer_no % 2 === 0) ? cablePitchPx / 2 : 0;
       const topY = centerY - centerOffsetPx;
       const bottomY = centerY + centerOffsetPx;
 
       for (let w = 0; w < wraps; w++) {
-        const cx = spoolLeft + cableRadiusPx + w * cablePitchPx;
+        const cx = spoolLeft + cableRadiusPx + layerPhasePx + w * cablePitchPx;
         if (cx - cableRadiusPx < spoolLeft - 1e-3) continue;
         if (cx + cableRadiusPx > spoolRight + 1e-3) continue;
 
