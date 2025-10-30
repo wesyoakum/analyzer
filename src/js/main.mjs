@@ -24,6 +24,7 @@ import {
 import { drawWaveContours, drawWaveHeightContours } from './plots/wave-contours.mjs';
 import { drawDepthProfiles } from './plots/depth-profiles.mjs';
 import { setupComponentSelectors } from './component-selectors.mjs';
+import { renderDrumVisualization, clearDrumVisualization } from './drum-visual.mjs';
 
 // ---- App state for plots/tables ----
 let lastElLayer = [], lastElWraps = [];
