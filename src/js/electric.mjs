@@ -1,7 +1,8 @@
 // ===== electric.mjs — electric-side layer aggregation + table rendering =====
 import {
   G, M_PER_IN,
-  tension_kgf, elec_available_tension_kgf
+  tension_kgf, elec_available_tension_kgf,
+  TENSION_SAFETY_FACTOR
 } from './utils.mjs';
 
 /**
@@ -63,14 +64,16 @@ export function rowsToElectricLayer(rows, payload_kg, cable_w_kgpm, gr1, gr2, mo
   const denom = (gr1 || 1) * (gr2 || 1) * (motors || 1);
 
   for (const L of [...byLayer.values()].sort((a, b) => a.layer_no - b.layer_no)) {
-    const maxT_kgf = tension_kgf(L.pre_deployed_m, payload_kg, cable_w_kgpm);
+    const maxTheo_kgf = tension_kgf(L.pre_deployed_m, payload_kg, cable_w_kgpm);
+    const maxReq_kgf = +(maxTheo_kgf * TENSION_SAFETY_FACTOR).toFixed(1);
     const radius_m = (L.layer_dia_in * M_PER_IN) / 2;
-    const maxT_Nm = +(maxT_kgf * G * radius_m).toFixed(1);
+    const maxT_Nm = +(maxReq_kgf * G * radius_m).toFixed(1);
     const maxMotorNm = +(maxT_Nm / denom).toFixed(1);
 
     out.push({
       ...L,
-      max_tension_kgf: maxT_kgf,
+      max_tension_theoretical_kgf: maxTheo_kgf,
+      max_tension_required_kgf: maxReq_kgf,
       max_torque_Nm: maxT_Nm,
       max_motor_torque_Nm: maxMotorNm
     });
@@ -93,7 +96,8 @@ export function projectElectricWraps(rows) {
     spooled_len_m: r.spooled_len_m,
     deployed_len_m: r.deployed_len_m,
     total_cable_len_m: r.total_cable_len_m,
-    tension_kgf: r.tension_kgf,
+    tension_required_kgf: r.tension_kgf,
+    tension_theoretical_kgf: r.tension_theoretical_kgf,
     torque_Nm: r.torque_Nm,
     motor_torque_Nm: r.motor_torque_Nm,
     motor_rpm: r.motor_rpm,
@@ -118,7 +122,8 @@ export function renderElectricTables(elLayers, elWraps, tbodyLayer, tbodyWraps) 
       <td>${r.layer_no}</td><td>${r.layer_dia_in}</td>
       <td>${r.pre_on_drum_m}</td><td>${r.pre_deployed_m}</td>
       <td>${r.post_on_drum_m}</td><td>${r.post_deployed_m}</td>
-      <td>${r.max_tension_kgf}</td><td>${r.max_torque_Nm}</td><td>${r.max_motor_torque_Nm}</td>
+      <td>${r.max_tension_theoretical_kgf}</td><td>${r.max_tension_required_kgf}</td>
+      <td>${r.max_torque_Nm}</td><td>${r.max_motor_torque_Nm}</td>
       <td>${r.motor_rpm_at_start ?? ''}</td><td>${r.line_speed_at_start_mpm ?? ''}</td><td>${r.avail_tension_kgf_at_start ?? ''}</td>`;
     tbodyLayer.appendChild(tr);
   }
@@ -130,7 +135,8 @@ export function renderElectricTables(elLayers, elWraps, tbodyLayer, tbodyWraps) 
     tr.innerHTML = `
       <td>${r.wrap_no}</td><td>${r.layer_no}</td><td>${r.layer_dia_in}</td>
       <td>${r.wrap_len_in}</td><td>${r.pre_spooled_len_m}</td><td>${r.spooled_len_m}</td><td>${r.deployed_len_m}</td>
-      <td>${r.tension_kgf}</td><td>${r.torque_Nm}</td><td>${r.motor_torque_Nm}</td>
+      <td>${r.tension_theoretical_kgf ?? ''}</td><td>${r.tension_required_kgf ?? ''}</td>
+      <td>${r.torque_Nm}</td><td>${r.motor_torque_Nm}</td>
       <td>${r.motor_rpm}</td><td>${r.line_speed_mpm}</td><td>${r.avail_tension_kgf}</td>`;
     tbodyWraps.appendChild(tr);
   }

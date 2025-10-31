@@ -275,6 +275,32 @@
             <tr class="note">
               <td colspan="3" class="dim">Selecting a system populates drum geometry, drivetrain, and component selections automatically. Editing any populated field clears the system selection.</td>
             </tr>
+            <tr>
+              <th scope="row">
+                <label class="param-label" for="rated_speed_mpm" data-code="rated_speed_mpm">Rated Line Speed <span class="symbol" aria-hidden="true">v<sub>rated</sub></span></label>
+              </th>
+              <td class="value"><input id="rated_speed_mpm" type="number" step="0.1" value="30"></td>
+              <td class="units">m/min</td>
+            </tr>
+            <tr>
+              <th scope="row">
+                <label class="param-label" for="rated_swl_kgf" data-code="rated_swl_kgf">Safe Working Load <span class="symbol" aria-hidden="true">T<sub>SWL</sub></span></label>
+              </th>
+              <td class="value"><input id="rated_swl_kgf" type="number" step="1" value="8000"></td>
+              <td class="units">kgf</td>
+            </tr>
+            <tr>
+              <th scope="row">
+                <label class="param-label" for="system_efficiency" data-code="system_efficiency">System Efficiency <span class="symbol" aria-hidden="true">η<sub>sys</sub></span></label>
+              </th>
+              <td class="value"><input id="system_efficiency" type="number" step="0.01" value="0.9"></td>
+              <td class="units">–</td>
+            </tr>
+            <tr>
+              <th scope="row">Minimum System Horsepower</th>
+              <td class="value"><span id="system_min_hp" class="output-field">–</span></td>
+              <td class="units">hp</td>
+            </tr>
           </tbody>
         </table>
       </section>
@@ -515,7 +541,8 @@
                 <svg id="depth_tension_svg" viewBox="0 0 1000 540"></svg>
               </div>
               <div class="legend legend--compact">
-                <div class="legitem"><span class="swatch accent"></span><span>Required tension</span></div>
+                <div class="legitem"><span class="swatch theoretical"></span><span>Theoretical tension</span></div>
+                <div class="legitem"><span class="swatch accent"></span><span>Required tension (with safety factor)</span></div>
                 <div class="legitem"><span class="swatch accent dashed"></span><span>Available tension</span></div>
                 <div class="legitem"><span class="swatch red"></span><span>Required above available</span></div>
               </div>
@@ -556,7 +583,8 @@
               <th title="pre_deployed_m">pre_dep<br>(m)</th>
               <th title="post_on_drum_m">post_on<br>(m)</th>
               <th title="post_deployed_m">post_dep<br>(m)</th>
-              <th title="max_tension_kgf">T<sub>max</sub><br>(kgf)</th>
+              <th title="max_tension_theoretical_kgf">T<sub>theo,max</sub><br>(kgf)</th>
+              <th title="max_tension_required_kgf">T<sub>req,max</sub><br>(kgf)</th>
               <th title="max_torque_Nm">τ<sub>max</sub><br>(N·m)</th>
               <th title="max_motor_torque_Nm">τ<sub>m,max</sub><br>(N·m)</th>
               <th title="motor_rpm_at_start">n<sub>m,start</sub><br>(rpm)</th>
@@ -587,7 +615,8 @@
                 <th title="pre_spooled_len_m">pre_spool<br>(m)</th>
                 <th title="spooled_len_m">on_drum<br>(m)</th>
                 <th title="deployed_len_m">dep<br>(m)</th>
-                <th title="tension_kgf">T<br>(kgf)</th>
+                <th title="tension_theoretical_kgf">T<sub>theo</sub><br>(kgf)</th>
+                <th title="tension_required_kgf">T<sub>req</sub><br>(kgf)</th>
                 <th title="torque_Nm">τ<br>(N·m)</th>
                 <th title="motor_torque_Nm">τ<sub>m</sub><br>(N·m)</th>
                 <th title="motor_rpm">n<sub>m</sub><br>(rpm)</th>
@@ -647,6 +676,8 @@
                 <th title="pre_spooled_len_m">pre_spool<br>(m)</th>
                 <th title="spooled_len_m">on_drum<br>(m)</th>
                 <th title="deployed_len_m">dep<br>(m)</th>
+                <th title="tension_theoretical_kgf">T<sub>theo</sub><br>(kgf)</th>
+                <th title="tension_required_kgf">T<sub>req</sub><br>(kgf)</th>
                 <th title="hyd_P_required_psi">P<sub>req</sub><br>(psi)</th>
                 <th title="hyd_speed_power_mpm">v<sub>P</sub><br>(m/min)</th>
                 <th title="hyd_speed_flow_mpm">v<sub>Q</sub><br>(m/min)</th>

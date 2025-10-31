@@ -1,127 +1,74 @@
-diff --git a/src/js/drum-visual.mjs b/src/js/drum-visual.mjs
-index 8b620a57eecb73b74c8be63f831899645d33744a..01e947d22ea87729ef500f7f0836abfc462463e6 100644
---- a/src/js/drum-visual.mjs
-+++ b/src/js/drum-visual.mjs
-@@ -174,111 +174,118 @@ export function renderDrumVisualization(rows, summary, cfg, meta) {
-     : 0;
-   const outerDiaIn = Math.max(
-     summaryOuterDiaIn,
-     derivedOuterRadiusIn * 2,
-     core_dia_in || 0,
-     cable_dia_in || 0,
-     1
-   );
-   const heightIn = outerDiaIn;
-   const scale = heightIn > 0 ? (SVG_BASE_HEIGHT - 2 * SVG_MARGIN) / heightIn : 1;
-   const widthIn = Math.max(flange_to_flange_in || 0, cable_dia_in || 0, 1);
-   const widthPx = widthIn * scale;
-   const heightPx = heightIn * scale;
-   const viewWidth = widthPx + SVG_MARGIN * 2;
-   const viewHeight = heightPx + SVG_MARGIN * 2;
+diff --git a/src/js/utils.mjs b/src/js/utils.mjs
+index f8bcb8535b3ff9bfc76db279dadb78ae212d72ce..a0933dcbd7c0cd2dcfb9e5c8a8117570dd7aea66 100644
+--- a/src/js/utils.mjs
++++ b/src/js/utils.mjs
+@@ -1,66 +1,68 @@
+ // ===== utils.mjs — shared constants, unit helpers, math, and SVG helpers =====
  
-   svg.setAttribute('viewBox', `0 0 ${viewWidth.toFixed(2)} ${viewHeight.toFixed(2)}`);
+ // ---- Constants (SI-centric where possible) ----
+ export const IN_PER_MM = 1 / 25.4;
+ export const M_PER_IN  = 0.0254;
+ export const G         = 9.80665;          // m/s^2
+ export const W_PER_HP  = 745.7;            // W per hp (mechanical)
+ export const TWO_PI    = 2 * Math.PI;
+ export const CC_PER_GAL = 3785.411784;     // cc per US gallon
+ export const PSI_TO_PA  = 6894.757293;     // Pa per psi
  
-   const spoolLeft = SVG_MARGIN;
-   const spoolRight = spoolLeft + widthPx;
-   const centerY = SVG_MARGIN + heightPx / 2;
- 
-   const coreHeightPx = Math.max(0, (core_dia_in || 0) * scale);
-   const coreWidthPx = Math.max(0, (flange_to_flange_in || 0) * scale);
- 
-+  const strokeWidth = 0.85;
-+  const strokeWidthAttr = strokeWidth.toFixed(3);
++export const TENSION_SAFETY_FACTOR = 1.25; // Required tension = theoretical × 1.25 safety factor
 +
-   if (coreHeightPx > 0 && coreWidthPx > 0) {
-     svg.appendChild(svgEl('rect', {
-       x: spoolLeft.toFixed(2),
-       y: (centerY - coreHeightPx / 2).toFixed(2),
-       width: coreWidthPx.toFixed(2),
-       height: coreHeightPx.toFixed(2),
-       fill: 'none',
-       stroke: rgbToCss(ink900Rgb, 0.72),
--      'stroke-width': 1
-+      'stroke-width': strokeWidthAttr,
-+      'vector-effect': 'non-scaling-stroke'
-     }));
-   }
+ export const constants = {
+   IN_PER_MM, M_PER_IN, G, W_PER_HP, TWO_PI, CC_PER_GAL, PSI_TO_PA
+ };
  
-   const axisColor = rgbToCss(ink700Rgb, 0.18);
-   svg.appendChild(svgEl('line', {
-     x1: spoolLeft.toFixed(2),
-     y1: centerY.toFixed(2),
-     x2: spoolRight.toFixed(2),
-     y2: centerY.toFixed(2),
-     stroke: axisColor,
--    'stroke-width': 1,
-+    'stroke-width': strokeWidthAttr,
-+    'vector-effect': 'non-scaling-stroke',
-     'stroke-dasharray': '6 6'
-   }));
+ // ---- DOM helpers (kept tiny; only used by main & plot modules) ----
+ export const q = (id) => /** @type {HTMLElement} */ (document.getElementById(id));
+ export const read = (id) => parseFloat(q(id).value.replace(',', '.'));
  
-   const cableRadiusPx = cable_dia_in > 0 ? (cable_dia_in / 2) * scale : 0;
-   const cablePitchPx = cable_dia_in > 0 ? cable_dia_in * scale : 0;
+ // ---- Numeric helpers ----
+ export const truncToHalf = (x) => Math.floor(x * 2) / 2;
+ export const isWhole = (x, eps = 1e-9) => Math.abs(x - Math.round(x)) < eps;
  
-   const wrapsByLayer = new Map();
-   for (const row of rows) {
-     wrapsByLayer.set(row.layer_no, (wrapsByLayer.get(row.layer_no) || 0) + 1);
-   }
+ // “nice” tick generator for axes
+ export function niceTicks(min, max, count = 6) {
+   const span = Math.max(1e-12, max - min);
+   const step0 = span / Math.max(1, count);
+   const mag = Math.pow(10, Math.floor(Math.log10(step0)));
+   const norm = step0 / mag;
+   const niceNorm = norm < 1.5 ? 1 : norm < 3 ? 2 : norm < 7 ? 5 : 10;
+   const step = niceNorm * mag;
+   const tmin = Math.ceil(min / step) * step;
+   const tmax = Math.floor(max / step) * step;
+   const ticks = [];
+   for (let v = tmin; v <= tmax + 1e-12; v += step) ticks.push(+v.toFixed(10));
+   return { ticks, step };
+ }
  
-   if (cableRadiusPx > 0 && cablePitchPx > 0 && coreWidthPx > 0) {
-     layersForViz.forEach(layer => {
-       const wraps = wrapsByLayer.get(layer.layer_no) || 0;
-       if (wraps <= 0) return;
-       const centerOffsetPx = layer.center_radius_in * scale;
-       const layerPhasePx = (layer.layer_no % 2 === 0) ? cablePitchPx / 2 : 0;
-       const topY = centerY - centerOffsetPx;
-       const bottomY = centerY + centerOffsetPx;
+ // ---- Mechanics / units helpers ----
  
-       for (let w = 0; w < wraps; w++) {
-         const cx = spoolLeft + cableRadiusPx + layerPhasePx + w * cablePitchPx;
-         if (cx - cableRadiusPx < spoolLeft - 1e-3) continue;
-         if (cx + cableRadiusPx > spoolRight + 1e-3) continue;
+-// Tension (kgf) from payload + cable-in-water weight per meter * deployed length
++// Theoretical tension (kgf) from payload + cable-in-water weight per meter * deployed length
+ export const tension_kgf = (deployed_m, payload_kg, cable_w_kgpm) =>
+   +(payload_kg + cable_w_kgpm * deployed_m).toFixed(1);
  
-         svg.appendChild(svgEl('circle', {
-           cx: cx.toFixed(2),
-           cy: topY.toFixed(2),
-           r: cableRadiusPx.toFixed(2),
-           fill: layer.fillColor,
-           stroke: layer.strokeColor,
--          'stroke-width': 1
-+          'stroke-width': strokeWidthAttr,
-+          'vector-effect': 'non-scaling-stroke'
-         }));
+ // Available line tension from electric motor torque cap (kgf)
+ // motor_tmax_Nm: per motor; multiplied by gear ratios and motor count → drum torque
+ export function elec_available_tension_kgf(motor_tmax_Nm, gr1, gr2, motors, radius_m) {
+   if (!Number.isFinite(motor_tmax_Nm) || motor_tmax_Nm <= 0 || !Number.isFinite(radius_m) || radius_m <= 0) return 0;
+   const drum_T = motor_tmax_Nm * (gr1 || 1) * (gr2 || 1) * (motors || 1); // N·m at drum
+   const line_N = drum_T / radius_m;                                       // N
+   return +(line_N / G).toFixed(1);                                        // kgf
+ }
  
-         svg.appendChild(svgEl('circle', {
-           cx: cx.toFixed(2),
-           cy: bottomY.toFixed(2),
-           r: cableRadiusPx.toFixed(2),
-           fill: layer.fillColor,
-           stroke: layer.strokeColor,
--          'stroke-width': 1
-+          'stroke-width': strokeWidthAttr,
-+          'vector-effect': 'non-scaling-stroke'
-         }));
-       }
-     });
-   }
+ // Line speed (m/min) from motor rpm at given layer diameter & gear reductions
+ export function line_speed_mpm_from_motor_rpm(motor_rpm, gr1, gr2, layer_dia_in) {
+   const drum_rpm = motor_rpm / (Math.max(gr1, 1e-9) * Math.max(gr2, 1e-9));
+   const D_m = layer_dia_in * M_PER_IN;
+   return Math.PI * D_m * drum_rpm;
+ }
  
-   // Summary & accessibility copy
-   const cableLenDigits = cable_len_m >= 1000 ? 0 : cable_len_m >= 10 ? 1 : 2;
-   const cableDiaDigits = cable_dia_mm >= 50 ? 0 : cable_dia_mm >= 10 ? 1 : 2;
-   const layerWord = total_layers === 1 ? 'layer' : 'layers';
-   const wrapWord = total_wraps === 1 ? 'wrap' : 'wraps';
-   const summaryLine = `${fmt(cable_len_m, cableLenDigits)} m of ${fmt(cable_dia_mm, cableDiaDigits)} mm cable on ${fmt(total_layers, 0)} ${layerWord} with ${fmt(total_wraps, 0)} total ${wrapWord}`;
-   const wrapsPerLayer = meta && Number.isFinite(meta.wraps_per_layer_used)
-     ? ` (≈${fmt(meta.wraps_per_layer_used, 1)} wraps per layer)`
-     : '';
-   const geometryParts = [
-     `core Ø ${fmt(core_dia_in, 2)} in`,
-     `flange-to-flange ${fmt(flange_to_flange_in, 2)} in`,
-     `Lebus liner ${fmt(lebus_thk_in, 3)} in`,
-     `full drum Ø ${fmt(full_drum_dia_in, 2)} in`
-   ];
-   const geometryLine = `Drum geometry: ${geometryParts.join(', ')}.`;
-   const summaryPlain = `${summaryLine}${wrapsPerLayer}. ${geometryLine}`;
+ // Hydraulic conversions & power
+ export const gpm_from_cc_rev_and_rpm = (cc_rev, rpm) => (cc_rev * rpm) / CC_PER_GAL;
+ export const rpm_from_gpm_and_disp   = (gpm, cc_rev) => (gpm * CC_PER_GAL) / Math.max(cc_rev, 1e-9);
  
-   summaryEl.innerHTML = `<strong>${summaryLine}${wrapsPerLayer}.</strong> ${geometryLine}`;
-   titleEl.textContent = `Winch drum cross-section with ${fmt(total_layers, 0)} ${layerWord}`;
+ export function psi_from_torque_and_disp_Nm_cc(torque_Nm, cc_rev) {
+   const V = Math.max(cc_rev, 1e-12) * 1e-6;     // m^3/rev

@@ -6,7 +6,8 @@ import {
   tension_kgf, elec_available_tension_kgf,
   gpm_from_cc_rev_and_rpm, rpm_from_gpm_and_disp,
   psi_from_torque_and_disp_Nm_cc, torque_per_motor_from_pressure_Pa,
-  line_speed_mpm_from_motor_rpm, hp_from_psi_and_gpm
+  line_speed_mpm_from_motor_rpm, hp_from_psi_and_gpm,
+  TENSION_SAFETY_FACTOR
 } from './utils.mjs';
 
 import { setupInputPersistence } from './persist-inputs.mjs';
@@ -144,6 +145,34 @@ function setupAutoRecompute() {
   });
 }
 
+function updateMinimumSystemHp(ratedSpeedMpm, ratedSwlKgf, efficiency) {
+  const output = /** @type {HTMLElement|null} */ (document.getElementById('system_min_hp'));
+  if (!output) return;
+
+  const validSpeed = Number.isFinite(ratedSpeedMpm) && ratedSpeedMpm > 0;
+  const validSwl = Number.isFinite(ratedSwlKgf) && ratedSwlKgf > 0;
+
+  if (!validSpeed || !validSwl) {
+    output.textContent = '–';
+    return;
+  }
+
+  const eff = Number.isFinite(efficiency) && efficiency > 0 ? efficiency : 1;
+  const force_N = ratedSwlKgf * G;
+  const speed_mps = ratedSpeedMpm / 60;
+  const base_power_W = force_N * speed_mps;
+  const base_hp = base_power_W / W_PER_HP;
+  const hp_with_eff = base_hp / eff;
+  const min_hp = hp_with_eff * 1.2;
+
+  output.textContent = Number.isFinite(min_hp) ? min_hp.toFixed(1) : '–';
+}
+
+function clearMinimumSystemHp() {
+  const output = /** @type {HTMLElement|null} */ (document.getElementById('system_min_hp'));
+  if (output) output.textContent = '–';
+}
+
 function setupDriveModeControls() {
   const toggles = [
     { mode: 'electric', el: /** @type {HTMLInputElement|null} */ (document.getElementById(DRIVE_MODE_CHECKBOX.electric)) },
@@ -259,6 +288,12 @@ function computeAll() {
     const payload_kg = read('payload_kg');
     const cable_w_kgpm = read('c_w_kgpm');
 
+    const rated_speed_mpm = read('rated_speed_mpm');
+    const rated_swl_kgf = read('rated_swl_kgf');
+    const system_efficiency = read('system_efficiency');
+
+    updateMinimumSystemHp(rated_speed_mpm, rated_swl_kgf, system_efficiency);
+
     // Shared drivetrain
     const gr1 = read('gr1');
     const gr2 = read('gr2');
@@ -308,8 +343,11 @@ function computeAll() {
     // Per-wrap calculations (electric + hydraulic)
     for (const r of rows) {
       // Base tension and torque at drum
-      r.tension_kgf = tension_kgf(r.deployed_len_m, payload_kg, cable_w_kgpm);
-      const tension_N = r.tension_kgf * G;
+      const theoretical_tension = tension_kgf(r.deployed_len_m, payload_kg, cable_w_kgpm);
+      const required_tension = +(theoretical_tension * TENSION_SAFETY_FACTOR).toFixed(1);
+      r.tension_theoretical_kgf = theoretical_tension;
+      r.tension_kgf = required_tension;
+      const tension_N = required_tension * G;
       const radius_m = (r.layer_dia_in * M_PER_IN) / 2;
       r.torque_Nm = +(tension_N * radius_m).toFixed(1);
 
@@ -431,6 +469,7 @@ function computeAll() {
     console.error(e);
     q('err').textContent = 'ERROR: ' + (e && e.message ? e.message : e);
     if (status) status.textContent = 'error';
+    clearMinimumSystemHp();
     lastElLayer = lastElWraps = lastHyLayer = lastHyWraps = [];
     clearDrumVisualization();
     clearPlots();
