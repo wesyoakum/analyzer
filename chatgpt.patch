@@ -1,74 +1,99 @@
-diff --git a/src/js/utils.mjs b/src/js/utils.mjs
-index f8bcb8535b3ff9bfc76db279dadb78ae212d72ce..a0933dcbd7c0cd2dcfb9e5c8a8117570dd7aea66 100644
---- a/src/js/utils.mjs
-+++ b/src/js/utils.mjs
-@@ -1,66 +1,68 @@
- // ===== utils.mjs — shared constants, unit helpers, math, and SVG helpers =====
+diff --git a/src/js/plots/depth-profiles.mjs b/src/js/plots/depth-profiles.mjs
+index a54e4c3c2acd09f9941a2e2b0359f667332b5c8d..4af651eb21138f955d7b0101bb6ed4178f8aca2b 100644
+--- a/src/js/plots/depth-profiles.mjs
++++ b/src/js/plots/depth-profiles.mjs
+@@ -1,31 +1,31 @@
+ // ===== plots/depth-profiles.mjs  Speed vs Depth & Tension vs Depth (DOM-agnostic) =====
+ import { niceTicks, svgEl, TENSION_SAFETY_FACTOR } from '../utils.mjs';
  
- // ---- Constants (SI-centric where possible) ----
- export const IN_PER_MM = 1 / 25.4;
- export const M_PER_IN  = 0.0254;
- export const G         = 9.80665;          // m/s^2
- export const W_PER_HP  = 745.7;            // W per hp (mechanical)
- export const TWO_PI    = 2 * Math.PI;
- export const CC_PER_GAL = 3785.411784;     // cc per US gallon
- export const PSI_TO_PA  = 6894.757293;     // Pa per psi
+ const LIGHT_CANDIDATE_COLOR = '#b9c3d8';
+ const EXCEED_COLOR = '#c65353';
+-const THEORETICAL_COLOR = '#7c8fc5';
++const TENSION_OK_COLOR = '#1b5e20';
  
-+export const TENSION_SAFETY_FACTOR = 1.25; // Required tension = theoretical × 1.25 safety factor
-+
- export const constants = {
-   IN_PER_MM, M_PER_IN, G, W_PER_HP, TWO_PI, CC_PER_GAL, PSI_TO_PA
- };
- 
- // ---- DOM helpers (kept tiny; only used by main & plot modules) ----
- export const q = (id) => /** @type {HTMLElement} */ (document.getElementById(id));
- export const read = (id) => parseFloat(q(id).value.replace(',', '.'));
- 
- // ---- Numeric helpers ----
- export const truncToHalf = (x) => Math.floor(x * 2) / 2;
- export const isWhole = (x, eps = 1e-9) => Math.abs(x - Math.round(x)) < eps;
- 
- // “nice” tick generator for axes
- export function niceTicks(min, max, count = 6) {
-   const span = Math.max(1e-12, max - min);
-   const step0 = span / Math.max(1, count);
-   const mag = Math.pow(10, Math.floor(Math.log10(step0)));
-   const norm = step0 / mag;
-   const niceNorm = norm < 1.5 ? 1 : norm < 3 ? 2 : norm < 7 ? 5 : 10;
-   const step = niceNorm * mag;
-   const tmin = Math.ceil(min / step) * step;
-   const tmax = Math.floor(max / step) * step;
-   const ticks = [];
-   for (let v = tmin; v <= tmax + 1e-12; v += step) ticks.push(+v.toFixed(10));
-   return { ticks, step };
+ function getAccentColor() {
+   if (typeof window !== 'undefined' && typeof document !== 'undefined' && window.getComputedStyle) {
+     const val = window.getComputedStyle(document.documentElement).getPropertyValue('--accent');
+     if (val) return val.trim();
+   }
+   return '#2c56a3';
  }
  
- // ---- Mechanics / units helpers ----
+ /**
+  * Draw both depth profile plots (speed & tension).
+  *
+  * @param {SVGSVGElement} svgSpeed
+  * @param {SVGSVGElement} svgTension
+  * @param {Object} opts
+  * @param {'electric'|'hydraulic'} opts.scenario
+  * @param {Array<Object>} opts.elWraps
+  * @param {Array<Object>} opts.hyWraps
+  * @param {number} opts.payload_kg
+  * @param {number} opts.cable_w_kgpm
+  * @param {number} [opts.dead_end_m=0]
+  */
+ export function drawDepthProfiles(svgSpeed, svgTension, {
+   scenario = 'electric',
+   elWraps = [],
+@@ -210,58 +210,58 @@ function drawTensionProfile(svg, segments, maxDepth, maxTension, payload_kg, cab
+     }));
+   });
  
--// Tension (kgf) from payload + cable-in-water weight per meter * deployed length
-+// Theoretical tension (kgf) from payload + cable-in-water weight per meter * deployed length
- export const tension_kgf = (deployed_m, payload_kg, cable_w_kgpm) =>
-   +(payload_kg + cable_w_kgpm * deployed_m).toFixed(1);
+   const drawPieces = (pieces, { strokeWidth = 2, dash = null } = {}) => {
+     pieces.forEach(seg => {
+       const d0 = Math.max(0, Math.min(seg.d0, maxDepth));
+       const d1 = Math.max(0, Math.min(seg.d1, maxDepth));
+       if (Math.abs(d1 - d0) < 1e-6) return;
+       const pts = [
+         [sx(d0), sy(seg.T0)],
+         [sx(d1), sy(seg.T1)]
+       ];
+       const attrs = {
+         d: pathFrom(pts),
+         fill: 'none',
+         stroke: seg.color,
+         'stroke-width': strokeWidth
+       };
+       if (dash) attrs['stroke-dasharray'] = dash;
+       svg.appendChild(svgEl('path', attrs));
+     });
+   };
  
- // Available line tension from electric motor torque cap (kgf)
- // motor_tmax_Nm: per motor; multiplied by gear ratios and motor count → drum torque
- export function elec_available_tension_kgf(motor_tmax_Nm, gr1, gr2, motors, radius_m) {
-   if (!Number.isFinite(motor_tmax_Nm) || motor_tmax_Nm <= 0 || !Number.isFinite(radius_m) || radius_m <= 0) return 0;
-   const drum_T = motor_tmax_Nm * (gr1 || 1) * (gr2 || 1) * (motors || 1); // N·m at drum
-   const line_N = drum_T / radius_m;                                       // N
-   return +(line_N / G).toFixed(1);                                        // kgf
+   const theoreticalPieces = buildTensionSegments(normalizedSegments, payload_kg, cable_w_kgpm, maxDepth, {
+     factor: 1,
+-    colorBelow: THEORETICAL_COLOR,
+-    colorAbove: THEORETICAL_COLOR
++    colorBelow: TENSION_OK_COLOR,
++    colorAbove: EXCEED_COLOR
+   });
+   drawPieces(theoreticalPieces, { strokeWidth: 2, dash: '6 4' });
+ 
+   const requiredPieces = buildTensionSegments(normalizedSegments, payload_kg, cable_w_kgpm, maxDepth, {
+     factor: TENSION_SAFETY_FACTOR,
+-    colorBelow: accentColor,
++    colorBelow: TENSION_OK_COLOR,
+     colorAbove: EXCEED_COLOR
+   });
+   drawPieces(requiredPieces, { strokeWidth: 2.4 });
+ 
+   svg.appendChild(svgEl('line', { x1: ML, y1: sy(0), x2: W - MR, y2: sy(0), stroke: '#bbb', 'stroke-dasharray': '4 4' }));
+ 
+   function pathFrom(pts) {
+     if (!pts.length) return '';
+     let d = `M ${pts[0][0]} ${pts[0][1]}`;
+     for (let i = 1; i < pts.length; i++) d += ` L ${pts[i][0]} ${pts[i][1]}`;
+     return d;
+   }
  }
  
- // Line speed (m/min) from motor rpm at given layer diameter & gear reductions
- export function line_speed_mpm_from_motor_rpm(motor_rpm, gr1, gr2, layer_dia_in) {
-   const drum_rpm = motor_rpm / (Math.max(gr1, 1e-9) * Math.max(gr2, 1e-9));
-   const D_m = layer_dia_in * M_PER_IN;
-   return Math.PI * D_m * drum_rpm;
- }
- 
- // Hydraulic conversions & power
- export const gpm_from_cc_rev_and_rpm = (cc_rev, rpm) => (cc_rev * rpm) / CC_PER_GAL;
- export const rpm_from_gpm_and_disp   = (gpm, cc_rev) => (gpm * CC_PER_GAL) / Math.max(cc_rev, 1e-9);
- 
- export function psi_from_torque_and_disp_Nm_cc(torque_Nm, cc_rev) {
-   const V = Math.max(cc_rev, 1e-12) * 1e-6;     // m^3/rev
+ function buildTensionSegments(segments, payload_kg, cable_w_kgpm, maxDepth, {
+   factor = 1,
+   colorBelow,
+   colorAbove
+ } = {}) {
+   const boundaries = new Set([0, maxDepth]);
+   segments.forEach(S => {
+     boundaries.add(Math.max(0, S.depth_end));
+     boundaries.add(Math.max(0, S.depth_start));
+   });
+   const sorted = [...boundaries].sort((a, b) => a - b);

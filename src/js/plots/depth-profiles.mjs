@@ -3,7 +3,7 @@ import { niceTicks, svgEl, TENSION_SAFETY_FACTOR } from '../utils.mjs';
 
 const LIGHT_CANDIDATE_COLOR = '#b9c3d8';
 const EXCEED_COLOR = '#c65353';
-const THEORETICAL_COLOR = '#7c8fc5';
+const TENSION_OK_COLOR = '#1b5e20';
 
 function getAccentColor() {
   if (typeof window !== 'undefined' && typeof document !== 'undefined' && window.getComputedStyle) {
@@ -232,14 +232,14 @@ function drawTensionProfile(svg, segments, maxDepth, maxTension, payload_kg, cab
 
   const theoreticalPieces = buildTensionSegments(normalizedSegments, payload_kg, cable_w_kgpm, maxDepth, {
     factor: 1,
-    colorBelow: THEORETICAL_COLOR,
-    colorAbove: THEORETICAL_COLOR
+    colorBelow: TENSION_OK_COLOR,
+    colorAbove: EXCEED_COLOR
   });
   drawPieces(theoreticalPieces, { strokeWidth: 2, dash: '6 4' });
 
   const requiredPieces = buildTensionSegments(normalizedSegments, payload_kg, cable_w_kgpm, maxDepth, {
     factor: TENSION_SAFETY_FACTOR,
-    colorBelow: accentColor,
+    colorBelow: TENSION_OK_COLOR,
     colorAbove: EXCEED_COLOR
   });
   drawPieces(requiredPieces, { strokeWidth: 2.4 });
