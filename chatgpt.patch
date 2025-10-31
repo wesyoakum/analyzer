@@ -1,8 +1,8 @@
 diff --git a/src/js/main.mjs b/src/js/main.mjs
-index 076fa7a8b54171d457b17d7913e69ea3878c4dc4..fce31680574f5f46eeea521fe7a2bb967ef70ecf 100644
+index 076fa7a8b54171d457b17d7913e69ea3878c4dc4..a46839b88a2e558ef42ed74a7bff2b50dd08b8d7 100644
 --- a/src/js/main.mjs
 +++ b/src/js/main.mjs
-@@ -505,74 +505,74 @@ function computeAll() {
+@@ -505,74 +505,79 @@ function computeAll() {
        }
  
        // ----- HYDRAULIC per wrap -----
@@ -32,6 +32,17 @@ index 076fa7a8b54171d457b17d7913e69ea3878c4dc4..fce31680574f5f46eeea521fe7a2bb96
 +        const hp_elec_in_total = (Number.isFinite(h_emotor_hp) ? h_emotor_hp : 0) *
 +          (Number.isFinite(h_strings) ? h_strings : 0);
 +        const eff_total = Number.isFinite(h_emotor_eff) ? h_emotor_eff : 0;
++
++        let speed_power_mpm = 0;
++        if (hp_elec_in_total > 0 && eff_total > 0 && required_tension > 0) {
++          const tension_required_N = required_tension * G;
++          if (tension_required_N > 0) {
++            const power_available_W = hp_elec_in_total * eff_total * W_PER_HP;
++            const speed_power_mps = power_available_W / tension_required_N;
++            speed_power_mpm = speed_power_mps * 60;
++          }
++        }
++        if (!Number.isFinite(speed_power_mpm) || speed_power_mpm < 0) speed_power_mpm = 0;
  
 -        if (P_power_psi > 0) {
 -          const gpm_power_max = (hp_tot_usable * 1714) / P_power_psi;
@@ -41,12 +52,6 @@ index 076fa7a8b54171d457b17d7913e69ea3878c4dc4..fce31680574f5f46eeea521fe7a2bb96
 -          );
 -          speed_power_mpm = line_speed_mpm_from_motor_rpm(rpm_power_per_motor, gr1, gr2, r.layer_dia_in);
 -          speed_avail_mpm = Math.min(speed_power_mpm, speed_flow_mpm);
-+        let speed_power_mpm = 0;
-+        if (hp_elec_in_total > 0 && eff_total > 0 && required_tension > 0) {
-+          speed_power_mpm = (hp_elec_in_total * eff_total) / required_tension;
-+        }
-+        if (!Number.isFinite(speed_power_mpm) || speed_power_mpm < 0) speed_power_mpm = 0;
-+
 +        let speed_avail_mpm = Math.min(speed_power_mpm, speed_flow_mpm);
 +        if (!Number.isFinite(speed_avail_mpm) || speed_avail_mpm < 0) speed_avail_mpm = 0;
  

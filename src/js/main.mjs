@@ -533,7 +533,12 @@ function computeAll() {
 
         let speed_power_mpm = 0;
         if (hp_elec_in_total > 0 && eff_total > 0 && required_tension > 0) {
-          speed_power_mpm = (hp_elec_in_total * eff_total) / required_tension;
+          const tension_required_N = required_tension * G;
+          if (tension_required_N > 0) {
+            const power_available_W = hp_elec_in_total * eff_total * W_PER_HP;
+            const speed_power_mps = power_available_W / tension_required_N;
+            speed_power_mpm = speed_power_mps * 60;
+          }
         }
         if (!Number.isFinite(speed_power_mpm) || speed_power_mpm < 0) speed_power_mpm = 0;
 
