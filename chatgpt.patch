@@ -1,5 +1,5 @@
 diff --git a/src/js/main.mjs b/src/js/main.mjs
-index 076fa7a8b54171d457b17d7913e69ea3878c4dc4..a34a43601c5acd3354a9dc391f32ee9e476db5f4 100644
+index 076fa7a8b54171d457b17d7913e69ea3878c4dc4..fce31680574f5f46eeea521fe7a2bb967ef70ecf 100644
 --- a/src/js/main.mjs
 +++ b/src/js/main.mjs
 @@ -505,74 +505,74 @@ function computeAll() {
@@ -42,8 +42,8 @@ index 076fa7a8b54171d457b17d7913e69ea3878c4dc4..a34a43601c5acd3354a9dc391f32ee9e
 -          speed_power_mpm = line_speed_mpm_from_motor_rpm(rpm_power_per_motor, gr1, gr2, r.layer_dia_in);
 -          speed_avail_mpm = Math.min(speed_power_mpm, speed_flow_mpm);
 +        let speed_power_mpm = 0;
-+        if (hp_elec_in_total > 0 && eff_total > 0) {
-+          speed_power_mpm = required_tension / (hp_elec_in_total * eff_total);
++        if (hp_elec_in_total > 0 && eff_total > 0 && required_tension > 0) {
++          speed_power_mpm = (hp_elec_in_total * eff_total) / required_tension;
 +        }
 +        if (!Number.isFinite(speed_power_mpm) || speed_power_mpm < 0) speed_power_mpm = 0;
 +
