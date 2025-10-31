@@ -75,6 +75,8 @@ export function projectHydraulicWraps(rows) {
     spooled_len_m: r.spooled_len_m,
     deployed_len_m: r.deployed_len_m,
     total_cable_len_m: r.total_cable_len_m,
+    tension_theoretical_kgf: r.tension_theoretical_kgf,
+    tension_required_kgf: r.tension_kgf,
     hyd_P_required_psi: r.hyd_P_required_psi,
     hyd_speed_power_mpm: r.hyd_speed_power_mpm,
     hyd_speed_flow_mpm: r.hyd_speed_flow_mpm,
@@ -116,6 +118,7 @@ export function renderHydraulicTables(hyLayers, hyWraps, tbodyLayer, tbodyWraps)
     tr.innerHTML = `
       <td>${r.wrap_no}</td><td>${r.layer_no}</td><td>${r.layer_dia_in}</td>
       <td>${r.wrap_len_in}</td><td>${r.pre_spooled_len_m}</td><td>${r.spooled_len_m}</td><td>${r.deployed_len_m}</td>
+      <td>${r.tension_theoretical_kgf ?? ''}</td><td>${r.tension_required_kgf ?? ''}</td>
       <td>${r.hyd_P_required_psi}</td><td>${r.hyd_speed_power_mpm}</td>
       <td>${r.hyd_speed_flow_mpm}</td><td>${r.hyd_speed_available_mpm}</td>
       <td>${r.hyd_hp_used_at_available}</td><td>${r.hyd_elec_input_hp_used}</td>
