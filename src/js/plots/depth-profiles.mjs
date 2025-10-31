@@ -51,9 +51,12 @@ export function drawDepthProfiles(svgSpeed, svgTension, {
     ? Math.max(...segments.map(S => Math.max(S.depth_start || 0, S.depth_end || 0)))
     : 0;
   const maxSpeedFromCandidates = segments.length
-    ? Math.max(0, ...segments.map(S => Array.isArray(S.candidate_speeds_ms)
-      ? Math.max(0, ...S.candidate_speeds_ms, S.speed_ms || 0)
-      : (S.speed_ms || 0)))
+    ? Math.max(0, ...segments.map(S => {
+        if (!Array.isArray(S.candidate_speeds_ms) || !S.candidate_speeds_ms.length) {
+          return S.speed_ms || 0;
+        }
+        return Math.max(0, ...S.candidate_speeds_ms.map(C => C.value_ms), S.speed_ms || 0);
+      }))
     : 0;
   const maxSpeed = Math.max(1, maxSpeedFromCandidates);
   const maxAvailT = Math.max(0, ...segments.map(S => S.avail_tension_kgf || 0));
@@ -123,17 +126,17 @@ function drawSpeedProfile(svg, segments, maxDepth, maxSpeed, accentColor) {
     }));
   });
 
-  // candidate speeds (Vp light green, Vq light purple, dashed)
-    segments.forEach(S => {
+  // candidate speeds (Vp power-limited purple, Vq flow-limited green, dashed)
+  segments.forEach(S => {
     if (!Array.isArray(S.candidate_speeds_ms)) return;
     const depthEnd = Math.min(S.depth_start, S.depth_end);
     const depthStart = Math.max(S.depth_start, S.depth_end);
-    S.candidate_speeds_ms.forEach((val, idx) => {
-      if (!Number.isFinite(val)) return;
-      const y = sy(val);
+    S.candidate_speeds_ms.forEach(candidate => {
+      if (!candidate || !Number.isFinite(candidate.value_ms)) return;
+      const y = sy(candidate.value_ms);
       const x0 = sx(depthEnd);
       const x1 = sx(depthStart);
-      const stroke = (idx === 0) ? CANDIDATE_POWER_COLOR : CANDIDATE_FLOW_COLOR;
+      const stroke = (candidate.kind === 'flow') ? CANDIDATE_FLOW_COLOR : CANDIDATE_POWER_COLOR;
 
       svg.appendChild(svgEl('line', {
         x1: x0,
@@ -372,21 +375,33 @@ function wrapsToDepthSegments(wraps, speedField, tensionField, deadEnd = 0, scen
 
     const speedValMpm = Number.isFinite(wrap[speedField]) ? wrap[speedField] : null;
     const candidateFields = (scenario === 'hydraulic')
-      ? ['hyd_speed_power_mpm', 'hyd_speed_flow_mpm']
+      ? [
+          { field: 'hyd_speed_power_mpm', kind: 'power' },
+          { field: 'hyd_speed_flow_mpm', kind: 'flow' }
+        ]
       : [];
-    /** @type {number[]} */
+    /** @type {{kind: 'power'|'flow', value_ms: number}[]} */
     const candidateSpeedsMs = [];
-    for (const field of candidateFields) {
+    for (const { field, kind } of candidateFields) {
       const val = Number.isFinite(wrap[field]) ? wrap[field] : null;
       if (!Number.isFinite(val)) continue;
       const ms = val / 60;
-      if (Number.isFinite(ms)) candidateSpeedsMs.push(ms);
+      if (Number.isFinite(ms)) candidateSpeedsMs.push({ kind, value_ms: ms });
     }
 
     const speedMs = Number.isFinite(speedValMpm) ? speedValMpm / 60 : null;
-    const filteredCandidates = Array.from(new Set(
-      candidateSpeedsMs.filter(v => (speedMs === null) || Math.abs(v - speedMs) > 1e-6)
-    ));
+    /** @type {{kind: 'power'|'flow', value_ms: number}[]} */
+    const filteredCandidates = [];
+    const seenKeys = new Set();
+    for (const candidate of candidateSpeedsMs) {
+      if (speedMs !== null && Math.abs(candidate.value_ms - speedMs) <= 1e-6) {
+        continue;
+      }
+      const key = `${candidate.kind}:${candidate.value_ms.toFixed(6)}`;
+      if (seenKeys.has(key)) continue;
+      seenKeys.add(key);
+      filteredCandidates.push(candidate);
+    }
     const tensionVal = Number.isFinite(wrap[tensionField]) ? wrap[tensionField] : null;
 
     segments.push({
