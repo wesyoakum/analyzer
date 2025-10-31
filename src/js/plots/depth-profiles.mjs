@@ -1,8 +1,8 @@
 // ===== plots/depth-profiles.mjs  Speed vs Depth & Tension vs Depth (DOM-agnostic) =====
 import { niceTicks, svgEl, TENSION_SAFETY_FACTOR } from '../utils.mjs';
 
-const CANDIDATE_POWER_COLOR = '#b7e4c7';
-const CANDIDATE_FLOW_COLOR = '#d8b4fe';
+const CANDIDATE_POWER_COLOR = '#9759b7';
+const CANDIDATE_FLOW_COLOR = '#2d9c77';
 const EXCEED_COLOR = '#c65353';
 const TENSION_OK_COLOR = '#2d9c77';
 
