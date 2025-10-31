@@ -527,17 +527,21 @@ function computeAll() {
 
         // Power-limited speed (cap pressure at max if P_req exceeds max)
         const P_power_psi = (P_req_psi > 0) ? Math.min(P_req_psi, h_max_psi) : 0;
-        let speed_power_mpm = 0, hp_used_at_available = 0, speed_avail_mpm = 0;
+        const hp_elec_in_total = (Number.isFinite(h_emotor_hp) ? h_emotor_hp : 0) *
+          (Number.isFinite(h_strings) ? h_strings : 0);
+        const eff_total = Number.isFinite(h_emotor_eff) ? h_emotor_eff : 0;
 
-        if (P_power_psi > 0) {
-          const gpm_power_max = (hp_tot_usable * 1714) / P_power_psi;
-          const rpm_power_per_motor = Math.min(
-            h_hmot_rpm_cap || Infinity,
-            rpm_from_gpm_and_disp(gpm_power_max / Math.max(motors, 1), h_hmot_cc)
-          );
-          speed_power_mpm = line_speed_mpm_from_motor_rpm(rpm_power_per_motor, gr1, gr2, r.layer_dia_in);
-          speed_avail_mpm = Math.min(speed_power_mpm, speed_flow_mpm);
+        let speed_power_mpm = 0;
+        if (hp_elec_in_total > 0 && eff_total > 0) {
+          speed_power_mpm = required_tension / (hp_elec_in_total * eff_total);
+        }
+        if (!Number.isFinite(speed_power_mpm) || speed_power_mpm < 0) speed_power_mpm = 0;
 
+        let speed_avail_mpm = Math.min(speed_power_mpm, speed_flow_mpm);
+        if (!Number.isFinite(speed_avail_mpm) || speed_avail_mpm < 0) speed_avail_mpm = 0;
+
+        let hp_used_at_available = 0;
+        if (speed_avail_mpm > 0 && P_power_psi > 0) {
           // Power used at the actual available speed
           const D_m = r.layer_dia_in * M_PER_IN;
           const drum_rpm_needed = speed_avail_mpm / (Math.PI * D_m);
@@ -547,10 +551,6 @@ function computeAll() {
           const gpm_used = Math.min(gpm_total_needed, q_tot_gpm);
           hp_used_at_available = hp_from_psi_and_gpm(P_power_psi, gpm_used);
           if (hp_used_at_available > hp_tot_usable) hp_used_at_available = hp_tot_usable;
-        } else {
-          speed_power_mpm = speed_flow_mpm;
-          speed_avail_mpm = speed_flow_mpm;
-          hp_used_at_available = 0;
         }
 
         r.hyd_P_required_psi = Math.round(P_req_psi);
