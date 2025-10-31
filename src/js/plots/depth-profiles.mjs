@@ -38,7 +38,7 @@ export function drawDepthProfiles(svgSpeed, svgTension, {
   const wraps = (scenario === 'electric') ? (elWraps || []) : (hyWraps || []);
   const speedField = (scenario === 'electric')
     ? 'line_speed_mpm'
-    : ['vavail', 'vAvail', 'v_available', 'v_available_mpm', 'hyd_speed_available_mpm'];
+    : ['vavail', 'vAvail', 'v_available', 'v_available_mpm', 'v_avail', 'hyd_speed_available_mpm'];
   const tensionField = (scenario === 'electric')
     ? ['avail_tension_kgf', 't_avail_kgf', 'tAvail']
     : ['Tavail,start', 'Tavail_start', 'tavail_start', 'tavail_start_kgf', 'hyd_avail_tension_kgf'];
@@ -362,15 +362,15 @@ function wrapsToDepthSegments(wraps, speedField, tensionField, deadEnd = 0, scen
     if (!wrap) continue;
     const totalLen = coerceNumeric(wrap, 'total_cable_len_m');
     const preOn = coerceNumeric(wrap, 'pre_spooled_len_m');
-    let depthEnd = coerceNumeric(wrap, 'deployed_len_m');
+    let depthEnd = coerceNumeric(wrap, ['post_dep', 'post_deployed_m', 'deployed_len_m']);
 
     if (!Number.isFinite(depthEnd)) {
       fallbackStart = null;
       continue;
     }
 
-    let depthStart = null;
-    if (Number.isFinite(totalLen) && Number.isFinite(preOn)) {
+    let depthStart = coerceNumeric(wrap, ['pre_dep', 'pre_deployed_m']);
+    if (Number.isFinite(totalLen) && Number.isFinite(preOn) && !Number.isFinite(depthStart)) {
       depthStart = totalLen - preOn;
     } else if (Number.isFinite(fallbackStart)) {
       depthStart = fallbackStart;
@@ -397,8 +397,8 @@ function wrapsToDepthSegments(wraps, speedField, tensionField, deadEnd = 0, scen
     const speedValMpm = coerceNumeric(wrap, speedField);
     const candidateFields = (scenario === 'hydraulic')
       ? [
-          { field: ['vP', 'vp', 'vp_mpm', 'hyd_speed_power_mpm'], kind: 'power' },
-          { field: ['vQ', 'vq', 'vq_mpm', 'hyd_speed_flow_mpm'], kind: 'flow' }
+          { field: ['vP', 'vp', 'v_p', 'vp_mpm', 'hyd_speed_power_mpm'], kind: 'power' },
+          { field: ['vQ', 'vq', 'v_q', 'vq_mpm', 'hyd_speed_flow_mpm'], kind: 'flow' }
         ]
       : [];
     /** @type {{kind: 'power'|'flow', value_ms: number}[]} */
