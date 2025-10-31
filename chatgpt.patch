@@ -1,8 +1,67 @@
 diff --git a/src/js/plots/depth-profiles.mjs b/src/js/plots/depth-profiles.mjs
-index ff6dac38f6a6f78cd3737fe18b4713c8b044387f..483226ca5208089dba0f0e27587ccc4070543dd6 100644
+index ff6dac38f6a6f78cd3737fe18b4713c8b044387f..06a91e90b7b42c1164729cc871bb030e88f9be3e 100644
 --- a/src/js/plots/depth-profiles.mjs
 +++ b/src/js/plots/depth-profiles.mjs
-@@ -310,113 +310,126 @@ function buildTensionSegments(segments, payload_kg, cable_w_kgpm, maxDepth, {
+@@ -14,52 +14,56 @@ function getAccentColor() {
+   return '#2c56a3';
+ }
+ 
+ /**
+  * Draw both depth profile plots (speed & tension).
+  *
+  * @param {SVGSVGElement} svgSpeed
+  * @param {SVGSVGElement} svgTension
+  * @param {Object} opts
+  * @param {'electric'|'hydraulic'} opts.scenario
+  * @param {Array<Object>} opts.elWraps
+  * @param {Array<Object>} opts.hyWraps
+  * @param {number} opts.payload_kg
+  * @param {number} opts.cable_w_kgpm
+  * @param {number} [opts.dead_end_m=0]
+  */
+ export function drawDepthProfiles(svgSpeed, svgTension, {
+   scenario = 'electric',
+   elWraps = [],
+   hyWraps = [],
+   payload_kg = 0,
+   cable_w_kgpm = 0,
+   dead_end_m = 0
+ } = {}) {
+   const wraps = (scenario === 'electric') ? (elWraps || []) : (hyWraps || []);
+-  const speedField = (scenario === 'electric') ? 'line_speed_mpm' : 'hyd_speed_available_mpm';
+-  const tensionField = (scenario === 'electric') ? 'avail_tension_kgf' : 'hyd_avail_tension_kgf';
++  const speedField = (scenario === 'electric')
++    ? 'line_speed_mpm'
++    : ['vavail', 'vAvail', 'v_available', 'v_available_mpm', 'hyd_speed_available_mpm'];
++  const tensionField = (scenario === 'electric')
++    ? ['avail_tension_kgf', 't_avail_kgf', 'tAvail']
++    : ['Tavail,start', 'Tavail_start', 'tavail_start', 'tavail_start_kgf', 'hyd_avail_tension_kgf'];
+ 
+   // Build wrap intervals [depth_start, depth_end] with values
+   const deadEnd = Number.isFinite(dead_end_m) ? Math.max(0, dead_end_m) : 0;
+   const segments = wrapsToDepthSegments(wraps, speedField, tensionField, deadEnd, scenario);
+ 
+   // Sort deep to shallow by start depth
+   segments.sort((a, b) => (b.depth_start || 0) - (a.depth_start || 0));
+ 
+   // Extents
+   const maxDepth = segments.length
+     ? Math.max(...segments.map(S => Math.max(S.depth_start || 0, S.depth_end || 0)))
+     : 0;
+   const maxSpeedFromCandidates = segments.length
+     ? Math.max(0, ...segments.map(S => {
+         if (!Array.isArray(S.candidate_speeds_ms) || !S.candidate_speeds_ms.length) {
+           return S.speed_ms || 0;
+         }
+         return Math.max(0, ...S.candidate_speeds_ms.map(C => C.value_ms), S.speed_ms || 0);
+       }))
+     : 0;
+   const maxSpeed = Math.max(1, maxSpeedFromCandidates);
+   const maxAvailT = Math.max(0, ...segments.map(S => S.avail_tension_kgf || 0));
+   const maxTheoT = payload_kg + cable_w_kgpm * maxDepth;
+   const maxReqT = maxTheoT * TENSION_SAFETY_FACTOR;
+   const maxTension = Math.max(maxReqT, maxAvailT) * 1.05 || 1;
+@@ -310,113 +314,130 @@ function buildTensionSegments(segments, payload_kg, cable_w_kgpm, maxDepth, {
      const firstColor = above0 ? colorAbove : colorBelow;
      const secondColor = above0 ? colorBelow : colorAbove;
  
@@ -30,13 +89,17 @@ index ff6dac38f6a6f78cd3737fe18b4713c8b044387f..483226ca5208089dba0f0e27587ccc40
  
 +function coerceNumeric(wrap, field) {
 +  if (!wrap) return null;
-+  const raw = wrap[field];
-+  if (Number.isFinite(raw)) return raw;
-+  if (typeof raw === 'string') {
-+    const cleaned = raw.replace(/,/g, '').trim();
-+    if (!cleaned) return null;
-+    const parsed = Number.parseFloat(cleaned);
-+    return Number.isFinite(parsed) ? parsed : null;
++  const fields = Array.isArray(field) ? field : [field];
++  for (const name of fields) {
++    if (!name) continue;
++    const raw = wrap[name];
++    if (Number.isFinite(raw)) return raw;
++    if (typeof raw === 'string') {
++      const cleaned = raw.replace(/,/g, '').trim();
++      if (!cleaned) continue;
++      const parsed = Number.parseFloat(cleaned);
++      if (Number.isFinite(parsed)) return parsed;
++    }
 +  }
 +  return null;
 +}
@@ -89,8 +152,10 @@ index ff6dac38f6a6f78cd3737fe18b4713c8b044387f..483226ca5208089dba0f0e27587ccc40
 +    const speedValMpm = coerceNumeric(wrap, speedField);
      const candidateFields = (scenario === 'hydraulic')
        ? [
-           { field: 'hyd_speed_power_mpm', kind: 'power' },
-           { field: 'hyd_speed_flow_mpm', kind: 'flow' }
+-          { field: 'hyd_speed_power_mpm', kind: 'power' },
+-          { field: 'hyd_speed_flow_mpm', kind: 'flow' }
++          { field: ['vP', 'vp', 'vp_mpm', 'hyd_speed_power_mpm'], kind: 'power' },
++          { field: ['vQ', 'vq', 'vq_mpm', 'hyd_speed_flow_mpm'], kind: 'flow' }
          ]
        : [];
      /** @type {{kind: 'power'|'flow', value_ms: number}[]} */

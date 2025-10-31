@@ -36,8 +36,12 @@ export function drawDepthProfiles(svgSpeed, svgTension, {
   dead_end_m = 0
 } = {}) {
   const wraps = (scenario === 'electric') ? (elWraps || []) : (hyWraps || []);
-  const speedField = (scenario === 'electric') ? 'line_speed_mpm' : 'hyd_speed_available_mpm';
-  const tensionField = (scenario === 'electric') ? 'avail_tension_kgf' : 'hyd_avail_tension_kgf';
+  const speedField = (scenario === 'electric')
+    ? 'line_speed_mpm'
+    : ['vavail', 'vAvail', 'v_available', 'v_available_mpm', 'hyd_speed_available_mpm'];
+  const tensionField = (scenario === 'electric')
+    ? ['avail_tension_kgf', 't_avail_kgf', 'tAvail']
+    : ['Tavail,start', 'Tavail_start', 'tavail_start', 'tavail_start_kgf', 'hyd_avail_tension_kgf'];
 
   // Build wrap intervals [depth_start, depth_end] with values
   const deadEnd = Number.isFinite(dead_end_m) ? Math.max(0, dead_end_m) : 0;
@@ -334,13 +338,17 @@ function buildTensionSegments(segments, payload_kg, cable_w_kgpm, maxDepth, {
 
 function coerceNumeric(wrap, field) {
   if (!wrap) return null;
-  const raw = wrap[field];
-  if (Number.isFinite(raw)) return raw;
-  if (typeof raw === 'string') {
-    const cleaned = raw.replace(/,/g, '').trim();
-    if (!cleaned) return null;
-    const parsed = Number.parseFloat(cleaned);
-    return Number.isFinite(parsed) ? parsed : null;
+  const fields = Array.isArray(field) ? field : [field];
+  for (const name of fields) {
+    if (!name) continue;
+    const raw = wrap[name];
+    if (Number.isFinite(raw)) return raw;
+    if (typeof raw === 'string') {
+      const cleaned = raw.replace(/,/g, '').trim();
+      if (!cleaned) continue;
+      const parsed = Number.parseFloat(cleaned);
+      if (Number.isFinite(parsed)) return parsed;
+    }
   }
   return null;
 }
@@ -389,8 +397,8 @@ function wrapsToDepthSegments(wraps, speedField, tensionField, deadEnd = 0, scen
     const speedValMpm = coerceNumeric(wrap, speedField);
     const candidateFields = (scenario === 'hydraulic')
       ? [
-          { field: 'hyd_speed_power_mpm', kind: 'power' },
-          { field: 'hyd_speed_flow_mpm', kind: 'flow' }
+          { field: ['vP', 'vp', 'vp_mpm', 'hyd_speed_power_mpm'], kind: 'power' },
+          { field: ['vQ', 'vq', 'vq_mpm', 'hyd_speed_flow_mpm'], kind: 'flow' }
         ]
       : [];
     /** @type {{kind: 'power'|'flow', value_ms: number}[]} */
