@@ -332,6 +332,19 @@ function buildTensionSegments(segments, payload_kg, cable_w_kgpm, maxDepth, {
   return merged;
 }
 
+function coerceNumeric(wrap, field) {
+  if (!wrap) return null;
+  const raw = wrap[field];
+  if (Number.isFinite(raw)) return raw;
+  if (typeof raw === 'string') {
+    const cleaned = raw.replace(/,/g, '').trim();
+    if (!cleaned) return null;
+    const parsed = Number.parseFloat(cleaned);
+    return Number.isFinite(parsed) ? parsed : null;
+  }
+  return null;
+}
+
 function wrapsToDepthSegments(wraps, speedField, tensionField, deadEnd = 0, scenario = 'electric') {
   /** @type {Array<Object>} */
   const segments = [];
@@ -339,9 +352,9 @@ function wrapsToDepthSegments(wraps, speedField, tensionField, deadEnd = 0, scen
 
   for (const wrap of wraps) {
     if (!wrap) continue;
-    const totalLen = Number.isFinite(wrap.total_cable_len_m) ? wrap.total_cable_len_m : null;
-    const preOn = Number.isFinite(wrap.pre_spooled_len_m) ? wrap.pre_spooled_len_m : null;
-    let depthEnd = Number.isFinite(wrap.deployed_len_m) ? wrap.deployed_len_m : null;
+    const totalLen = coerceNumeric(wrap, 'total_cable_len_m');
+    const preOn = coerceNumeric(wrap, 'pre_spooled_len_m');
+    let depthEnd = coerceNumeric(wrap, 'deployed_len_m');
 
     if (!Number.isFinite(depthEnd)) {
       fallbackStart = null;
@@ -373,7 +386,7 @@ function wrapsToDepthSegments(wraps, speedField, tensionField, deadEnd = 0, scen
     depthStart = toDepth(depthStart);
     depthEnd = toDepth(depthEnd);
 
-    const speedValMpm = Number.isFinite(wrap[speedField]) ? wrap[speedField] : null;
+    const speedValMpm = coerceNumeric(wrap, speedField);
     const candidateFields = (scenario === 'hydraulic')
       ? [
           { field: 'hyd_speed_power_mpm', kind: 'power' },
@@ -383,7 +396,7 @@ function wrapsToDepthSegments(wraps, speedField, tensionField, deadEnd = 0, scen
     /** @type {{kind: 'power'|'flow', value_ms: number}[]} */
     const candidateSpeedsMs = [];
     for (const { field, kind } of candidateFields) {
-      const val = Number.isFinite(wrap[field]) ? wrap[field] : null;
+      const val = coerceNumeric(wrap, field);
       if (!Number.isFinite(val)) continue;
       const ms = val / 60;
       if (Number.isFinite(ms)) candidateSpeedsMs.push({ kind, value_ms: ms });
@@ -402,7 +415,7 @@ function wrapsToDepthSegments(wraps, speedField, tensionField, deadEnd = 0, scen
       seenKeys.add(key);
       filteredCandidates.push(candidate);
     }
-    const tensionVal = Number.isFinite(wrap[tensionField]) ? wrap[tensionField] : null;
+    const tensionVal = coerceNumeric(wrap, tensionField);
 
     segments.push({
       depth_start: depthStart,
