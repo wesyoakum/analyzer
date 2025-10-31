@@ -3,7 +3,7 @@ import { niceTicks, svgEl, TENSION_SAFETY_FACTOR } from '../utils.mjs';
 
 const LIGHT_CANDIDATE_COLOR = '#b9c3d8';
 const EXCEED_COLOR = '#c65353';
-const TENSION_OK_COLOR = '#1b5e20';
+const TENSION_OK_COLOR = '#2d9c77';
 
 function getAccentColor() {
   if (typeof window !== 'undefined' && typeof document !== 'undefined' && window.getComputedStyle) {
