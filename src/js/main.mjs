@@ -31,6 +31,77 @@ import { renderDrumVisualization, clearDrumVisualization } from './drum-visual.m
 let lastElLayer = [], lastElWraps = [];
 let lastHyLayer = [], lastHyWraps = [];
 
+const CSV_BUTTON_SPECS = {
+  csv_el_layer: {
+    filename: () => 'electric-layer.csv',
+    columns: [
+      'layer_no', 'layer_dia_in', 'pre_on_drum_m', 'pre_deployed_m',
+      'post_on_drum_m', 'post_deployed_m', 'max_tension_theoretical_kgf',
+      'max_tension_required_kgf', 'max_torque_Nm', 'max_motor_torque_Nm',
+      'motor_rpm_at_start', 'line_speed_at_start_mpm', 'avail_tension_kgf_at_start'
+    ],
+    header: [
+      'layer_no', 'layer_dia_in', 'pre_on_drum_m', 'pre_deployed_m',
+      'post_on_drum_m', 'post_deployed_m', 'max_tension_theoretical_kgf',
+      'max_tension_required_kgf', 'max_torque_Nm', 'max_motor_torque_Nm',
+      'motor_rpm_at_start', 'line_speed_at_start_mpm', 'avail_tension_kgf_at_start'
+    ],
+    getRows: () => lastElLayer
+  },
+  csv_el_wraps: {
+    filename: () => 'electric-wraps.csv',
+    columns: [
+      'wrap_no', 'layer_no', 'layer_dia_in', 'wrap_len_in', 'pre_spooled_len_m',
+      'spooled_len_m', 'deployed_len_m', 'tension_theoretical_kgf',
+      'tension_required_kgf', 'torque_Nm', 'motor_torque_Nm', 'motor_rpm',
+      'line_speed_mpm', 'avail_tension_kgf'
+    ],
+    header: [
+      'wrap_no', 'layer_no', 'layer_dia_in', 'wrap_len_in', 'pre_spooled_len_m',
+      'spooled_len_m', 'deployed_len_m', 'tension_theoretical_kgf',
+      'tension_required_kgf', 'torque_Nm', 'motor_torque_Nm', 'motor_rpm',
+      'line_speed_mpm', 'avail_tension_kgf'
+    ],
+    getRows: () => lastElWraps
+  },
+  csv_hy_layer: {
+    filename: () => 'hydraulic-layer.csv',
+    columns: [
+      'layer_no', 'layer_dia_in', 'pre_on_drum_m', 'pre_deployed_m',
+      'post_on_drum_m', 'post_deployed_m', 'hyd_P_required_psi',
+      'hyd_speed_power_mpm', 'hyd_speed_flow_mpm', 'hyd_speed_available_mpm',
+      'hyd_hp_used_at_available', 'hyd_elec_input_hp_used',
+      'hyd_drum_torque_at_maxP_Nm', 'hyd_avail_tension_kgf_at_start'
+    ],
+    header: [
+      'layer_no', 'layer_dia_in', 'pre_on_drum_m', 'pre_deployed_m',
+      'post_on_drum_m', 'post_deployed_m', 'hyd_P_required_psi',
+      'hyd_speed_power_mpm', 'hyd_speed_flow_mpm', 'hyd_speed_available_mpm',
+      'hyd_hp_used_at_available', 'hyd_elec_input_hp_used',
+      'hyd_drum_torque_at_maxP_Nm', 'hyd_avail_tension_kgf_at_start'
+    ],
+    getRows: () => lastHyLayer
+  },
+  csv_hy_wraps: {
+    filename: () => 'hydraulic-wraps.csv',
+    columns: [
+      'wrap_no', 'layer_no', 'layer_dia_in', 'wrap_len_in', 'pre_spooled_len_m',
+      'spooled_len_m', 'deployed_len_m', 'tension_theoretical_kgf',
+      'tension_required_kgf', 'hyd_P_required_psi', 'hyd_speed_power_mpm',
+      'hyd_speed_flow_mpm', 'hyd_speed_available_mpm', 'hyd_hp_used_at_available',
+      'hyd_elec_input_hp_used', 'hyd_drum_torque_maxP_Nm', 'hyd_avail_tension_kgf'
+    ],
+    header: [
+      'wrap_no', 'layer_no', 'layer_dia_in', 'wrap_len_in', 'pre_spooled_len_m',
+      'spooled_len_m', 'deployed_len_m', 'tension_theoretical_kgf',
+      'tension_required_kgf', 'hyd_P_required_psi', 'hyd_speed_power_mpm',
+      'hyd_speed_flow_mpm', 'hyd_speed_available_mpm', 'hyd_hp_used_at_available',
+      'hyd_elec_input_hp_used', 'hyd_drum_torque_maxP_Nm', 'hyd_avail_tension_kgf'
+    ],
+    getRows: () => lastHyWraps
+  }
+};
+
 const DRIVE_MODE_CHECKBOX = {
   electric: 'drive_electric_enabled',
   hydraulic: 'drive_hydraulic_enabled'
@@ -43,6 +114,8 @@ document.addEventListener('DOMContentLoaded', () => {
   setupComponentSelectors();
 
   setupDriveModeControls();
+
+  setupCsvDownloads();
 
   setupPlotResizeToggles();
 
@@ -102,6 +175,57 @@ function updateBuildIndicator() {
   });
 
   indicator.textContent = `Updated ${formatter.format(lastModified)} UTC`;
+}
+
+function setupCsvDownloads() {
+  Object.entries(CSV_BUTTON_SPECS).forEach(([id, spec]) => {
+    const btn = q(id);
+    if (!btn) return;
+    btn.addEventListener('click', () => {
+      const rows = spec.getRows ? spec.getRows() : [];
+      if (!rows || rows.length === 0) return;
+      const csv = rowsToCsv(rows, spec.columns, spec.header);
+      triggerCsvDownload(csv, spec.filename ? spec.filename() : `${id}.csv`);
+    });
+  });
+
+  updateCsvButtonStates();
+}
+
+function updateCsvButtonStates() {
+  Object.entries(CSV_BUTTON_SPECS).forEach(([id, spec]) => {
+    const btn = q(id);
+    if (!btn) return;
+    const rows = spec.getRows ? spec.getRows() : [];
+    btn.disabled = !(Array.isArray(rows) && rows.length > 0);
+  });
+}
+
+function rowsToCsv(rows, columns, headerRow) {
+  const header = (headerRow && headerRow.length ? headerRow : columns).map(csvEscapeCell).join(',');
+  const dataLines = rows.map(row => columns.map(col => csvEscapeCell(row[col])).join(','));
+  return [header, ...dataLines].join('\r\n');
+}
+
+function csvEscapeCell(value) {
+  if (value === null || value === undefined) return '';
+  const str = String(value);
+  if (/[",\n\r]/.test(str)) {
+    return '"' + str.replace(/"/g, '""') + '"';
+  }
+  return str;
+}
+
+function triggerCsvDownload(csvText, filename) {
+  const blob = new Blob([csvText], { type: 'text/csv;charset=utf-8;' });
+  const url = URL.createObjectURL(blob);
+  const link = document.createElement('a');
+  link.href = url;
+  link.download = filename;
+  document.body.appendChild(link);
+  link.click();
+  document.body.removeChild(link);
+  URL.revokeObjectURL(url);
 }
 
 function setupPlotResizeToggles() {
@@ -460,6 +584,8 @@ function computeAll() {
     renderElectricTables(lastElLayer, lastElWraps, q('tbody_el_layer'), q('tbody_el_wraps'));
     renderHydraulicTables(lastHyLayer, lastHyWraps, q('tbody_hy_layer'), q('tbody_hy_wraps'));
 
+    updateCsvButtonStates();
+
     // ---- Update status ----
     if (status) status.textContent = 'results updated';
 
@@ -473,6 +599,7 @@ function computeAll() {
     lastElLayer = lastElWraps = lastHyLayer = lastHyWraps = [];
     clearDrumVisualization();
     clearPlots();
+    updateCsvButtonStates();
   }
 }
 
