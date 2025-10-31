@@ -1,7 +1,8 @@
 // ===== plots/depth-profiles.mjs  Speed vs Depth & Tension vs Depth (DOM-agnostic) =====
 import { niceTicks, svgEl, TENSION_SAFETY_FACTOR } from '../utils.mjs';
 
-const LIGHT_CANDIDATE_COLOR = '#b9c3d8';
+const CANDIDATE_POWER_COLOR = '#b7e4c7';
+const CANDIDATE_FLOW_COLOR = '#d8b4fe';
 const EXCEED_COLOR = '#c65353';
 const TENSION_OK_COLOR = '#2d9c77';
 
@@ -104,28 +105,6 @@ function drawSpeedProfile(svg, segments, maxDepth, maxSpeed, accentColor) {
     'text-anchor': 'middle', 'font-size': '12', fill: '#444'
   })).textContent = 'Speed (m/s)';
 
-  // candidate speeds (light gray, dashed)
-  segments.forEach(S => {
-    if (!Array.isArray(S.candidate_speeds_ms)) return;
-    const depthEnd = Math.min(S.depth_start, S.depth_end);
-    const depthStart = Math.max(S.depth_start, S.depth_end);
-    S.candidate_speeds_ms.forEach(val => {
-      if (!Number.isFinite(val)) return;
-      const y = sy(val);
-      const x0 = sx(depthEnd);
-      const x1 = sx(depthStart);
-      svg.appendChild(svgEl('line', {
-        x1: x0,
-        y1: y,
-        x2: x1,
-        y2: y,
-        stroke: LIGHT_CANDIDATE_COLOR,
-        'stroke-width': 2,
-        'stroke-dasharray': '5 4'
-      }));
-    });
-  });
-
   // available speed (accent)
   segments.forEach(S => {
     if (!Number.isFinite(S.speed_ms)) return;
@@ -140,8 +119,32 @@ function drawSpeedProfile(svg, segments, maxDepth, maxSpeed, accentColor) {
       x2: x1,
       y2: y,
       stroke: accentColor,
-      'stroke-width': 2.4
+      'stroke-width': 4.8
     }));
+  });
+
+  // candidate speeds (Vp light green, Vq light purple, dashed)
+    segments.forEach(S => {
+    if (!Array.isArray(S.candidate_speeds_ms)) return;
+    const depthEnd = Math.min(S.depth_start, S.depth_end);
+    const depthStart = Math.max(S.depth_start, S.depth_end);
+    S.candidate_speeds_ms.forEach((val, idx) => {
+      if (!Number.isFinite(val)) return;
+      const y = sy(val);
+      const x0 = sx(depthEnd);
+      const x1 = sx(depthStart);
+      const stroke = (idx === 0) ? CANDIDATE_POWER_COLOR : CANDIDATE_FLOW_COLOR;
+
+      svg.appendChild(svgEl('line', {
+        x1: x0,
+        y1: y,
+        x2: x1,
+        y2: y,
+        stroke,
+        'stroke-width': 2,
+        'stroke-dasharray': '5 4'
+      }));
+    });
   });
 
   // zero line
