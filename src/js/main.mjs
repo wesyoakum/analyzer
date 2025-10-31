@@ -532,8 +532,8 @@ function computeAll() {
         const eff_total = Number.isFinite(h_emotor_eff) ? h_emotor_eff : 0;
 
         let speed_power_mpm = 0;
-        if (hp_elec_in_total > 0 && eff_total > 0) {
-          speed_power_mpm = required_tension / (hp_elec_in_total * eff_total);
+        if (hp_elec_in_total > 0 && eff_total > 0 && required_tension > 0) {
+          speed_power_mpm = (hp_elec_in_total * eff_total) / required_tension;
         }
         if (!Number.isFinite(speed_power_mpm) || speed_power_mpm < 0) speed_power_mpm = 0;
 
