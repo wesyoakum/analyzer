@@ -532,11 +532,11 @@ function computeAll() {
         const eff_total = Number.isFinite(h_emotor_eff) ? h_emotor_eff : 0;
 
         let speed_power_mpm = 0;
-        if (hp_elec_in_total > 0 && eff_total > 0 && required_tension > 0) {
-          const tension_required_N = required_tension * G;
-          if (tension_required_N > 0) {
+        if (hp_elec_in_total > 0 && eff_total > 0 && theoretical_tension > 0) {
+          const tension_theoretical_N = theoretical_tension * G;
+          if (tension_theoretical_N > 0) {
             const power_available_W = hp_elec_in_total * eff_total * W_PER_HP;
-            const speed_power_mps = power_available_W / tension_required_N;
+            const speed_power_mps = power_available_W / tension_theoretical_N;
             speed_power_mpm = speed_power_mps * 60;
           }
         }
@@ -640,13 +640,17 @@ function redrawPlots() {
   const depthTensionSvg = /** @type {SVGSVGElement|null} */ (document.getElementById('depth_tension_svg'));
 
   if (depthScenarioEl && depthSpeedSvg && depthTensionSvg) {
+    const ratedSpeedMsRaw = read('depth_rated_speed_ms');
+    const ratedSpeedMs = Number.isFinite(ratedSpeedMsRaw) ? ratedSpeedMsRaw : null;
     drawDepthProfiles(depthSpeedSvg, depthTensionSvg, {
       scenario: depthScenarioEl.value || 'electric',       // 'electric' | 'hydraulic'
       elWraps: lastElWraps,
       hyWraps: lastHyWraps,
       payload_kg: read('payload_kg'),
       cable_w_kgpm: read('c_w_kgpm'),
-      dead_end_m: read('dead_m')    });
+      dead_end_m: read('dead_m'),
+      rated_speed_ms: ratedSpeedMs
+    });
   }
 }
 

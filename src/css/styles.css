@@ -559,6 +559,10 @@ th[title] {
   border-top-color: var(--accent);
 }
 
+.swatch.rated {
+  border-top-color: #2d9c77;
+}
+
 .swatch.gray {
   border-top-color: #9aa5bc;
 }

@@ -2,9 +2,10 @@
 import { niceTicks, svgEl, TENSION_SAFETY_FACTOR } from '../utils.mjs';
 
 const CANDIDATE_POWER_COLOR = '#9759b7';
-const CANDIDATE_FLOW_COLOR = '#2d9c77';
+const CANDIDATE_FLOW_COLOR = '#d58c1f';
 const EXCEED_COLOR = '#c65353';
 const TENSION_OK_COLOR = '#2d9c77';
+const RATED_SPEED_COLOR = '#2d9c77';
 
 function getAccentColor() {
   if (typeof window !== 'undefined' && typeof document !== 'undefined' && window.getComputedStyle) {
@@ -33,7 +34,8 @@ export function drawDepthProfiles(svgSpeed, svgTension, {
   hyWraps = [],
   payload_kg = 0,
   cable_w_kgpm = 0,
-  dead_end_m = 0
+  dead_end_m = 0,
+  rated_speed_ms = null
 } = {}) {
   const wraps = (scenario === 'electric') ? (elWraps || []) : (hyWraps || []);
   const speedField = (scenario === 'electric')
@@ -62,7 +64,8 @@ export function drawDepthProfiles(svgSpeed, svgTension, {
         return Math.max(0, ...S.candidate_speeds_ms.map(C => C.value_ms), S.speed_ms || 0);
       }))
     : 0;
-  const maxSpeed = Math.max(1, maxSpeedFromCandidates);
+  const ratedSpeedMs = Number.isFinite(rated_speed_ms) ? Math.max(0, rated_speed_ms) : null;
+  const maxSpeed = Math.max(1, maxSpeedFromCandidates, ratedSpeedMs || 0);
   const maxAvailT = Math.max(0, ...segments.map(S => S.avail_tension_kgf || 0));
   const maxTheoT = payload_kg + cable_w_kgpm * maxDepth;
   const maxReqT = maxTheoT * TENSION_SAFETY_FACTOR;
@@ -71,12 +74,12 @@ export function drawDepthProfiles(svgSpeed, svgTension, {
   const accentColor = getAccentColor();
 
   // Render both
-  drawSpeedProfile(svgSpeed, segments, maxDepth, maxSpeed, accentColor);
+  drawSpeedProfile(svgSpeed, segments, maxDepth, maxSpeed, accentColor, ratedSpeedMs);
   drawTensionProfile(svgTension, segments, maxDepth, maxTension, payload_kg, cable_w_kgpm, accentColor);
 }
 
 // ---------- Speed vs Depth ----------
-function drawSpeedProfile(svg, segments, maxDepth, maxSpeed, accentColor) {
+function drawSpeedProfile(svg, segments, maxDepth, maxSpeed, accentColor, ratedSpeedMs = null) {
   while (svg.firstChild) svg.removeChild(svg.firstChild);
 
   const ML = 64, MR = 18, MT = 18, MB = 46;
@@ -154,8 +157,97 @@ function drawSpeedProfile(svg, segments, maxDepth, maxSpeed, accentColor) {
     });
   });
 
+  if (Number.isFinite(ratedSpeedMs) && ratedSpeedMs > 0) {
+    const ratedExceeded = segments.some(S => Number.isFinite(S.speed_ms) && (S.speed_ms + 1e-6) < ratedSpeedMs);
+    const ratedStroke = ratedExceeded ? EXCEED_COLOR : RATED_SPEED_COLOR;
+    const yRated = sy(ratedSpeedMs);
+    svg.appendChild(svgEl('line', {
+      x1: ML,
+      y1: yRated,
+      x2: W - MR,
+      y2: yRated,
+      stroke: ratedStroke,
+      'stroke-width': 3
+    }));
+
+    if (ratedExceeded) {
+      const limit = findRatedDepthLimit(segments, ratedSpeedMs);
+      if (limit && Number.isFinite(limit.depth)) {
+        const clampedDepth = Math.max(0, Math.min(limit.depth, maxDepth));
+        const x = sx(clampedDepth);
+        const axisY = H - MB;
+        svg.appendChild(svgEl('line', {
+          x1: x,
+          y1: yRated,
+          x2: x,
+          y2: axisY,
+          stroke: EXCEED_COLOR,
+          'stroke-width': 2,
+          'stroke-dasharray': '4 6'
+        }));
+
+        const labelText = formatDepthLabel(limit.depth);
+        if (labelText) {
+          const label = svgEl('text', {
+            x,
+            y: axisY + 20,
+            'text-anchor': 'middle',
+            'font-size': '12',
+            fill: EXCEED_COLOR
+          });
+          label.textContent = `${labelText} m`;
+          svg.appendChild(label);
+        }
+      }
+    }
+  }
+
   // zero line
   svg.appendChild(svgEl('line', { x1: ML, y1: sy(0), x2: W - MR, y2: sy(0), stroke: '#bbb', 'stroke-dasharray': '4 4' }));
+}
+
+function findRatedDepthLimit(segments, ratedSpeedMs) {
+  if (!Array.isArray(segments) || !Number.isFinite(ratedSpeedMs) || ratedSpeedMs <= 0) return null;
+  const ranges = segments
+    .filter(S => Number.isFinite(S.speed_ms))
+    .map(S => ({
+      d0: Math.min(S.depth_start, S.depth_end),
+      d1: Math.max(S.depth_start, S.depth_end),
+      speed: S.speed_ms
+    }))
+    .sort((a, b) => a.d0 - b.d0);
+
+  if (!ranges.length) return null;
+
+  let deepestReach = null;
+  let hasReachable = false;
+
+  for (const range of ranges) {
+    if (range.speed + 1e-6 >= ratedSpeedMs) {
+      hasReachable = true;
+      deepestReach = (deepestReach === null) ? range.d1 : Math.max(deepestReach, range.d1);
+      continue;
+    }
+
+    if (!hasReachable) {
+      return { depth: range.d0 };
+    }
+
+    return { depth: deepestReach ?? range.d0 };
+  }
+
+  return null;
+}
+
+function formatDepthLabel(depth) {
+  if (!Number.isFinite(depth)) return '';
+  if (Math.abs(depth) >= 100) return String(Math.round(depth));
+  if (Math.abs(depth) >= 10) return removeTrailingZeros(depth.toFixed(1));
+  return removeTrailingZeros(depth.toFixed(2));
+}
+
+function removeTrailingZeros(text) {
+  return text.replace(/\.0+$/, '').replace(/(\.\d*[1-9])0+$/, '$1');
 }
 
 // ---------- Tension vs Depth ----------
