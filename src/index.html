@@ -51,9 +51,6 @@
                     </td>
                     <td class="units">–</td>
                   </tr>
-                  <tr class="note">
-                    <td colspan="3" class="dim">Selecting a system populates drum geometry, drivetrain, and component selections automatically. Editing any populated field clears the system selection.</td>
-                  </tr>
                 </tbody>
               </table>
             </section>
@@ -123,9 +120,6 @@
                       </td>
                       <td class="units">–</td>
                     </tr>
-                    <tr class="note">
-                      <td colspan="3" class="dim">Selecting a cable fills the diameter, operating depth, dead end, and in-water weight. Editing any populated field clears the selection.</td>
-                    </tr>
                     <tr>
                       <th scope="row">
                         <label class="param-label" for="c_mm" data-code="c_mm">Cable Diameter <span class="symbol" aria-hidden="true">d<sub>c</sub></span></label>
@@ -180,9 +174,6 @@
                       </td>
                       <td class="units">–</td>
                     </tr>
-                    <tr class="note">
-                      <td colspan="3" class="dim">Selecting a drum fills the core diameter, flange width, Lebus thickness, packing factor, and wraps per layer. Editing any populated field clears the selection.</td>
-                    </tr>
                     <tr>
                       <th scope="row">
                         <label class="param-label" for="core_in" data-code="core_in">Core Diameter <span class="symbol" aria-hidden="true">d<sub>core</sub></span></label>
@@ -219,7 +210,7 @@
                       <td class="units">wraps</td>
                     </tr>
                     <tr class="note">
-                      <td colspan="3" class="dim" id="wraps_note">Leave blank or set to 0 to use calculated wraps (always truncated to .0/.5).</td>
+                      <td colspan="3" class="dim" id="wraps_note">Leave blank to use calculated wraps.</td>
                     </tr>
                   </tbody>
                 </table>
@@ -247,9 +238,6 @@
                       </select>
                     </td>
                     <td class="units">–</td>
-                  </tr>
-                  <tr class="note">
-                    <td colspan="3" class="dim">Selecting a payload fills the in-water payload weight automatically. Editing the weight clears the selection.</td>
                   </tr>
                   <tr>
                     <th scope="row">
@@ -295,9 +283,6 @@
                     <td class="value"><input id="motors" type="number" step="1" value="6"></td>
                     <td class="units">count</td>
                   </tr>
-                  <tr class="note">
-                    <td colspan="3" class="dim">Used by both Electric &amp; Hydraulic for torque split and RPM mapping.</td>
-                  </tr>
                 </tbody>
               </table>
 
@@ -322,9 +307,6 @@
                         </select>
                       </td>
                       <td class="units">–</td>
-                    </tr>
-                    <tr class="note">
-                      <td colspan="3" class="dim">Selecting a gearbox fills Gear Ratio 1 and Gear Ratio 2 automatically. Editing either ratio clears the selection.</td>
                     </tr>
                     <tr>
                       <th scope="row">
@@ -408,9 +390,6 @@
               </td>
               <td class="units">–</td>
             </tr>
-            <tr class="note">
-              <td colspan="3" class="dim">Selecting a motor fills the rated power, maximum speed, and maximum torque inputs automatically. Adjusting any of those values clears the selection.</td>
-            </tr>
             <tr>
               <th scope="row">
                 <label class="param-label" for="motor_hp" data-code="motor_hp">Motor Rated Power <span class="symbol" aria-hidden="true">P<sub>m</sub></span></label>
@@ -431,9 +410,6 @@
               </th>
               <td class="value"><input id="motor_tmax" type="number" step="0.1" value="230"></td>
               <td class="units">N·m</td>
-            </tr>
-            <tr class="note">
-              <td colspan="3" class="dim">Per-wrap: required tension → drum torque → per-motor torque. RPM limited by hp and capped by max RPM. Line speed from drum dia &amp; ratios. Available tension from motor torque cap.</td>
             </tr>
           </tbody>
         </table>
@@ -470,9 +446,6 @@
                     </select>
                   </td>
                   <td class="units">–</td>
-                </tr>
-                <tr class="note">
-                  <td colspan="3" class="dim">Selecting a motor fills the hydraulic motor displacement and maximum speed inputs automatically. Adjusting either value clears the selection.</td>
                 </tr>
                 <tr>
                   <th scope="row">
@@ -514,9 +487,6 @@
                   </td>
                   <td class="units">–</td>
                 </tr>
-                <tr class="note">
-                  <td colspan="3" class="dim">Selecting an HPU fills the pump strings, HPU motor, and pump selections automatically. Editing any populated field clears the selection.</td>
-                </tr>
                 <tr>
                   <th scope="row">
                     <label class="param-label" for="h_pump_strings" data-code="h_pump_strings">Number of Pump Strings <span class="symbol" aria-hidden="true">N<sub>p</sub></span></label>
@@ -534,9 +504,6 @@
                     </select>
                   </td>
                   <td class="units">–</td>
-                </tr>
-                <tr class="note">
-                  <td colspan="3" class="dim">Selecting an HPU motor fills the nameplate power and maximum speed inputs automatically. Editing either value clears the selection.</td>
                 </tr>
                 <tr>
                   <th scope="row">
@@ -562,9 +529,6 @@
                     </select>
                   </td>
                   <td class="units">–</td>
-                </tr>
-                <tr class="note">
-                  <td colspan="3" class="dim">Selecting a pump fills the displacement and maximum pressure inputs automatically. Editing either value clears the selection.</td>
                 </tr>
                 <tr>
                   <th scope="row">
