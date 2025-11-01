@@ -1,4 +1,4 @@
-// ===== main.mjs — app bootstrap, compute, render, plots =====
+// ===== main.mjs app bootstrap, compute, render, plots =====
 
 import {
   q, read,
@@ -390,14 +390,14 @@ function updateScenarioOptions(selectId, electricEnabled, hydraulicEnabled) {
 
 // ---- Core compute + render ----
 function computeAll() {
-  const errBox = q('err');
+  const errBox = /** @type {HTMLElement|null} */ (document.getElementById('err'));
   const status = /** @type {HTMLElement|null} */ (document.getElementById('status'));
-  errBox.textContent = '';
+  if (errBox) errBox.textContent = '';
   if (status) status.textContent = 'computing…';
 
   try {
     // Geometry & load inputs
-        const wraps_override_input = read('wraps_override');
+    const wraps_override_input = read('wraps_override');
     const wraps_per_layer_override = (
       Number.isFinite(wraps_override_input) && wraps_override_input > 0
     ) ? wraps_override_input : undefined;
@@ -602,7 +602,7 @@ function computeAll() {
     redrawPlots();
   } catch (e) {
     console.error(e);
-    q('err').textContent = 'ERROR: ' + (e && e.message ? e.message : e);
+    if (errBox) errBox.textContent = 'ERROR: ' + (e && e.message ? e.message : e);
     if (status) status.textContent = 'error';
     clearMinimumSystemHp();
     lastElLayer = lastElWraps = lastHyLayer = lastHyWraps = [];
@@ -614,7 +614,7 @@ function computeAll() {
 
 // ---- Plot redraw helper (uses decoupled plotting modules) ----
 function redrawPlots() {
-    // Wave contours (optional - skip if controls/SVGs absent)
+  // Wave contours (optional - skip if controls/SVGs absent)
   const waveScenarioEl = /** @type {HTMLSelectElement|null} */ (document.getElementById('wave_scenario'));
   const waveTminEl = /** @type {HTMLInputElement|null} */ (document.getElementById('wave_tmin'));
   const waveTmaxEl = /** @type {HTMLInputElement|null} */ (document.getElementById('wave_tmax'));
