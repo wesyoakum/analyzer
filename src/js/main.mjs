@@ -143,11 +143,14 @@ document.addEventListener('DOMContentLoaded', () => {
   // Wave plot controls
   q('wave_redraw').addEventListener('click', () => redrawPlots());
   q('wave_scenario').addEventListener('change', () => redrawPlots());
-  ['wave_tmin', 'wave_tmax', 'wave_vmax', 'wave_hmax'].forEach(id => q(id).addEventListener('change', () => redrawPlots()));
+  ['wave_tmin', 'wave_tmax', 'wave_vmin', 'wave_vmax', 'wave_hmin', 'wave_hmax']
+    .forEach(id => q(id).addEventListener('change', () => redrawPlots()));
 
   // Depth plot controls
   q('depth_redraw').addEventListener('click', () => redrawPlots());
   q('depth_scenario').addEventListener('change', () => redrawPlots());
+  ['depth_xmin', 'depth_xmax', 'depth_speed_ymin', 'depth_speed_ymax', 'depth_tension_ymin', 'depth_tension_ymax', 'depth_rated_speed_ms']
+    .forEach(id => q(id).addEventListener('change', () => redrawPlots()));
 
   // Initial compute
   computeAll();
@@ -615,19 +618,33 @@ function redrawPlots() {
   const waveScenarioEl = /** @type {HTMLSelectElement|null} */ (document.getElementById('wave_scenario'));
   const waveTminEl = /** @type {HTMLInputElement|null} */ (document.getElementById('wave_tmin'));
   const waveTmaxEl = /** @type {HTMLInputElement|null} */ (document.getElementById('wave_tmax'));
+  const waveVminEl = /** @type {HTMLInputElement|null} */ (document.getElementById('wave_vmin'));
   const waveVmaxEl = /** @type {HTMLInputElement|null} */ (document.getElementById('wave_vmax'));
+  const waveHminEl = /** @type {HTMLInputElement|null} */ (document.getElementById('wave_hmin'));
   const waveHmaxEl = /** @type {HTMLInputElement|null} */ (document.getElementById('wave_hmax'));
   const waveSvg = /** @type {SVGSVGElement|null} */ (document.getElementById('wave_svg'));
   const waveSvgHeight = /** @type {SVGSVGElement|null} */ (document.getElementById('wave_svg_height'));
 
+  const parseInput = (el) => {
+    if (!el) return NaN;
+    return parseFloat((el.value || '').replace(',', '.'));
+  };
+
   if (waveScenarioEl && waveTminEl && waveTmaxEl && waveHmaxEl && waveSvg && waveSvgHeight) {
-    const parseInput = (el) => parseFloat((el.value || '').replace(',', '.'));
+    const TminVal = parseInput(waveTminEl);
+    const TmaxVal = parseInput(waveTmaxEl);
+    const speedMinVal = parseInput(waveVminEl);
+    const speedMaxVal = parseInput(waveVmaxEl);
+    const HminVal = parseInput(waveHminEl);
+    const HmaxVal = parseInput(waveHmaxEl);
     const waveOpts = {
       scenario: waveScenarioEl.value || 'electric',
-      Tmin: parseInput(waveTminEl) || 4,
-      Tmax: parseInput(waveTmaxEl) || 20,
-      speedMax: waveVmaxEl ? parseInput(waveVmaxEl) : undefined,
-      Hmax: parseInput(waveHmaxEl) || 6,
+      Tmin: Number.isFinite(TminVal) ? TminVal : 4,
+      Tmax: Number.isFinite(TmaxVal) ? TmaxVal : 20,
+      speedMin: Number.isFinite(speedMinVal) ? speedMinVal : undefined,
+      speedMax: Number.isFinite(speedMaxVal) ? speedMaxVal : undefined,
+      Hmin: Number.isFinite(HminVal) ? HminVal : undefined,
+      Hmax: Number.isFinite(HmaxVal) ? HmaxVal : 6,
       elLayers: lastElLayer,
       hyLayers: lastHyLayer
     };
@@ -639,10 +656,22 @@ function redrawPlots() {
   const depthScenarioEl = /** @type {HTMLSelectElement|null} */ (document.getElementById('depth_scenario'));
   const depthSpeedSvg = /** @type {SVGSVGElement|null} */ (document.getElementById('depth_speed_svg'));
   const depthTensionSvg = /** @type {SVGSVGElement|null} */ (document.getElementById('depth_tension_svg'));
+  const depthXminEl = /** @type {HTMLInputElement|null} */ (document.getElementById('depth_xmin'));
+  const depthXmaxEl = /** @type {HTMLInputElement|null} */ (document.getElementById('depth_xmax'));
+  const depthSpeedYminEl = /** @type {HTMLInputElement|null} */ (document.getElementById('depth_speed_ymin'));
+  const depthSpeedYmaxEl = /** @type {HTMLInputElement|null} */ (document.getElementById('depth_speed_ymax'));
+  const depthTensionYminEl = /** @type {HTMLInputElement|null} */ (document.getElementById('depth_tension_ymin'));
+  const depthTensionYmaxEl = /** @type {HTMLInputElement|null} */ (document.getElementById('depth_tension_ymax'));
 
   if (depthScenarioEl && depthSpeedSvg && depthTensionSvg) {
     const ratedSpeedMsRaw = read('depth_rated_speed_ms');
     const ratedSpeedMs = Number.isFinite(ratedSpeedMsRaw) ? ratedSpeedMsRaw : null;
+    const depthXminVal = parseInput(depthXminEl);
+    const depthXmaxVal = parseInput(depthXmaxEl);
+    const depthSpeedMinVal = parseInput(depthSpeedYminEl);
+    const depthSpeedMaxVal = parseInput(depthSpeedYmaxEl);
+    const depthTensionMinVal = parseInput(depthTensionYminEl);
+    const depthTensionMaxVal = parseInput(depthTensionYmaxEl);
     drawDepthProfiles(depthSpeedSvg, depthTensionSvg, {
       scenario: depthScenarioEl.value || 'electric',       // 'electric' | 'hydraulic'
       elWraps: lastElWraps,
@@ -650,7 +679,13 @@ function redrawPlots() {
       payload_kg: read('payload_kg'),
       cable_w_kgpm: read('c_w_kgpm'),
       dead_end_m: read('dead_m'),
-      rated_speed_ms: ratedSpeedMs
+      rated_speed_ms: ratedSpeedMs,
+      depth_xmin: Number.isFinite(depthXminVal) ? depthXminVal : undefined,
+      depth_xmax: Number.isFinite(depthXmaxVal) ? depthXmaxVal : undefined,
+      speed_ymin: Number.isFinite(depthSpeedMinVal) ? depthSpeedMinVal : undefined,
+      speed_ymax: Number.isFinite(depthSpeedMaxVal) ? depthSpeedMaxVal : undefined,
+      tension_ymin: Number.isFinite(depthTensionMinVal) ? depthTensionMinVal : undefined,
+      tension_ymax: Number.isFinite(depthTensionMaxVal) ? depthTensionMaxVal : undefined
     });
   }
 }

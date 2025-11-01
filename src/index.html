@@ -156,94 +156,7 @@
         </div>
       </details>
 
-      <section class="card">
-        <h2 class="section-title">Section 1: Wave Contour Inputs</h2>
-        <table class="worksheet compact">
-          <thead>
-            <tr>
-              <th scope="col">Parameter</th>
-              <th scope="col" class="value">Input</th>
-              <th scope="col" class="units">Units</th>
-            </tr>
-          </thead>
-          <tbody>
-            <tr>
-              <th scope="row">
-                <label class="param-label" for="wave_scenario" data-code="wave_scenario">Wave Scenario <span class="symbol" aria-hidden="true">S<sub>w</sub></span></label>
-              </th>
-              <td class="value">
-                <select id="wave_scenario">
-                  <option value="electric" selected>Electric</option>
-                  <option value="hydraulic">Hydraulic</option>
-                </select>
-              </td>
-              <td class="units">–</td>
-            </tr>
-            <tr>
-              <th scope="row">
-                <label class="param-label" for="wave_tmin" data-code="wave_tmin">Minimum Wave Period <span class="symbol" aria-hidden="true">T<sub>min</sub></span></label>
-              </th>
-              <td class="value"><input id="wave_tmin" type="number" step="0.1" value="4"></td>
-              <td class="units">s</td>
-            </tr>
-            <tr>
-              <th scope="row">
-                <label class="param-label" for="wave_tmax" data-code="wave_tmax">Maximum Wave Period <span class="symbol" aria-hidden="true">T<sub>max</sub></span></label>
-              </th>
-              <td class="value"><input id="wave_tmax" type="number" step="0.1" value="20"></td>
-              <td class="units">s</td>
-            </tr>
-            <tr>
-              <th scope="row">
-                <label class="param-label" for="wave_vmax" data-code="wave_vmax">Maximum Contour Speed <span class="symbol" aria-hidden="true">v<sub>max</sub></span></label>
-              </th>
-              <td class="value"><input id="wave_vmax" type="number" step="0.1" placeholder="auto"></td>
-              <td class="units">m/s</td>
-            </tr>
-            <tr>
-              <th scope="row">
-                <label class="param-label" for="wave_hmax" data-code="wave_hmax">Maximum Wave Height <span class="symbol" aria-hidden="true">H<sub>max</sub></span></label>
-              </th>
-              <td class="value"><input id="wave_hmax" type="number" step="0.1" value="6"></td>
-              <td class="units">m</td>
-            </tr>
-          </tbody>
-        </table>
-      </section>
-
-      <section class="card">
-        <h2 class="section-title">Section 1: Depth Profile Inputs</h2>
-        <table class="worksheet compact depth-controls">
-          <thead>
-            <tr>
-              <th scope="col">Parameter</th>
-              <th scope="col" class="value">Input</th>
-              <th scope="col" class="units">Units</th>
-            </tr>
-          </thead>
-          <tbody>
-            <tr>
-              <th scope="row">
-                <label class="param-label" for="depth_scenario" data-code="depth_scenario">Profile Scenario <span class="symbol" aria-hidden="true">S<sub>d</sub></span></label>
-              </th>
-              <td class="value">
-                <select id="depth_scenario">
-                  <option value="electric" selected>Electric (start-of-layer values)</option>
-                  <option value="hydraulic">Hydraulic (start-of-layer values)</option>
-                </select>
-              </td>
-              <td class="units">–</td>
-            </tr>
-            <tr>
-              <th scope="row">
-                <label class="param-label" for="depth_rated_speed_ms" data-code="depth_rated_speed_ms">Rated Speed <span class="symbol" aria-hidden="true">v<sub>rated</sub></span></label>
-              </th>
-              <td class="value"><input id="depth_rated_speed_ms" type="number" step="0.01" value="1"></td>
-              <td class="units">m/s</td>
-            </tr>
-          </tbody>
-        </table>
-      </section>
+      
 
       <section class="card">
         <h2 class="section-title">Section 1: Drive Configuration</h2>
@@ -473,6 +386,90 @@
             <button id="wave_redraw" type="button">Redraw contours</button>
           </div>
         </div>
+        <div class="plot-controls">
+          <div class="plot-controls__group">
+            <div class="plot-controls__group-title">Scenario</div>
+            <table class="worksheet compact plot-controls__table">
+              <tbody>
+                <tr>
+                  <th scope="row">
+                    <label class="param-label" for="wave_scenario" data-code="wave_scenario">Wave Scenario <span class="symbol" aria-hidden="true">S<sub>w</sub></span></label>
+                  </th>
+                  <td class="value">
+                    <select id="wave_scenario">
+                      <option value="electric" selected>Electric</option>
+                      <option value="hydraulic">Hydraulic</option>
+                    </select>
+                  </td>
+                  <td class="units">–</td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+          <div class="plot-controls__group">
+            <div class="plot-controls__group-title">Period axis (both plots)</div>
+            <table class="worksheet compact plot-controls__table">
+              <tbody>
+                <tr>
+                  <th scope="row">
+                    <label class="param-label" for="wave_tmin" data-code="wave_tmin">Minimum Wave Period <span class="symbol" aria-hidden="true">T<sub>min</sub></span></label>
+                  </th>
+                  <td class="value"><input id="wave_tmin" type="number" step="0.1" min="0" value="4"></td>
+                  <td class="units">s</td>
+                </tr>
+                <tr>
+                  <th scope="row">
+                    <label class="param-label" for="wave_tmax" data-code="wave_tmax">Maximum Wave Period <span class="symbol" aria-hidden="true">T<sub>max</sub></span></label>
+                  </th>
+                  <td class="value"><input id="wave_tmax" type="number" step="0.1" min="0" value="20"></td>
+                  <td class="units">s</td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+          <div class="plot-controls__group">
+            <div class="plot-controls__group-title">Speed axis (speed plot)</div>
+            <table class="worksheet compact plot-controls__table">
+              <tbody>
+                <tr>
+                  <th scope="row">
+                    <label class="param-label" for="wave_vmin" data-code="wave_vmin">Minimum Contour Speed <span class="symbol" aria-hidden="true">v<sub>min</sub></span></label>
+                  </th>
+                  <td class="value"><input id="wave_vmin" type="number" step="0.1" min="0" value="0"></td>
+                  <td class="units">m/s</td>
+                </tr>
+                <tr>
+                  <th scope="row">
+                    <label class="param-label" for="wave_vmax" data-code="wave_vmax">Maximum Contour Speed <span class="symbol" aria-hidden="true">v<sub>max</sub></span></label>
+                  </th>
+                  <td class="value"><input id="wave_vmax" type="number" step="0.1" min="0" placeholder="auto"></td>
+                  <td class="units">m/s</td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+          <div class="plot-controls__group">
+            <div class="plot-controls__group-title">Height axis (height plot)</div>
+            <table class="worksheet compact plot-controls__table">
+              <tbody>
+                <tr>
+                  <th scope="row">
+                    <label class="param-label" for="wave_hmin" data-code="wave_hmin">Minimum Wave Height <span class="symbol" aria-hidden="true">H<sub>min</sub></span></label>
+                  </th>
+                  <td class="value"><input id="wave_hmin" type="number" step="0.1" min="0" value="0"></td>
+                  <td class="units">m</td>
+                </tr>
+                <tr>
+                  <th scope="row">
+                    <label class="param-label" for="wave_hmax" data-code="wave_hmax">Maximum Wave Height <span class="symbol" aria-hidden="true">H<sub>max</sub></span></label>
+                  </th>
+                  <td class="value"><input id="wave_hmax" type="number" step="0.1" min="0" value="6"></td>
+                  <td class="units">m</td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
         <div class="twocol waveplots">
           <div class="col plot-column">
             <div class="plot-panel">
@@ -520,6 +517,97 @@
           <h2 class="section-title">Section 2: Depth Profiles</h2>
           <div class="btnbar card-header-actions">
             <button id="depth_redraw" type="button">Redraw profiles</button>
+          </div>
+        </div>
+        <div class="plot-controls">
+          <div class="plot-controls__group">
+            <div class="plot-controls__group-title">Scenario &amp; references</div>
+            <table class="worksheet compact plot-controls__table">
+              <tbody>
+                <tr>
+                  <th scope="row">
+                    <label class="param-label" for="depth_scenario" data-code="depth_scenario">Profile Scenario <span class="symbol" aria-hidden="true">S<sub>d</sub></span></label>
+                  </th>
+                  <td class="value">
+                    <select id="depth_scenario">
+                      <option value="electric" selected>Electric (start-of-layer values)</option>
+                      <option value="hydraulic">Hydraulic (start-of-layer values)</option>
+                    </select>
+                  </td>
+                  <td class="units">–</td>
+                </tr>
+                <tr>
+                  <th scope="row">
+                    <label class="param-label" for="depth_rated_speed_ms" data-code="depth_rated_speed_ms">Rated Speed <span class="symbol" aria-hidden="true">v<sub>rated</sub></span></label>
+                  </th>
+                  <td class="value"><input id="depth_rated_speed_ms" type="number" step="0.01" min="0" value="1"></td>
+                  <td class="units">m/s</td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+          <div class="plot-controls__group">
+            <div class="plot-controls__group-title">Depth axis (both plots)</div>
+            <table class="worksheet compact plot-controls__table">
+              <tbody>
+                <tr>
+                  <th scope="row">
+                    <label class="param-label" for="depth_xmin" data-code="depth_xmin">Minimum Depth <span class="symbol" aria-hidden="true">d<sub>min</sub></span></label>
+                  </th>
+                  <td class="value"><input id="depth_xmin" type="number" step="1" min="0" value="0"></td>
+                  <td class="units">m</td>
+                </tr>
+                <tr>
+                  <th scope="row">
+                    <label class="param-label" for="depth_xmax" data-code="depth_xmax">Maximum Depth <span class="symbol" aria-hidden="true">d<sub>max</sub></span></label>
+                  </th>
+                  <td class="value"><input id="depth_xmax" type="number" step="1" min="0" placeholder="auto"></td>
+                  <td class="units">m</td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+          <div class="plot-controls__group">
+            <div class="plot-controls__group-title">Speed axis</div>
+            <table class="worksheet compact plot-controls__table">
+              <tbody>
+                <tr>
+                  <th scope="row">
+                    <label class="param-label" for="depth_speed_ymin" data-code="depth_speed_ymin">Minimum Speed <span class="symbol" aria-hidden="true">v<sub>min</sub></span></label>
+                  </th>
+                  <td class="value"><input id="depth_speed_ymin" type="number" step="0.01" min="0" value="0"></td>
+                  <td class="units">m/s</td>
+                </tr>
+                <tr>
+                  <th scope="row">
+                    <label class="param-label" for="depth_speed_ymax" data-code="depth_speed_ymax">Maximum Speed <span class="symbol" aria-hidden="true">v<sub>max</sub></span></label>
+                  </th>
+                  <td class="value"><input id="depth_speed_ymax" type="number" step="0.01" min="0" placeholder="auto"></td>
+                  <td class="units">m/s</td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+          <div class="plot-controls__group">
+            <div class="plot-controls__group-title">Tension axis</div>
+            <table class="worksheet compact plot-controls__table">
+              <tbody>
+                <tr>
+                  <th scope="row">
+                    <label class="param-label" for="depth_tension_ymin" data-code="depth_tension_ymin">Minimum Tension <span class="symbol" aria-hidden="true">T<sub>min</sub></span></label>
+                  </th>
+                  <td class="value"><input id="depth_tension_ymin" type="number" step="1" min="0" value="0"></td>
+                  <td class="units">kgf</td>
+                </tr>
+                <tr>
+                  <th scope="row">
+                    <label class="param-label" for="depth_tension_ymax" data-code="depth_tension_ymax">Maximum Tension <span class="symbol" aria-hidden="true">T<sub>max</sub></span></label>
+                  </th>
+                  <td class="value"><input id="depth_tension_ymax" type="number" step="1" min="0" placeholder="auto"></td>
+                  <td class="units">kgf</td>
+                </tr>
+              </tbody>
+            </table>
           </div>
         </div>
         <div class="twocol depth-plots">

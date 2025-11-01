@@ -19,7 +19,9 @@ function renderWavePlot(svg, {
   scenario = 'electric',
   Tmin = 4,
   Tmax = 20,
+  Hmin = 0,
   Hmax = 6,
+  speedMin = 0,
   speedMax = null,
 
   elLayers = [],
@@ -35,10 +37,33 @@ function renderWavePlot(svg, {
 
   while (svg.firstChild) svg.removeChild(svg.firstChild);
 
-  Tmin = Math.max(0.1, +Tmin || 4);
-  Tmax = Math.max(Tmin + 0.1, +Tmax || 20);
-  Hmax = Math.max(0.5, +Hmax || 6);
-  const explicitVmax = Number.isFinite(+speedMax) ? Math.max(0.1, +speedMax) : null;
+  const parseNumber = val => {
+    const num = Number(val);
+    return Number.isFinite(num) ? num : NaN;
+  };
+
+  Tmin = parseNumber(Tmin);
+  if (!Number.isFinite(Tmin) || Tmin <= 0) Tmin = 4;
+  Tmin = Math.max(0.1, Tmin);
+
+  Tmax = parseNumber(Tmax);
+  if (!Number.isFinite(Tmax)) Tmax = Tmin + 16;
+  Tmax = Math.max(Tmin + 0.1, Tmax);
+
+  speedMin = parseNumber(speedMin);
+  if (!Number.isFinite(speedMin)) speedMin = 0;
+  speedMin = Math.max(0, speedMin);
+
+  const parsedSpeedMax = parseNumber(speedMax);
+  const hasExplicitVmax = Number.isFinite(parsedSpeedMax) && parsedSpeedMax > speedMin;
+
+  Hmin = parseNumber(Hmin);
+  if (!Number.isFinite(Hmin)) Hmin = 0;
+  Hmin = Math.max(0, Hmin);
+
+  Hmax = parseNumber(Hmax);
+  if (!Number.isFinite(Hmax)) Hmax = Math.max(6, Hmin + 0.5);
+  Hmax = Math.max(Hmin + 0.1, Hmax);
 
   // layer speeds in m/s (start-of-layer)
   let layerSpeeds = [];
@@ -60,24 +85,36 @@ function renderWavePlot(svg, {
   for (const { v_ms } of layerSpeeds) {
     if (v_ms > maxLayerSpeed) maxLayerSpeed = v_ms;
   }
-  const autoVmax = Math.max(vmaxFromContours, maxLayerSpeed) * 1.05 || 1;
-  const Vmax = explicitVmax ?? autoVmax;
+  let autoVmax = Math.max(vmaxFromContours, maxLayerSpeed, speedMin + 0.1) * 1.05;
+  if (!Number.isFinite(autoVmax) || autoVmax <= speedMin) {
+    autoVmax = speedMin + 1;
+  }
+  let Vmax = hasExplicitVmax ? Math.max(speedMin + 0.1, parsedSpeedMax) : autoVmax;
+  if (!Number.isFinite(Vmax) || Vmax <= speedMin) Vmax = speedMin + 1;
+  const Vmin = speedMin;
 
   const W = svg.viewBox.baseVal.width || svg.clientWidth || 1000;
   const H = svg.viewBox.baseVal.height || svg.clientHeight || 540;
   const ML = 64, MR = 20, MT = 20, MB = 46;
   const innerW = W - ML - MR, innerH = H - MT - MB;
 
-  const sx = t => ML + (t - Tmin) / (Tmax - Tmin) * innerW;
+  const sx = t => {
+    const clamped = Math.min(Math.max(t, Tmin), Tmax);
+    return ML + (clamped - Tmin) / Math.max(Tmax - Tmin, 1e-9) * innerW;
+  };
+  const yMin = mode === 'speed' ? Vmin : Hmin;
   const yMax = mode === 'speed' ? Vmax : Hmax;
-  const sy = val => MT + (1 - val / Math.max(yMax, 1e-9)) * innerH;
+  const sy = val => {
+    const clamped = Math.min(Math.max(val, yMin), yMax);
+    return MT + (1 - (clamped - yMin) / Math.max(yMax - yMin, 1e-9)) * innerH;
+  };
 
   // frame
   svg.appendChild(svgEl('rect', { x: ML, y: MT, width: innerW, height: innerH, fill: '#fff', stroke: '#ccc' }));
 
   // grid & ticks
   const xt = niceTicks(Tmin, Tmax, 8).ticks;
-  const yt = niceTicks(0, yMax, 6).ticks;
+  const yt = niceTicks(yMin, yMax, 6).ticks;
   xt.forEach(tx => {
     const X = sx(tx);
     svg.appendChild(svgEl('line', { x1: X, y1: MT, x2: X, y2: H - MB, stroke: '#eee' }));
@@ -135,6 +172,7 @@ function renderWavePlot(svg, {
 
     // horizontal lines for each layer speed
     layerSpeeds.forEach(L => {
+      if (L.v_ms < Vmin - 1e-9 || L.v_ms > Vmax + 1e-9) return;
       const Y = sy(L.v_ms);
       svg.appendChild(svgEl('line', { x1: ML, y1: Y, x2: W - MR, y2: Y, stroke: accentColor, 'stroke-width': 1.5 }));
       const lbl = svgEl('text', {
@@ -210,6 +248,10 @@ function renderWavePlot(svg, {
       const TmaxForLine = Math.min(Tmax, (Hmax * Math.PI) / Math.max(v, 1e-12));
       if (TmaxForLine <= Tmin + 1e-6) continue;
 
+      const minH = (v * Tmin) / Math.PI;
+      const maxH = (v * TmaxForLine) / Math.PI;
+      if (maxH < Hmin - 1e-6 || minH > Hmax + 1e-6) continue;
+
       const pts = [];
       const samples = 200;
       for (let i = 0; i <= samples; i++) {
@@ -228,7 +270,7 @@ function renderWavePlot(svg, {
       }));
 
       const lastPt = pts[pts.length - 1];
-      if (lastPt) {
+      if (lastPt && lastPt[1] >= MT && lastPt[1] <= H - MB) {
         const lbl = svgEl('text', {
           x: lastPt[0] + 4,
           y: lastPt[1] - 4,
@@ -247,6 +289,10 @@ function renderWavePlot(svg, {
       const TmaxForLine = Math.min(Tmax, (Hmax * Math.PI) / Math.max(L.v_ms, 1e-12));
       if (TmaxForLine <= Tmin + 1e-6) return;
 
+      const minH = (L.v_ms * Tmin) / Math.PI;
+      const maxH = (L.v_ms * TmaxForLine) / Math.PI;
+      if (maxH < Hmin - 1e-6 || minH > Hmax + 1e-6) return;
+
       const pts = [];
       const samples = 200;
       for (let i = 0; i <= samples; i++) {
@@ -262,7 +308,7 @@ function renderWavePlot(svg, {
       }));
 
       const lastPt = pts[pts.length - 1];
-      if (lastPt) {
+      if (lastPt && lastPt[1] >= MT && lastPt[1] <= H - MB) {
         const lbl = svgEl('text', {
           x: lastPt[0] - 4,
           y: lastPt[1] - 6,
@@ -277,6 +323,8 @@ function renderWavePlot(svg, {
   }
 
   // zero line
-  svg.appendChild(svgEl('line', { x1: ML, y1: sy(0), x2: W - MR, y2: sy(0), stroke: '#bbb', 'stroke-dasharray': '4 4' }));
+  if (yMin <= 0 && yMax >= 0) {
+    svg.appendChild(svgEl('line', { x1: ML, y1: sy(0), x2: W - MR, y2: sy(0), stroke: '#bbb', 'stroke-dasharray': '4 4' }));
+  }
   if (hoverLayer) svg.appendChild(hoverLayer);
 }

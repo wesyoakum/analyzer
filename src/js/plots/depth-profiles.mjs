@@ -48,7 +48,13 @@ export function drawDepthProfiles(svgSpeed, svgTension, {
   payload_kg = 0,
   cable_w_kgpm = 0,
   dead_end_m = 0,
-  rated_speed_ms = null
+  rated_speed_ms = null,
+  depth_xmin = 0,
+  depth_xmax = null,
+  speed_ymin = 0,
+  speed_ymax = null,
+  tension_ymin = 0,
+  tension_ymax = null
 } = {}) {
   const wraps = (scenario === 'electric') ? (elWraps || []) : (hyWraps || []);
   const speedField = (scenario === 'electric')
@@ -78,21 +84,60 @@ export function drawDepthProfiles(svgSpeed, svgTension, {
       }))
     : 0;
   const ratedSpeedMs = Number.isFinite(rated_speed_ms) ? Math.max(0, rated_speed_ms) : null;
-  const maxSpeed = Math.max(1, maxSpeedFromCandidates, ratedSpeedMs || 0);
   const maxAvailT = Math.max(0, ...segments.map(S => S.avail_tension_kgf || 0));
-  const maxTheoT = payload_kg + cable_w_kgpm * maxDepth;
+  const tensionDepth = Math.max(maxDepth, depthMax);
+  const maxTheoT = payload_kg + cable_w_kgpm * tensionDepth;
   const maxReqT = maxTheoT * TENSION_SAFETY_FACTOR;
-  const maxTension = Math.max(maxReqT, maxAvailT) * 1.05 || 1;
+  const toNumber = val => {
+    const num = Number(val);
+    return Number.isFinite(num) ? num : NaN;
+  };
+
+  let depthMin = toNumber(depth_xmin);
+  if (!Number.isFinite(depthMin) || depthMin < 0) depthMin = 0;
+
+  let depthMax = toNumber(depth_xmax);
+  const autoDepthMax = Math.max(depthMin + 0.1, maxDepth);
+  if (Number.isFinite(depthMax)) {
+    depthMax = Math.max(depthMin + 0.1, depthMax);
+  } else {
+    depthMax = autoDepthMax;
+  }
+  if (depthMax <= depthMin) depthMax = depthMin + 1;
+
+  let speedMin = toNumber(speed_ymin);
+  if (!Number.isFinite(speedMin) || speedMin < 0) speedMin = 0;
+
+  let speedMax = toNumber(speed_ymax);
+  const autoSpeedMax = Math.max(speedMin + 0.1, 1, maxSpeedFromCandidates, ratedSpeedMs || 0);
+  if (Number.isFinite(speedMax)) {
+    speedMax = Math.max(speedMin + 0.1, speedMax);
+  } else {
+    speedMax = autoSpeedMax;
+  }
+  if (speedMax <= speedMin) speedMax = speedMin + 1;
+
+  let tensionMin = toNumber(tension_ymin);
+  if (!Number.isFinite(tensionMin) || tensionMin < 0) tensionMin = 0;
+
+  let tensionMax = toNumber(tension_ymax);
+  const autoTensionMax = Math.max(tensionMin + 1, maxReqT, maxAvailT) * 1.05;
+  if (Number.isFinite(tensionMax)) {
+    tensionMax = Math.max(tensionMin + 1, tensionMax);
+  } else {
+    tensionMax = autoTensionMax;
+  }
+  if (tensionMax <= tensionMin) tensionMax = tensionMin + 1;
 
   const accentColor = getAccentColor();
 
   // Render both
-  drawSpeedProfile(svgSpeed, segments, maxDepth, maxSpeed, accentColor, ratedSpeedMs);
-  drawTensionProfile(svgTension, segments, maxDepth, maxTension, payload_kg, cable_w_kgpm, accentColor);
+  drawSpeedProfile(svgSpeed, segments, depthMin, depthMax, speedMin, speedMax, accentColor, ratedSpeedMs);
+  drawTensionProfile(svgTension, segments, depthMin, depthMax, tensionMin, tensionMax, payload_kg, cable_w_kgpm, accentColor);
 }
 
 // ---------- Speed vs Depth ----------
-function drawSpeedProfile(svg, segments, maxDepth, maxSpeed, accentColor, ratedSpeedMs = null) {
+function drawSpeedProfile(svg, segments, depthMin, depthMax, speedMin, speedMax, accentColor, ratedSpeedMs = null) {
   while (svg.firstChild) svg.removeChild(svg.firstChild);
 
   const ML = 64, MR = 18, MT = 18, MB = 46;
@@ -100,20 +145,26 @@ function drawSpeedProfile(svg, segments, maxDepth, maxSpeed, accentColor, ratedS
   const H = svg.viewBox.baseVal.height || svg.clientHeight || 540;
   const innerW = W - ML - MR, innerH = H - MT - MB;
 
-  const sx = d => ML + (d / Math.max(1e-9, maxDepth)) * innerW;       // X depth
-  const sy = v => MT + (1 - v / Math.max(1e-9, maxSpeed)) * innerH;   // Y speed
+  const clampDepth = d => Math.min(Math.max(d, depthMin), depthMax);
+  const clampSpeed = v => Math.min(Math.max(v, speedMin), speedMax);
+  const depthSpan = Math.max(1e-9, depthMax - depthMin);
+  const speedSpan = Math.max(1e-9, speedMax - speedMin);
+
+  const sx = d => ML + (clampDepth(d) - depthMin) / depthSpan * innerW;
+  const sy = v => MT + (1 - (clampSpeed(v) - speedMin) / speedSpan) * innerH;
 
   svg.appendChild(svgEl('rect', { x: ML, y: MT, width: innerW, height: innerH, fill: '#fff', stroke: '#ccc' }));
 
-  // grid/ticks
-  niceTicks(0, maxDepth, 8).ticks.forEach(dx => {
+  niceTicks(depthMin, depthMax, 8).ticks.forEach(dx => {
+    if (dx < depthMin - 1e-9 || dx > depthMax + 1e-9) return;
     const X = sx(dx);
     svg.appendChild(svgEl('line', { x1: X, y1: MT, x2: X, y2: H - MB, stroke: '#eee' }));
     const t = svgEl('text', { x: X, y: H - 8, 'text-anchor': 'middle', 'font-size': '12', fill: '#444' });
-    t.textContent = String(Math.round(dx));
+    t.textContent = formatDepthLabel(dx);
     svg.appendChild(t);
   });
-  niceTicks(0, maxSpeed, 6).ticks.forEach(v => {
+  niceTicks(speedMin, speedMax, 6).ticks.forEach(v => {
+    if (v < speedMin - 1e-9 || v > speedMax + 1e-9) return;
     const Y = sy(v);
     svg.appendChild(svgEl('line', { x1: ML, y1: Y, x2: W - MR, y2: Y, stroke: '#eee' }));
     const t = svgEl('text', { x: ML - 6, y: Y + 4, 'text-anchor': 'end', 'font-size': '12', fill: '#444' });
@@ -122,20 +173,23 @@ function drawSpeedProfile(svg, segments, maxDepth, maxSpeed, accentColor, ratedS
   });
 
   svg.appendChild(svgEl('text', { x: ML + innerW / 2, y: H - 4, 'text-anchor': 'middle', 'font-size': '12', fill: '#444' }))
-     .textContent = 'Depth (m)';
+    .textContent = 'Depth (m)';
   svg.appendChild(svgEl('text', {
     x: 18, y: MT + innerH / 2, transform: `rotate(-90,18,${MT + innerH / 2})`,
     'text-anchor': 'middle', 'font-size': '12', fill: '#444'
   })).textContent = 'Speed (m/s)';
 
-  // available speed (accent)
   segments.forEach(S => {
     if (!Number.isFinite(S.speed_ms)) return;
-    const y = sy(S.speed_ms);
+    if (S.speed_ms < speedMin - 1e-9 || S.speed_ms > speedMax + 1e-9) return;
     const depthEnd = Math.min(S.depth_start, S.depth_end);
     const depthStart = Math.max(S.depth_start, S.depth_end);
+    if (Math.max(depthStart, depthEnd) < depthMin - 1e-9) return;
+    if (Math.min(depthStart, depthEnd) > depthMax + 1e-9) return;
     const x0 = sx(depthEnd);
     const x1 = sx(depthStart);
+    if (Math.abs(x1 - x0) < 1e-6) return;
+    const y = sy(S.speed_ms);
     svg.appendChild(svgEl('line', {
       x1: x0,
       y1: y,
@@ -146,16 +200,20 @@ function drawSpeedProfile(svg, segments, maxDepth, maxSpeed, accentColor, ratedS
     }));
   });
 
-  // candidate speeds (Vp power-limited purple, Vq flow-limited green, dashed)
   segments.forEach(S => {
     if (!Array.isArray(S.candidate_speeds_ms)) return;
     const depthEnd = Math.min(S.depth_start, S.depth_end);
     const depthStart = Math.max(S.depth_start, S.depth_end);
+    if (Math.max(depthStart, depthEnd) < depthMin - 1e-9) return;
+    if (Math.min(depthStart, depthEnd) > depthMax + 1e-9) return;
+
     S.candidate_speeds_ms.forEach(candidate => {
       if (!candidate || !Number.isFinite(candidate.value_ms)) return;
+      if (candidate.value_ms < speedMin - 1e-9 || candidate.value_ms > speedMax + 1e-9) return;
       const y = sy(candidate.value_ms);
       const x0 = sx(depthEnd);
       const x1 = sx(depthStart);
+      if (Math.abs(x1 - x0) < 1e-6) return;
       const stroke = (candidate.kind === 'flow') ? CANDIDATE_FLOW_COLOR : CANDIDATE_POWER_COLOR;
 
       svg.appendChild(svgEl('line', {
@@ -170,7 +228,7 @@ function drawSpeedProfile(svg, segments, maxDepth, maxSpeed, accentColor, ratedS
     });
   });
 
-  if (Number.isFinite(ratedSpeedMs) && ratedSpeedMs > 0) {
+  if (Number.isFinite(ratedSpeedMs) && ratedSpeedMs > 0 && ratedSpeedMs >= speedMin - 1e-9 && ratedSpeedMs <= speedMax + 1e-9) {
     const ratedExceeded = segments.some(S => Number.isFinite(S.speed_ms) && !isRatedBelowAvailable(ratedSpeedMs, S.speed_ms));
     const ratedStroke = ratedExceeded ? EXCEED_COLOR : RATED_SPEED_COLOR;
     const yRated = sy(ratedSpeedMs);
@@ -186,7 +244,7 @@ function drawSpeedProfile(svg, segments, maxDepth, maxSpeed, accentColor, ratedS
     if (ratedExceeded) {
       const limit = findRatedDepthLimit(segments, ratedSpeedMs);
       if (limit && Number.isFinite(limit.depth)) {
-        const clampedDepth = Math.max(0, Math.min(limit.depth, maxDepth));
+        const clampedDepth = clampDepth(limit.depth);
         const x = sx(clampedDepth);
         const axisY = H - MB;
         svg.appendChild(svgEl('line', {
@@ -215,8 +273,9 @@ function drawSpeedProfile(svg, segments, maxDepth, maxSpeed, accentColor, ratedS
     }
   }
 
-  // zero line
-  svg.appendChild(svgEl('line', { x1: ML, y1: sy(0), x2: W - MR, y2: sy(0), stroke: '#bbb', 'stroke-dasharray': '4 4' }));
+  if (speedMin <= 0 && speedMax >= 0) {
+    svg.appendChild(svgEl('line', { x1: ML, y1: sy(0), x2: W - MR, y2: sy(0), stroke: '#bbb', 'stroke-dasharray': '4 4' }));
+  }
 }
 
 function findRatedDepthLimit(segments, ratedSpeedMs) {
@@ -264,7 +323,7 @@ function removeTrailingZeros(text) {
 }
 
 // ---------- Tension vs Depth ----------
-function drawTensionProfile(svg, segments, maxDepth, maxTension, payload_kg, cable_w_kgpm, accentColor) {
+function drawTensionProfile(svg, segments, depthMin, depthMax, tensionMin, tensionMax, payload_kg, cable_w_kgpm, accentColor) {
   while (svg.firstChild) svg.removeChild(svg.firstChild);
 
   const ML = 64, MR = 18, MT = 18, MB = 46;
@@ -272,20 +331,26 @@ function drawTensionProfile(svg, segments, maxDepth, maxTension, payload_kg, cab
   const H = svg.viewBox.baseVal.height || svg.clientHeight || 540;
   const innerW = W - ML - MR, innerH = H - MT - MB;
 
-  const sx = d => ML + (d / Math.max(1e-9, maxDepth)) * innerW;        // X depth
-  const sy = T => MT + (1 - T / Math.max(1e-9, maxTension)) * innerH;  // Y tension
+  const clampDepth = d => Math.min(Math.max(d, depthMin), depthMax);
+  const clampTension = T => Math.min(Math.max(T, tensionMin), tensionMax);
+  const depthSpan = Math.max(1e-9, depthMax - depthMin);
+  const tensionSpan = Math.max(1e-9, tensionMax - tensionMin);
+
+  const sx = d => ML + (clampDepth(d) - depthMin) / depthSpan * innerW;
+  const sy = T => MT + (1 - (clampTension(T) - tensionMin) / tensionSpan) * innerH;
 
   svg.appendChild(svgEl('rect', { x: ML, y: MT, width: innerW, height: innerH, fill: '#fff', stroke: '#ccc' }));
 
-  // grid/ticks
-  niceTicks(0, maxDepth, 8).ticks.forEach(dx => {
+  niceTicks(depthMin, depthMax, 8).ticks.forEach(dx => {
+    if (dx < depthMin - 1e-9 || dx > depthMax + 1e-9) return;
     const X = sx(dx);
     svg.appendChild(svgEl('line', { x1: X, y1: MT, x2: X, y2: H - MB, stroke: '#eee' }));
     const t = svgEl('text', { x: X, y: H - 8, 'text-anchor': 'middle', 'font-size': '12', fill: '#444' });
-    t.textContent = String(Math.round(dx));
+    t.textContent = formatDepthLabel(dx);
     svg.appendChild(t);
   });
-  niceTicks(0, maxTension, 6).ticks.forEach(T => {
+  niceTicks(tensionMin, tensionMax, 6).ticks.forEach(T => {
+    if (T < tensionMin - 1e-9 || T > tensionMax + 1e-9) return;
     const Y = sy(T);
     svg.appendChild(svgEl('line', { x1: ML, y1: Y, x2: W - MR, y2: Y, stroke: '#eee' }));
     const t = svgEl('text', { x: ML - 6, y: Y + 4, 'text-anchor': 'end', 'font-size': '12', fill: '#444' });
@@ -294,26 +359,36 @@ function drawTensionProfile(svg, segments, maxDepth, maxTension, payload_kg, cab
   });
 
   svg.appendChild(svgEl('text', { x: ML + innerW / 2, y: H - 4, 'text-anchor': 'middle', 'font-size': '12', fill: '#444' }))
-     .textContent = 'Depth (m)';
+    .textContent = 'Depth (m)';
   svg.appendChild(svgEl('text', {
     x: 18, y: MT + innerH / 2, transform: `rotate(-90,18,${MT + innerH / 2})`,
     'text-anchor': 'middle', 'font-size': '12', fill: '#444'
   })).textContent = 'Tension (kgf)';
 
-  const normalizedSegments = segments.map(S => ({
-    depth_start: Math.max(0, Math.max(S.depth_start, S.depth_end)),
-    depth_end: Math.max(0, Math.min(S.depth_start, S.depth_end)),
-    avail_tension_kgf: Number.isFinite(S.avail_tension_kgf) ? S.avail_tension_kgf : null
-  }));
+  const normalizedSegments = segments.map(S => {
+    const depthStartRaw = Math.max(S.depth_start, S.depth_end);
+    const depthEndRaw = Math.min(S.depth_start, S.depth_end);
+    if (!Number.isFinite(depthStartRaw) || !Number.isFinite(depthEndRaw)) return null;
+    if (Math.max(depthStartRaw, depthEndRaw) < depthMin - 1e-9) return null;
+    if (Math.min(depthStartRaw, depthEndRaw) > depthMax + 1e-9) return null;
+    return {
+      depth_start: clampDepth(depthStartRaw),
+      depth_end: clampDepth(depthEndRaw),
+      avail_tension_kgf: Number.isFinite(S.avail_tension_kgf) ? S.avail_tension_kgf : null
+    };
+  }).filter(Boolean);
 
-  // available tension as accent dashed steps across each wrap interval
   segments.forEach(S => {
     if (!Number.isFinite(S.avail_tension_kgf)) return;
+    if (S.avail_tension_kgf < tensionMin - 1e-9 || S.avail_tension_kgf > tensionMax + 1e-9) return;
     const depthEnd = Math.min(S.depth_start, S.depth_end);
-       const depthStart = Math.max(S.depth_start, S.depth_end);
-    const y = sy(S.avail_tension_kgf);
+    const depthStart = Math.max(S.depth_start, S.depth_end);
+    if (Math.max(depthStart, depthEnd) < depthMin - 1e-9) return;
+    if (Math.min(depthStart, depthEnd) > depthMax + 1e-9) return;
     const x0 = sx(depthEnd);
     const x1 = sx(depthStart);
+    if (Math.abs(x1 - x0) < 1e-6) return;
+    const y = sy(S.avail_tension_kgf);
     svg.appendChild(svgEl('line', {
       x1: x0,
       y1: y,
@@ -327,8 +402,8 @@ function drawTensionProfile(svg, segments, maxDepth, maxTension, payload_kg, cab
 
   const drawPieces = (pieces, { strokeWidth = 2, dash = null } = {}) => {
     pieces.forEach(seg => {
-      const d0 = Math.max(0, Math.min(seg.d0, maxDepth));
-      const d1 = Math.max(0, Math.min(seg.d1, maxDepth));
+      const d0 = clampDepth(seg.d0);
+      const d1 = clampDepth(seg.d1);
       if (Math.abs(d1 - d0) < 1e-6) return;
       const pts = [
         [sx(d0), sy(seg.T0)],
@@ -345,21 +420,23 @@ function drawTensionProfile(svg, segments, maxDepth, maxTension, payload_kg, cab
     });
   };
 
-  const theoreticalPieces = buildTensionSegments(normalizedSegments, payload_kg, cable_w_kgpm, maxDepth, {
+  const theoreticalPieces = buildTensionSegments(normalizedSegments, payload_kg, cable_w_kgpm, depthMin, depthMax, {
     factor: 1,
     colorBelow: TENSION_OK_COLOR,
     colorAbove: EXCEED_COLOR
   });
   drawPieces(theoreticalPieces, { strokeWidth: 2, dash: '6 4' });
 
-  const requiredPieces = buildTensionSegments(normalizedSegments, payload_kg, cable_w_kgpm, maxDepth, {
+  const requiredPieces = buildTensionSegments(normalizedSegments, payload_kg, cable_w_kgpm, depthMin, depthMax, {
     factor: TENSION_SAFETY_FACTOR,
     colorBelow: TENSION_OK_COLOR,
     colorAbove: EXCEED_COLOR
   });
   drawPieces(requiredPieces, { strokeWidth: 2.4 });
 
-  svg.appendChild(svgEl('line', { x1: ML, y1: sy(0), x2: W - MR, y2: sy(0), stroke: '#bbb', 'stroke-dasharray': '4 4' }));
+  if (tensionMin <= 0 && tensionMax >= 0) {
+    svg.appendChild(svgEl('line', { x1: ML, y1: sy(0), x2: W - MR, y2: sy(0), stroke: '#bbb', 'stroke-dasharray': '4 4' }));
+  }
 
   function pathFrom(pts) {
     if (!pts.length) return '';
@@ -369,15 +446,16 @@ function drawTensionProfile(svg, segments, maxDepth, maxTension, payload_kg, cab
   }
 }
 
-function buildTensionSegments(segments, payload_kg, cable_w_kgpm, maxDepth, {
+function buildTensionSegments(segments, payload_kg, cable_w_kgpm, depthMin, depthMax, {
   factor = 1,
   colorBelow,
   colorAbove
 } = {}) {
-  const boundaries = new Set([0, maxDepth]);
+  const clampDepth = d => Math.min(Math.max(d, depthMin), depthMax);
+  const boundaries = new Set([depthMin, depthMax]);
   segments.forEach(S => {
-    boundaries.add(Math.max(0, S.depth_end));
-    boundaries.add(Math.max(0, S.depth_start));
+    boundaries.add(clampDepth(S.depth_end));
+    boundaries.add(clampDepth(S.depth_start));
   });
   const sorted = [...boundaries].sort((a, b) => a - b);
 
@@ -385,6 +463,7 @@ function buildTensionSegments(segments, payload_kg, cable_w_kgpm, maxDepth, {
   for (let i = 0; i < sorted.length - 1; i++) {
     const d0 = sorted[i];
     const d1 = sorted[i + 1];
+    if (d1 - d0 < 1e-9) continue;
     const mid = (d0 + d1) / 2;
     const seg = segments.find(S => mid >= Math.min(S.depth_end, S.depth_start) - 1e-9 && mid <= Math.max(S.depth_end, S.depth_start) + 1e-9);
     const avail = seg ? seg.avail_tension_kgf : null;

@@ -1,159 +1,317 @@
-diff --git a/src/js/main.mjs b/src/js/main.mjs
-index 87ef58ba8c1b7117d52e502bd7000a5cfefc993e..af5d57f21f5589bc368533de889836e5d81e83e9 100644
---- a/src/js/main.mjs
-+++ b/src/js/main.mjs
-@@ -396,74 +396,76 @@ function computeAll() {
-     // Geometry & load inputs
-         const wraps_override_input = read('wraps_override');
-     const wraps_per_layer_override = (
-       Number.isFinite(wraps_override_input) && wraps_override_input > 0
-     ) ? wraps_override_input : undefined;
+diff --git a/src/js/plots/wave-contours.mjs b/src/js/plots/wave-contours.mjs
+index 56ff537d03a4da93d83055129c81fd7d90971afb..545a0a97a232d3819c87eda6d667d02691679169 100644
+--- a/src/js/plots/wave-contours.mjs
++++ b/src/js/plots/wave-contours.mjs
+@@ -1,105 +1,142 @@
+ // ===== plots/wave-contours.mjs â€” Wave contour plots (DOM-agnostic) =====
+ import { niceTicks, svgEl, svgPathFromPoints } from '../utils.mjs';
  
-     const cfg = {
-       cable_dia_mm: read('c_mm'),
-       operating_depth_m: read('depth_m'),
-       dead_end_m: read('dead_m'),
-       core_dia_in: read('core_in'),
-       flange_to_flange_in: read('ftf_in'),
-       lebus_thk_in: read('lebus_in'),
-       packing_factor: read('pack'),
-       wraps_per_layer_override
-     };
-     const payload_kg = read('payload_kg');
-     const cable_w_kgpm = read('c_w_kgpm');
+ /**
+  * Draw the wave contour plot (speed vs period with height contours).
+  */
+ export function drawWaveContours(svg, opts = {}) {
+   renderWavePlot(svg, opts, 'speed');
+ }
  
-     const rated_speed_mpm = read('rated_speed_mpm');
-     const rated_swl_kgf = read('rated_swl_kgf');
-     const system_efficiency = read('system_efficiency');
+ /**
+  * Draw the complementary plot (wave height vs period with layer speed contours).
+  */
+ export function drawWaveHeightContours(svg, opts = {}) {
+   renderWavePlot(svg, opts, 'height');
+ }
  
-     updateMinimumSystemHp(rated_speed_mpm, rated_swl_kgf, system_efficiency);
+ function renderWavePlot(svg, {
+   scenario = 'electric',
+   Tmin = 4,
+   Tmax = 20,
++  Hmin = 0,
+   Hmax = 6,
++  speedMin = 0,
+   speedMax = null,
  
-+    const positiveOr = (value, fallback) => (Number.isFinite(value) && value > 0 ? value : fallback);
+   elLayers = [],
+   hyLayers = []
+ } = {}, mode = 'speed') {
+   if (svg._waveHoverHandlers) {
+     const { move, leave } = svg._waveHoverHandlers;
+     svg.removeEventListener('pointermove', move);
+     svg.removeEventListener('pointerleave', leave);
+     svg.removeEventListener('pointerenter', move);
+     delete svg._waveHoverHandlers;
+   }
+ 
+   while (svg.firstChild) svg.removeChild(svg.firstChild);
+ 
+-  Tmin = Math.max(0.1, +Tmin || 4);
+-  Tmax = Math.max(Tmin + 0.1, +Tmax || 20);
+-  Hmax = Math.max(0.5, +Hmax || 6);
+-  const explicitVmax = Number.isFinite(+speedMax) ? Math.max(0.1, +speedMax) : null;
++  const parseNumber = val => {
++    const num = Number(val);
++    return Number.isFinite(num) ? num : NaN;
++  };
 +
-     // Shared drivetrain
--    const gr1 = read('gr1');
--    const gr2 = read('gr2');
--    const motors = read('motors');
--    const denom_mech = (gr1 || 1) * (gr2 || 1) * (motors || 1);
-+    const gr1 = positiveOr(read('gr1'), 1);
-+    const gr2 = positiveOr(read('gr2'), 1);
-+    const motors = positiveOr(read('motors'), 1);
-+    const denom_mech = gr1 * gr2 * motors;
++  Tmin = parseNumber(Tmin);
++  if (!Number.isFinite(Tmin) || Tmin <= 0) Tmin = 4;
++  Tmin = Math.max(0.1, Tmin);
++
++  Tmax = parseNumber(Tmax);
++  if (!Number.isFinite(Tmax)) Tmax = Tmin + 16;
++  Tmax = Math.max(Tmin + 0.1, Tmax);
++
++  speedMin = parseNumber(speedMin);
++  if (!Number.isFinite(speedMin)) speedMin = 0;
++  speedMin = Math.max(0, speedMin);
++
++  const parsedSpeedMax = parseNumber(speedMax);
++  const hasExplicitVmax = Number.isFinite(parsedSpeedMax) && parsedSpeedMax > speedMin;
++
++  Hmin = parseNumber(Hmin);
++  if (!Number.isFinite(Hmin)) Hmin = 0;
++  Hmin = Math.max(0, Hmin);
++
++  Hmax = parseNumber(Hmax);
++  if (!Number.isFinite(Hmax)) Hmax = Math.max(6, Hmin + 0.5);
++  Hmax = Math.max(Hmin + 0.1, Hmax);
  
-     const electricEnabled = driveModeEnabled('electric');
-     const hydraulicEnabled = driveModeEnabled('hydraulic');
+   // layer speeds in m/s (start-of-layer)
+   let layerSpeeds = [];
+   if (scenario === 'electric') {
+     layerSpeeds = (elLayers || [])
+       .filter(r => Number.isFinite(+r.line_speed_at_start_mpm))
+       .map(r => ({ layer_no: r.layer_no, v_ms: (+r.line_speed_at_start_mpm) / 60 }));
+   } else {
+     layerSpeeds = (hyLayers || [])
+       .filter(r => Number.isFinite(+r.hyd_speed_available_mpm))
+       .map(r => ({ layer_no: r.layer_no, v_ms: (+r.hyd_speed_available_mpm) / 60 }));
+   }
+   layerSpeeds = layerSpeeds.filter(L => Number.isFinite(L.v_ms) && L.v_ms >= 0);
+   layerSpeeds.sort((a, b) => a.v_ms - b.v_ms);
  
-     // Electric inputs
-     const motor_max_rpm = read('motor_max_rpm');
--    const motor_hp = read('motor_hp');
-+    const motor_hp = positiveOr(read('motor_hp'), 0);
-     const motor_tmax = read('motor_tmax');
--    const P_per_motor_W = (Number.isFinite(motor_hp) ? motor_hp : 0) * W_PER_HP;
-+    const P_per_motor_W = motor_hp * W_PER_HP;
+   // Y range (speed plot only) derived from contours and layers
+   const vmaxFromContours = Math.PI * Hmax / Math.max(Tmin, 1e-9);
+   let maxLayerSpeed = 0;
+   for (const { v_ms } of layerSpeeds) {
+     if (v_ms > maxLayerSpeed) maxLayerSpeed = v_ms;
+   }
+-  const autoVmax = Math.max(vmaxFromContours, maxLayerSpeed) * 1.05 || 1;
+-  const Vmax = explicitVmax ?? autoVmax;
++  let autoVmax = Math.max(vmaxFromContours, maxLayerSpeed, speedMin + 0.1) * 1.05;
++  if (!Number.isFinite(autoVmax) || autoVmax <= speedMin) {
++    autoVmax = speedMin + 1;
++  }
++  let Vmax = hasExplicitVmax ? Math.max(speedMin + 0.1, parsedSpeedMax) : autoVmax;
++  if (!Number.isFinite(Vmax) || Vmax <= speedMin) Vmax = speedMin + 1;
++  const Vmin = speedMin;
  
-     // Hydraulic inputs
--    const h_strings = read('h_pump_strings');
--    const h_emotor_hp = read('h_emotor_hp');
--    const h_emotor_eff = read('h_emotor_eff'); // electro-hydraulic efficiency
--    const h_emotor_rpm = read('h_emotor_rpm');
--    const h_pump_cc = read('h_pump_cc');
--    const h_max_psi = read('h_max_psi');
--    const h_hmot_cc = read('h_hmot_cc');
--    const h_hmot_rpm_cap = read('h_hmot_rpm_max');
-+    const h_strings = positiveOr(read('h_pump_strings'), 0);
-+    const h_emotor_hp = positiveOr(read('h_emotor_hp'), 0);
-+    const h_emotor_eff = positiveOr(read('h_emotor_eff'), 0); // electro-hydraulic efficiency
-+    const h_emotor_rpm = positiveOr(read('h_emotor_rpm'), 0);
-+    const h_pump_cc = positiveOr(read('h_pump_cc'), 0);
-+    const h_max_psi = positiveOr(read('h_max_psi'), 0);
-+    const h_hmot_cc = positiveOr(read('h_hmot_cc'), 0);
-+    const h_hmot_rpm_cap = positiveOr(read('h_hmot_rpm_max'), Infinity);
+   const W = svg.viewBox.baseVal.width || svg.clientWidth || 1000;
+   const H = svg.viewBox.baseVal.height || svg.clientHeight || 540;
+   const ML = 64, MR = 20, MT = 20, MB = 46;
+   const innerW = W - ML - MR, innerH = H - MT - MB;
  
-     // Usable hydraulic hp & flow from pump strings
-     const hp_str_usable = h_emotor_hp * h_emotor_eff;
-     const hp_tot_usable = hp_str_usable * h_strings;
-     const q_str_gpm = gpm_from_cc_rev_and_rpm(h_pump_cc, h_emotor_rpm);
-     const q_tot_gpm = q_str_gpm * h_strings;
+-  const sx = t => ML + (t - Tmin) / (Tmax - Tmin) * innerW;
++  const sx = t => {
++    const clamped = Math.min(Math.max(t, Tmin), Tmax);
++    return ML + (clamped - Tmin) / Math.max(Tmax - Tmin, 1e-9) * innerW;
++  };
++  const yMin = mode === 'speed' ? Vmin : Hmin;
+   const yMax = mode === 'speed' ? Vmax : Hmax;
+-  const sy = val => MT + (1 - val / Math.max(yMax, 1e-9)) * innerH;
++  const sy = val => {
++    const clamped = Math.min(Math.max(val, yMin), yMax);
++    return MT + (1 - (clamped - yMin) / Math.max(yMax - yMin, 1e-9)) * innerH;
++  };
  
-     // Max-pressure torque per hydraulic motor and at drum (pressure-limited)
-     const dP_Pa = h_max_psi * PSI_TO_PA;
-     const torque_per_hmotor_maxP = torque_per_motor_from_pressure_Pa(dP_Pa, h_hmot_cc); // N·m per motor at max P
-     const torque_at_drum_maxP_factor = Math.max(gr1, 1) * Math.max(gr2, 1) * Math.max(motors, 1);
+   // frame
+   svg.appendChild(svgEl('rect', { x: ML, y: MT, width: innerW, height: innerH, fill: '#fff', stroke: '#ccc' }));
  
-     // Generate wraps from geometry
-     const { rows, summary, meta } = calcLayers(cfg);
+   // grid & ticks
+   const xt = niceTicks(Tmin, Tmax, 8).ticks;
+-  const yt = niceTicks(0, yMax, 6).ticks;
++  const yt = niceTicks(yMin, yMax, 6).ticks;
+   xt.forEach(tx => {
+     const X = sx(tx);
+     svg.appendChild(svgEl('line', { x1: X, y1: MT, x2: X, y2: H - MB, stroke: '#eee' }));
+     const t = svgEl('text', { x: X, y: H - 8, 'text-anchor': 'middle', 'font-size': '12', fill: '#444' });
+     t.textContent = (Math.round(tx * 100) / 100).toString();
+     svg.appendChild(t);
+   });
+   yt.forEach(v => {
+     const Y = sy(v);
+     svg.appendChild(svgEl('line', { x1: ML, y1: Y, x2: W - MR, y2: Y, stroke: '#eee' }));
+     const t = svgEl('text', { x: ML - 6, y: Y + 4, 'text-anchor': 'end', 'font-size': '12', fill: '#444' });
+     t.textContent = (Math.round(v * 100) / 100).toString();
+     svg.appendChild(t);
+   });
  
-     const wrapsNoteEl = /** @type {HTMLTableCellElement|null} */ (document.getElementById('wraps_note'));
-     if (wrapsNoteEl) {
-       const calcWraps = meta && Number.isFinite(meta.wraps_per_layer_calc) ? meta.wraps_per_layer_calc : undefined;
-       const display = (typeof calcWraps === 'number') ? calcWraps.toFixed(1) : '–';
-       wrapsNoteEl.textContent = `Leave blank or set to 0 to use calculated wraps (always truncated to .0/.5). Auto-calculated wraps per layer: ${display}.`;
+   // axis labels
+   svg.appendChild(svgEl('text', { x: ML + innerW / 2, y: H - 4, 'text-anchor': 'middle', 'font-size': '12', fill: '#444' }))
+      .textContent = 'Period T (s)';
+   const yLabel = mode === 'speed' ? 'Speed (m/s)' : 'Wave Height (m)';
+   svg.appendChild(svgEl('text', {
+     x: 18, y: MT + innerH / 2, transform: `rotate(-90,18,${MT + innerH / 2})`,
+     'text-anchor': 'middle', 'font-size': '12', fill: '#444'
+   })).textContent = yLabel;
+ 
+   const Hstep = 0.5;
+@@ -113,50 +150,51 @@ function renderWavePlot(svg, {
+   })();
+ 
+   let hoverLayer = null;
+ 
+   if (mode === 'speed') {
+     // contour lines for H from 0.5 to Hmax in 0.5 m step
+     for (let Hm = Hstep; Hm <= Hmax + 1e-9; Hm += Hstep) {
+       const pts = [];
+       const samples = 200;
+       for (let i = 0; i <= samples; i++) {
+         const T = Tmin + (Tmax - Tmin) * i / samples;
+         const v = Math.PI * Hm / Math.max(T, 1e-9);
+         pts.push([sx(T), sy(v)]);
+       }
+       svg.appendChild(svgEl('path', {
+         d: svgPathFromPoints(pts),
+         fill: 'none',
+         stroke: '#999',
+         'stroke-width': 1.5,
+         'stroke-dasharray': (Math.abs(Hm - Math.round(Hm)) < 1e-9) ? '0' : '6 6'
+       }));
      }
  
-     // Per-wrap calculations (electric + hydraulic)
-     for (const r of rows) {
-       // Base tension and torque at drum
-@@ -498,60 +500,59 @@ function computeAll() {
-         // Available line tension from motor torque cap
-         r.avail_tension_kgf = elec_available_tension_kgf(motor_tmax, gr1, gr2, motors, radius_m);
-       } else {
-         r.motor_torque_Nm = 0;
-         r.motor_rpm = 0;
-         r.line_speed_mpm = 0;
-         r.avail_tension_kgf = 0;
+     // horizontal lines for each layer speed
+     layerSpeeds.forEach(L => {
++      if (L.v_ms < Vmin - 1e-9 || L.v_ms > Vmax + 1e-9) return;
+       const Y = sy(L.v_ms);
+       svg.appendChild(svgEl('line', { x1: ML, y1: Y, x2: W - MR, y2: Y, stroke: accentColor, 'stroke-width': 1.5 }));
+       const lbl = svgEl('text', {
+         x: W - MR - 2,
+         y: Y - 3,
+         'text-anchor': 'end',
+         'font-size': '11',
+         fill: accentColor
+       });
+       lbl.textContent = `L${L.layer_no} (${L.v_ms.toFixed(2)} m/s)`;
+       svg.appendChild(lbl);
+     });
+ 
+     hoverLayer = svgEl('g', { 'pointer-events': 'none' });
+     const hoverLine = svgEl('line', {
+       x1: ML,
+       x2: ML,
+       y1: MT,
+       y2: H - MB,
+       stroke: accentColor,
+       'stroke-width': 1.5,
+       'stroke-dasharray': '6 4',
+       opacity: 0
+     });
+     const hoverLabel = svgEl('text', {
+@@ -188,95 +226,105 @@ function renderWavePlot(svg, {
+       hoverLine.setAttribute('opacity', '1');
+ 
+       const displayT = Math.round(T * 10) / 10;
+       hoverLabel.setAttribute('x', clampedX);
+       hoverLabel.textContent = `${displayT.toFixed(1)} sec`;
+       hoverLabel.setAttribute('opacity', '1');
+     };
+ 
+     const hideHover = () => {
+       hoverLine.setAttribute('opacity', '0');
+       hoverLabel.setAttribute('opacity', '0');
+     };
+ 
+     svg.addEventListener('pointermove', updateHover);
+     svg.addEventListener('pointerenter', updateHover);
+     svg.addEventListener('pointerleave', hideHover);
+     svg._waveHoverHandlers = { move: updateHover, leave: hideHover };
+   } else {
+     // iso-speed contour lines (H = v·T / π) for integer and half-integer speeds
+     const speedStep = 0.5;
+     const maxIsoSpeed = Math.PI * Hmax / Math.max(Tmin, 1e-9);
+     for (let v = speedStep; v <= maxIsoSpeed + 1e-9; v += speedStep) {
+       const TmaxForLine = Math.min(Tmax, (Hmax * Math.PI) / Math.max(v, 1e-12));
+       if (TmaxForLine <= Tmin + 1e-6) continue;
+ 
++      const minH = (v * Tmin) / Math.PI;
++      const maxH = (v * TmaxForLine) / Math.PI;
++      if (maxH < Hmin - 1e-6 || minH > Hmax + 1e-6) continue;
++
+       const pts = [];
+       const samples = 200;
+       for (let i = 0; i <= samples; i++) {
+         const T = Tmin + (TmaxForLine - Tmin) * i / samples;
+         const Hline = (v * T) / Math.PI;
+         pts.push([sx(T), sy(Hline)]);
        }
  
-       // ----- HYDRAULIC per wrap -----
-       if (hydraulicEnabled) {
-         // Pressure-limited drum torque and available tension
-         const drum_T_pressure_max = torque_per_hmotor_maxP * torque_at_drum_maxP_factor; // N·m at drum
-         r.hyd_drum_torque_maxP_Nm = +drum_T_pressure_max.toFixed(2);
-         const hyd_avail_tension_N = drum_T_pressure_max / Math.max(radius_m, 1e-12);
-         r.hyd_avail_tension_kgf = +(hyd_avail_tension_N / G).toFixed(1);
+       const isIntegerSpeed = Math.abs(v - Math.round(v)) < 1e-9;
+       svg.appendChild(svgEl('path', {
+         d: svgPathFromPoints(pts),
+         fill: 'none',
+         stroke: '#bbb',
+         'stroke-width': isIntegerSpeed ? 1.4 : 1,
+         'stroke-dasharray': isIntegerSpeed ? '0' : '6 6'
+       }));
  
-         // Pressure required for current torque (per motor)
-         const drum_T = tension_N * radius_m;
-         const torque_per_hmotor = drum_T / (Math.max(gr1, 1e-9) * Math.max(gr2, 1e-9) * Math.max(motors, 1));
-         let P_req_psi = psi_from_torque_and_disp_Nm_cc(torque_per_hmotor, h_hmot_cc);
-         if (!Number.isFinite(P_req_psi) || P_req_psi < 0) P_req_psi = 0;
+       const lastPt = pts[pts.length - 1];
+-      if (lastPt) {
++      if (lastPt && lastPt[1] >= MT && lastPt[1] <= H - MB) {
+         const lbl = svgEl('text', {
+           x: lastPt[0] + 4,
+           y: lastPt[1] - 4,
+           'text-anchor': 'start',
+           'font-size': '10',
+           fill: '#888'
+         });
+         lbl.textContent = `${v.toFixed(1)} m/s`;
+         svg.appendChild(lbl);
+       }
+     }
  
-         // Flow-limited speed
-         const rpm_flow_per_motor = Math.min(
--          h_hmot_rpm_cap || Infinity,
-+          h_hmot_rpm_cap,
-           rpm_from_gpm_and_disp(q_tot_gpm / Math.max(motors, 1), h_hmot_cc)
-         );
-         const speed_flow_mpm = line_speed_mpm_from_motor_rpm(rpm_flow_per_motor, gr1, gr2, r.layer_dia_in);
+     // contour lines for each layer speed (H = vÂ·T / Ï€)
+     layerSpeeds.forEach(L => {
+       if (!Number.isFinite(L.v_ms) || L.v_ms <= 0) return;
+       const TmaxForLine = Math.min(Tmax, (Hmax * Math.PI) / Math.max(L.v_ms, 1e-12));
+       if (TmaxForLine <= Tmin + 1e-6) return;
  
-         // Power-limited speed (cap pressure at max if P_req exceeds max)
-         const P_power_psi = (P_req_psi > 0) ? Math.min(P_req_psi, h_max_psi) : 0;
--        const hp_elec_in_total = (Number.isFinite(h_emotor_hp) ? h_emotor_hp : 0) *
--          (Number.isFinite(h_strings) ? h_strings : 0);
--        const eff_total = Number.isFinite(h_emotor_eff) ? h_emotor_eff : 0;
-+        const hp_elec_in_total = h_emotor_hp * h_strings;
-+        const eff_total = h_emotor_eff;
++      const minH = (L.v_ms * Tmin) / Math.PI;
++      const maxH = (L.v_ms * TmaxForLine) / Math.PI;
++      if (maxH < Hmin - 1e-6 || minH > Hmax + 1e-6) return;
++
+       const pts = [];
+       const samples = 200;
+       for (let i = 0; i <= samples; i++) {
+         const T = Tmin + (TmaxForLine - Tmin) * i / samples;
+         const Hline = (L.v_ms * T) / Math.PI;
+         pts.push([sx(T), sy(Hline)]);
+       }
+       svg.appendChild(svgEl('path', {
+         d: svgPathFromPoints(pts),
+         fill: 'none',
+         stroke: accentColor,
+         'stroke-width': 1.6
+       }));
  
-         let speed_power_mpm = 0;
-         if (hp_elec_in_total > 0 && eff_total > 0 && theoretical_tension > 0) {
-           const tension_theoretical_N = theoretical_tension * G;
-           if (tension_theoretical_N > 0) {
-             const power_available_W = hp_elec_in_total * eff_total * W_PER_HP;
-             const speed_power_mps = power_available_W / tension_theoretical_N;
-             speed_power_mpm = speed_power_mps * 60;
-           }
-         }
-         if (!Number.isFinite(speed_power_mpm) || speed_power_mpm < 0) speed_power_mpm = 0;
+       const lastPt = pts[pts.length - 1];
+-      if (lastPt) {
++      if (lastPt && lastPt[1] >= MT && lastPt[1] <= H - MB) {
+         const lbl = svgEl('text', {
+           x: lastPt[0] - 4,
+           y: lastPt[1] - 6,
+           'text-anchor': 'end',
+           'font-size': '11',
+           fill: accentColor
+         });
+         lbl.textContent = `L${L.layer_no} (${L.v_ms.toFixed(2)} m/s)`;
+         svg.appendChild(lbl);
+       }
+     });
+   }
  
-         let speed_avail_mpm = Math.min(speed_power_mpm, speed_flow_mpm);
-         if (!Number.isFinite(speed_avail_mpm) || speed_avail_mpm < 0) speed_avail_mpm = 0;
- 
-         let hp_used_at_available = 0;
-         if (speed_avail_mpm > 0 && P_power_psi > 0) {
-           // Power used at the actual available speed
-           const D_m = r.layer_dia_in * M_PER_IN;
-           const drum_rpm_needed = speed_avail_mpm / (Math.PI * D_m);
-           const motor_rpm_needed = drum_rpm_needed * (Math.max(gr1, 1) * Math.max(gr2, 1));
-           const gpm_per_motor_needed = (motor_rpm_needed * h_hmot_cc) / CC_PER_GAL;
-           const gpm_total_needed = Math.max(motors, 1) * gpm_per_motor_needed;
-           const gpm_used = Math.min(gpm_total_needed, q_tot_gpm);
-           hp_used_at_available = hp_from_psi_and_gpm(P_power_psi, gpm_used);
+   // zero line
+-  svg.appendChild(svgEl('line', { x1: ML, y1: sy(0), x2: W - MR, y2: sy(0), stroke: '#bbb', 'stroke-dasharray': '4 4' }));
++  if (yMin <= 0 && yMax >= 0) {
++    svg.appendChild(svgEl('line', { x1: ML, y1: sy(0), x2: W - MR, y2: sy(0), stroke: '#bbb', 'stroke-dasharray': '4 4' }));
++  }
+   if (hoverLayer) svg.appendChild(hoverLayer);
+ }
