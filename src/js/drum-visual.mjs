@@ -215,9 +215,7 @@ export function renderDrumVisualization(rows, summary, cfg, meta) {
   }
 
   if (flangeHeightPx > 0 && flangeWidthPx > 0) {
-    const centerX = spoolLeft + widthPx / 2;
-    svg.appendChild(svgEl('rect', {
-      x: (centerX - flangeWidthPx / 2).toFixed(2),
+    const flangeRectAttrs = {
       y: (centerY - flangeHeightPx / 2).toFixed(2),
       width: flangeWidthPx.toFixed(2),
       height: flangeHeightPx.toFixed(2),
@@ -225,6 +223,16 @@ export function renderDrumVisualization(rows, summary, cfg, meta) {
       stroke: rgbToCss(accentRgb, 0.5),
       'stroke-width': strokeWidthAttr,
       'vector-effect': 'non-scaling-stroke'
+    };
+
+    svg.appendChild(svgEl('rect', {
+      ...flangeRectAttrs,
+      x: (spoolLeft - flangeWidthPx).toFixed(2)
+    }));
+
+    svg.appendChild(svgEl('rect', {
+      ...flangeRectAttrs,
+      x: spoolRight.toFixed(2)
     }));
   }
 

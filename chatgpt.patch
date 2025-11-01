@@ -1,56 +1,76 @@
-diff --git a/src/js/main.mjs b/src/js/main.mjs
-index 34a2a6e321bb05878f84656a708373db5a34858a..430f83e4076584490c54ce8fdfa1f07729b7a494 100644
---- a/src/js/main.mjs
-+++ b/src/js/main.mjs
-@@ -471,50 +471,51 @@ function updateScenarioOptions(selectId, electricEnabled, hydraulicEnabled) {
-       if (first) selectEl.value = first.value;
-     }
-     selectEl.dispatchEvent(new Event('change', { bubbles: true }));
+diff --git a/src/js/drum-visual.mjs b/src/js/drum-visual.mjs
+index 05655ef08d1d45c2f5b9fdb5e7b1646d815b7ca6..1cd653d3542ff849f43b117950eb043caf31f1e3 100644
+--- a/src/js/drum-visual.mjs
++++ b/src/js/drum-visual.mjs
+@@ -193,60 +193,68 @@ export function renderDrumVisualization(rows, summary, cfg, meta) {
+   const centerY = SVG_MARGIN + heightPx / 2;
+ 
+   const coreHeightPx = Math.max(0, (core_dia_in || 0) * scale);
+   const coreWidthPx = Math.max(0, (flange_to_flange_in || 0) * scale);
+   const flangeDiaIn = Math.max(0, flange_dia_in || 0);
+   const flangeHeightPx = flangeDiaIn * scale;
+   const flangeWidthPx = flangeDiaIn * 0.01 * scale;
+ 
+   const strokeWidth = 0.85;
+   const strokeWidthAttr = strokeWidth.toFixed(3);
+ 
+   if (coreHeightPx > 0 && coreWidthPx > 0) {
+     svg.appendChild(svgEl('rect', {
+       x: spoolLeft.toFixed(2),
+       y: (centerY - coreHeightPx / 2).toFixed(2),
+       width: coreWidthPx.toFixed(2),
+       height: coreHeightPx.toFixed(2),
+       fill: 'none',
+       stroke: rgbToCss(ink900Rgb, 0.72),
+       'stroke-width': strokeWidthAttr,
+       'vector-effect': 'non-scaling-stroke'
+     }));
    }
- }
  
- // ---- Core compute + render ----
- function computeAll() {
-   const errBox = /** @type {HTMLElement|null} */ (document.getElementById('err'));
-   const status = /** @type {HTMLElement|null} */ (document.getElementById('status'));
-   if (errBox) errBox.textContent = '';
-   if (status) status.textContent = 'computing…';
+   if (flangeHeightPx > 0 && flangeWidthPx > 0) {
+-    const centerX = spoolLeft + widthPx / 2;
+-    svg.appendChild(svgEl('rect', {
+-      x: (centerX - flangeWidthPx / 2).toFixed(2),
++    const flangeRectAttrs = {
+       y: (centerY - flangeHeightPx / 2).toFixed(2),
+       width: flangeWidthPx.toFixed(2),
+       height: flangeHeightPx.toFixed(2),
+       fill: rgbToCss(accentRgb, 0.12),
+       stroke: rgbToCss(accentRgb, 0.5),
+       'stroke-width': strokeWidthAttr,
+       'vector-effect': 'non-scaling-stroke'
++    };
++
++    svg.appendChild(svgEl('rect', {
++      ...flangeRectAttrs,
++      x: (spoolLeft - flangeWidthPx).toFixed(2)
++    }));
++
++    svg.appendChild(svgEl('rect', {
++      ...flangeRectAttrs,
++      x: spoolRight.toFixed(2)
+     }));
+   }
  
-   try {
-     // Geometry & load inputs
-     const wraps_override_input = read('wraps_override');
-     const wraps_per_layer_override = (
-       Number.isFinite(wraps_override_input) && wraps_override_input > 0
-     ) ? wraps_override_input : undefined;
+   const axisColor = rgbToCss(ink700Rgb, 0.18);
+   svg.appendChild(svgEl('line', {
+     x1: spoolLeft.toFixed(2),
+     y1: centerY.toFixed(2),
+     x2: spoolRight.toFixed(2),
+     y2: centerY.toFixed(2),
+     stroke: axisColor,
+     'stroke-width': strokeWidthAttr,
+     'vector-effect': 'non-scaling-stroke',
+     'stroke-dasharray': '6 6'
+   }));
  
-     const cfg = {
-       cable_dia_mm: read('c_mm'),
-       operating_depth_m: read('depth_m'),
-       dead_end_m: read('dead_m'),
-       core_dia_in: read('core_in'),
-+      flange_dia_in: read('flange_dia_in'),
-       flange_to_flange_in: read('ftf_in'),
-       lebus_thk_in: read('lebus_in'),
-       packing_factor: read('pack'),
-       wraps_per_layer_override
-     };
-     const payload_kg = read('payload_kg');
-     const cable_w_kgpm = read('c_w_kgpm');
+   const cableRadiusPx = cable_dia_in > 0 ? (cable_dia_in / 2) * scale : 0;
+   const cablePitchPx = cable_dia_in > 0 ? cable_dia_in * scale : 0;
  
-     const rated_speed_mpm = read('rated_speed_mpm');
-     const rated_swl_kgf = read('rated_swl_kgf');
-     const system_efficiency = read('system_efficiency');
+   const wrapsByLayer = new Map();
+   for (const row of rows) {
+     wrapsByLayer.set(row.layer_no, (wrapsByLayer.get(row.layer_no) || 0) + 1);
+   }
  
-     updateMinimumSystemHp(rated_speed_mpm, rated_swl_kgf, system_efficiency);
- 
-     const positiveOr = (value, fallback) => (Number.isFinite(value) && value > 0 ? value : fallback);
- 
-     // Shared drivetrain
-     const gr1 = positiveOr(read('gr1'), 1);
-     const gr2 = positiveOr(read('gr2'), 1);
-     const motors = positiveOr(read('motors'), 1);
-     const denom_mech = gr1 * gr2 * motors;
- 
-     const electricEnabled = driveModeEnabled('electric');
-     const hydraulicEnabled = driveModeEnabled('hydraulic');
- 
+   if (cableRadiusPx > 0 && cablePitchPx > 0 && coreWidthPx > 0) {
+     layersForViz.forEach(layer => {
