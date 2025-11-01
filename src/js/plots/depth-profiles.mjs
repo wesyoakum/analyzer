@@ -9,6 +9,13 @@ const RATED_SPEED_COLOR = '#76be4e'; // green
 const PITA_PINK = 'e056e8'; // pink
 const CLARS_BLUE = '#2163a5'; // blue
 
+const RATED_AVAILABLE_TOLERANCE = 1e-6;
+
+function isRatedBelowAvailable(ratedSpeedMs, availableSpeedMs) {
+  if (!Number.isFinite(ratedSpeedMs) || !Number.isFinite(availableSpeedMs)) return false;
+  return ratedSpeedMs + RATED_AVAILABLE_TOLERANCE < availableSpeedMs;
+}
+
 function getAccentColor() {
   if (typeof window !== 'undefined' && typeof document !== 'undefined' && window.getComputedStyle) {
     const val = window.getComputedStyle(document.documentElement).getPropertyValue('--accent');
@@ -160,7 +167,7 @@ function drawSpeedProfile(svg, segments, maxDepth, maxSpeed, accentColor, ratedS
   });
 
   if (Number.isFinite(ratedSpeedMs) && ratedSpeedMs > 0) {
-    const ratedExceeded = segments.some(S => Number.isFinite(S.speed_ms) && (S.speed_ms + 1e-6) < ratedSpeedMs);
+    const ratedExceeded = segments.some(S => Number.isFinite(S.speed_ms) && !isRatedBelowAvailable(ratedSpeedMs, S.speed_ms));
     const ratedStroke = ratedExceeded ? EXCEED_COLOR : RATED_SPEED_COLOR;
     const yRated = sy(ratedSpeedMs);
     svg.appendChild(svgEl('line', {
@@ -225,7 +232,7 @@ function findRatedDepthLimit(segments, ratedSpeedMs) {
   let hasReachable = false;
 
   for (const range of ranges) {
-    if (range.speed + 1e-6 >= ratedSpeedMs) {
+    if (isRatedBelowAvailable(ratedSpeedMs, range.speed)) {
       hasReachable = true;
       deepestReach = (deepestReach === null) ? range.d1 : Math.max(deepestReach, range.d1);
       continue;
