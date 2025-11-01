@@ -1,11 +1,13 @@
 // ===== plots/depth-profiles.mjs  Speed vs Depth & Tension vs Depth (DOM-agnostic) =====
 import { niceTicks, svgEl, TENSION_SAFETY_FACTOR } from '../utils.mjs';
 
-const CANDIDATE_POWER_COLOR = '#9759b7';
-const CANDIDATE_FLOW_COLOR = '#d58c1f';
-const EXCEED_COLOR = '#c65353';
-const TENSION_OK_COLOR = '#2d9c77';
-const RATED_SPEED_COLOR = '#2d9c77';
+const CANDIDATE_POWER_COLOR = '#eed500'; // yellow
+const CANDIDATE_FLOW_COLOR = '#9249c6'; // purple
+const EXCEED_COLOR = '#c65353'; // red
+const TENSION_OK_COLOR = '#76be4e'; // green
+const RATED_SPEED_COLOR = '#2163a5'; // blue
+const PITA_PINK = 'e056e8'; // pink
+
 
 function getAccentColor() {
   if (typeof window !== 'undefined' && typeof document !== 'undefined' && window.getComputedStyle) {
