@@ -201,26 +201,29 @@ export function renderDrumVisualization(rows, summary, cfg, meta) {
   const strokeWidth = 0.85;
   const strokeWidthAttr = strokeWidth.toFixed(3);
 
+  let coreStrokeColor = null;
   if (coreHeightPx > 0 && coreWidthPx > 0) {
+    coreStrokeColor = rgbToCss(ink900Rgb, 0.72);
     svg.appendChild(svgEl('rect', {
       x: spoolLeft.toFixed(2),
       y: (centerY - coreHeightPx / 2).toFixed(2),
       width: coreWidthPx.toFixed(2),
       height: coreHeightPx.toFixed(2),
       fill: 'none',
-      stroke: rgbToCss(ink900Rgb, 0.72),
+      stroke: coreStrokeColor,
       'stroke-width': strokeWidthAttr,
       'vector-effect': 'non-scaling-stroke'
     }));
   }
 
   if (flangeHeightPx > 0 && flangeWidthPx > 0) {
+    const flangeStrokeColor = coreStrokeColor ?? rgbToCss(ink900Rgb, 0.72);
     const flangeRectAttrs = {
       y: (centerY - flangeHeightPx / 2).toFixed(2),
       width: flangeWidthPx.toFixed(2),
       height: flangeHeightPx.toFixed(2),
-      fill: rgbToCss(accentRgb, 0.12),
-      stroke: rgbToCss(accentRgb, 0.5),
+      fill: 'none',
+      stroke: flangeStrokeColor,
       'stroke-width': strokeWidthAttr,
       'vector-effect': 'non-scaling-stroke'
     };

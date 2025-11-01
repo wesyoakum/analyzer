@@ -1,76 +1,159 @@
-diff --git a/src/js/drum-visual.mjs b/src/js/drum-visual.mjs
-index 05655ef08d1d45c2f5b9fdb5e7b1646d815b7ca6..1cd653d3542ff849f43b117950eb043caf31f1e3 100644
---- a/src/js/drum-visual.mjs
-+++ b/src/js/drum-visual.mjs
-@@ -193,60 +193,68 @@ export function renderDrumVisualization(rows, summary, cfg, meta) {
-   const centerY = SVG_MARGIN + heightPx / 2;
+diff --git a/src/js/plots/depth-profiles.mjs b/src/js/plots/depth-profiles.mjs
+index 900962defd880f8b42d4272b10f0627274ecd09d..de7348d52bc0cd4481fe6bdce3b33c85b485d9e4 100644
+--- a/src/js/plots/depth-profiles.mjs
++++ b/src/js/plots/depth-profiles.mjs
+@@ -1,47 +1,56 @@
+ // ===== plots/depth-profiles.mjs  Speed vs Depth & Tension vs Depth (DOM-agnostic) =====
+ import { niceTicks, svgEl, TENSION_SAFETY_FACTOR } from '../utils.mjs';
  
-   const coreHeightPx = Math.max(0, (core_dia_in || 0) * scale);
-   const coreWidthPx = Math.max(0, (flange_to_flange_in || 0) * scale);
-   const flangeDiaIn = Math.max(0, flange_dia_in || 0);
-   const flangeHeightPx = flangeDiaIn * scale;
-   const flangeWidthPx = flangeDiaIn * 0.01 * scale;
+ const CANDIDATE_POWER_COLOR = '#9249c6'; // purple
+ const CANDIDATE_FLOW_COLOR = '#eed500'; // yellow
+ const EXCEED_COLOR = '#c65353'; // red
+ const TENSION_OK_COLOR = '#76be4e'; // green
+-const RATED_SPEED_COLOR = '#76be4e'; // green
++const RATED_SPEED_COLOR = '#888888'; // gray
+ const PITA_PINK = 'e056e8'; // pink
+ const CLARS_BLUE = '#2163a5'; // blue
  
-   const strokeWidth = 0.85;
-   const strokeWidthAttr = strokeWidth.toFixed(3);
+ const RATED_AVAILABLE_TOLERANCE = 1e-9;
  
-   if (coreHeightPx > 0 && coreWidthPx > 0) {
-     svg.appendChild(svgEl('rect', {
-       x: spoolLeft.toFixed(2),
-       y: (centerY - coreHeightPx / 2).toFixed(2),
-       width: coreWidthPx.toFixed(2),
-       height: coreHeightPx.toFixed(2),
-       fill: 'none',
-       stroke: rgbToCss(ink900Rgb, 0.72),
-       'stroke-width': strokeWidthAttr,
-       'vector-effect': 'non-scaling-stroke'
-     }));
-   }
+ function isRatedBelowAvailable(ratedSpeedMs, availableSpeedMs) {
+   if (!Number.isFinite(ratedSpeedMs) || !Number.isFinite(availableSpeedMs)) return false;
+   const diff = availableSpeedMs - ratedSpeedMs;
+   if (!Number.isFinite(diff)) return false;
+   const relTol = Number.EPSILON * Math.max(1, Math.abs(availableSpeedMs), Math.abs(ratedSpeedMs));
+   const tolerance = Math.max(RATED_AVAILABLE_TOLERANCE, relTol);
+   return diff > tolerance;
+ }
  
-   if (flangeHeightPx > 0 && flangeWidthPx > 0) {
--    const centerX = spoolLeft + widthPx / 2;
--    svg.appendChild(svgEl('rect', {
--      x: (centerX - flangeWidthPx / 2).toFixed(2),
-+    const flangeRectAttrs = {
-       y: (centerY - flangeHeightPx / 2).toFixed(2),
-       width: flangeWidthPx.toFixed(2),
-       height: flangeHeightPx.toFixed(2),
-       fill: rgbToCss(accentRgb, 0.12),
-       stroke: rgbToCss(accentRgb, 0.5),
-       'stroke-width': strokeWidthAttr,
-       'vector-effect': 'non-scaling-stroke'
-+    };
++function isAvailableBelowRated(ratedSpeedMs, availableSpeedMs) {
++  if (!Number.isFinite(ratedSpeedMs) || !Number.isFinite(availableSpeedMs)) return false;
++  const diff = ratedSpeedMs - availableSpeedMs;
++  if (!Number.isFinite(diff)) return false;
++  const relTol = Number.EPSILON * Math.max(1, Math.abs(availableSpeedMs), Math.abs(ratedSpeedMs));
++  const tolerance = Math.max(RATED_AVAILABLE_TOLERANCE, relTol);
++  return diff > tolerance;
++}
 +
-+    svg.appendChild(svgEl('rect', {
-+      ...flangeRectAttrs,
-+      x: (spoolLeft - flangeWidthPx).toFixed(2)
-+    }));
-+
-+    svg.appendChild(svgEl('rect', {
-+      ...flangeRectAttrs,
-+      x: spoolRight.toFixed(2)
+ function getAccentColor() {
+   if (typeof window !== 'undefined' && typeof document !== 'undefined' && window.getComputedStyle) {
+     const val = window.getComputedStyle(document.documentElement).getPropertyValue('--accent');
+     if (val) return val.trim();
+   }
+   return '#2c56a3';
+ }
+ 
+ /**
+  * Draw both depth profile plots (speed & tension).
+  *
+  * @param {SVGSVGElement} svgSpeed
+  * @param {SVGSVGElement} svgTension
+  * @param {Object} opts
+  * @param {'electric'|'hydraulic'} opts.scenario
+  * @param {Array<Object>} opts.elWraps
+  * @param {Array<Object>} opts.hyWraps
+  * @param {number} opts.payload_kg
+  * @param {number} opts.cable_w_kgpm
+  * @param {number} [opts.dead_end_m=0]
+  */
+ export function drawDepthProfiles(svgSpeed, svgTension, {
+   scenario = 'electric',
+   elWraps = [],
+   hyWraps = [],
+@@ -169,91 +178,94 @@ function drawSpeedProfile(svg, segments, depthMin, depthMax, speedMin, speedMax,
+     const Y = sy(v);
+     svg.appendChild(svgEl('line', { x1: ML, y1: Y, x2: W - MR, y2: Y, stroke: '#eee' }));
+     const t = svgEl('text', { x: ML - 6, y: Y + 4, 'text-anchor': 'end', 'font-size': '12', fill: '#444' });
+     t.textContent = String(Math.round(v * 100) / 100);
+     svg.appendChild(t);
+   });
+ 
+   svg.appendChild(svgEl('text', { x: ML + innerW / 2, y: H - 4, 'text-anchor': 'middle', 'font-size': '12', fill: '#444' }))
+     .textContent = 'Depth (m)';
+   svg.appendChild(svgEl('text', {
+     x: 18, y: MT + innerH / 2, transform: `rotate(-90,18,${MT + innerH / 2})`,
+     'text-anchor': 'middle', 'font-size': '12', fill: '#444'
+   })).textContent = 'Speed (m/s)';
+ 
+   segments.forEach(S => {
+     if (!Number.isFinite(S.speed_ms)) return;
+     if (S.speed_ms < speedMin - 1e-9 || S.speed_ms > speedMax + 1e-9) return;
+     const depthEnd = Math.min(S.depth_start, S.depth_end);
+     const depthStart = Math.max(S.depth_start, S.depth_end);
+     if (Math.max(depthStart, depthEnd) < depthMin - 1e-9) return;
+     if (Math.min(depthStart, depthEnd) > depthMax + 1e-9) return;
+     const x0 = sx(depthEnd);
+     const x1 = sx(depthStart);
+     if (Math.abs(x1 - x0) < 1e-6) return;
+     const y = sy(S.speed_ms);
++    const strokeColor = (Number.isFinite(ratedSpeedMs) && isAvailableBelowRated(ratedSpeedMs, S.speed_ms))
++      ? EXCEED_COLOR
++      : accentColor;
+     svg.appendChild(svgEl('line', {
+       x1: x0,
+       y1: y,
+       x2: x1,
+       y2: y,
+-      stroke: accentColor,
++      stroke: strokeColor,
+       'stroke-width': 4.8
      }));
-   }
+   });
  
-   const axisColor = rgbToCss(ink700Rgb, 0.18);
-   svg.appendChild(svgEl('line', {
-     x1: spoolLeft.toFixed(2),
-     y1: centerY.toFixed(2),
-     x2: spoolRight.toFixed(2),
-     y2: centerY.toFixed(2),
-     stroke: axisColor,
-     'stroke-width': strokeWidthAttr,
-     'vector-effect': 'non-scaling-stroke',
-     'stroke-dasharray': '6 6'
-   }));
+   segments.forEach(S => {
+     if (!Array.isArray(S.candidate_speeds_ms)) return;
+     const depthEnd = Math.min(S.depth_start, S.depth_end);
+     const depthStart = Math.max(S.depth_start, S.depth_end);
+     if (Math.max(depthStart, depthEnd) < depthMin - 1e-9) return;
+     if (Math.min(depthStart, depthEnd) > depthMax + 1e-9) return;
  
-   const cableRadiusPx = cable_dia_in > 0 ? (cable_dia_in / 2) * scale : 0;
-   const cablePitchPx = cable_dia_in > 0 ? cable_dia_in * scale : 0;
+     S.candidate_speeds_ms.forEach(candidate => {
+       if (!candidate || !Number.isFinite(candidate.value_ms)) return;
+       if (candidate.value_ms < speedMin - 1e-9 || candidate.value_ms > speedMax + 1e-9) return;
+       const y = sy(candidate.value_ms);
+       const x0 = sx(depthEnd);
+       const x1 = sx(depthStart);
+       if (Math.abs(x1 - x0) < 1e-6) return;
+       const stroke = (candidate.kind === 'flow') ? CANDIDATE_FLOW_COLOR : CANDIDATE_POWER_COLOR;
  
-   const wrapsByLayer = new Map();
-   for (const row of rows) {
-     wrapsByLayer.set(row.layer_no, (wrapsByLayer.get(row.layer_no) || 0) + 1);
-   }
+       svg.appendChild(svgEl('line', {
+         x1: x0,
+         y1: y,
+         x2: x1,
+         y2: y,
+         stroke,
+         'stroke-width': 2,
+         'stroke-dasharray': '5 4'
+       }));
+     });
+   });
  
-   if (cableRadiusPx > 0 && cablePitchPx > 0 && coreWidthPx > 0) {
-     layersForViz.forEach(layer => {
+   if (Number.isFinite(ratedSpeedMs) && ratedSpeedMs > 0 && ratedSpeedMs >= speedMin - 1e-9 && ratedSpeedMs <= speedMax + 1e-9) {
+     const ratedExceeded = segments.some(S => Number.isFinite(S.speed_ms) && !isRatedBelowAvailable(ratedSpeedMs, S.speed_ms));
+-    const ratedStroke = ratedExceeded ? EXCEED_COLOR : RATED_SPEED_COLOR;
++    const ratedStroke = RATED_SPEED_COLOR;
+     const yRated = sy(ratedSpeedMs);
+     svg.appendChild(svgEl('line', {
+       x1: ML,
+       y1: yRated,
+       x2: W - MR,
+       y2: yRated,
+       stroke: ratedStroke,
+       'stroke-width': 3
+     }));
+ 
+     if (ratedExceeded) {
+       const limit = findRatedDepthLimit(segments, ratedSpeedMs);
+       if (limit && Number.isFinite(limit.depth)) {
+         const clampedDepth = clampDepth(limit.depth);
+         const x = sx(clampedDepth);
+         const axisY = H - MB;
+         svg.appendChild(svgEl('line', {
+           x1: x,
+           y1: yRated,
+           x2: x,
+           y2: axisY,
+           stroke: EXCEED_COLOR,
+           'stroke-width': 2,
+           'stroke-dasharray': '4 6'
+         }));

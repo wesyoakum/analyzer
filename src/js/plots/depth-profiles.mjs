@@ -5,7 +5,7 @@ const CANDIDATE_POWER_COLOR = '#9249c6'; // purple
 const CANDIDATE_FLOW_COLOR = '#eed500'; // yellow
 const EXCEED_COLOR = '#c65353'; // red
 const TENSION_OK_COLOR = '#76be4e'; // green
-const RATED_SPEED_COLOR = '#76be4e'; // green
+const RATED_SPEED_COLOR = '#888888'; // gray
 const PITA_PINK = 'e056e8'; // pink
 const CLARS_BLUE = '#2163a5'; // blue
 
@@ -14,6 +14,15 @@ const RATED_AVAILABLE_TOLERANCE = 1e-9;
 function isRatedBelowAvailable(ratedSpeedMs, availableSpeedMs) {
   if (!Number.isFinite(ratedSpeedMs) || !Number.isFinite(availableSpeedMs)) return false;
   const diff = availableSpeedMs - ratedSpeedMs;
+  if (!Number.isFinite(diff)) return false;
+  const relTol = Number.EPSILON * Math.max(1, Math.abs(availableSpeedMs), Math.abs(ratedSpeedMs));
+  const tolerance = Math.max(RATED_AVAILABLE_TOLERANCE, relTol);
+  return diff > tolerance;
+}
+
+function isAvailableBelowRated(ratedSpeedMs, availableSpeedMs) {
+  if (!Number.isFinite(ratedSpeedMs) || !Number.isFinite(availableSpeedMs)) return false;
+  const diff = ratedSpeedMs - availableSpeedMs;
   if (!Number.isFinite(diff)) return false;
   const relTol = Number.EPSILON * Math.max(1, Math.abs(availableSpeedMs), Math.abs(ratedSpeedMs));
   const tolerance = Math.max(RATED_AVAILABLE_TOLERANCE, relTol);
@@ -191,12 +200,15 @@ function drawSpeedProfile(svg, segments, depthMin, depthMax, speedMin, speedMax,
     const x1 = sx(depthStart);
     if (Math.abs(x1 - x0) < 1e-6) return;
     const y = sy(S.speed_ms);
+    const strokeColor = (Number.isFinite(ratedSpeedMs) && isAvailableBelowRated(ratedSpeedMs, S.speed_ms))
+      ? EXCEED_COLOR
+      : accentColor;
     svg.appendChild(svgEl('line', {
       x1: x0,
       y1: y,
       x2: x1,
       y2: y,
-      stroke: accentColor,
+      stroke: strokeColor,
       'stroke-width': 4.8
     }));
   });
@@ -231,7 +243,7 @@ function drawSpeedProfile(svg, segments, depthMin, depthMax, speedMin, speedMax,
 
   if (Number.isFinite(ratedSpeedMs) && ratedSpeedMs > 0 && ratedSpeedMs >= speedMin - 1e-9 && ratedSpeedMs <= speedMax + 1e-9) {
     const ratedExceeded = segments.some(S => Number.isFinite(S.speed_ms) && !isRatedBelowAvailable(ratedSpeedMs, S.speed_ms));
-    const ratedStroke = ratedExceeded ? EXCEED_COLOR : RATED_SPEED_COLOR;
+    const ratedStroke = RATED_SPEED_COLOR;
     const yRated = sy(ratedSpeedMs);
     svg.appendChild(svgEl('line', {
       x1: ML,
