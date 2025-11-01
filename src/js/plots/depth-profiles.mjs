@@ -85,9 +85,6 @@ export function drawDepthProfiles(svgSpeed, svgTension, {
     : 0;
   const ratedSpeedMs = Number.isFinite(rated_speed_ms) ? Math.max(0, rated_speed_ms) : null;
   const maxAvailT = Math.max(0, ...segments.map(S => S.avail_tension_kgf || 0));
-  const tensionDepth = Math.max(maxDepth, depthMax);
-  const maxTheoT = payload_kg + cable_w_kgpm * tensionDepth;
-  const maxReqT = maxTheoT * TENSION_SAFETY_FACTOR;
   const toNumber = val => {
     const num = Number(val);
     return Number.isFinite(num) ? num : NaN;
@@ -116,6 +113,10 @@ export function drawDepthProfiles(svgSpeed, svgTension, {
     speedMax = autoSpeedMax;
   }
   if (speedMax <= speedMin) speedMax = speedMin + 1;
+
+  const tensionDepth = Math.max(maxDepth, depthMax);
+  const maxTheoT = payload_kg + cable_w_kgpm * tensionDepth;
+  const maxReqT = maxTheoT * TENSION_SAFETY_FACTOR;
 
   let tensionMin = toNumber(tension_ymin);
   if (!Number.isFinite(tensionMin) || tensionMin < 0) tensionMin = 0;
