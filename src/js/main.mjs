@@ -113,6 +113,8 @@ document.addEventListener('DOMContentLoaded', () => {
 
   setupComponentSelectors();
 
+  setupCollapsibleToggles();
+
   setupDriveModeControls();
 
   setupCsvDownloads();
@@ -141,13 +143,11 @@ document.addEventListener('DOMContentLoaded', () => {
   });
 
   // Wave plot controls
-  q('wave_redraw').addEventListener('click', () => redrawPlots());
   q('wave_scenario').addEventListener('change', () => redrawPlots());
   ['wave_tmin', 'wave_tmax', 'wave_vmin', 'wave_vmax', 'wave_hmin', 'wave_hmax']
     .forEach(id => q(id).addEventListener('change', () => redrawPlots()));
 
   // Depth plot controls
-  q('depth_redraw').addEventListener('click', () => redrawPlots());
   q('depth_scenario').addEventListener('change', () => redrawPlots());
   ['depth_xmin', 'depth_xmax', 'depth_speed_ymin', 'depth_speed_ymax', 'depth_tension_ymin', 'depth_tension_ymax', 'depth_rated_speed_ms']
     .forEach(id => q(id).addEventListener('change', () => redrawPlots()));
@@ -229,6 +229,92 @@ function triggerCsvDownload(csvText, filename) {
   link.click();
   document.body.removeChild(link);
   URL.revokeObjectURL(url);
+}
+
+function setupCollapsibleToggles() {
+  let collapseIdCounter = 0;
+  const configs = [
+    { selector: '#component-catalog-card', headerSelector: '.section-title', defaultExpanded: false },
+    { selector: '#panel-inputs .card[data-drive-scope]', headerSelector: '.section-title', defaultExpanded: true },
+    { selector: '#panel-inputs .input-section', headerSelector: '.input-section__title', defaultExpanded: true },
+    { selector: '#panel-inputs .input-subsection', headerSelector: '.input-subsection__title', defaultExpanded: true },
+    { selector: '.plot-controls__group', headerSelector: '.plot-controls__group-title', defaultExpanded: false }
+  ];
+
+  configs.forEach(({ selector, headerSelector, defaultExpanded }) => {
+    document.querySelectorAll(selector).forEach(container => {
+      initCollapsibleContainer(container, headerSelector, defaultExpanded);
+    });
+  });
+
+  /**
+   * @param {Element} container
+   * @param {string} headerSelector
+   * @param {boolean} defaultExpanded
+   */
+  function initCollapsibleContainer(container, headerSelector, defaultExpanded) {
+    if (!(container instanceof HTMLElement)) return;
+    if (container.dataset.collapseInit === 'true') return;
+
+    const headerEl = container.querySelector(headerSelector);
+    if (!headerEl) return;
+
+    // Remove leading whitespace before the header to avoid stray text nodes.
+    let cursor = container.firstChild;
+    while (cursor && cursor !== headerEl) {
+      const nextCursor = cursor.nextSibling;
+      if (cursor.nodeType === Node.TEXT_NODE && !(cursor.textContent || '').trim()) {
+        container.removeChild(cursor);
+      }
+      cursor = nextCursor;
+    }
+
+    const body = document.createElement('div');
+    body.classList.add('collapse-body');
+
+    let node = headerEl.nextSibling;
+    while (node) {
+      const next = node.nextSibling;
+      body.appendChild(node);
+      node = next;
+    }
+
+    const headerWrapper = document.createElement('div');
+    headerWrapper.classList.add('collapse-header');
+    headerWrapper.appendChild(headerEl);
+
+    const toggle = document.createElement('button');
+    toggle.type = 'button';
+    toggle.classList.add('collapse-toggle');
+    headerWrapper.appendChild(toggle);
+
+    container.insertBefore(headerWrapper, container.firstChild);
+    container.appendChild(body);
+    container.dataset.collapseInit = 'true';
+
+    if (!body.id) {
+      collapseIdCounter += 1;
+      body.id = `collapse-body-${collapseIdCounter}`;
+    }
+    toggle.setAttribute('aria-controls', body.id);
+
+    let expanded = defaultExpanded;
+
+    const applyState = (value) => {
+      expanded = value;
+      toggle.textContent = expanded ? '[-]' : '[+]';
+      toggle.setAttribute('aria-expanded', expanded ? 'true' : 'false');
+      toggle.setAttribute('aria-label', expanded ? 'Collapse section' : 'Expand section');
+      body.hidden = !expanded;
+      container.classList.toggle('is-collapsed', !expanded);
+    };
+
+    applyState(expanded);
+
+    toggle.addEventListener('click', () => {
+      applyState(!expanded);
+    });
+  }
 }
 
 function setupPlotResizeToggles() {

@@ -22,6 +22,34 @@
     </nav>
 
     <div id="panel-inputs" class="panel active">
+      <section class="card info-card" id="component-catalog-card" aria-labelledby="component-catalog-instructions">
+        <h2 class="section-title" id="component-catalog-instructions">How to update component presets</h2>
+        <p>
+          The component dropdowns now read from dedicated catalogs in
+          <code>src/js/component-selectors.mjs</code>. Add or edit part numbers directly in the matching
+          array to make them available across the app.
+        </p>
+        <ol>
+          <li>
+            Open <code>src/js/component-selectors.mjs</code> and locate the array that matches the component
+            type you want to change (for example <code>GEARBOX_OPTIONS</code> or
+            <code>ELECTRIC_MOTOR_OPTIONS</code>).
+          </li>
+          <li>
+            Add a new object with the part number, description, and any field values that should autofill
+            when the part is selected. Follow the existing entries as a template.
+          </li>
+          <li>
+            Save the file and refresh the page. The new entry will appear under the corresponding dropdown
+            and auto-populate the linked form inputs.
+          </li>
+        </ol>
+        <p class="dim">
+          Tip: if you need to clear a selection after experimenting, change any populated value and the app
+          will revert the dropdown to <em>Custom (manual input)</em> automatically.
+        </p>
+      </section>
+
       <details class="card collapsible" open>
         <summary class="collapsible-summary">
           <h2 class="section-title">Section 1: Drum and Cable Inputs</h2>
@@ -333,34 +361,6 @@
       
 
 
-      <section class="card info-card" aria-labelledby="component-catalog-instructions">
-        <h2 class="section-title" id="component-catalog-instructions">How to update component presets</h2>
-        <p>
-          The component dropdowns now read from dedicated catalogs in
-          <code>src/js/component-selectors.mjs</code>. Add or edit part numbers directly in the matching
-          array to make them available across the app.
-        </p>
-        <ol>
-          <li>
-            Open <code>src/js/component-selectors.mjs</code> and locate the array that matches the component
-            type you want to change (for example <code>GEARBOX_OPTIONS</code> or
-            <code>ELECTRIC_MOTOR_OPTIONS</code>).
-          </li>
-          <li>
-            Add a new object with the part number, description, and any field values that should autofill
-            when the part is selected. Follow the existing entries as a template.
-          </li>
-          <li>
-            Save the file and refresh the page. The new entry will appear under the corresponding dropdown
-            and auto-populate the linked form inputs.
-          </li>
-        </ol>
-        <p class="dim">
-          Tip: if you need to clear a selection after experimenting, change any populated value and the app
-          will revert the dropdown to <em>Custom (manual input)</em> automatically.
-        </p>
-      </section>
-
       <section class="card" data-drive-scope="electric">
         <h2 class="section-title">Section 1: Electric Inputs</h2>
         <table class="worksheet">
@@ -555,9 +555,6 @@
       <section class="card wave-card">
         <div class="card-header">
           <h2 class="section-title">Section 2: Wave Contours</h2>
-          <div class="btnbar card-header-actions">
-            <button id="wave_redraw" type="button">Redraw contours</button>
-          </div>
         </div>
         <div class="plot-controls">
           <div class="plot-controls__group">
@@ -688,9 +685,6 @@
       <section class="card">
         <div class="card-header">
           <h2 class="section-title">Section 2: Depth Profiles</h2>
-          <div class="btnbar card-header-actions">
-            <button id="depth_redraw" type="button">Redraw profiles</button>
-          </div>
         </div>
         <div class="plot-controls">
           <div class="plot-controls__group">

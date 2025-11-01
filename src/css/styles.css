@@ -122,7 +122,7 @@ body {
   font-size: 16px;
   font-weight: 600;
   letter-spacing: 0.02em;
-  margin: 0 0 12px;
+  margin: 0;
 }
 
 .input-subsection {
@@ -135,7 +135,7 @@ body {
   letter-spacing: 0.05em;
   text-transform: uppercase;
   color: var(--ink-700);
-  margin: 0 0 10px;
+  margin: 0;
 }
 
 .card-header {
@@ -193,7 +193,7 @@ body {
   color: var(--ink-700);
   letter-spacing: 0.05em;
   text-transform: uppercase;
-  margin: 0 0 8px;
+  margin: 0;
 }
 
 .plot-controls__table {
@@ -303,11 +303,11 @@ body {
 }
 
 .collapsible-hint::after {
-  content: 'Expand';
+  content: '[+]';
 }
 
 .collapsible[open] .collapsible-hint::after {
-  content: 'Collapse';
+  content: '[-]';
 }
 
 .collapsible-body {
@@ -320,6 +320,44 @@ body {
 
 .collapsible-body > table {
   margin-top: 16px;
+}
+
+.collapse-header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.collapse-header + .collapse-body {
+  margin-top: 12px;
+}
+
+.input-subsection .collapse-header + .collapse-body,
+.plot-controls__group .collapse-header + .collapse-body {
+  margin-top: 10px;
+}
+
+.collapse-toggle {
+  border: none;
+  background: none;
+  padding: 0;
+  font: inherit;
+  color: var(--ink-600);
+  cursor: pointer;
+}
+
+.collapse-toggle:hover,
+.collapse-toggle:focus-visible {
+  color: var(--accent);
+}
+
+.collapse-body[hidden] {
+  display: none;
+}
+
+.is-collapsed > .collapse-header + .collapse-body {
+  margin-top: 0;
 }
 
 button {
@@ -578,10 +616,19 @@ th[title] {
 }
 
 .plot-panel__toggle {
-  padding: 4px 10px;
+  padding: 0;
   min-width: 0;
   font-size: 14px;
   line-height: 1;
+  border: none;
+  background: none;
+  color: var(--ink-600);
+  cursor: pointer;
+}
+
+.plot-panel__toggle:hover,
+.plot-panel__toggle:focus-visible {
+  color: var(--accent);
 }
 
 .plot-column {
