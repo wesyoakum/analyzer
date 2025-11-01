@@ -435,8 +435,9 @@ function computeAll() {
     // Electric inputs
     const motor_max_rpm = read('motor_max_rpm');
     const motor_hp = positiveOr(read('motor_hp'), 0);
+    const motor_eff = positiveOr(read('motor_eff'), 1);
     const motor_tmax = read('motor_tmax');
-    const P_per_motor_W = motor_hp * W_PER_HP;
+    const P_per_motor_W = motor_hp * motor_eff * W_PER_HP;
 
     // Hydraulic inputs
     const h_strings = positiveOr(read('h_pump_strings'), 0);

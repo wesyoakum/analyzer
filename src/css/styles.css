@@ -112,6 +112,32 @@ body {
   margin-top: 0;
 }
 
+.input-sections {
+  display: flex;
+  flex-direction: column;
+  gap: 28px;
+}
+
+.input-section__title {
+  font-size: 16px;
+  font-weight: 600;
+  letter-spacing: 0.02em;
+  margin: 0 0 12px;
+}
+
+.input-subsection {
+  margin-top: 20px;
+}
+
+.input-subsection__title {
+  font-size: 14px;
+  font-weight: 600;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+  color: var(--ink-700);
+  margin: 0 0 10px;
+}
+
 .card-header {
   display: flex;
   align-items: flex-start;
