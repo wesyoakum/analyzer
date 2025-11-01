@@ -493,6 +493,7 @@ function computeAll() {
       operating_depth_m: read('depth_m'),
       dead_end_m: read('dead_m'),
       core_dia_in: read('core_in'),
+      flange_dia_in: read('flange_dia_in'),
       flange_to_flange_in: read('ftf_in'),
       lebus_thk_in: read('lebus_in'),
       packing_factor: read('pack'),

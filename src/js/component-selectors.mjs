@@ -19,6 +19,7 @@
   * @property {number|string|boolean} [dead_m]
   * @property {number|string|boolean} [c_w_kgpm]
   * @property {number|string|boolean} [core_in]
+  * @property {number|string|boolean} [flange_dia_in]
   * @property {number|string|boolean} [ftf_in]
   * @property {number|string|boolean} [lebus_in]
   * @property {number|string|boolean} [pack]
@@ -78,6 +79,7 @@ export const DRUM_OPTIONS = [
     pn: 'DR-64-116',
     description: '64 in core, 116 in FTF, 0.625 in liner',
     core_in: 64,
+    flange_dia_in: 110,
     ftf_in: 116,
     lebus_in: 0.625,
     pack: 0.877,
@@ -87,6 +89,7 @@ export const DRUM_OPTIONS = [
     pn: 'DR-705-118',
     description: '70.5 in core, 118 in FTF, 0.75 in liner',
     core_in: 70.5,
+    flange_dia_in: 122,
     ftf_in: 118,
     lebus_in: 0.75,
     pack: 0.88,
@@ -96,6 +99,7 @@ export const DRUM_OPTIONS = [
     pn: 'DR-82-132',
     description: '82 in core, 132 in FTF, 0.6 in liner',
     core_in: 82,
+    flange_dia_in: 138,
     ftf_in: 132,
     lebus_in: 0.6,
     pack: 0.9,
@@ -280,6 +284,7 @@ export const SYSTEM_OPTIONS = [
     hpu_select: 'HPU-2S-210',
     hpu_motor_select: 'HMOT-75-1780',
     core_in: 70.5,
+    flange_dia_in: 122,
     ftf_in: 118,
     lebus_in: 0.75,
     pack: 0.88,
@@ -299,6 +304,7 @@ export const SYSTEM_OPTIONS = [
     hpu_select: 'HPU-2S-250',
     hpu_motor_select: 'HMOT-110-1200',
     core_in: 82,
+    flange_dia_in: 138,
     ftf_in: 132,
     lebus_in: 0.6,
     pack: 0.9,
@@ -320,6 +326,7 @@ export const FIELD_MAPS = {
   }),
   drum: /** @type {SelectConfig['fieldMap']} */ ({
     core_in: 'core_in',
+    flange_dia_in: 'flange_dia_in',
     ftf_in: 'ftf_in',
     lebus_in: 'lebus_in',
     pack: 'pack',

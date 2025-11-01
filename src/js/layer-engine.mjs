@@ -9,6 +9,7 @@ import { IN_PER_MM, M_PER_IN, truncToHalf, isWhole } from './utils.mjs';
  * @property {number} operating_depth_m
  * @property {number} dead_end_m
  * @property {number} core_dia_in
+ * @property {number} [flange_dia_in]
  * @property {number} flange_to_flange_in
  * @property {number} lebus_thk_in
  * @property {number} [packing_factor=0.877]   // radial growth per layer = cable_dia * packing_factor

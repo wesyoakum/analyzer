@@ -1,229 +1,56 @@
 diff --git a/src/js/main.mjs b/src/js/main.mjs
-index ccde952a211bf3851bccf855affd3b4c0c36c340..34a2a6e321bb05878f84656a708373db5a34858a 100644
+index 34a2a6e321bb05878f84656a708373db5a34858a..430f83e4076584490c54ce8fdfa1f07729b7a494 100644
 --- a/src/js/main.mjs
 +++ b/src/js/main.mjs
-@@ -91,85 +91,85 @@ const CSV_BUTTON_SPECS = {
-       'hyd_speed_flow_mpm', 'hyd_speed_available_mpm', 'hyd_hp_used_at_available',
-       'hyd_elec_input_hp_used', 'hyd_drum_torque_maxP_Nm', 'hyd_avail_tension_kgf'
-     ],
-     header: [
-       'wrap_no', 'layer_no', 'layer_dia_in', 'wrap_len_in', 'pre_spooled_len_m',
-       'spooled_len_m', 'deployed_len_m', 'tension_theoretical_kgf',
-       'tension_required_kgf', 'hyd_P_required_psi', 'hyd_speed_power_mpm',
-       'hyd_speed_flow_mpm', 'hyd_speed_available_mpm', 'hyd_hp_used_at_available',
-       'hyd_elec_input_hp_used', 'hyd_drum_torque_maxP_Nm', 'hyd_avail_tension_kgf'
-     ],
-     getRows: () => lastHyWraps
-   }
- };
- 
- const DRIVE_MODE_CHECKBOX = {
-   electric: 'drive_electric_enabled',
-   hydraulic: 'drive_hydraulic_enabled'
- };
- 
- // ---- Wire up events once DOM is ready ----
- document.addEventListener('DOMContentLoaded', () => {
-   setupInputPersistence();
- 
-   setupComponentSelectors();
- 
-+  setupCollapsibleToggles();
-+
-   setupDriveModeControls();
- 
-   setupCsvDownloads();
- 
-   setupPlotResizeToggles();
- 
-   setupAutoRecompute();
- 
-   updateBuildIndicator();
- 
-   document.querySelectorAll('.param-label').forEach(label => {
-     const code = label.dataset.code;
-     if (code) {
-       label.setAttribute('title', code);
+@@ -471,50 +471,51 @@ function updateScenarioOptions(selectId, electricEnabled, hydraulicEnabled) {
+       if (first) selectEl.value = first.value;
      }
-   });
- 
-   // Tabs
-   document.querySelectorAll('.tab-btn').forEach(b => {
-     b.addEventListener('click', () => {
-       document.querySelectorAll('.tab-btn').forEach(x => x.classList.remove('active'));
-       document.querySelectorAll('.panel').forEach(x => x.classList.remove('active'));
-       b.classList.add('active');
-       document.getElementById(b.dataset.target).classList.add('active');
-     });
-   });
- 
-   // Wave plot controls
--  q('wave_redraw').addEventListener('click', () => redrawPlots());
-   q('wave_scenario').addEventListener('change', () => redrawPlots());
-   ['wave_tmin', 'wave_tmax', 'wave_vmin', 'wave_vmax', 'wave_hmin', 'wave_hmax']
-     .forEach(id => q(id).addEventListener('change', () => redrawPlots()));
- 
-   // Depth plot controls
--  q('depth_redraw').addEventListener('click', () => redrawPlots());
-   q('depth_scenario').addEventListener('change', () => redrawPlots());
-   ['depth_xmin', 'depth_xmax', 'depth_speed_ymin', 'depth_speed_ymax', 'depth_tension_ymin', 'depth_tension_ymax', 'depth_rated_speed_ms']
-     .forEach(id => q(id).addEventListener('change', () => redrawPlots()));
- 
-   // Initial compute
-   computeAll();
- });
- 
- function updateBuildIndicator() {
-   const indicator = /** @type {HTMLElement|null} */ (document.getElementById('build-info'));
-   if (!indicator) return;
- 
-   const lastModified = new Date(document.lastModified);
-   if (Number.isNaN(lastModified.getTime())) {
-     indicator.textContent = `Updated ${document.lastModified}`;
-     return;
+     selectEl.dispatchEvent(new Event('change', { bubbles: true }));
    }
- 
-   const formatter = new Intl.DateTimeFormat('en-US', {
-     year: 'numeric',
-     month: 'short',
-     day: '2-digit',
-     hour: '2-digit',
-     minute: '2-digit',
-     second: '2-digit',
-@@ -209,50 +209,136 @@ function rowsToCsv(rows, columns, headerRow) {
-   const dataLines = rows.map(row => columns.map(col => csvEscapeCell(row[col])).join(','));
-   return [header, ...dataLines].join('\r\n');
  }
  
- function csvEscapeCell(value) {
-   if (value === null || value === undefined) return '';
-   const str = String(value);
-   if (/[",\n\r]/.test(str)) {
-     return '"' + str.replace(/"/g, '""') + '"';
-   }
-   return str;
- }
+ // ---- Core compute + render ----
+ function computeAll() {
+   const errBox = /** @type {HTMLElement|null} */ (document.getElementById('err'));
+   const status = /** @type {HTMLElement|null} */ (document.getElementById('status'));
+   if (errBox) errBox.textContent = '';
+   if (status) status.textContent = 'computing…';
  
- function triggerCsvDownload(csvText, filename) {
-   const blob = new Blob([csvText], { type: 'text/csv;charset=utf-8;' });
-   const url = URL.createObjectURL(blob);
-   const link = document.createElement('a');
-   link.href = url;
-   link.download = filename;
-   document.body.appendChild(link);
-   link.click();
-   document.body.removeChild(link);
-   URL.revokeObjectURL(url);
- }
+   try {
+     // Geometry & load inputs
+     const wraps_override_input = read('wraps_override');
+     const wraps_per_layer_override = (
+       Number.isFinite(wraps_override_input) && wraps_override_input > 0
+     ) ? wraps_override_input : undefined;
  
-+function setupCollapsibleToggles() {
-+  let collapseIdCounter = 0;
-+  const configs = [
-+    { selector: '#component-catalog-card', headerSelector: '.section-title', defaultExpanded: false },
-+    { selector: '#panel-inputs .card[data-drive-scope]', headerSelector: '.section-title', defaultExpanded: true },
-+    { selector: '#panel-inputs .input-section', headerSelector: '.input-section__title', defaultExpanded: true },
-+    { selector: '#panel-inputs .input-subsection', headerSelector: '.input-subsection__title', defaultExpanded: true },
-+    { selector: '.plot-controls__group', headerSelector: '.plot-controls__group-title', defaultExpanded: false }
-+  ];
-+
-+  configs.forEach(({ selector, headerSelector, defaultExpanded }) => {
-+    document.querySelectorAll(selector).forEach(container => {
-+      initCollapsibleContainer(container, headerSelector, defaultExpanded);
-+    });
-+  });
-+
-+  /**
-+   * @param {Element} container
-+   * @param {string} headerSelector
-+   * @param {boolean} defaultExpanded
-+   */
-+  function initCollapsibleContainer(container, headerSelector, defaultExpanded) {
-+    if (!(container instanceof HTMLElement)) return;
-+    if (container.dataset.collapseInit === 'true') return;
-+
-+    const headerEl = container.querySelector(headerSelector);
-+    if (!headerEl) return;
-+
-+    // Remove leading whitespace before the header to avoid stray text nodes.
-+    let cursor = container.firstChild;
-+    while (cursor && cursor !== headerEl) {
-+      const nextCursor = cursor.nextSibling;
-+      if (cursor.nodeType === Node.TEXT_NODE && !(cursor.textContent || '').trim()) {
-+        container.removeChild(cursor);
-+      }
-+      cursor = nextCursor;
-+    }
-+
-+    const body = document.createElement('div');
-+    body.classList.add('collapse-body');
-+
-+    let node = headerEl.nextSibling;
-+    while (node) {
-+      const next = node.nextSibling;
-+      body.appendChild(node);
-+      node = next;
-+    }
-+
-+    const headerWrapper = document.createElement('div');
-+    headerWrapper.classList.add('collapse-header');
-+    headerWrapper.appendChild(headerEl);
-+
-+    const toggle = document.createElement('button');
-+    toggle.type = 'button';
-+    toggle.classList.add('collapse-toggle');
-+    headerWrapper.appendChild(toggle);
-+
-+    container.insertBefore(headerWrapper, container.firstChild);
-+    container.appendChild(body);
-+    container.dataset.collapseInit = 'true';
-+
-+    if (!body.id) {
-+      collapseIdCounter += 1;
-+      body.id = `collapse-body-${collapseIdCounter}`;
-+    }
-+    toggle.setAttribute('aria-controls', body.id);
-+
-+    let expanded = defaultExpanded;
-+
-+    const applyState = (value) => {
-+      expanded = value;
-+      toggle.textContent = expanded ? '[-]' : '[+]';
-+      toggle.setAttribute('aria-expanded', expanded ? 'true' : 'false');
-+      toggle.setAttribute('aria-label', expanded ? 'Collapse section' : 'Expand section');
-+      body.hidden = !expanded;
-+      container.classList.toggle('is-collapsed', !expanded);
-+    };
-+
-+    applyState(expanded);
-+
-+    toggle.addEventListener('click', () => {
-+      applyState(!expanded);
-+    });
-+  }
-+}
-+
- function setupPlotResizeToggles() {
-   const toggles = document.querySelectorAll('[data-plot-toggle]');
-   toggles.forEach(btn => {
-     const col = btn.closest('.plot-column');
-     if (!col) return;
-     const initialExpanded = col.classList.contains('is-expanded');
-     btn.textContent = initialExpanded ? '[-]' : '[+]';
-     btn.setAttribute('aria-expanded', initialExpanded ? 'true' : 'false');
-     btn.addEventListener('click', () => {
-       const expanded = col.classList.toggle('is-expanded');
-       btn.textContent = expanded ? '[-]' : '[+]';
-       btn.setAttribute('aria-expanded', expanded ? 'true' : 'false');
-     });
-   });
- }
+     const cfg = {
+       cable_dia_mm: read('c_mm'),
+       operating_depth_m: read('depth_m'),
+       dead_end_m: read('dead_m'),
+       core_dia_in: read('core_in'),
++      flange_dia_in: read('flange_dia_in'),
+       flange_to_flange_in: read('ftf_in'),
+       lebus_thk_in: read('lebus_in'),
+       packing_factor: read('pack'),
+       wraps_per_layer_override
+     };
+     const payload_kg = read('payload_kg');
+     const cable_w_kgpm = read('c_w_kgpm');
  
- function setupAutoRecompute() {
-   const inputs = Array.from(document.querySelectorAll('input, select, textarea'));
-   if (!inputs.length) return;
+     const rated_speed_mpm = read('rated_speed_mpm');
+     const rated_swl_kgf = read('rated_swl_kgf');
+     const system_efficiency = read('system_efficiency');
  
-   const handler = () => computeAll();
+     updateMinimumSystemHp(rated_speed_mpm, rated_swl_kgf, system_efficiency);
  
-   inputs.forEach(el => {
-     if (el.tagName === 'SELECT') {
-       el.addEventListener('change', handler);
+     const positiveOr = (value, fallback) => (Number.isFinite(value) && value > 0 ? value : fallback);
+ 
+     // Shared drivetrain
+     const gr1 = positiveOr(read('gr1'), 1);
+     const gr2 = positiveOr(read('gr2'), 1);
+     const motors = positiveOr(read('motors'), 1);
+     const denom_mech = gr1 * gr2 * motors;
+ 
+     const electricEnabled = driveModeEnabled('electric');
+     const hydraulicEnabled = driveModeEnabled('hydraulic');
+ 

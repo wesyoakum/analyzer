@@ -120,6 +120,7 @@ export function renderDrumVisualization(rows, summary, cfg, meta) {
   const {
     cable_dia_mm,
     core_dia_in,
+    flange_dia_in,
     flange_to_flange_in,
     lebus_thk_in,
     packing_factor
@@ -132,10 +133,11 @@ export function renderDrumVisualization(rows, summary, cfg, meta) {
 
   const styles = getComputedStyle(document.documentElement);
   const accentRgb = parseCssColor(cssVar(styles, '--accent', FALLBACK_HEX.accent), FALLBACK_COLORS.accent);
-  const accentLightRgb = parseCssColor(cssVar(styles, '--accent-light', FALLBACK_HEX.accentLight), FALLBACK_COLORS.accentLight);
   const ink700Rgb = parseCssColor(cssVar(styles, '--ink-700', FALLBACK_HEX.ink700), FALLBACK_COLORS.ink700);
   const ink900Rgb = parseCssColor(cssVar(styles, '--ink-900', FALLBACK_HEX.ink900), FALLBACK_COLORS.ink900);
   const paperRgb = parseCssColor(cssVar(styles, '--paper', FALLBACK_HEX.paper), FALLBACK_COLORS.paper);
+  const cableFillCss = rgbToCss(mixRgb(accentRgb, paperRgb, 0.45), 0.82);
+  const cableStrokeCss = rgbToCss(accentRgb, 0.94);
 
   const uniqueLayers = [];
   const seen = new Set();
@@ -151,17 +153,14 @@ export function renderDrumVisualization(rows, summary, cfg, meta) {
     (cable_dia_in > 0 ? cable_dia_in / 2 : 0)
   );
 
-  const layersForViz = uniqueLayers.map((layer, idx) => {
+  const layersForViz = uniqueLayers.map(layer => {
     const zeroBased = Math.max(0, layer.layer_no - 1);
     const centerRadiusIn = baseRadiusIn + zeroBased * cable_dia_in * packingFactor;
-    const t = uniqueLayers.length > 1 ? idx / (uniqueLayers.length - 1) : 0;
-    const baseColor = mixRgb(accentRgb, accentLightRgb, 0.25 + 0.55 * t);
-    const fillColor = mixRgb(baseColor, paperRgb, 0.55);
     return {
       layer_no: layer.layer_no,
       center_radius_in: centerRadiusIn,
-      fillColor: rgbToCss(fillColor, 0.82),
-      strokeColor: rgbToCss(baseColor, 0.94)
+      fillColor: cableFillCss,
+      strokeColor: cableStrokeCss
     };
   });
 
@@ -195,8 +194,11 @@ export function renderDrumVisualization(rows, summary, cfg, meta) {
 
   const coreHeightPx = Math.max(0, (core_dia_in || 0) * scale);
   const coreWidthPx = Math.max(0, (flange_to_flange_in || 0) * scale);
+  const flangeDiaIn = Math.max(0, flange_dia_in || 0);
+  const flangeHeightPx = flangeDiaIn * scale;
+  const flangeWidthPx = flangeDiaIn * 0.01 * scale;
 
-   const strokeWidth = 0.85;
+  const strokeWidth = 0.85;
   const strokeWidthAttr = strokeWidth.toFixed(3);
 
   if (coreHeightPx > 0 && coreWidthPx > 0) {
@@ -207,6 +209,20 @@ export function renderDrumVisualization(rows, summary, cfg, meta) {
       height: coreHeightPx.toFixed(2),
       fill: 'none',
       stroke: rgbToCss(ink900Rgb, 0.72),
+      'stroke-width': strokeWidthAttr,
+      'vector-effect': 'non-scaling-stroke'
+    }));
+  }
+
+  if (flangeHeightPx > 0 && flangeWidthPx > 0) {
+    const centerX = spoolLeft + widthPx / 2;
+    svg.appendChild(svgEl('rect', {
+      x: (centerX - flangeWidthPx / 2).toFixed(2),
+      y: (centerY - flangeHeightPx / 2).toFixed(2),
+      width: flangeWidthPx.toFixed(2),
+      height: flangeHeightPx.toFixed(2),
+      fill: rgbToCss(accentRgb, 0.12),
+      stroke: rgbToCss(accentRgb, 0.5),
       'stroke-width': strokeWidthAttr,
       'vector-effect': 'non-scaling-stroke'
     }));
@@ -281,6 +297,7 @@ export function renderDrumVisualization(rows, summary, cfg, meta) {
   const geometryParts = [
     `core Ø ${fmt(core_dia_in, 2)} in`,
     `flange-to-flange ${fmt(flange_to_flange_in, 2)} in`,
+    `flange Ø ${fmt(flange_dia_in, 2)} in`,
     `Lebus liner ${fmt(lebus_thk_in, 3)} in`,
     `full drum Ø ${fmt(full_drum_dia_in, 2)} in`
   ];
