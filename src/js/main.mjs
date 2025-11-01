@@ -418,30 +418,32 @@ function computeAll() {
 
     updateMinimumSystemHp(rated_speed_mpm, rated_swl_kgf, system_efficiency);
 
+    const positiveOr = (value, fallback) => (Number.isFinite(value) && value > 0 ? value : fallback);
+
     // Shared drivetrain
-    const gr1 = read('gr1');
-    const gr2 = read('gr2');
-    const motors = read('motors');
-    const denom_mech = (gr1 || 1) * (gr2 || 1) * (motors || 1);
+    const gr1 = positiveOr(read('gr1'), 1);
+    const gr2 = positiveOr(read('gr2'), 1);
+    const motors = positiveOr(read('motors'), 1);
+    const denom_mech = gr1 * gr2 * motors;
 
     const electricEnabled = driveModeEnabled('electric');
     const hydraulicEnabled = driveModeEnabled('hydraulic');
 
     // Electric inputs
     const motor_max_rpm = read('motor_max_rpm');
-    const motor_hp = read('motor_hp');
+    const motor_hp = positiveOr(read('motor_hp'), 0);
     const motor_tmax = read('motor_tmax');
-    const P_per_motor_W = (Number.isFinite(motor_hp) ? motor_hp : 0) * W_PER_HP;
+    const P_per_motor_W = motor_hp * W_PER_HP;
 
     // Hydraulic inputs
-    const h_strings = read('h_pump_strings');
-    const h_emotor_hp = read('h_emotor_hp');
-    const h_emotor_eff = read('h_emotor_eff'); // electro-hydraulic efficiency
-    const h_emotor_rpm = read('h_emotor_rpm');
-    const h_pump_cc = read('h_pump_cc');
-    const h_max_psi = read('h_max_psi');
-    const h_hmot_cc = read('h_hmot_cc');
-    const h_hmot_rpm_cap = read('h_hmot_rpm_max');
+    const h_strings = positiveOr(read('h_pump_strings'), 0);
+    const h_emotor_hp = positiveOr(read('h_emotor_hp'), 0);
+    const h_emotor_eff = positiveOr(read('h_emotor_eff'), 0); // electro-hydraulic efficiency
+    const h_emotor_rpm = positiveOr(read('h_emotor_rpm'), 0);
+    const h_pump_cc = positiveOr(read('h_pump_cc'), 0);
+    const h_max_psi = positiveOr(read('h_max_psi'), 0);
+    const h_hmot_cc = positiveOr(read('h_hmot_cc'), 0);
+    const h_hmot_rpm_cap = positiveOr(read('h_hmot_rpm_max'), Infinity);
 
     // Usable hydraulic hp & flow from pump strings
     const hp_str_usable = h_emotor_hp * h_emotor_eff;
@@ -520,16 +522,15 @@ function computeAll() {
 
         // Flow-limited speed
         const rpm_flow_per_motor = Math.min(
-          h_hmot_rpm_cap || Infinity,
+          h_hmot_rpm_cap,
           rpm_from_gpm_and_disp(q_tot_gpm / Math.max(motors, 1), h_hmot_cc)
         );
         const speed_flow_mpm = line_speed_mpm_from_motor_rpm(rpm_flow_per_motor, gr1, gr2, r.layer_dia_in);
 
         // Power-limited speed (cap pressure at max if P_req exceeds max)
         const P_power_psi = (P_req_psi > 0) ? Math.min(P_req_psi, h_max_psi) : 0;
-        const hp_elec_in_total = (Number.isFinite(h_emotor_hp) ? h_emotor_hp : 0) *
-          (Number.isFinite(h_strings) ? h_strings : 0);
-        const eff_total = Number.isFinite(h_emotor_eff) ? h_emotor_eff : 0;
+        const hp_elec_in_total = h_emotor_hp * h_strings;
+        const eff_total = h_emotor_eff;
 
         let speed_power_mpm = 0;
         if (hp_elec_in_total > 0 && eff_total > 0 && theoretical_tension > 0) {
