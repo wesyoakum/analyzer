@@ -9,11 +9,15 @@ const RATED_SPEED_COLOR = '#76be4e'; // green
 const PITA_PINK = 'e056e8'; // pink
 const CLARS_BLUE = '#2163a5'; // blue
 
-const RATED_AVAILABLE_TOLERANCE = 1e-6;
+const RATED_AVAILABLE_TOLERANCE = 1e-9;
 
 function isRatedBelowAvailable(ratedSpeedMs, availableSpeedMs) {
   if (!Number.isFinite(ratedSpeedMs) || !Number.isFinite(availableSpeedMs)) return false;
-  return ratedSpeedMs + RATED_AVAILABLE_TOLERANCE < availableSpeedMs;
+  const diff = availableSpeedMs - ratedSpeedMs;
+  if (!Number.isFinite(diff)) return false;
+  const relTol = Number.EPSILON * Math.max(1, Math.abs(availableSpeedMs), Math.abs(ratedSpeedMs));
+  const tolerance = Math.max(RATED_AVAILABLE_TOLERANCE, relTol);
+  return diff > tolerance;
 }
 
 function getAccentColor() {
@@ -306,7 +310,7 @@ function drawTensionProfile(svg, segments, maxDepth, maxTension, payload_kg, cab
   segments.forEach(S => {
     if (!Number.isFinite(S.avail_tension_kgf)) return;
     const depthEnd = Math.min(S.depth_start, S.depth_end);
-    const depthStart = Math.max(S.depth_start, S.depth_end);
+       const depthStart = Math.max(S.depth_start, S.depth_end);
     const y = sy(S.avail_tension_kgf);
     const x0 = sx(depthEnd);
     const x1 = sx(depthStart);

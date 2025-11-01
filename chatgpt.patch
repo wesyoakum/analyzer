@@ -1,8 +1,8 @@
 diff --git a/src/js/plots/depth-profiles.mjs b/src/js/plots/depth-profiles.mjs
-index 417022d72e0acb5179fbfa40473b92c6d67e1bd4..f806bd98b8f57eb614a8ed7003fc2fbe358ff1ca 100644
+index 417022d72e0acb5179fbfa40473b92c6d67e1bd4..04798ba68ad3362542e86bf4cfcb2c1be9301b52 100644
 --- a/src/js/plots/depth-profiles.mjs
 +++ b/src/js/plots/depth-profiles.mjs
-@@ -1,36 +1,43 @@
+@@ -1,36 +1,47 @@
  // ===== plots/depth-profiles.mjs  Speed vs Depth & Tension vs Depth (DOM-agnostic) =====
  import { niceTicks, svgEl, TENSION_SAFETY_FACTOR } from '../utils.mjs';
  
@@ -14,11 +14,15 @@ index 417022d72e0acb5179fbfa40473b92c6d67e1bd4..f806bd98b8f57eb614a8ed7003fc2fbe
  const PITA_PINK = 'e056e8'; // pink
  const CLARS_BLUE = '#2163a5'; // blue
  
-+const RATED_AVAILABLE_TOLERANCE = 1e-6;
++const RATED_AVAILABLE_TOLERANCE = 1e-9;
 +
 +function isRatedBelowAvailable(ratedSpeedMs, availableSpeedMs) {
 +  if (!Number.isFinite(ratedSpeedMs) || !Number.isFinite(availableSpeedMs)) return false;
-+  return ratedSpeedMs + RATED_AVAILABLE_TOLERANCE < availableSpeedMs;
++  const diff = availableSpeedMs - ratedSpeedMs;
++  if (!Number.isFinite(diff)) return false;
++  const relTol = Number.EPSILON * Math.max(1, Math.abs(availableSpeedMs), Math.abs(ratedSpeedMs));
++  const tolerance = Math.max(RATED_AVAILABLE_TOLERANCE, relTol);
++  return diff > tolerance;
 +}
 +
  function getAccentColor() {
@@ -46,7 +50,7 @@ index 417022d72e0acb5179fbfa40473b92c6d67e1bd4..f806bd98b8f57eb614a8ed7003fc2fbe
    scenario = 'electric',
    elWraps = [],
    hyWraps = [],
-@@ -138,51 +145,51 @@ function drawSpeedProfile(svg, segments, maxDepth, maxSpeed, accentColor, ratedS
+@@ -138,51 +149,51 @@ function drawSpeedProfile(svg, segments, maxDepth, maxSpeed, accentColor, ratedS
    // candidate speeds (Vp power-limited purple, Vq flow-limited green, dashed)
    segments.forEach(S => {
      if (!Array.isArray(S.candidate_speeds_ms)) return;
@@ -99,7 +103,7 @@ index 417022d72e0acb5179fbfa40473b92c6d67e1bd4..f806bd98b8f57eb614a8ed7003fc2fbe
            stroke: EXCEED_COLOR,
            'stroke-width': 2,
            'stroke-dasharray': '4 6'
-@@ -203,51 +210,51 @@ function drawSpeedProfile(svg, segments, maxDepth, maxSpeed, accentColor, ratedS
+@@ -203,51 +214,51 @@ function drawSpeedProfile(svg, segments, maxDepth, maxSpeed, accentColor, ratedS
        }
      }
    }
