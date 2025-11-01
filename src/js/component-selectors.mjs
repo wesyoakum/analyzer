@@ -33,170 +33,193 @@
  * @property {boolean} [initialSkipEvents]
  */
 
+/** @type {ComponentOption[]} */
+export const GEARBOX_OPTIONS = [
+  {
+    pn: 'GB-123',
+    description: 'Single stage 20:1 (overall)',
+    gear_ratio_stage1: 20,
+    gear_ratio_stage2: 1
+  },
+  {
+    pn: 'GB-2050',
+    description: 'Planetary 20:1 × 5:1 (100:1 overall)',
+    gear_ratio_stage1: 20,
+    gear_ratio_stage2: 5
+  },
+  {
+    pn: 'GB-1550',
+    description: 'Compound 15:1 × 5:1 (75:1 overall)',
+    gear_ratio_stage1: 15,
+    gear_ratio_stage2: 5
+  },
+  {
+    pn: 'GB-1250',
+    description: 'High-speed 12.5:1 × 5:1 (62.5:1 overall)',
+    gear_ratio_stage1: 12.5,
+    gear_ratio_stage2: 5
+  }
+];
+
+/** @type {ComponentOption[]} */
+export const ELECTRIC_MOTOR_OPTIONS = [
+  {
+    pn: 'EM-150-4P',
+    description: '150 hp, 1800 rpm, 230 N·m',
+    motor_hp: 150,
+    motor_max_rpm: 1800,
+    motor_tmax_Nm: 230
+  },
+  {
+    pn: 'EM-200-4P',
+    description: '200 hp, 1785 rpm, 310 N·m',
+    motor_hp: 200,
+    motor_max_rpm: 1785,
+    motor_tmax_Nm: 310
+  },
+  {
+    pn: 'EM-250-6P',
+    description: '250 hp, 1200 rpm, 430 N·m',
+    motor_hp: 250,
+    motor_max_rpm: 1200,
+    motor_tmax_Nm: 430
+  }
+];
+
+/** @type {ComponentOption[]} */
+export const HYDRAULIC_PUMP_OPTIONS = [
+  {
+    pn: 'HP-210A',
+    description: '210 cc/rev, 3500 psi',
+    pump_disp_cc: 210,
+    pump_max_psi: 3500
+  },
+  {
+    pn: 'HP-180B',
+    description: '180 cc/rev, 4000 psi',
+    pump_disp_cc: 180,
+    pump_max_psi: 4000
+  },
+  {
+    pn: 'HP-250C',
+    description: '250 cc/rev, 3200 psi',
+    pump_disp_cc: 250,
+    pump_max_psi: 3200
+  }
+];
+
+/** @type {ComponentOption[]} */
+export const HYDRAULIC_MOTOR_OPTIONS = [
+  {
+    pn: 'HM-1234',
+    description: '55 cc/rev, 2300 rpm',
+    hyd_motor_disp_cc: 55,
+    hyd_motor_max_rpm: 2300
+  },
+  {
+    pn: 'HM-1580',
+    description: '80 cc/rev, 1900 rpm',
+    hyd_motor_disp_cc: 80,
+    hyd_motor_max_rpm: 1900
+  },
+  {
+    pn: 'HM-2090',
+    description: '95 cc/rev, 1600 rpm',
+    hyd_motor_disp_cc: 95,
+    hyd_motor_max_rpm: 1600
+  }
+];
+
+/** @type {ComponentOption[]} */
+export const SYSTEM_OPTIONS = [
+  {
+    pn: 'WINCH-513',
+    description: 'Placeholder 513 Winch system',
+    core_in: 70.5,
+    ftf_in: 118,
+    lebus_in: 0.75,
+    pack: 0.88,
+    motors: 6,
+    h_pump_strings: 2,
+    gearbox_select: 'GB-123',
+    electric_motor_select: 'EM-200-4P',
+    hydraulic_pump_select: 'HP-210A',
+    hydraulic_motor_select: 'HM-1580'
+  },
+  {
+    pn: 'WINCH-900',
+    description: 'Placeholder 900 Winch system',
+    core_in: 82,
+    ftf_in: 132,
+    lebus_in: 0.6,
+    pack: 0.9,
+    motors: 4,
+    h_pump_strings: 3,
+    gearbox_select: 'GB-2050',
+    electric_motor_select: 'EM-250-6P',
+    hydraulic_pump_select: 'HP-250C',
+    hydraulic_motor_select: 'HM-2090'
+  }
+];
+
+export const FIELD_MAPS = {
+  gearbox: /** @type {SelectConfig['fieldMap']} */ ({
+    gr1: 'gear_ratio_stage1',
+    gr2: 'gear_ratio_stage2'
+  }),
+  electricMotor: /** @type {SelectConfig['fieldMap']} */ ({
+    motor_max_rpm: 'motor_max_rpm',
+    motor_hp: 'motor_hp',
+    motor_tmax: 'motor_tmax_Nm'
+  }),
+  hydraulicPump: /** @type {SelectConfig['fieldMap']} */ ({
+    h_pump_cc: 'pump_disp_cc',
+    h_max_psi: 'pump_max_psi'
+  }),
+  hydraulicMotor: /** @type {SelectConfig['fieldMap']} */ ({
+    h_hmot_cc: 'hyd_motor_disp_cc',
+    h_hmot_rpm_max: 'hyd_motor_max_rpm'
+  }),
+  system: /** @type {SelectConfig['fieldMap']} */ ({
+    core_in: 'core_in',
+    ftf_in: 'ftf_in',
+    lebus_in: 'lebus_in',
+    pack: 'pack',
+    motors: 'motors',
+    h_pump_strings: 'h_pump_strings',
+    gearbox_select: 'gearbox_select',
+    electric_motor_select: 'electric_motor_select',
+    hydraulic_pump_select: 'hydraulic_pump_select',
+    hydraulic_motor_select: 'hydraulic_motor_select'
+  })
+};
+
 /** @type {SelectConfig[]} */
 const SELECT_CONFIGS = [
   {
     selectId: 'gearbox_select',
-    options: [
-      {
-        pn: 'GB-123',
-        description: 'Single stage 20:1 (overall)',
-        gear_ratio_stage1: 20,
-        gear_ratio_stage2: 1
-      },
-      {
-        pn: 'GB-2050',
-        description: 'Planetary 20:1 × 5:1 (100:1 overall)',
-        gear_ratio_stage1: 20,
-        gear_ratio_stage2: 5
-      },
-      {
-        pn: 'GB-1550',
-        description: 'Compound 15:1 × 5:1 (75:1 overall)',
-        gear_ratio_stage1: 15,
-        gear_ratio_stage2: 5
-      },
-      {
-        pn: 'GB-1250',
-        description: 'High-speed 12.5:1 × 5:1 (62.5:1 overall)',
-        gear_ratio_stage1: 12.5,
-        gear_ratio_stage2: 5
-      }
-    ],
-    fieldMap: {
-      gr1: 'gear_ratio_stage1',
-      gr2: 'gear_ratio_stage2'
-    }
+    options: GEARBOX_OPTIONS,
+    fieldMap: FIELD_MAPS.gearbox
   },
   {
     selectId: 'electric_motor_select',
-    options: [
-      {
-        pn: 'EM-150-4P',
-        description: '150 hp, 1800 rpm, 230 N·m',
-        motor_hp: 150,
-        motor_max_rpm: 1800,
-        motor_tmax_Nm: 230
-      },
-      {
-        pn: 'EM-200-4P',
-        description: '200 hp, 1785 rpm, 310 N·m',
-        motor_hp: 200,
-        motor_max_rpm: 1785,
-        motor_tmax_Nm: 310
-      },
-      {
-        pn: 'EM-250-6P',
-        description: '250 hp, 1200 rpm, 430 N·m',
-        motor_hp: 250,
-        motor_max_rpm: 1200,
-        motor_tmax_Nm: 430
-      }
-    ],
-    fieldMap: {
-      motor_max_rpm: 'motor_max_rpm',
-      motor_hp: 'motor_hp',
-      motor_tmax: 'motor_tmax_Nm'
-    }
+    options: ELECTRIC_MOTOR_OPTIONS,
+    fieldMap: FIELD_MAPS.electricMotor
   },
   {
     selectId: 'hydraulic_pump_select',
-    options: [
-      {
-        pn: 'HP-210A',
-        description: '210 cc/rev, 3500 psi',
-        pump_disp_cc: 210,
-        pump_max_psi: 3500
-      },
-      {
-        pn: 'HP-180B',
-        description: '180 cc/rev, 4000 psi',
-        pump_disp_cc: 180,
-        pump_max_psi: 4000
-      },
-      {
-        pn: 'HP-250C',
-        description: '250 cc/rev, 3200 psi',
-        pump_disp_cc: 250,
-        pump_max_psi: 3200
-      }
-    ],
-    fieldMap: {
-      h_pump_cc: 'pump_disp_cc',
-      h_max_psi: 'pump_max_psi'
-    }
+    options: HYDRAULIC_PUMP_OPTIONS,
+    fieldMap: FIELD_MAPS.hydraulicPump
   },
   {
     selectId: 'hydraulic_motor_select',
-    options: [
-      {
-        pn: 'HM-1234',
-        description: '55 cc/rev, 2300 rpm',
-        hyd_motor_disp_cc: 55,
-        hyd_motor_max_rpm: 2300
-      },
-      {
-        pn: 'HM-1580',
-        description: '80 cc/rev, 1900 rpm',
-        hyd_motor_disp_cc: 80,
-        hyd_motor_max_rpm: 1900
-      },
-      {
-        pn: 'HM-2090',
-        description: '95 cc/rev, 1600 rpm',
-        hyd_motor_disp_cc: 95,
-        hyd_motor_max_rpm: 1600
-      }
-    ],
-    fieldMap: {
-      h_hmot_cc: 'hyd_motor_disp_cc',
-      h_hmot_rpm_max: 'hyd_motor_max_rpm'
-    }
+    options: HYDRAULIC_MOTOR_OPTIONS,
+    fieldMap: FIELD_MAPS.hydraulicMotor
   },
   {
     selectId: 'system_select',
-    options: [
-      {
-        pn: 'WINCH-513',
-        description: 'Placeholder 513 Winch system',
-        core_in: 70.5,
-        ftf_in: 118,
-        lebus_in: 0.75,
-        pack: 0.88,
-        motors: 6,
-        h_pump_strings: 2,
-        gearbox_select: 'GB-123',
-        electric_motor_select: 'EM-200-4P',
-        hydraulic_pump_select: 'HP-210A',
-        hydraulic_motor_select: 'HM-1580'
-      },
-      {
-        pn: 'WINCH-900',
-        description: 'Placeholder 900 Winch system',
-        core_in: 82,
-        ftf_in: 132,
-        lebus_in: 0.6,
-        pack: 0.9,
-        motors: 4,
-        h_pump_strings: 3,
-        gearbox_select: 'GB-2050',
-        electric_motor_select: 'EM-250-6P',
-        hydraulic_pump_select: 'HP-250C',
-        hydraulic_motor_select: 'HM-2090'
-      }
-    ],
-    fieldMap: {
-      core_in: 'core_in',
-      ftf_in: 'ftf_in',
-      lebus_in: 'lebus_in',
-      pack: 'pack',
-      motors: 'motors',
-      h_pump_strings: 'h_pump_strings',
-      gearbox_select: 'gearbox_select',
-      electric_motor_select: 'electric_motor_select',
-      hydraulic_pump_select: 'hydraulic_pump_select',
-      hydraulic_motor_select: 'hydraulic_motor_select'
-    },
+    options: SYSTEM_OPTIONS,
+    fieldMap: FIELD_MAPS.system,
     initialSkipEvents: false
   }
 ];
