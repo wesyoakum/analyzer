@@ -5,9 +5,9 @@ const CANDIDATE_POWER_COLOR = '#9249c6'; // purple
 const CANDIDATE_FLOW_COLOR = '#eed500'; // yellow
 const EXCEED_COLOR = '#c65353'; // red
 const TENSION_OK_COLOR = '#76be4e'; // green
-const RATED_SPEED_COLOR = '#2163a5'; // blue
+const RATED_SPEED_COLOR = '#76be4e'; // green
 const PITA_PINK = 'e056e8'; // pink
-
+const CLARS_BLUE = '#2163a5'; // blue
 
 function getAccentColor() {
   if (typeof window !== 'undefined' && typeof document !== 'undefined' && window.getComputedStyle) {
