@@ -252,26 +252,60 @@ export function renderDrumVisualization(rows, summary, cfg, meta) {
   }));
 
   const cableRadiusPx = cable_dia_in > 0 ? (cable_dia_in / 2) * scale : 0;
-  const cablePitchPx = cable_dia_in > 0 ? cable_dia_in * scale : 0;
+
+  const wrapsPerLayerUsed = meta && Number.isFinite(meta.wraps_per_layer_used)
+    ? meta.wraps_per_layer_used
+    : null;
+  const wrapsPerLayerFraction = wrapsPerLayerUsed !== null
+    ? Math.abs(wrapsPerLayerUsed - Math.round(wrapsPerLayerUsed))
+    : 0;
+  const isHalfWrapPattern = wrapsPerLayerUsed !== null && Math.abs(wrapsPerLayerFraction - 0.5) < 1e-6;
 
   const wrapsByLayer = new Map();
   for (const row of rows) {
     wrapsByLayer.set(row.layer_no, (wrapsByLayer.get(row.layer_no) || 0) + 1);
   }
 
-  if (cableRadiusPx > 0 && cablePitchPx > 0 && coreWidthPx > 0) {
+  if (cableRadiusPx > 0 && coreWidthPx > 0) {
+    const leftTangent = spoolLeft + cableRadiusPx;
+    const rightTangent = spoolRight - cableRadiusPx;
+    const availableWidth = Math.max(0, coreWidthPx - 2 * cableRadiusPx);
+
     layersForViz.forEach(layer => {
       const wraps = wrapsByLayer.get(layer.layer_no) || 0;
       if (wraps <= 0) return;
       const centerOffsetPx = layer.center_radius_in * scale;
-      const layerPhasePx = (layer.layer_no % 2 === 0) ? cablePitchPx / 2 : 0;
       const topY = centerY - centerOffsetPx;
       const bottomY = centerY + centerOffsetPx;
 
-      for (let w = 0; w < wraps; w++) {
-        const cx = spoolLeft + cableRadiusPx + layerPhasePx + w * cablePitchPx;
-        if (cx - cableRadiusPx < spoolLeft - 1e-3) continue;
-        if (cx + cableRadiusPx > spoolRight + 1e-3) continue;
+      /** @type {number[]} */
+      const centers = [];
+      if (wraps === 1) {
+        if (isHalfWrapPattern && (layer.layer_no % 2 === 0)) {
+          centers.push(rightTangent);
+        } else {
+          centers.push(leftTangent);
+        }
+      } else if (isHalfWrapPattern) {
+        const denom = Math.max(wraps - 0.5, 1e-6);
+        const gap = availableWidth / denom;
+        const start = (layer.layer_no % 2 === 0)
+          ? leftTangent + gap / 2
+          : leftTangent;
+        for (let w = 0; w < wraps; w++) {
+          centers.push(start + w * gap);
+        }
+      } else {
+        const gap = wraps > 1 ? availableWidth / (wraps - 1) : 0;
+        const start = leftTangent;
+        for (let w = 0; w < wraps; w++) {
+          centers.push(start + w * gap);
+        }
+      }
+
+      centers.forEach(cx => {
+        if (cx - cableRadiusPx < spoolLeft - 1e-3) return;
+        if (cx + cableRadiusPx > spoolRight + 1e-3) return;
 
         svg.appendChild(svgEl('circle', {
           cx: cx.toFixed(2),
@@ -292,7 +326,7 @@ export function renderDrumVisualization(rows, summary, cfg, meta) {
           'stroke-width': strokeWidthAttr,
           'vector-effect': 'non-scaling-stroke'
         }));
-      }
+      });
     });
   }
 
