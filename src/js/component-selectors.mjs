@@ -61,34 +61,11 @@ export const CABLE_OPTIONS = [
 /** @type {ComponentOption[]} */
 export const DRUM_OPTIONS = [
   {
-    pn: 'DR-64-116',
-    description: '64 in core, 116 in FTF, 0.625 in liner',
-    core_in: 64,
-    flange_dia_in: 110,
-    ftf_in: 116,
-    lebus_in: 0.625,
-    pack: 0.877,
-    wraps_override: 40
-  },
-  {
-    pn: 'DR-705-118',
-    description: '70.5 in core, 118 in FTF, 0.75 in liner',
+    pn: 'CTW513',
+    description: '70.5 in core, 90.5 in FTF, 110 in Flange',
     core_in: 70.5,
-    flange_dia_in: 122,
-    ftf_in: 118,
-    lebus_in: 0.75,
-    pack: 0.88,
-    wraps_override: 38.5
-  },
-  {
-    pn: 'DR-82-132',
-    description: '82 in core, 132 in FTF, 0.6 in liner',
-    core_in: 82,
-    flange_dia_in: 138,
-    ftf_in: 132,
-    lebus_in: 0.6,
-    pack: 0.9,
-    wraps_override: 36
+    flange_dia_in: 110,
+    ftf_in: 90.5
   }
 ];
 
