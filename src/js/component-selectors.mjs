@@ -51,28 +51,10 @@
 /** @type {ComponentOption[]} */
 export const CABLE_OPTIONS = [
   {
-    pn: 'CB-30-3000',
-    description: '30 mm × 3000 m, 100 m dead, 3.8 kg/m',
-    c_mm: 30,
-    depth_m: 3000,
-    dead_m: 100,
+    pn: '42mm Umbilical',
+    description: 'Typical WROV Umbilical',
+    c_mm: 42,
     c_w_kgpm: 3.8
-  },
-  {
-    pn: 'CB-32-3500',
-    description: '32 mm × 3500 m, 120 m dead, 4.2 kg/m',
-    c_mm: 32,
-    depth_m: 3500,
-    dead_m: 120,
-    c_w_kgpm: 4.2
-  },
-  {
-    pn: 'CB-28-2500',
-    description: '28 mm × 2500 m, 80 m dead, 3.1 kg/m',
-    c_mm: 28,
-    depth_m: 2500,
-    dead_m: 80,
-    c_w_kgpm: 3.1
   }
 ];
 
