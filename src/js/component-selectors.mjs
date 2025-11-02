@@ -384,12 +384,28 @@ export const ELECTRIC_MOTOR_OPTIONS = [
     motor_tmax_Nm: 294.349
   },
   {
+    pn: 'LAM90-18-405TC',
+    name: '90 HP AC Motor',
+    description: 'PN LAM90-18-405TC — 90 hp, 359.029 N·m, 1785 rpm',
+    motor_hp: 90,
+    motor_max_rpm: 1785,
+    motor_tmax_Nm: 359.029
+  },
+  {
     pn: 'LAM100-18-405TC',
     name: '100 HP AC Motor',
     description: 'PN LAM100-18-405TC — 100 hp, 402.001 N·m, 1780 rpm',
     motor_hp: 100,
     motor_max_rpm: 1780,
     motor_tmax_Nm: 402.001
+  },
+  {
+    pn: 'LAM110-12-444TC',
+    name: '110 HP AC Motor',
+    description: 'PN LAM110-12-444TC — 110 hp, 652.736 N·m, 1200 rpm',
+    motor_hp: 110,
+    motor_max_rpm: 1200,
+    motor_tmax_Nm: 652.736
   },
   {
     pn: 'LAM125-18-444TC',
@@ -630,48 +646,26 @@ export const HYDRAULIC_MOTOR_OPTIONS = [
 ];
 
 /** @type {ComponentOption[]} */
-export const HPU_MOTOR_OPTIONS = [
-  {
-    pn: 'HMOT-75-1780',
-    description: '75 hp @ 1780 rpm',
-    h_emotor_hp: 75,
-    h_emotor_rpm: 1780
-  },
-  {
-    pn: 'HMOT-90-1785',
-    description: '90 hp @ 1785 rpm',
-    h_emotor_hp: 90,
-    h_emotor_rpm: 1785
-  },
-  {
-    pn: 'HMOT-110-1200',
-    description: '110 hp @ 1200 rpm',
-    h_emotor_hp: 110,
-    h_emotor_rpm: 1200
-  }
-];
-
-/** @type {ComponentOption[]} */
 export const HPU_OPTIONS = [
   {
     pn: 'HPU-2S-210',
-    description: '2 strings, HMOT-75-1780, pump HP-210A',
+    description: '2 strings, LAM75-18-365TC, pump HP-210A',
     h_pump_strings: 2,
-    hpu_motor_select: 'HMOT-75-1780',
+    hpu_motor_select: 'LAM75-18-365TC',
     hydraulic_pump_select: 'HP-210A'
   },
   {
     pn: 'HPU-3S-180',
-    description: '3 strings, HMOT-90-1785, pump HP-180B',
+    description: '3 strings, LAM90-18-405TC, pump HP-180B',
     h_pump_strings: 3,
-    hpu_motor_select: 'HMOT-90-1785',
+    hpu_motor_select: 'LAM90-18-405TC',
     hydraulic_pump_select: 'HP-180B'
   },
   {
     pn: 'HPU-2S-250',
-    description: '2 strings, HMOT-110-1200, pump HP-250C',
+    description: '2 strings, LAM110-12-444TC, pump HP-250C',
     h_pump_strings: 2,
-    hpu_motor_select: 'HMOT-110-1200',
+    hpu_motor_select: 'LAM110-12-444TC',
     hydraulic_pump_select: 'HP-250C'
   }
 ];
@@ -685,7 +679,7 @@ export const SYSTEM_OPTIONS = [
     drum_select: 'DR-705-118',
     payload_select: 'PL-8000',
     hpu_select: 'HPU-2S-210',
-    hpu_motor_select: 'HMOT-75-1780',
+    hpu_motor_select: 'LAM75-18-365TC',
     core_in: 70.5,
     flange_dia_in: 122,
     ftf_in: 118,
@@ -705,7 +699,7 @@ export const SYSTEM_OPTIONS = [
     drum_select: 'DR-82-132',
     payload_select: 'PL-10000',
     hpu_select: 'HPU-2S-250',
-    hpu_motor_select: 'HMOT-110-1200',
+    hpu_motor_select: 'LAM110-12-444TC',
     core_in: 82,
     flange_dia_in: 138,
     ftf_in: 132,
@@ -757,8 +751,8 @@ export const FIELD_MAPS = {
     h_hmot_rpm_max: 'hyd_motor_max_rpm'
   }),
   hpuMotor: /** @type {SelectConfig['fieldMap']} */ ({
-    h_emotor_hp: 'h_emotor_hp',
-    h_emotor_rpm: 'h_emotor_rpm'
+    motor_hp: 'h_emotor_hp',
+    motor_max_rpm: 'h_emotor_rpm'
   }),
   hpu: /** @type {SelectConfig['fieldMap']} */ ({
     h_pump_strings: 'h_pump_strings',
@@ -813,7 +807,7 @@ const SELECT_CONFIGS = [
   },
   {
     selectId: 'hpu_motor_select',
-    options: HPU_MOTOR_OPTIONS,
+    options: ELECTRIC_MOTOR_OPTIONS,
     fieldMap: FIELD_MAPS.hpuMotor
   },
   {
