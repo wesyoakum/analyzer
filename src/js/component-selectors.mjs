@@ -3,15 +3,18 @@
 /**
  * @typedef {Object} ComponentOption
  * @property {string} pn
+ * @property {string} [name]
  * @property {string} [description]
  * @property {number|string|boolean} [gear_ratio_stage1]
  * @property {number|string|boolean} [gear_ratio_stage2]
+ * @property {number|string|boolean} [gearbox_max_torque_Nm]
  * @property {number|string|boolean} [motor_max_rpm]
  * @property {number|string|boolean} [motor_hp]
  * @property {number|string|boolean} [motor_tmax_Nm]
  * @property {number|string|boolean} [pump_disp_cc]
  * @property {number|string|boolean} [pump_max_psi]
  * @property {number|string|boolean} [hyd_motor_disp_cc]
+ * @property {number|string|boolean} [hyd_motor_min_disp_cc]
  * @property {number|string|boolean} [hyd_motor_max_rpm]
   * @property {number|string|boolean} [motor_eff]
   * @property {number|string|boolean} [c_mm]
@@ -129,100 +132,500 @@ export const PAYLOAD_OPTIONS = [
 /** @type {ComponentOption[]} */
 export const GEARBOX_OPTIONS = [
   {
-    pn: 'GB-123',
-    description: 'Single stage 20:1 (overall)',
-    gear_ratio_stage1: 20,
-    gear_ratio_stage2: 1
+    pn: 'Hico-30-17.32',
+    name: 'Hico-30-17.32',
+    description: 'PN 30 — ratio 17.32:1, max torque 5649.24 N·m',
+    gear_ratio_stage1: 17.32,
+    gearbox_max_torque_Nm: 5649.24
   },
   {
-    pn: 'GB-2050',
-    description: 'Planetary 20:1 × 5:1 (100:1 overall)',
-    gear_ratio_stage1: 20,
-    gear_ratio_stage2: 5
+    pn: 'Hico-30-22.52',
+    name: 'Hico-30-22.52',
+    description: 'PN 30 — ratio 22.52:1, max torque 5649.24 N·m',
+    gear_ratio_stage1: 22.52,
+    gearbox_max_torque_Nm: 5649.24
   },
   {
-    pn: 'GB-1550',
-    description: 'Compound 15:1 × 5:1 (75:1 overall)',
-    gear_ratio_stage1: 15,
-    gear_ratio_stage2: 5
+    pn: 'Hico-40-19',
+    name: 'Hico-40-19',
+    description: 'PN 40 — ratio 19:1, max torque 6779.09 N·m',
+    gear_ratio_stage1: 19,
+    gearbox_max_torque_Nm: 6779.09
   },
   {
-    pn: 'GB-1250',
-    description: 'High-speed 12.5:1 × 5:1 (62.5:1 overall)',
-    gear_ratio_stage1: 12.5,
-    gear_ratio_stage2: 5
+    pn: 'Hico-44-24.7',
+    name: 'Hico-44-24.7',
+    description: 'PN 44 — ratio 24.7:1, max torque 8473.86 N·m',
+    gear_ratio_stage1: 24.7,
+    gearbox_max_torque_Nm: 8473.86
+  },
+  {
+    pn: 'Hico-30-24',
+    name: 'Hico-30-24',
+    description: 'PN 30 — ratio 24:1, max torque 5649.24 N·m',
+    gear_ratio_stage1: 24,
+    gearbox_max_torque_Nm: 5649.24
+  },
+  {
+    pn: 'Hico-40-31.2',
+    name: 'Hico-40-31.2',
+    description: 'PN 40 — ratio 31.2:1, max torque 6779.09 N·m',
+    gear_ratio_stage1: 31.2,
+    gearbox_max_torque_Nm: 6779.09
+  },
+  {
+    pn: 'F-30 Ratio 19-305',
+    name: 'F-30 Ratio 19-305',
+    description: 'PN F-30 — max torque 30000 N·m',
+    gearbox_max_torque_Nm: 30000
+  },
+  {
+    pn: 'F-40 Ratio 19-181',
+    name: 'F-40 Ratio 19-181',
+    description: 'PN F-40 — max torque 40000 N·m',
+    gearbox_max_torque_Nm: 40000
+  },
+  {
+    pn: 'F-55 Ratio 16-185',
+    name: 'F-55 Ratio 16-185',
+    description: 'PN F-55 — max torque 55000 N·m',
+    gearbox_max_torque_Nm: 55000
+  },
+  {
+    pn: 'F-80 Ratio 19-206',
+    name: 'F-80 Ratio 19-206',
+    description: 'PN F-80 — max torque 80000 N·m',
+    gearbox_max_torque_Nm: 80000
+  },
+  {
+    pn: 'F-100 Ratio 21-226',
+    name: 'F-100 Ratio 21-226',
+    description: 'PN F-100 — max torque 100000 N·m',
+    gearbox_max_torque_Nm: 100000
+  },
+  {
+    pn: 'F-130 Ratio 69-206',
+    name: 'F-130 Ratio 69-206',
+    description: 'PN F-130 — max torque 130000 N·m',
+    gearbox_max_torque_Nm: 130000
+  },
+  {
+    pn: 'F-180 Ratio 206-281',
+    name: 'F-180 Ratio 206-281',
+    description: 'PN F-180 — max torque 180000 N·m',
+    gearbox_max_torque_Nm: 180000
+  },
+  {
+    pn: 'F-220 Ratio 97-345',
+    name: 'F-220 Ratio 97-345',
+    description: 'PN F-220 — max torque 220000 N·m',
+    gearbox_max_torque_Nm: 220000
+  },
+  {
+    pn: 'F-260 Ratio 69-1784',
+    name: 'F-260 Ratio 69-1784',
+    description: 'PN F-260 — max torque 260000 N·m',
+    gearbox_max_torque_Nm: 260000
+  },
+  {
+    pn: 'F-280 Ratio 201-201',
+    name: 'F-280 Ratio 201-201',
+    description: 'PN F-280 — max torque 280000 N·m',
+    gearbox_max_torque_Nm: 280000
+  },
+  {
+    pn: 'F-360 Ratio 94-490',
+    name: 'F-360 Ratio 94-490',
+    description: 'PN F-360 — max torque 360000 N·m',
+    gearbox_max_torque_Nm: 360000
+  },
+  {
+    pn: 'Dinamic Oil 512 Ratio 13.8-43.6',
+    name: 'Dinamic Oil 512 Ratio 13.8-43.6',
+    description: 'PN 512 — ratio 13.8–43.6:1, max torque 7380 N·m',
+    gearbox_max_torque_Nm: 7380
+  },
+  {
+    pn: 'Dinamic Oil 513 Ratio 42.6-189.',
+    name: 'Dinamic Oil 513 Ratio 42.6-189.',
+    description: 'PN 513 — ratio 42.6–189:1, max torque 7800 N·m',
+    gearbox_max_torque_Nm: 7800
+  },
+  {
+    pn: 'Dinamic Oil 612 Ratio 13.4-33.1',
+    name: 'Dinamic Oil 612 Ratio 13.4-33.1',
+    description: 'PN 612 — ratio 13.4–33.1:1, max torque 9800 N·m',
+    gearbox_max_torque_Nm: 9800
+  },
+  {
+    pn: 'Dinamic Oil 613 Ratio 49.1-210.',
+    name: 'Dinamic Oil 613 Ratio 49.1-210.',
+    description: 'PN 613 — ratio 49.1–210:1, max torque 10150 N·m',
+    gearbox_max_torque_Nm: 10150
+  },
+  {
+    pn: 'Dinamic Oil 812 Ratio 14.1-42.7',
+    name: 'Dinamic Oil 812 Ratio 14.1-42.7',
+    description: 'PN 812 — ratio 14.1–42.7:1, max torque 11750 N·m',
+    gearbox_max_torque_Nm: 11750
+  },
+  {
+    pn: 'Dinamic Oil 813 Ratio 43.6-207.',
+    name: 'Dinamic Oil 813 Ratio 43.6-207.',
+    description: 'PN 813 — ratio 43.6–207:1, max torque 12400 N·m',
+    gearbox_max_torque_Nm: 12400
+  },
+  {
+    pn: 'Dinamic Oil 1022 Ratio 14.1-42.7',
+    name: 'Dinamic Oil 1022 Ratio 14.1-42.7',
+    description: 'PN 1022 — ratio 14.1–42.7:1, max torque 16601 N·m',
+    gearbox_max_torque_Nm: 16601
+  },
+  {
+    pn: 'Dinamic Oil 1023 Ratio 43.6-226.',
+    name: 'Dinamic Oil 1023 Ratio 43.6-226.',
+    description: 'PN 1023 — ratio 43.6–226:1, max torque 18060 N·m',
+    gearbox_max_torque_Nm: 18060
+  },
+  {
+    pn: 'Dinamic Oil 1532 Ratio 17.9-45.7',
+    name: 'Dinamic Oil 1532 Ratio 17.9-45.7',
+    description: 'PN 1532 — ratio 17.9–45.7:1, max torque 22650 N·m',
+    gearbox_max_torque_Nm: 22650
+  },
+  {
+    pn: 'Dinamic Oil 2522 Ratio 17.5-41.8',
+    name: 'Dinamic Oil 2522 Ratio 17.5-41.8',
+    description: 'PN 2522 — ratio 17.5–41.8:1, max torque 18972 N·m',
+    gearbox_max_torque_Nm: 18972
   }
 ];
 
 /** @type {ComponentOption[]} */
 export const ELECTRIC_MOTOR_OPTIONS = [
   {
-    pn: 'EM-150-4P',
-    description: '150 hp, 1800 rpm, 230 N·m',
+    pn: 'LAM5-18-184TC',
+    name: '5 HP AC Motor',
+    description: 'PN LAM5-18-184TC — 5 hp, 20.202 N·m, 1780 rpm',
+    motor_hp: 5,
+    motor_max_rpm: 1780,
+    motor_tmax_Nm: 20.202
+  },
+  {
+    pn: 'LAM10-18-215TC',
+    name: '10 HP AC Motor',
+    description: 'PN LAM10-18-215TC — 10 hp, 40.756 N·m, 1780 rpm',
+    motor_hp: 10,
+    motor_max_rpm: 1780,
+    motor_tmax_Nm: 40.756
+  },
+  {
+    pn: 'LAM15-18-254TC',
+    name: '15 HP AC Motor',
+    description: 'PN LAM15-18-254TC — 15 hp, 59.249 N·m, 1780 rpm',
+    motor_hp: 15,
+    motor_max_rpm: 1780,
+    motor_tmax_Nm: 59.249
+  },
+  {
+    pn: 'LAM20-18-256TC',
+    name: '20 HP AC Motor',
+    description: 'PN LAM20-18-256TC — 20 hp, 80.956 N·m, 1780 rpm',
+    motor_hp: 20,
+    motor_max_rpm: 1780,
+    motor_tmax_Nm: 80.956
+  },
+  {
+    pn: 'LAM25-18-284TC',
+    name: '25 HP AC Motor',
+    description: 'PN LAM25-18-284TC — 25 hp, 99.382 N·m, 1780 rpm',
+    motor_hp: 25,
+    motor_max_rpm: 1780,
+    motor_tmax_Nm: 99.382
+  },
+  {
+    pn: 'LAM30-18-286TC',
+    name: '30 HP AC Motor',
+    description: 'PN LAM30-18-286TC — 30 hp, 118.404 N·m, 1780 rpm',
+    motor_hp: 30,
+    motor_max_rpm: 1780,
+    motor_tmax_Nm: 118.404
+  },
+  {
+    pn: 'LAM40-18-324TC',
+    name: '40 HP AC Motor',
+    description: 'PN LAM40-18-324TC — 40 hp, 161.071 N·m, 1780 rpm',
+    motor_hp: 40,
+    motor_max_rpm: 1780,
+    motor_tmax_Nm: 161.071
+  },
+  {
+    pn: 'LAM50-18-326TC',
+    name: '50 HP AC Motor',
+    description: 'PN LAM50-18-326TC — 50 hp, 199.306 N·m, 1780 rpm',
+    motor_hp: 50,
+    motor_max_rpm: 1780,
+    motor_tmax_Nm: 199.306
+  },
+  {
+    pn: 'LAM60-18-364TC',
+    name: '60 HP AC Motor',
+    description: 'PN LAM60-18-364TC — 60 hp, 241.336 N·m, 1780 rpm',
+    motor_hp: 60,
+    motor_max_rpm: 1780,
+    motor_tmax_Nm: 241.336
+  },
+  {
+    pn: 'LAM75-18-365TC',
+    name: '75 HP AC Motor',
+    description: 'PN LAM75-18-365TC — 75 hp, 294.349 N·m, 1780 rpm',
+    motor_hp: 75,
+    motor_max_rpm: 1780,
+    motor_tmax_Nm: 294.349
+  },
+  {
+    pn: 'LAM100-18-405TC',
+    name: '100 HP AC Motor',
+    description: 'PN LAM100-18-405TC — 100 hp, 402.001 N·m, 1780 rpm',
+    motor_hp: 100,
+    motor_max_rpm: 1780,
+    motor_tmax_Nm: 402.001
+  },
+  {
+    pn: 'LAM125-18-444TC',
+    name: '125 HP AC Motor',
+    description: 'PN LAM125-18-444TC — 125 hp, 483.35 N·m, 1780 rpm',
+    motor_hp: 125,
+    motor_max_rpm: 1780,
+    motor_tmax_Nm: 483.35
+  },
+  {
+    pn: 'LAM150-18-445TC',
+    name: '150 HP AC Motor',
+    description: 'PN LAM150-18-445TC — 150 hp, 588.697 N·m, 1780 rpm',
     motor_hp: 150,
-    motor_max_rpm: 1800,
-    motor_tmax_Nm: 230,
-    motor_eff: 0.95
+    motor_max_rpm: 1780,
+    motor_tmax_Nm: 588.697
   },
   {
-    pn: 'EM-200-4P',
-    description: '200 hp, 1785 rpm, 310 N·m',
+    pn: 'LAM200-18-445TC',
+    name: '200 HP AC Motor',
+    description: 'PN LAM200-18-445TC — 200 hp, 799.934 N·m, 1780 rpm',
     motor_hp: 200,
-    motor_max_rpm: 1785,
-    motor_tmax_Nm: 310,
-    motor_eff: 0.94
+    motor_max_rpm: 1780,
+    motor_tmax_Nm: 799.934
   },
   {
-    pn: 'EM-250-6P',
-    description: '250 hp, 1200 rpm, 430 N·m',
-    motor_hp: 250,
-    motor_max_rpm: 1200,
-    motor_tmax_Nm: 430,
-    motor_eff: 0.93
+    pn: 'EM-PMI240-T180-2200',
+    name: 'Editron 2200',
+    description: 'PN EM-PMI240-T180-2200 — 59 hp, 192 N·m, 2200 rpm',
+    motor_hp: 59,
+    motor_max_rpm: 2200,
+    motor_tmax_Nm: 192
+  },
+  {
+    pn: 'EM-PMI240-T180-4400',
+    name: 'Editron 4400',
+    description: 'PN EM-PMI240-T180-4400 — 107.28 hp, 175 N·m, 4400 rpm',
+    motor_hp: 107.28,
+    motor_max_rpm: 4400,
+    motor_tmax_Nm: 175
+  },
+  {
+    pn: 'EM-PMI240-T180-6600',
+    name: 'Editron 6600',
+    description: 'PN EM-PMI240-T180-6600 — 120.69 hp, 130 N·m, 6600 rpm',
+    motor_hp: 120.69,
+    motor_max_rpm: 6600,
+    motor_tmax_Nm: 130
+  },
+  {
+    pn: 'EM-PMI240-T180-8800',
+    name: 'Editron 8800',
+    description: 'PN EM-PMI240-T180-8800 — 134.1 hp, 109 N·m, 8800 rpm',
+    motor_hp: 134.1,
+    motor_max_rpm: 8800,
+    motor_tmax_Nm: 109
   }
 ];
 
 /** @type {ComponentOption[]} */
 export const HYDRAULIC_PUMP_OPTIONS = [
   {
-    pn: 'HP-210A',
-    description: '210 cc/rev, 3500 psi',
-    pump_disp_cc: 210,
-    pump_max_psi: 3500
+    pn: 'HP1 60',
+    name: 'Danfoss HP1 60',
+    description: 'PN HP1 60 — 60 cc/rev',
+    pump_disp_cc: 60
   },
   {
-    pn: 'HP-180B',
-    description: '180 cc/rev, 4000 psi',
-    pump_disp_cc: 180,
-    pump_max_psi: 4000
+    pn: 'HP1 68',
+    name: 'Danfoss HP1 68',
+    description: 'PN HP1 68 — 68 cc/rev',
+    pump_disp_cc: 68
   },
   {
-    pn: 'HP-250C',
-    description: '250 cc/rev, 3200 psi',
-    pump_disp_cc: 250,
-    pump_max_psi: 3200
+    pn: 'HP1 69',
+    name: 'Danfoss HP1 69',
+    description: 'PN HP1 69 — 69 cc/rev',
+    pump_disp_cc: 69
+  },
+  {
+    pn: 'HP1 78',
+    name: 'Danfoss HP1 78',
+    description: 'PN HP1 78 — 78 cc/rev',
+    pump_disp_cc: 78
+  },
+  {
+    pn: 'HP1 89',
+    name: 'Danfoss HP1 89',
+    description: 'PN HP1 89 — 89 cc/rev',
+    pump_disp_cc: 89
+  },
+  {
+    pn: 'HP1 100',
+    name: 'Danfoss HP1 100',
+    description: 'PN HP1 100 — 100 cc/rev',
+    pump_disp_cc: 100
+  },
+  {
+    pn: 'HP1 115',
+    name: 'Danfoss HP1 115',
+    description: 'PN HP1 115 — 115 cc/rev',
+    pump_disp_cc: 115
+  },
+  {
+    pn: 'HP1 130',
+    name: 'Danfoss HP1 130',
+    description: 'PN HP1 130 — 130 cc/rev',
+    pump_disp_cc: 130
+  },
+  {
+    pn: 'HP1 147',
+    name: 'Danfoss HP1 147',
+    description: 'PN HP1 147 — 147 cc/rev',
+    pump_disp_cc: 147
+  },
+  {
+    pn: 'HP1 165',
+    name: 'Danfoss HP1 165',
+    description: 'PN HP1 165 — 165 cc/rev',
+    pump_disp_cc: 165
+  },
+  {
+    pn: 'HP1 180',
+    name: 'Danfoss HP1 180',
+    description: 'PN HP1 180 — 180 cc/rev',
+    pump_disp_cc: 180
+  },
+  {
+    pn: 'HP1 210',
+    name: 'Danfoss HP1 210',
+    description: 'PN HP1 210 — 210 cc/rev',
+    pump_disp_cc: 210
+  },
+  {
+    pn: 'HP1 250',
+    name: 'Danfoss HP1 250',
+    description: 'PN HP1 250 — 250 cc/rev',
+    pump_disp_cc: 250
+  },
+  {
+    pn: 'HP1 280',
+    name: 'Danfoss HP1 280',
+    description: 'PN HP1 280 — 280 cc/rev',
+    pump_disp_cc: 280
   }
 ];
 
 /** @type {ComponentOption[]} */
 export const HYDRAULIC_MOTOR_OPTIONS = [
   {
-    pn: 'HM-1234',
-    description: '55 cc/rev, 2300 rpm',
-    hyd_motor_disp_cc: 55,
-    hyd_motor_max_rpm: 2300
+    pn: '55',
+    name: 'Brevini 55',
+    description: 'PN 55 — 30–61 cc/rev, 4450 rpm',
+    hyd_motor_min_disp_cc: 30,
+    hyd_motor_disp_cc: 61,
+    hyd_motor_max_rpm: 4450
   },
   {
-    pn: 'HM-1580',
-    description: '80 cc/rev, 1900 rpm',
+    pn: '75',
+    name: 'Brevini 75',
+    description: 'PN 75 — 40–81 cc/rev, 4000 rpm',
+    hyd_motor_min_disp_cc: 40,
+    hyd_motor_disp_cc: 81,
+    hyd_motor_max_rpm: 4000
+  },
+  {
+    pn: '108',
+    name: 'Brevini 108',
+    description: 'PN 108 — 56–113 cc/rev, 3550 rpm',
+    hyd_motor_min_disp_cc: 56,
+    hyd_motor_disp_cc: 113,
+    hyd_motor_max_rpm: 3550
+  },
+  {
+    pn: '160',
+    name: 'Brevini 160',
+    description: 'PN 160 — 80–161 cc/rev, 3100 rpm',
+    hyd_motor_min_disp_cc: 80,
+    hyd_motor_disp_cc: 161,
+    hyd_motor_max_rpm: 3100
+  },
+  {
+    pn: '200',
+    name: 'Brevini 200',
+    description: 'PN 200 — 108–216 cc/rev, 2900 rpm',
+    hyd_motor_min_disp_cc: 108,
+    hyd_motor_disp_cc: 216,
+    hyd_motor_max_rpm: 2900
+  },
+  {
+    pn: 'CMF 80',
+    name: 'Linde CMF 80',
+    description: 'PN CMF 80 — 80 cc/rev, 4500 rpm',
+    hyd_motor_min_disp_cc: 80,
     hyd_motor_disp_cc: 80,
-    hyd_motor_max_rpm: 1900
+    hyd_motor_max_rpm: 4500
   },
   {
-    pn: 'HM-2090',
-    description: '95 cc/rev, 1600 rpm',
-    hyd_motor_disp_cc: 95,
-    hyd_motor_max_rpm: 1600
+    pn: 'CMV 60',
+    name: 'Linde CMV 60',
+    description: 'PN CMV 60 — 62 cc/rev, 4450 rpm',
+    hyd_motor_min_disp_cc: 62,
+    hyd_motor_disp_cc: 62,
+    hyd_motor_max_rpm: 4450
+  },
+  {
+    pn: 'CMV 85',
+    name: 'Linde CMV 85',
+    description: 'PN CMV 85 — 29.8–85 cc/rev, 3900 rpm',
+    hyd_motor_min_disp_cc: 29.8,
+    hyd_motor_disp_cc: 85,
+    hyd_motor_max_rpm: 3900
+  },
+  {
+    pn: 'CMV 115',
+    name: 'Linde CMV 115',
+    description: 'PN CMV 115 — 39.2–115 cc/rev, 3550 rpm',
+    hyd_motor_min_disp_cc: 39.2,
+    hyd_motor_disp_cc: 115,
+    hyd_motor_max_rpm: 3550
+  },
+  {
+    pn: 'CMV 140',
+    name: 'Linde CMV 140',
+    description: 'PN CMV 140 — 49–140 cc/rev, 3250 rpm',
+    hyd_motor_min_disp_cc: 49,
+    hyd_motor_disp_cc: 140,
+    hyd_motor_max_rpm: 3250
+  },
+  {
+    pn: 'CMV 170',
+    name: 'Linde CMV 170',
+    description: 'PN CMV 170 — 64.6–170 cc/rev, 3100 rpm',
+    hyd_motor_min_disp_cc: 64.6,
+    hyd_motor_disp_cc: 170,
+    hyd_motor_max_rpm: 3100
   }
 ];
 
@@ -439,7 +842,7 @@ const SELECT_CONFIGS = [
 const watchedInputs = new Set();
 
 function describeOption(config, option) {
-  const parts = [option.pn];
+  const parts = [option.name ?? option.pn];
   if (option.description) parts.push(option.description);
   return parts.join(' — ');
 }
