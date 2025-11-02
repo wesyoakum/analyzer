@@ -260,6 +260,7 @@ export function renderDrumVisualization(rows, summary, cfg, meta) {
     ? Math.abs(wrapsPerLayerUsed - Math.round(wrapsPerLayerUsed))
     : 0;
   const isHalfWrapPattern = wrapsPerLayerUsed !== null && Math.abs(wrapsPerLayerFraction - 0.5) < 1e-6;
+  const isWholeWrapPattern = wrapsPerLayerUsed !== null && Math.abs(wrapsPerLayerFraction) < 1e-6;
 
   const wrapsByLayer = new Map();
   for (const row of rows) {
@@ -280,15 +281,22 @@ export function renderDrumVisualization(rows, summary, cfg, meta) {
 
       /** @type {number[]} */
       const centers = [];
-      if (wraps === 1) {
-        if (isHalfWrapPattern && (layer.layer_no % 2 === 0)) {
-          centers.push(rightTangent);
-        } else {
-          centers.push(leftTangent);
-        }
-      } else if (isHalfWrapPattern) {
+      if (isHalfWrapPattern) {
         const denom = Math.max(wraps - 0.5, 1e-6);
         const gap = availableWidth / denom;
+        const start = (layer.layer_no % 2 === 0)
+          ? leftTangent + gap / 2
+          : leftTangent;
+        for (let w = 0; w < wraps; w++) {
+          centers.push(start + w * gap);
+        }
+      } else if (
+        isWholeWrapPattern &&
+        wrapsPerLayerUsed > 1 &&
+        availableWidth > 0
+      ) {
+        const baseWraps = Math.max(0, Math.round(wrapsPerLayerUsed));
+        const gap = availableWidth / Math.max(baseWraps - 1, 1e-6);
         const start = (layer.layer_no % 2 === 0)
           ? leftTangent + gap / 2
           : leftTangent;
@@ -298,8 +306,12 @@ export function renderDrumVisualization(rows, summary, cfg, meta) {
       } else {
         const gap = wraps > 1 ? availableWidth / (wraps - 1) : 0;
         const start = leftTangent;
-        for (let w = 0; w < wraps; w++) {
-          centers.push(start + w * gap);
+        if (wraps === 1) {
+          centers.push(start);
+        } else {
+          for (let w = 0; w < wraps; w++) {
+            centers.push(start + w * gap);
+          }
         }
       }
 
