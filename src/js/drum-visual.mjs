@@ -278,7 +278,7 @@ export function renderDrumVisualization(rows, summary, cfg, meta) {
         : 0;
       const spacingPx = Math.max(spacingIn, 0) * scale;
       const startFromLeft = (layer.layer_no % 2) === 1;
-      const startCx = startFromLeft
+      let startCx = startFromLeft
         ? spoolLeft + cableRadiusPx
         : spoolRight - cableRadiusPx;
       const delta = startFromLeft ? spacingPx : -spacingPx;
@@ -291,6 +291,9 @@ export function renderDrumVisualization(rows, summary, cfg, meta) {
       ) {
         const evenLayerMax = Math.max(Math.round(theoreticalWrapsPerLayer) - 1, 0);
         wrapsToDraw = Math.min(wrapsToDraw, evenLayerMax);
+        if (!startFromLeft && spacingPx > 0) {
+          startCx -= spacingPx / 2;
+        }
       }
 
       for (let w = 0; w < wrapsToDraw; w++) {
