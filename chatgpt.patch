@@ -1,72 +1,134 @@
-diff --git a/src/js/drum-visual.mjs b/src/js/drum-visual.mjs
-index 0cc41821adeea92aaa1285a08a5a1f8cde412dc0..6211e04e1a463fb102d756253a0a62440f805e07 100644
---- a/src/js/drum-visual.mjs
-+++ b/src/js/drum-visual.mjs
-@@ -256,63 +256,66 @@ export function renderDrumVisualization(rows, summary, cfg, meta) {
-     ? meta.wraps_per_layer_used
-     : (cable_dia_in > 0 ? (Math.max(flange_to_flange_in || 0, 0) / Math.max(cable_dia_in, 1e-9)) : 0);
+diff --git a/src/js/plots/depth-profiles.mjs b/src/js/plots/depth-profiles.mjs
+index de7348d52bc0cd4481fe6bdce3b33c85b485d9e4..15a890aa941df59d2c94f8f28cd5806cdcda7d56 100644
+--- a/src/js/plots/depth-profiles.mjs
++++ b/src/js/plots/depth-profiles.mjs
+@@ -1,32 +1,32 @@
+ // ===== plots/depth-profiles.mjs  Speed vs Depth & Tension vs Depth (DOM-agnostic) =====
+ import { niceTicks, svgEl, TENSION_SAFETY_FACTOR } from '../utils.mjs';
  
-   const wrapsByLayer = new Map();
-   for (const row of rows) {
-     wrapsByLayer.set(row.layer_no, (wrapsByLayer.get(row.layer_no) || 0) + 1);
+ const CANDIDATE_POWER_COLOR = '#9249c6'; // purple
+ const CANDIDATE_FLOW_COLOR = '#eed500'; // yellow
+ const EXCEED_COLOR = '#c65353'; // red
+-const TENSION_OK_COLOR = '#76be4e'; // green
++const TENSION_THEORETICAL_COLOR = '#7c8fc5'; // matches legend swatch
+ const RATED_SPEED_COLOR = '#888888'; // gray
+ const PITA_PINK = 'e056e8'; // pink
+ const CLARS_BLUE = '#2163a5'; // blue
+ 
+ const RATED_AVAILABLE_TOLERANCE = 1e-9;
+ 
+ function isRatedBelowAvailable(ratedSpeedMs, availableSpeedMs) {
+   if (!Number.isFinite(ratedSpeedMs) || !Number.isFinite(availableSpeedMs)) return false;
+   const diff = availableSpeedMs - ratedSpeedMs;
+   if (!Number.isFinite(diff)) return false;
+   const relTol = Number.EPSILON * Math.max(1, Math.abs(availableSpeedMs), Math.abs(ratedSpeedMs));
+   const tolerance = Math.max(RATED_AVAILABLE_TOLERANCE, relTol);
+   return diff > tolerance;
+ }
+ 
+ function isAvailableBelowRated(ratedSpeedMs, availableSpeedMs) {
+   if (!Number.isFinite(ratedSpeedMs) || !Number.isFinite(availableSpeedMs)) return false;
+   const diff = ratedSpeedMs - availableSpeedMs;
+   if (!Number.isFinite(diff)) return false;
+   const relTol = Number.EPSILON * Math.max(1, Math.abs(availableSpeedMs), Math.abs(ratedSpeedMs));
+   const tolerance = Math.max(RATED_AVAILABLE_TOLERANCE, relTol);
+   return diff > tolerance;
+ }
+ 
+ function getAccentColor() {
+@@ -411,76 +411,89 @@ function drawTensionProfile(svg, segments, depthMin, depthMax, tensionMin, tensi
+       'stroke-width': 2,
+       'stroke-dasharray': '6 4'
+     }));
+   });
+ 
+   const drawPieces = (pieces, { strokeWidth = 2, dash = null } = {}) => {
+     pieces.forEach(seg => {
+       const d0 = clampDepth(seg.d0);
+       const d1 = clampDepth(seg.d1);
+       if (Math.abs(d1 - d0) < 1e-6) return;
+       const pts = [
+         [sx(d0), sy(seg.T0)],
+         [sx(d1), sy(seg.T1)]
+       ];
+       const attrs = {
+         d: pathFrom(pts),
+         fill: 'none',
+         stroke: seg.color,
+         'stroke-width': strokeWidth
+       };
+       if (dash) attrs['stroke-dasharray'] = dash;
+       svg.appendChild(svgEl('path', attrs));
+     });
+   };
+ 
+-  const theoreticalPieces = buildTensionSegments(normalizedSegments, payload_kg, cable_w_kgpm, depthMin, depthMax, {
+-    factor: 1,
+-    colorBelow: TENSION_OK_COLOR,
+-    colorAbove: EXCEED_COLOR
+-  });
++  const theoreticalPieces = buildTheoreticalCurve(depthMin, depthMax, payload_kg, cable_w_kgpm);
+   drawPieces(theoreticalPieces, { strokeWidth: 2, dash: '6 4' });
+ 
+   const requiredPieces = buildTensionSegments(normalizedSegments, payload_kg, cable_w_kgpm, depthMin, depthMax, {
+     factor: TENSION_SAFETY_FACTOR,
+-    colorBelow: TENSION_OK_COLOR,
++    colorBelow: accentColor,
+     colorAbove: EXCEED_COLOR
+   });
+   drawPieces(requiredPieces, { strokeWidth: 2.4 });
+ 
+   if (tensionMin <= 0 && tensionMax >= 0) {
+     svg.appendChild(svgEl('line', { x1: ML, y1: sy(0), x2: W - MR, y2: sy(0), stroke: '#bbb', 'stroke-dasharray': '4 4' }));
    }
  
-   if (cableRadiusPx > 0 && coreWidthPx > 0) {
-     layersForViz.forEach(layer => {
-       const actualWraps = wrapsByLayer.get(layer.layer_no) || 0;
-       if (actualWraps <= 0) return;
-       const centerOffsetPx = layer.center_radius_in * scale;
-       const topY = centerY - centerOffsetPx;
-       const bottomY = centerY + centerOffsetPx;
+   function pathFrom(pts) {
+     if (!pts.length) return '';
+     let d = `M ${pts[0][0]} ${pts[0][1]}`;
+     for (let i = 1; i < pts.length; i++) d += ` L ${pts[i][0]} ${pts[i][1]}`;
+     return d;
+   }
+ }
  
-       const wrapSlots = Number.isFinite(theoreticalWrapsPerLayer) && theoreticalWrapsPerLayer > 0
-         ? theoreticalWrapsPerLayer
-         : actualWraps;
-       const spacingDivisor = wrapSlots > 1 ? wrapSlots - 1 : 0;
-       const spacingIn = spacingDivisor > 0
-         ? (Math.max(flange_to_flange_in || 0, 0) - Math.max(cable_dia_in, 0)) / spacingDivisor
-         : 0;
-       const spacingPx = Math.max(spacingIn, 0) * scale;
-       const startFromLeft = (layer.layer_no % 2) === 1;
--      const startCx = startFromLeft
-+      let startCx = startFromLeft
-         ? spoolLeft + cableRadiusPx
-         : spoolRight - cableRadiusPx;
-       const delta = startFromLeft ? spacingPx : -spacingPx;
++function buildTheoreticalCurve(depthMin, depthMax, payload_kg, cable_w_kgpm) {
++  if (!Number.isFinite(depthMin) || !Number.isFinite(depthMax)) return [];
++  if (!Number.isFinite(payload_kg) || !Number.isFinite(cable_w_kgpm)) return [];
++
++  const clampedMin = Math.min(depthMin, depthMax);
++  const clampedMax = Math.max(depthMin, depthMax);
++  if (Math.abs(clampedMax - clampedMin) < 1e-9) return [];
++
++  return [{
++    d0: clampedMin,
++    d1: clampedMax,
++    color: TENSION_THEORETICAL_COLOR,
++    T0: payload_kg + cable_w_kgpm * clampedMin,
++    T1: payload_kg + cable_w_kgpm * clampedMax
++  }];
++}
++
+ function buildTensionSegments(segments, payload_kg, cable_w_kgpm, depthMin, depthMax, {
+   factor = 1,
+   colorBelow,
+   colorAbove
+ } = {}) {
+   const clampDepth = d => Math.min(Math.max(d, depthMin), depthMax);
+   const boundaries = new Set([depthMin, depthMax]);
+   segments.forEach(S => {
+     boundaries.add(clampDepth(S.depth_end));
+     boundaries.add(clampDepth(S.depth_start));
+   });
+   const sorted = [...boundaries].sort((a, b) => a - b);
  
-       let wrapsToDraw = actualWraps;
-       if (
-         Number.isFinite(theoreticalWrapsPerLayer) &&
-         isWhole(theoreticalWrapsPerLayer) &&
-         (layer.layer_no % 2 === 0)
-       ) {
-         const evenLayerMax = Math.max(Math.round(theoreticalWrapsPerLayer) - 1, 0);
-         wrapsToDraw = Math.min(wrapsToDraw, evenLayerMax);
-+        if (!startFromLeft && spacingPx > 0) {
-+          startCx -= spacingPx / 2;
-+        }
-       }
- 
-       for (let w = 0; w < wrapsToDraw; w++) {
-         const cx = startCx + w * delta;
-         if (cx - cableRadiusPx < spoolLeft - 1e-3) continue;
-         if (cx + cableRadiusPx > spoolRight + 1e-3) continue;
- 
-         svg.appendChild(svgEl('circle', {
-           cx: cx.toFixed(2),
-           cy: topY.toFixed(2),
-           r: cableRadiusPx.toFixed(2),
-           fill: layer.fillColor,
-           stroke: layer.strokeColor,
-           'stroke-width': strokeWidthAttr,
-           'vector-effect': 'non-scaling-stroke'
-         }));
- 
-         svg.appendChild(svgEl('circle', {
-           cx: cx.toFixed(2),
-           cy: bottomY.toFixed(2),
-           r: cableRadiusPx.toFixed(2),
-           fill: layer.fillColor,
-           stroke: layer.strokeColor,
-           'stroke-width': strokeWidthAttr,
-           'vector-effect': 'non-scaling-stroke'
+   const pieces = [];
+   for (let i = 0; i < sorted.length - 1; i++) {
+     const d0 = sorted[i];
+     const d1 = sorted[i + 1];
+     if (d1 - d0 < 1e-9) continue;
+     const mid = (d0 + d1) / 2;
+     const seg = segments.find(S => mid >= Math.min(S.depth_end, S.depth_start) - 1e-9 && mid <= Math.max(S.depth_end, S.depth_start) + 1e-9);
+     const avail = seg ? seg.avail_tension_kgf : null;
+     const baseT0 = payload_kg + cable_w_kgpm * d0;
+     const baseT1 = payload_kg + cable_w_kgpm * d1;
+     const T0 = baseT0 * factor;
+     const T1 = baseT1 * factor;

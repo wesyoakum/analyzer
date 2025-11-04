@@ -4,7 +4,7 @@ import { niceTicks, svgEl, TENSION_SAFETY_FACTOR } from '../utils.mjs';
 const CANDIDATE_POWER_COLOR = '#9249c6'; // purple
 const CANDIDATE_FLOW_COLOR = '#eed500'; // yellow
 const EXCEED_COLOR = '#c65353'; // red
-const TENSION_OK_COLOR = '#76be4e'; // green
+const TENSION_THEORETICAL_COLOR = '#7c8fc5'; // matches legend swatch
 const RATED_SPEED_COLOR = '#888888'; // gray
 const PITA_PINK = 'e056e8'; // pink
 const CLARS_BLUE = '#2163a5'; // blue
@@ -433,16 +433,12 @@ function drawTensionProfile(svg, segments, depthMin, depthMax, tensionMin, tensi
     });
   };
 
-  const theoreticalPieces = buildTensionSegments(normalizedSegments, payload_kg, cable_w_kgpm, depthMin, depthMax, {
-    factor: 1,
-    colorBelow: TENSION_OK_COLOR,
-    colorAbove: EXCEED_COLOR
-  });
+  const theoreticalPieces = buildTheoreticalCurve(depthMin, depthMax, payload_kg, cable_w_kgpm);
   drawPieces(theoreticalPieces, { strokeWidth: 2, dash: '6 4' });
 
   const requiredPieces = buildTensionSegments(normalizedSegments, payload_kg, cable_w_kgpm, depthMin, depthMax, {
     factor: TENSION_SAFETY_FACTOR,
-    colorBelow: TENSION_OK_COLOR,
+    colorBelow: accentColor,
     colorAbove: EXCEED_COLOR
   });
   drawPieces(requiredPieces, { strokeWidth: 2.4 });
@@ -457,6 +453,23 @@ function drawTensionProfile(svg, segments, depthMin, depthMax, tensionMin, tensi
     for (let i = 1; i < pts.length; i++) d += ` L ${pts[i][0]} ${pts[i][1]}`;
     return d;
   }
+}
+
+function buildTheoreticalCurve(depthMin, depthMax, payload_kg, cable_w_kgpm) {
+  if (!Number.isFinite(depthMin) || !Number.isFinite(depthMax)) return [];
+  if (!Number.isFinite(payload_kg) || !Number.isFinite(cable_w_kgpm)) return [];
+
+  const clampedMin = Math.min(depthMin, depthMax);
+  const clampedMax = Math.max(depthMin, depthMax);
+  if (Math.abs(clampedMax - clampedMin) < 1e-9) return [];
+
+  return [{
+    d0: clampedMin,
+    d1: clampedMax,
+    color: TENSION_THEORETICAL_COLOR,
+    T0: payload_kg + cable_w_kgpm * clampedMin,
+    T1: payload_kg + cable_w_kgpm * clampedMax
+  }];
 }
 
 function buildTensionSegments(segments, payload_kg, cable_w_kgpm, depthMin, depthMax, {
