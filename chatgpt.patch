@@ -1,126 +1,8 @@
 diff --git a/src/js/plots/depth-profiles.mjs b/src/js/plots/depth-profiles.mjs
-index de7348d52bc0cd4481fe6bdce3b33c85b485d9e4..15a890aa941df59d2c94f8f28cd5806cdcda7d56 100644
+index 15a890aa941df59d2c94f8f28cd5806cdcda7d56..b0e01d8351365040ec20dfd8de54c47a31d9217f 100644
 --- a/src/js/plots/depth-profiles.mjs
 +++ b/src/js/plots/depth-profiles.mjs
-@@ -1,32 +1,32 @@
- // ===== plots/depth-profiles.mjs  Speed vs Depth & Tension vs Depth (DOM-agnostic) =====
- import { niceTicks, svgEl, TENSION_SAFETY_FACTOR } from '../utils.mjs';
- 
- const CANDIDATE_POWER_COLOR = '#9249c6'; // purple
- const CANDIDATE_FLOW_COLOR = '#eed500'; // yellow
- const EXCEED_COLOR = '#c65353'; // red
--const TENSION_OK_COLOR = '#76be4e'; // green
-+const TENSION_THEORETICAL_COLOR = '#7c8fc5'; // matches legend swatch
- const RATED_SPEED_COLOR = '#888888'; // gray
- const PITA_PINK = 'e056e8'; // pink
- const CLARS_BLUE = '#2163a5'; // blue
- 
- const RATED_AVAILABLE_TOLERANCE = 1e-9;
- 
- function isRatedBelowAvailable(ratedSpeedMs, availableSpeedMs) {
-   if (!Number.isFinite(ratedSpeedMs) || !Number.isFinite(availableSpeedMs)) return false;
-   const diff = availableSpeedMs - ratedSpeedMs;
-   if (!Number.isFinite(diff)) return false;
-   const relTol = Number.EPSILON * Math.max(1, Math.abs(availableSpeedMs), Math.abs(ratedSpeedMs));
-   const tolerance = Math.max(RATED_AVAILABLE_TOLERANCE, relTol);
-   return diff > tolerance;
- }
- 
- function isAvailableBelowRated(ratedSpeedMs, availableSpeedMs) {
-   if (!Number.isFinite(ratedSpeedMs) || !Number.isFinite(availableSpeedMs)) return false;
-   const diff = ratedSpeedMs - availableSpeedMs;
-   if (!Number.isFinite(diff)) return false;
-   const relTol = Number.EPSILON * Math.max(1, Math.abs(availableSpeedMs), Math.abs(ratedSpeedMs));
-   const tolerance = Math.max(RATED_AVAILABLE_TOLERANCE, relTol);
-   return diff > tolerance;
- }
- 
- function getAccentColor() {
-@@ -411,76 +411,89 @@ function drawTensionProfile(svg, segments, depthMin, depthMax, tensionMin, tensi
-       'stroke-width': 2,
-       'stroke-dasharray': '6 4'
-     }));
-   });
- 
-   const drawPieces = (pieces, { strokeWidth = 2, dash = null } = {}) => {
-     pieces.forEach(seg => {
-       const d0 = clampDepth(seg.d0);
-       const d1 = clampDepth(seg.d1);
-       if (Math.abs(d1 - d0) < 1e-6) return;
-       const pts = [
-         [sx(d0), sy(seg.T0)],
-         [sx(d1), sy(seg.T1)]
-       ];
-       const attrs = {
-         d: pathFrom(pts),
-         fill: 'none',
-         stroke: seg.color,
-         'stroke-width': strokeWidth
-       };
-       if (dash) attrs['stroke-dasharray'] = dash;
-       svg.appendChild(svgEl('path', attrs));
-     });
-   };
- 
--  const theoreticalPieces = buildTensionSegments(normalizedSegments, payload_kg, cable_w_kgpm, depthMin, depthMax, {
--    factor: 1,
--    colorBelow: TENSION_OK_COLOR,
--    colorAbove: EXCEED_COLOR
--  });
-+  const theoreticalPieces = buildTheoreticalCurve(depthMin, depthMax, payload_kg, cable_w_kgpm);
-   drawPieces(theoreticalPieces, { strokeWidth: 2, dash: '6 4' });
- 
-   const requiredPieces = buildTensionSegments(normalizedSegments, payload_kg, cable_w_kgpm, depthMin, depthMax, {
-     factor: TENSION_SAFETY_FACTOR,
--    colorBelow: TENSION_OK_COLOR,
-+    colorBelow: accentColor,
-     colorAbove: EXCEED_COLOR
-   });
-   drawPieces(requiredPieces, { strokeWidth: 2.4 });
- 
-   if (tensionMin <= 0 && tensionMax >= 0) {
-     svg.appendChild(svgEl('line', { x1: ML, y1: sy(0), x2: W - MR, y2: sy(0), stroke: '#bbb', 'stroke-dasharray': '4 4' }));
-   }
- 
-   function pathFrom(pts) {
-     if (!pts.length) return '';
-     let d = `M ${pts[0][0]} ${pts[0][1]}`;
-     for (let i = 1; i < pts.length; i++) d += ` L ${pts[i][0]} ${pts[i][1]}`;
-     return d;
-   }
- }
- 
-+function buildTheoreticalCurve(depthMin, depthMax, payload_kg, cable_w_kgpm) {
-+  if (!Number.isFinite(depthMin) || !Number.isFinite(depthMax)) return [];
-+  if (!Number.isFinite(payload_kg) || !Number.isFinite(cable_w_kgpm)) return [];
-+
-+  const clampedMin = Math.min(depthMin, depthMax);
-+  const clampedMax = Math.max(depthMin, depthMax);
-+  if (Math.abs(clampedMax - clampedMin) < 1e-9) return [];
-+
-+  return [{
-+    d0: clampedMin,
-+    d1: clampedMax,
-+    color: TENSION_THEORETICAL_COLOR,
-+    T0: payload_kg + cable_w_kgpm * clampedMin,
-+    T1: payload_kg + cable_w_kgpm * clampedMax
-+  }];
-+}
-+
- function buildTensionSegments(segments, payload_kg, cable_w_kgpm, depthMin, depthMax, {
-   factor = 1,
-   colorBelow,
-   colorAbove
- } = {}) {
-   const clampDepth = d => Math.min(Math.max(d, depthMin), depthMax);
-   const boundaries = new Set([depthMin, depthMax]);
-   segments.forEach(S => {
-     boundaries.add(clampDepth(S.depth_end));
-     boundaries.add(clampDepth(S.depth_start));
-   });
-   const sorted = [...boundaries].sort((a, b) => a - b);
- 
-   const pieces = [];
+@@ -489,65 +489,64 @@ function buildTensionSegments(segments, payload_kg, cable_w_kgpm, depthMin, dept
    for (let i = 0; i < sorted.length - 1; i++) {
      const d0 = sorted[i];
      const d1 = sorted[i + 1];
@@ -132,3 +14,64 @@ index de7348d52bc0cd4481fe6bdce3b33c85b485d9e4..15a890aa941df59d2c94f8f28cd5806c
      const baseT1 = payload_kg + cable_w_kgpm * d1;
      const T0 = baseT0 * factor;
      const T1 = baseT1 * factor;
+ 
+     if (!Number.isFinite(avail) || !Number.isFinite(factor) || factor <= 0) {
+       pieces.push({ d0, d1, color: colorBelow, T0, T1 });
+       continue;
+     }
+ 
+     const above0 = T0 > avail + 1e-6;
+     const above1 = T1 > avail + 1e-6;
+ 
+     if (above0 === above1) {
+       pieces.push({ d0, d1, color: above0 ? colorAbove : colorBelow, T0, T1 });
+       continue;
+     }
+ 
+-    if (Math.abs(cable_w_kgpm) < 1e-9) {
++    const deltaT = T1 - T0;
++    if (Math.abs(deltaT) < 1e-9) {
+       pieces.push({ d0, d1, color: above0 ? colorAbove : colorBelow, T0, T1 });
+       continue;
+     }
+ 
+-    const baseAvail = avail / factor;
+-    const dCross = (baseAvail - payload_kg) / cable_w_kgpm;
+-    const clamped = Math.min(Math.max(dCross, d0), d1);
+-    const baseCross = payload_kg + cable_w_kgpm * clamped;
+-    const Tcross = baseCross * factor;
++    const frac = Math.min(Math.max((avail - T0) / deltaT, 0), 1);
++    const dCross = d0 + frac * (d1 - d0);
++    const Tcross = T0 + frac * deltaT;
+     const firstColor = above0 ? colorAbove : colorBelow;
+     const secondColor = above0 ? colorBelow : colorAbove;
+ 
+-    pieces.push({ d0, d1: clamped, color: firstColor, T0, T1: Tcross });
+-    pieces.push({ d0: clamped, d1, color: secondColor, T0: Tcross, T1 });
++    pieces.push({ d0, d1: dCross, color: firstColor, T0, T1: Tcross });
++    pieces.push({ d0: dCross, d1, color: secondColor, T0: Tcross, T1 });
+   }
+ 
+   // Merge adjacent pieces of same color
+   const merged = [];
+   for (const piece of pieces) {
+     if (!merged.length) {
+       merged.push({ ...piece });
+       continue;
+     }
+     const last = merged[merged.length - 1];
+     if (piece.color === last.color && Math.abs(piece.d0 - last.d1) < 1e-6) {
+       last.d1 = piece.d1;
+       last.T1 = piece.T1;
+     } else {
+       merged.push({ ...piece });
+     }
+   }
+   return merged;
+ }
+ 
+ function coerceNumeric(wrap, field) {
+   if (!wrap) return null;
+   const fields = Array.isArray(field) ? field : [field];
+   for (const name of fields) {
+     if (!name) continue;

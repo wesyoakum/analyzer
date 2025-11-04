@@ -511,21 +511,20 @@ function buildTensionSegments(segments, payload_kg, cable_w_kgpm, depthMin, dept
       continue;
     }
 
-    if (Math.abs(cable_w_kgpm) < 1e-9) {
+    const deltaT = T1 - T0;
+    if (Math.abs(deltaT) < 1e-9) {
       pieces.push({ d0, d1, color: above0 ? colorAbove : colorBelow, T0, T1 });
       continue;
     }
 
-    const baseAvail = avail / factor;
-    const dCross = (baseAvail - payload_kg) / cable_w_kgpm;
-    const clamped = Math.min(Math.max(dCross, d0), d1);
-    const baseCross = payload_kg + cable_w_kgpm * clamped;
-    const Tcross = baseCross * factor;
+    const frac = Math.min(Math.max((avail - T0) / deltaT, 0), 1);
+    const dCross = d0 + frac * (d1 - d0);
+    const Tcross = T0 + frac * deltaT;
     const firstColor = above0 ? colorAbove : colorBelow;
     const secondColor = above0 ? colorBelow : colorAbove;
 
-    pieces.push({ d0, d1: clamped, color: firstColor, T0, T1: Tcross });
-    pieces.push({ d0: clamped, d1, color: secondColor, T0: Tcross, T1 });
+    pieces.push({ d0, d1: dCross, color: firstColor, T0, T1: Tcross });
+    pieces.push({ d0: dCross, d1, color: secondColor, T0: Tcross, T1 });
   }
 
   // Merge adjacent pieces of same color
