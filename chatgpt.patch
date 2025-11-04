@@ -1,8 +1,39 @@
 diff --git a/src/js/drum-visual.mjs b/src/js/drum-visual.mjs
-index cb8dd9b577f5804545dab65007a0ca58dc868795..2dbaaf0bb3ca4ca804157438e2733cc342a529b9 100644
+index 0457c35d946e864d5d4a8e09b370a1694edd0866..0cc41821adeea92aaa1285a08a5a1f8cde412dc0 100644
 --- a/src/js/drum-visual.mjs
 +++ b/src/js/drum-visual.mjs
-@@ -231,136 +231,98 @@ export function renderDrumVisualization(rows, summary, cfg, meta) {
+@@ -1,28 +1,28 @@
+ // ===== drum-visual.mjs â€” render drum cross-section + summary =====
+ 
+-import { svgEl, IN_PER_MM } from './utils.mjs';
++import { svgEl, IN_PER_MM, isWhole } from './utils.mjs';
+ 
+ const FALLBACK_COLORS = {
+   accent: { r: 44, g: 86, b: 163 },
+   accentLight: { r: 237, g: 242, b: 255 },
+   ink500: { r: 85, g: 99, b: 125 },
+   ink700: { r: 47, g: 59, b: 84 },
+   ink900: { r: 20, g: 34, b: 56 },
+   paper: { r: 255, g: 255, b: 255 }
+ };
+ 
+ const FALLBACK_HEX = {
+   accent: '#2c56a3',
+   accentLight: '#edf2ff',
+   ink500: '#55637d',
+   ink700: '#2f3b54',
+   ink900: '#142238',
+   paper: '#ffffff'
+ };
+ 
+ const SVG_BASE_HEIGHT = 360;
+ const SVG_MARGIN = 28;
+ 
+ /**
+  * Parse a CSS color string into RGB components.
+  * Supports #rgb[a], #rrggbb[aa], and rgb()/rgba().
+@@ -230,75 +230,92 @@ export function renderDrumVisualization(rows, summary, cfg, meta) {
+ 
      svg.appendChild(svgEl('rect', {
        ...flangeRectAttrs,
        x: (spoolLeft - flangeWidthPx).toFixed(2)
@@ -27,86 +58,56 @@ index cb8dd9b577f5804545dab65007a0ca58dc868795..2dbaaf0bb3ca4ca804157438e2733cc3
    }));
  
    const cableRadiusPx = cable_dia_in > 0 ? (cable_dia_in / 2) * scale : 0;
++  const theoreticalWrapsPerLayer = meta && Number.isFinite(meta.wraps_per_layer_used)
++    ? meta.wraps_per_layer_used
++    : (cable_dia_in > 0 ? (Math.max(flange_to_flange_in || 0, 0) / Math.max(cable_dia_in, 1e-9)) : 0);
  
--  const wrapsPerLayerUsed = meta && Number.isFinite(meta.wraps_per_layer_used)
--    ? meta.wraps_per_layer_used
--    : null;
--  const wrapsPerLayerFraction = wrapsPerLayerUsed !== null
--    ? Math.abs(wrapsPerLayerUsed - Math.round(wrapsPerLayerUsed))
--    : 0;
--  const isHalfWrapPattern = wrapsPerLayerUsed !== null && Math.abs(wrapsPerLayerFraction - 0.5) < 1e-6;
--  const isWholeWrapPattern = wrapsPerLayerUsed !== null && Math.abs(wrapsPerLayerFraction) < 1e-6;
--
    const wrapsByLayer = new Map();
    for (const row of rows) {
      wrapsByLayer.set(row.layer_no, (wrapsByLayer.get(row.layer_no) || 0) + 1);
    }
  
    if (cableRadiusPx > 0 && coreWidthPx > 0) {
--    const leftTangent = spoolLeft + cableRadiusPx;
--    const rightTangent = spoolRight - cableRadiusPx;
--    const availableWidth = Math.max(0, coreWidthPx - 2 * cableRadiusPx);
--
      layersForViz.forEach(layer => {
-       const wraps = wrapsByLayer.get(layer.layer_no) || 0;
-       if (wraps <= 0) return;
+-      const wraps = wrapsByLayer.get(layer.layer_no) || 0;
+-      if (wraps <= 0) return;
++      const actualWraps = wrapsByLayer.get(layer.layer_no) || 0;
++      if (actualWraps <= 0) return;
        const centerOffsetPx = layer.center_radius_in * scale;
        const topY = centerY - centerOffsetPx;
        const bottomY = centerY + centerOffsetPx;
  
--      /** @type {number[]} */
--      const centers = [];
--      if (isHalfWrapPattern) {
--        const denom = Math.max(wraps - 0.5, 1e-6);
--        const gap = availableWidth / denom;
--        const start = (layer.layer_no % 2 === 0)
--          ? leftTangent + gap / 2
--          : leftTangent;
--        for (let w = 0; w < wraps; w++) {
--          centers.push(start + w * gap);
--        }
--      } else if (
--        isWholeWrapPattern &&
--        wrapsPerLayerUsed > 1 &&
--        availableWidth > 0
--      ) {
--        const baseWraps = Math.max(0, Math.round(wrapsPerLayerUsed));
--        const gap = availableWidth / Math.max(baseWraps - 1, 1e-6);
--        const start = (layer.layer_no % 2 === 0)
--          ? leftTangent + gap / 2
--          : leftTangent;
--        for (let w = 0; w < wraps; w++) {
--          centers.push(start + w * gap);
--        }
--      } else {
--        const gap = wraps > 1 ? availableWidth / (wraps - 1) : 0;
--        const start = leftTangent;
--        if (wraps === 1) {
--          centers.push(start);
--        } else {
--          for (let w = 0; w < wraps; w++) {
--            centers.push(start + w * gap);
--          }
--        }
--      }
--
--      centers.forEach(cx => {
--        if (cx - cableRadiusPx < spoolLeft - 1e-3) return;
--        if (cx + cableRadiusPx > spoolRight + 1e-3) return;
-+      const spacingIn = wraps > 1
-+        ? (Math.max(flange_to_flange_in || 0, 0) - Math.max(cable_dia_in, 0)) / (wraps - 1)
-+        : 0;
-+      const spacingPx = Math.max(spacingIn, 0) * scale;
-+      const startFromLeft = (layer.layer_no % 2) === 1;
-+      const startCx = startFromLeft
-+        ? spoolLeft + cableRadiusPx
-+        : spoolRight - cableRadiusPx;
-+      const delta = startFromLeft ? spacingPx : -spacingPx;
+-      const spacingIn = wraps > 1
+-        ? (Math.max(flange_to_flange_in || 0, 0) - Math.max(cable_dia_in, 0)) / (wraps - 1)
++      const wrapSlots = Number.isFinite(theoreticalWrapsPerLayer) && theoreticalWrapsPerLayer > 0
++        ? theoreticalWrapsPerLayer
++        : actualWraps;
++      const spacingDivisor = wrapSlots > 1 ? wrapSlots - 1 : 0;
++      const spacingIn = spacingDivisor > 0
++        ? (Math.max(flange_to_flange_in || 0, 0) - Math.max(cable_dia_in, 0)) / spacingDivisor
+         : 0;
+       const spacingPx = Math.max(spacingIn, 0) * scale;
+       const startFromLeft = (layer.layer_no % 2) === 1;
+       const startCx = startFromLeft
+         ? spoolLeft + cableRadiusPx
+         : spoolRight - cableRadiusPx;
+       const delta = startFromLeft ? spacingPx : -spacingPx;
+ 
+-      for (let w = 0; w < wraps; w++) {
++      let wrapsToDraw = actualWraps;
++      if (
++        Number.isFinite(theoreticalWrapsPerLayer) &&
++        isWhole(theoreticalWrapsPerLayer) &&
++        (layer.layer_no % 2 === 0)
++      ) {
++        const evenLayerMax = Math.max(Math.round(theoreticalWrapsPerLayer) - 1, 0);
++        wrapsToDraw = Math.min(wrapsToDraw, evenLayerMax);
++      }
 +
-+      for (let w = 0; w < wraps; w++) {
-+        const cx = startCx + w * delta;
-+        if (cx - cableRadiusPx < spoolLeft - 1e-3) continue;
-+        if (cx + cableRadiusPx > spoolRight + 1e-3) continue;
++      for (let w = 0; w < wrapsToDraw; w++) {
+         const cx = startCx + w * delta;
+         if (cx - cableRadiusPx < spoolLeft - 1e-3) continue;
+         if (cx + cableRadiusPx > spoolRight + 1e-3) continue;
  
          svg.appendChild(svgEl('circle', {
            cx: cx.toFixed(2),
@@ -127,30 +128,5 @@ index cb8dd9b577f5804545dab65007a0ca58dc868795..2dbaaf0bb3ca4ca804157438e2733cc3
            'stroke-width': strokeWidthAttr,
            'vector-effect': 'non-scaling-stroke'
          }));
--      });
-+      }
+       }
      });
-   }
- 
-   // Summary & accessibility copy
-   const cableLenDigits = cable_len_m >= 1000 ? 0 : cable_len_m >= 10 ? 1 : 2;
-   const cableDiaDigits = cable_dia_mm >= 50 ? 0 : cable_dia_mm >= 10 ? 1 : 2;
-   const layerWord = total_layers === 1 ? 'layer' : 'layers';
-   const wrapWord = total_wraps === 1 ? 'wrap' : 'wraps';
-   const summaryLine = `${fmt(cable_len_m, cableLenDigits)} m of ${fmt(cable_dia_mm, cableDiaDigits)} mm cable on ${fmt(total_layers, 0)} ${layerWord} with ${fmt(total_wraps, 0)} total ${wrapWord}`;
-   const wrapsPerLayer = meta && Number.isFinite(meta.wraps_per_layer_used)
-     ? ` (≈${fmt(meta.wraps_per_layer_used, 1)} wraps per layer)`
-     : '';
-   const geometryParts = [
-     `core Ø ${fmt(core_dia_in, 2)} in`,
-     `flange-to-flange ${fmt(flange_to_flange_in, 2)} in`,
-     `flange Ø ${fmt(flange_dia_in, 2)} in`,
-     `Lebus liner ${fmt(lebus_thk_in, 3)} in`,
-     `full drum Ø ${fmt(full_drum_dia_in, 2)} in`
-   ];
-   const geometryLine = `Drum geometry: ${geometryParts.join(', ')}.`;
-   const summaryPlain = `${summaryLine}${wrapsPerLayer}. ${geometryLine}`;
- 
-   summaryEl.innerHTML = `<strong>${summaryLine}${wrapsPerLayer}.</strong> ${geometryLine}`;
-   titleEl.textContent = `Winch drum cross-section with ${fmt(total_layers, 0)} ${layerWord}`;
-   svg.setAttribute('aria-label', summaryPlain);

@@ -1,6 +1,6 @@
 // ===== drum-visual.mjs â€” render drum cross-section + summary =====
 
-import { svgEl, IN_PER_MM } from './utils.mjs';
+import { svgEl, IN_PER_MM, isWhole } from './utils.mjs';
 
 const FALLBACK_COLORS = {
   accent: { r: 44, g: 86, b: 163 },
@@ -252,6 +252,9 @@ export function renderDrumVisualization(rows, summary, cfg, meta) {
   }));
 
   const cableRadiusPx = cable_dia_in > 0 ? (cable_dia_in / 2) * scale : 0;
+  const theoreticalWrapsPerLayer = meta && Number.isFinite(meta.wraps_per_layer_used)
+    ? meta.wraps_per_layer_used
+    : (cable_dia_in > 0 ? (Math.max(flange_to_flange_in || 0, 0) / Math.max(cable_dia_in, 1e-9)) : 0);
 
   const wrapsByLayer = new Map();
   for (const row of rows) {
@@ -260,14 +263,18 @@ export function renderDrumVisualization(rows, summary, cfg, meta) {
 
   if (cableRadiusPx > 0 && coreWidthPx > 0) {
     layersForViz.forEach(layer => {
-      const wraps = wrapsByLayer.get(layer.layer_no) || 0;
-      if (wraps <= 0) return;
+      const actualWraps = wrapsByLayer.get(layer.layer_no) || 0;
+      if (actualWraps <= 0) return;
       const centerOffsetPx = layer.center_radius_in * scale;
       const topY = centerY - centerOffsetPx;
       const bottomY = centerY + centerOffsetPx;
 
-      const spacingIn = wraps > 1
-        ? (Math.max(flange_to_flange_in || 0, 0) - Math.max(cable_dia_in, 0)) / (wraps - 1)
+      const wrapSlots = Number.isFinite(theoreticalWrapsPerLayer) && theoreticalWrapsPerLayer > 0
+        ? theoreticalWrapsPerLayer
+        : actualWraps;
+      const spacingDivisor = wrapSlots > 1 ? wrapSlots - 1 : 0;
+      const spacingIn = spacingDivisor > 0
+        ? (Math.max(flange_to_flange_in || 0, 0) - Math.max(cable_dia_in, 0)) / spacingDivisor
         : 0;
       const spacingPx = Math.max(spacingIn, 0) * scale;
       const startFromLeft = (layer.layer_no % 2) === 1;
@@ -276,7 +283,17 @@ export function renderDrumVisualization(rows, summary, cfg, meta) {
         : spoolRight - cableRadiusPx;
       const delta = startFromLeft ? spacingPx : -spacingPx;
 
-      for (let w = 0; w < wraps; w++) {
+      let wrapsToDraw = actualWraps;
+      if (
+        Number.isFinite(theoreticalWrapsPerLayer) &&
+        isWhole(theoreticalWrapsPerLayer) &&
+        (layer.layer_no % 2 === 0)
+      ) {
+        const evenLayerMax = Math.max(Math.round(theoreticalWrapsPerLayer) - 1, 0);
+        wrapsToDraw = Math.min(wrapsToDraw, evenLayerMax);
+      }
+
+      for (let w = 0; w < wrapsToDraw; w++) {
         const cx = startCx + w * delta;
         if (cx - cableRadiusPx < spoolLeft - 1e-3) continue;
         if (cx + cableRadiusPx > spoolRight + 1e-3) continue;
