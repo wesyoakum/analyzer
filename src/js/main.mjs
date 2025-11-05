@@ -10,7 +10,7 @@ import {
   TENSION_SAFETY_FACTOR
 } from './utils.mjs';
 
-import { setupInputPersistence } from './persist-inputs.mjs';
+import { setupInputPersistence, clearPersistedInputs } from './persist-inputs.mjs';
 
 import { calcLayers } from './layer-engine.mjs';
 
@@ -122,6 +122,8 @@ document.addEventListener('DOMContentLoaded', () => {
   setupPlotResizeToggles();
 
   setupAutoRecompute();
+
+  setupClearInputs();
 
   updateBuildIndicator();
 
@@ -337,7 +339,22 @@ function setupAutoRecompute() {
   const inputs = Array.from(document.querySelectorAll('input, select, textarea'));
   if (!inputs.length) return;
 
-  const handler = () => computeAll();
+  let scheduled = false;
+  const runCompute = () => {
+    scheduled = false;
+    computeAll();
+  };
+  const scheduleCompute = () => {
+    if (scheduled) return;
+    scheduled = true;
+    if (typeof requestAnimationFrame === 'function') {
+      requestAnimationFrame(runCompute);
+    } else {
+      setTimeout(runCompute, 0);
+    }
+  };
+
+  const handler = () => scheduleCompute();
 
   inputs.forEach(el => {
     if (el.tagName === 'SELECT') {
@@ -355,6 +372,22 @@ function setupAutoRecompute() {
 
     el.addEventListener('input', handler);
     el.addEventListener('change', handler);
+  });
+}
+
+function setupClearInputs() {
+  const clearBtn = /** @type {HTMLButtonElement|null} */ (document.getElementById('clear_inputs'));
+  if (!clearBtn) return;
+
+  clearBtn.addEventListener('click', () => {
+    clearBtn.disabled = true;
+    try {
+      clearPersistedInputs();
+      const status = /** @type {HTMLElement|null} */ (document.getElementById('status'));
+      if (status) status.textContent = 'inputs cleared';
+    } finally {
+      clearBtn.disabled = false;
+    }
   });
 }
 

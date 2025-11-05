@@ -14,6 +14,7 @@
       <h1 class="page-title">Winch Analyzer</h1>
     </header>
     <div id="err"></div>
+    <div id="status" aria-live="polite" class="status" role="status"></div>
 
     <nav class="tabs" aria-label="App sections">
       <button class="tab-btn active" data-target="panel-inputs">Section 1: Inputs</button>
@@ -22,6 +23,16 @@
     </nav>
 
     <div id="panel-inputs" class="panel active">
+      <section class="card actions" aria-labelledby="input-actions-title">
+        <div class="card-header">
+          <h2 class="section-title" id="input-actions-title">Quick actions</h2>
+          <div class="card-header-actions">
+            <button id="clear_inputs" type="button">Clear all inputs</button>
+          </div>
+        </div>
+        <p class="dim">Remove any saved values and restore the default numbers for every field.</p>
+      </section>
+
       <section class="card info-card" id="component-catalog-card" aria-labelledby="component-catalog-instructions">
         <h2 class="section-title" id="component-catalog-instructions">How to update component presets</h2>
         <p>
