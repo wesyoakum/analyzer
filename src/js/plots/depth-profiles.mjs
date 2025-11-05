@@ -1,5 +1,5 @@
 // ===== plots/depth-profiles.mjs  Speed vs Depth & Tension vs Depth (DOM-agnostic) =====
-import { niceTicks, svgEl, TENSION_SAFETY_FACTOR } from '../utils.mjs';
+import { niceTicks, svgEl, TENSION_SAFETY_FACTOR, tension_kgf } from '../utils.mjs';
 
 const CANDIDATE_POWER_COLOR = '#9249c6'; // purple
 const CANDIDATE_FLOW_COLOR = '#eed500'; // yellow
@@ -387,11 +387,61 @@ function drawTensionProfile(svg, segments, depthMin, depthMax, tensionMin, tensi
     return {
       depth_start: clampDepth(depthStartRaw),
       depth_end: clampDepth(depthEndRaw),
-      avail_tension_kgf: Number.isFinite(S.avail_tension_kgf) ? S.avail_tension_kgf : null
+      avail_tension_kgf: Number.isFinite(S.avail_tension_kgf) ? S.avail_tension_kgf : null,
+      tension_required_end_kgf: Number.isFinite(S.tension_required_kgf) ? S.tension_required_kgf : null,
+      tension_theoretical_end_kgf: Number.isFinite(S.tension_theoretical_kgf) ? S.tension_theoretical_kgf : null
     };
   }).filter(Boolean);
 
-  segments.forEach(S => {
+  /** @type {Map<number, number>} */
+  const theoreticalByDepth = new Map();
+  /** @type {Map<number, number>} */
+  const requiredByDepth = new Map();
+
+  normalizedSegments.forEach(seg => {
+    if (Number.isFinite(seg.tension_theoretical_end_kgf)) {
+      theoreticalByDepth.set(seg.depth_end, seg.tension_theoretical_end_kgf);
+    }
+    if (Number.isFinite(seg.tension_required_end_kgf)) {
+      requiredByDepth.set(seg.depth_end, seg.tension_required_end_kgf);
+    }
+  });
+
+  const getTheoretical = (depth) => {
+    if (!Number.isFinite(depth)) return null;
+    if (theoreticalByDepth.has(depth)) return theoreticalByDepth.get(depth);
+    if (!Number.isFinite(payload_kg) || !Number.isFinite(cable_w_kgpm)) return null;
+    const val = tension_kgf(depth, payload_kg, cable_w_kgpm);
+    theoreticalByDepth.set(depth, val);
+    return val;
+  };
+
+  const getRequired = (depth) => {
+    if (!Number.isFinite(depth)) return null;
+    if (requiredByDepth.has(depth)) return requiredByDepth.get(depth);
+    const theo = getTheoretical(depth);
+    if (!Number.isFinite(theo)) return null;
+    const val = +(theo * TENSION_SAFETY_FACTOR).toFixed(1);
+    requiredByDepth.set(depth, val);
+    return val;
+  };
+
+  const segmentsWithValues = normalizedSegments.map(seg => {
+    const { depth_start, depth_end } = seg;
+    const theoreticalStart = getTheoretical(depth_start);
+    const theoreticalEnd = getTheoretical(depth_end);
+    const requiredStart = getRequired(depth_start);
+    const requiredEnd = getRequired(depth_end);
+    return {
+      ...seg,
+      tension_theoretical_start_kgf: theoreticalStart,
+      tension_theoretical_end_kgf: theoreticalEnd,
+      tension_required_start_kgf: requiredStart,
+      tension_required_end_kgf: requiredEnd
+    };
+  });
+
+  segmentsWithValues.forEach(S => {
     if (!Number.isFinite(S.avail_tension_kgf)) return;
     if (S.avail_tension_kgf < tensionMin - 1e-9 || S.avail_tension_kgf > tensionMax + 1e-9) return;
     const depthEnd = Math.min(S.depth_start, S.depth_end);
@@ -433,11 +483,14 @@ function drawTensionProfile(svg, segments, depthMin, depthMax, tensionMin, tensi
     });
   };
 
-  const theoreticalPieces = buildTheoreticalCurve(depthMin, depthMax, payload_kg, cable_w_kgpm);
+  // Ensure theoretical map includes the visible bounds to keep the curve continuous
+  getTheoretical(depthMin);
+  getTheoretical(depthMax);
+
+  const theoreticalPieces = buildTheoreticalCurve(segmentsWithValues, depthMin, depthMax, getTheoretical);
   drawPieces(theoreticalPieces, { strokeWidth: 2, dash: '6 4' });
 
-  const requiredPieces = buildTensionSegments(normalizedSegments, payload_kg, cable_w_kgpm, depthMin, depthMax, {
-    factor: TENSION_SAFETY_FACTOR,
+  const requiredPieces = buildTensionSegments(segmentsWithValues, depthMin, depthMax, {
     colorBelow: accentColor,
     colorAbove: EXCEED_COLOR
   });
@@ -455,25 +508,36 @@ function drawTensionProfile(svg, segments, depthMin, depthMax, tensionMin, tensi
   }
 }
 
-function buildTheoreticalCurve(depthMin, depthMax, payload_kg, cable_w_kgpm) {
+function buildTheoreticalCurve(segments, depthMin, depthMax, getTheoretical) {
   if (!Number.isFinite(depthMin) || !Number.isFinite(depthMax)) return [];
-  if (!Number.isFinite(payload_kg) || !Number.isFinite(cable_w_kgpm)) return [];
 
-  const clampedMin = Math.min(depthMin, depthMax);
-  const clampedMax = Math.max(depthMin, depthMax);
-  if (Math.abs(clampedMax - clampedMin) < 1e-9) return [];
+  const depths = new Set([depthMin, depthMax]);
+  segments.forEach(seg => {
+    if (Number.isFinite(seg.depth_end)) depths.add(Math.min(Math.max(seg.depth_end, depthMin), depthMax));
+    if (Number.isFinite(seg.depth_start)) depths.add(Math.min(Math.max(seg.depth_start, depthMin), depthMax));
+  });
 
-  return [{
-    d0: clampedMin,
-    d1: clampedMax,
-    color: TENSION_THEORETICAL_COLOR,
-    T0: payload_kg + cable_w_kgpm * clampedMin,
-    T1: payload_kg + cable_w_kgpm * clampedMax
-  }];
+  const sorted = [...depths].filter(d => Number.isFinite(d)).sort((a, b) => a - b);
+  const pieces = [];
+  for (let i = 0; i < sorted.length - 1; i++) {
+    const d0 = sorted[i];
+    const d1 = sorted[i + 1];
+    if (d1 - d0 < 1e-9) continue;
+    const T0 = getTheoretical(d0);
+    const T1 = getTheoretical(d1);
+    if (!Number.isFinite(T0) || !Number.isFinite(T1)) continue;
+    pieces.push({
+      d0,
+      d1,
+      color: TENSION_THEORETICAL_COLOR,
+      T0,
+      T1
+    });
+  }
+  return pieces;
 }
 
-function buildTensionSegments(segments, payload_kg, cable_w_kgpm, depthMin, depthMax, {
-  factor = 1,
+function buildTensionSegments(segments, depthMin, depthMax, {
   colorBelow,
   colorAbove
 } = {}) {
@@ -492,13 +556,13 @@ function buildTensionSegments(segments, payload_kg, cable_w_kgpm, depthMin, dept
     if (d1 - d0 < 1e-9) continue;
     const mid = (d0 + d1) / 2;
     const seg = segments.find(S => mid >= Math.min(S.depth_end, S.depth_start) - 1e-9 && mid <= Math.max(S.depth_end, S.depth_start) + 1e-9);
-    const avail = seg ? seg.avail_tension_kgf : null;
-    const baseT0 = payload_kg + cable_w_kgpm * d0;
-    const baseT1 = payload_kg + cable_w_kgpm * d1;
-    const T0 = baseT0 * factor;
-    const T1 = baseT1 * factor;
+    if (!seg) continue;
+    const avail = seg.avail_tension_kgf;
+    const T0 = interpolateSegmentValue(seg, d0, 'tension_required');
+    const T1 = interpolateSegmentValue(seg, d1, 'tension_required');
+    if (!Number.isFinite(T0) || !Number.isFinite(T1)) continue;
 
-    if (!Number.isFinite(avail) || !Number.isFinite(factor) || factor <= 0) {
+    if (!Number.isFinite(avail)) {
       pieces.push({ d0, d1, color: colorBelow, T0, T1 });
       continue;
     }
@@ -543,6 +607,23 @@ function buildTensionSegments(segments, payload_kg, cable_w_kgpm, depthMin, dept
     }
   }
   return merged;
+}
+
+function interpolateSegmentValue(segment, depth, fieldPrefix) {
+  if (!segment) return null;
+  const startDepth = Math.max(segment.depth_start, segment.depth_end);
+  const endDepth = Math.min(segment.depth_start, segment.depth_end);
+  const startVal = segment[`${fieldPrefix}_start_kgf`];
+  const endVal = segment[`${fieldPrefix}_end_kgf`];
+  if (Number.isFinite(startVal) && Number.isFinite(endVal)) {
+    if (Math.abs(startDepth - endDepth) < 1e-9) return startVal;
+    const frac = (depth - endDepth) / Math.max(startDepth - endDepth, 1e-9);
+    const clamped = Math.min(Math.max(frac, 0), 1);
+    return endVal + (startVal - endVal) * clamped;
+  }
+  if (Number.isFinite(endVal)) return endVal;
+  if (Number.isFinite(startVal)) return startVal;
+  return null;
 }
 
 function coerceNumeric(wrap, field) {
@@ -633,6 +714,14 @@ function wrapsToDepthSegments(wraps, speedField, tensionField, deadEnd = 0, scen
       filteredCandidates.push(candidate);
     }
     const tensionVal = coerceNumeric(wrap, tensionField);
+    const requiredVal = coerceNumeric(wrap, [
+      'tension_required_kgf',
+      'tension_req_kgf'
+    ]);
+    const theoreticalVal = coerceNumeric(wrap, [
+      'tension_theoretical_kgf',
+      'tension_theo_kgf'
+    ]);
 
     segments.push({
       depth_start: depthStart,
@@ -640,6 +729,8 @@ function wrapsToDepthSegments(wraps, speedField, tensionField, deadEnd = 0, scen
       speed_ms: speedMs,
       candidate_speeds_ms: filteredCandidates,
       avail_tension_kgf: Number.isFinite(tensionVal) ? tensionVal : null,
+      tension_required_kgf: Number.isFinite(requiredVal) ? requiredVal : null,
+      tension_theoretical_kgf: Number.isFinite(theoreticalVal) ? theoreticalVal : null,
       label: Number.isFinite(wrap.wrap_no)
         ? `W${wrap.wrap_no}`
         : (Number.isFinite(wrap.layer_no) ? `L${wrap.layer_no}` : '')
