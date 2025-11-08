@@ -4,7 +4,7 @@ import { niceTicks, svgEl, TENSION_SAFETY_FACTOR } from '../utils.mjs';
 const CANDIDATE_POWER_COLOR = '#9249c6'; // purple
 const CANDIDATE_FLOW_COLOR = '#eed500'; // yellow
 const EXCEED_COLOR = '#c65353'; // red
-const TENSION_THEORETICAL_COLOR = //'#7c8fc5'; // matches legend swatch
+const TENSION_THEORETICAL_COLOR = '#7c8fc5'; // matches legend swatch
 const RATED_SPEED_COLOR = '#888888'; // gray
 const PITA_PINK = 'e056e8'; // pink
 const CLARS_BLUE = '#2163a5'; // blue
