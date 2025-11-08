@@ -81,6 +81,12 @@ body {
   margin-top: 8px;
 }
 
+#status {
+  margin-top: 6px;
+  font-size: 14px;
+  color: var(--ink-500);
+}
+    
 .card {
   background: rgba(255, 255, 255, 0.96);
   border: 1px solid var(--paper-line-strong);
@@ -399,7 +405,7 @@ input:focus,
 select:focus,
 button:focus {
   outline: 2px solid var(--accent-light);
-  outline-offset: 1px;
+          outline-offset: 1px;
 }
 
 .table-title {
