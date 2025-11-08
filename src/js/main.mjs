@@ -138,8 +138,7 @@ document.addEventListener('DOMContentLoaded', () => {
     .forEach(id => q(id).addEventListener('change', () => redrawPlots()));
 
   // Depth plot controls
-  q('depth_scenario').addEventListener('change', () => redrawPlots());
-  ['depth_xmin', 'depth_xmax', 'depth_speed_ymin', 'depth_speed_ymax', 'depth_tension_ymin', 'depth_tension_ymax', 'depth_rated_speed_ms']
+  ['depth_xmin', 'depth_xmax', 'depth_speed_ymin', 'depth_speed_ymax', 'depth_tension_ymin', 'depth_tension_ymax']
     .forEach(id => q(id).addEventListener('change', () => redrawPlots()));
 
   // Initial compute
@@ -481,6 +480,12 @@ function driveModeEnabled(mode) {
   return normalized === mode;
 }
 
+function getActiveScenario() {
+  if (driveModeEnabled('electric')) return 'electric';
+  if (driveModeEnabled('hydraulic')) return 'hydraulic';
+  return DEFAULT_SYSTEM_TYPE;
+}
+
 function syncDriveModeVisibility() {
   const electricEnabled = driveModeEnabled('electric');
   const hydraulicEnabled = driveModeEnabled('hydraulic');
@@ -495,7 +500,6 @@ function syncDriveModeVisibility() {
   });
 
   updateScenarioOptions('wave_scenario', electricEnabled, hydraulicEnabled);
-  updateScenarioOptions('depth_scenario', electricEnabled, hydraulicEnabled);
 }
 
 function updateScenarioOptions(selectId, electricEnabled, hydraulicEnabled) {
@@ -797,7 +801,6 @@ function redrawPlots() {
   }
 
   // Depth profiles (optional - skip if controls/SVGs absent)
-  const depthScenarioEl = /** @type {HTMLSelectElement|null} */ (document.getElementById('depth_scenario'));
   const depthSpeedSvg = /** @type {SVGSVGElement|null} */ (document.getElementById('depth_speed_svg'));
   const depthTensionSvg = /** @type {SVGSVGElement|null} */ (document.getElementById('depth_tension_svg'));
   const depthXminEl = /** @type {HTMLInputElement|null} */ (document.getElementById('depth_xmin'));
@@ -807,9 +810,13 @@ function redrawPlots() {
   const depthTensionYminEl = /** @type {HTMLInputElement|null} */ (document.getElementById('depth_tension_ymin'));
   const depthTensionYmaxEl = /** @type {HTMLInputElement|null} */ (document.getElementById('depth_tension_ymax'));
 
-  if (depthScenarioEl && depthSpeedSvg && depthTensionSvg) {
-    const ratedSpeedMsRaw = read('depth_rated_speed_ms');
-    const ratedSpeedMs = Number.isFinite(ratedSpeedMsRaw) ? ratedSpeedMsRaw : null;
+  if (depthSpeedSvg && depthTensionSvg) {
+    const ratedSpeedMpmRaw = read('rated_speed_mpm');
+    const ratedSpeedMs = Number.isFinite(ratedSpeedMpmRaw) ? ratedSpeedMpmRaw / 60 : null;
+    const operatingDepthRaw = read('depth_m');
+    const operatingDepth = Number.isFinite(operatingDepthRaw) ? operatingDepthRaw : null;
+    const ratedSwlRaw = read('rated_swl_kgf');
+    const ratedSwl = Number.isFinite(ratedSwlRaw) ? ratedSwlRaw : null;
     const depthXminVal = parseInput(depthXminEl);
     const depthXmaxVal = parseInput(depthXmaxEl);
     const depthSpeedMinVal = parseInput(depthSpeedYminEl);
@@ -817,13 +824,15 @@ function redrawPlots() {
     const depthTensionMinVal = parseInput(depthTensionYminEl);
     const depthTensionMaxVal = parseInput(depthTensionYmaxEl);
     drawDepthProfiles(depthSpeedSvg, depthTensionSvg, {
-      scenario: depthScenarioEl.value || 'electric',       // 'electric' | 'hydraulic'
+      scenario: getActiveScenario(),       // 'electric' | 'hydraulic'
       elWraps: lastElWraps,
       hyWraps: lastHyWraps,
       payload_kg: read('payload_kg'),
       cable_w_kgpm: read('c_w_kgpm'),
       dead_end_m: read('dead_m'),
       rated_speed_ms: ratedSpeedMs,
+      operating_depth_m: operatingDepth,
+      rated_swl_kgf: ratedSwl,
       depth_xmin: Number.isFinite(depthXminVal) ? depthXminVal : undefined,
       depth_xmax: Number.isFinite(depthXmaxVal) ? depthXmaxVal : undefined,
       speed_ymin: Number.isFinite(depthSpeedMinVal) ? depthSpeedMinVal : undefined,

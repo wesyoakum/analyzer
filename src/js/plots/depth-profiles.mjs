@@ -58,6 +58,8 @@ export function drawDepthProfiles(svgSpeed, svgTension, {
   cable_w_kgpm = 0,
   dead_end_m = 0,
   rated_speed_ms = null,
+  operating_depth_m = null,
+  rated_swl_kgf = null,
   depth_xmin = 0,
   depth_xmax = null,
   speed_ymin = 0,
@@ -93,6 +95,8 @@ export function drawDepthProfiles(svgSpeed, svgTension, {
       }))
     : 0;
   const ratedSpeedMs = Number.isFinite(rated_speed_ms) ? Math.max(0, rated_speed_ms) : null;
+  const opDepth = Number.isFinite(operating_depth_m) ? Math.max(0, operating_depth_m) : null;
+  const ratedSwl = Number.isFinite(rated_swl_kgf) ? Math.max(0, rated_swl_kgf) : null;
   const maxAvailT = Math.max(0, ...segments.map(S => S.avail_tension_kgf || 0));
   const toNumber = val => {
     if (val === null || val === undefined) return NaN;
@@ -110,7 +114,10 @@ export function drawDepthProfiles(svgSpeed, svgTension, {
   if (!Number.isFinite(depthMin) || depthMin < 0) depthMin = 0;
 
   let depthMax = toNumber(depth_xmax);
-  const autoDepthMax = Math.max(depthMin + 0.1, maxDepth);
+  const depthCandidates = [depthMin + 0.1];
+  if (Number.isFinite(maxDepth)) depthCandidates.push(maxDepth);
+  if (Number.isFinite(opDepth)) depthCandidates.push(opDepth);
+  const autoDepthMax = Math.max(...depthCandidates);
   if (Number.isFinite(depthMax)) {
     depthMax = Math.max(depthMin + 0.1, depthMax);
   } else {
@@ -122,7 +129,7 @@ export function drawDepthProfiles(svgSpeed, svgTension, {
   if (!Number.isFinite(speedMin) || speedMin < 0) speedMin = 0;
 
   let speedMax = toNumber(speed_ymax);
-  const autoSpeedMax = Math.max(speedMin + 0.1, 1, maxSpeedFromCandidates, ratedSpeedMs || 0);
+  const autoSpeedMax = Math.max(speedMin + 0.1, 3, maxSpeedFromCandidates, ratedSpeedMs || 0);
   if (Number.isFinite(speedMax)) {
     speedMax = Math.max(speedMin + 0.1, speedMax);
   } else {
@@ -138,7 +145,9 @@ export function drawDepthProfiles(svgSpeed, svgTension, {
   if (!Number.isFinite(tensionMin) || tensionMin < 0) tensionMin = 0;
 
   let tensionMax = toNumber(tension_ymax);
-  const autoTensionMax = Math.max(tensionMin + 1, maxReqT, maxAvailT) * 1.05;
+  const swlTarget = Number.isFinite(ratedSwl) ? ratedSwl * 1.5 : 0;
+  const autoTensionBase = Math.max(tensionMin + 1, maxReqT, maxAvailT, swlTarget);
+  const autoTensionMax = autoTensionBase * 1.05;
   if (Number.isFinite(tensionMax)) {
     tensionMax = Math.max(tensionMin + 1, tensionMax);
   } else {

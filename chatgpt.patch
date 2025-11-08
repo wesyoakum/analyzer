@@ -1,325 +1,148 @@
-diff --git a/src/js/main.mjs b/src/js/main.mjs
-index 3f13e6d7cb40733b2eb23de5fec524fe1eb00646..99e3db8954fa1533c09c70ecd271befde28f7cfc 100644
---- a/src/js/main.mjs
-+++ b/src/js/main.mjs
-@@ -1,38 +1,38 @@
- // ===== main.mjs app bootstrap, compute, render, plots =====
- 
- import {
-   q, read,
-   G, W_PER_HP, PSI_TO_PA, CC_PER_GAL, M_PER_IN,
-   tension_kgf, elec_available_tension_kgf,
-   gpm_from_cc_rev_and_rpm, rpm_from_gpm_and_disp,
-   psi_from_torque_and_disp_Nm_cc, torque_per_motor_from_pressure_Pa,
-   line_speed_mpm_from_motor_rpm, hp_from_psi_and_gpm,
-   TENSION_SAFETY_FACTOR
- } from './utils.mjs';
- 
--import { setupInputPersistence, collectInputState } from './persist-inputs.mjs';
-+import { setupInputPersistence } from './persist-inputs.mjs';
- 
- import { calcLayers } from './layer-engine.mjs';
- 
- import {
-   rowsToElectricLayer, projectElectricWraps, renderElectricTables
- } from './electric.mjs';
- 
- import {
-   rowsToHydraulicLayer, projectHydraulicWraps, renderHydraulicTables
- } from './hydraulic.mjs';
- 
- import { drawWaveContours, drawWaveHeightContours } from './plots/wave-contours.mjs';
- import { drawDepthProfiles } from './plots/depth-profiles.mjs';
- import { setupComponentSelectors } from './component-selectors.mjs';
- import { renderDrumVisualization, clearDrumVisualization } from './drum-visual.mjs';
- 
- // ---- App state for plots/tables ----
- let lastElLayer = [], lastElWraps = [];
- let lastHyLayer = [], lastHyWraps = [];
- 
- const CSV_BUTTON_SPECS = {
-   csv_el_layer: {
-     filename: () => 'electric-layer.csv',
-     columns: [
-       'layer_no', 'layer_dia_in', 'pre_on_drum_m', 'pre_deployed_m',
-@@ -87,52 +87,50 @@ const CSV_BUTTON_SPECS = {
-     columns: [
-       'wrap_no', 'layer_no', 'layer_dia_in', 'wrap_len_in', 'pre_spooled_len_m',
-       'spooled_len_m', 'deployed_len_m', 'tension_theoretical_kgf',
-       'tension_required_kgf', 'hyd_P_required_psi', 'hyd_speed_power_mpm',
-       'hyd_speed_flow_mpm', 'hyd_speed_available_mpm', 'hyd_hp_used_at_available',
-       'hyd_elec_input_hp_used', 'hyd_drum_torque_maxP_Nm', 'hyd_avail_tension_kgf'
-     ],
-     header: [
-       'wrap_no', 'layer_no', 'layer_dia_in', 'wrap_len_in', 'pre_spooled_len_m',
-       'spooled_len_m', 'deployed_len_m', 'tension_theoretical_kgf',
-       'tension_required_kgf', 'hyd_P_required_psi', 'hyd_speed_power_mpm',
-       'hyd_speed_flow_mpm', 'hyd_speed_available_mpm', 'hyd_hp_used_at_available',
-       'hyd_elec_input_hp_used', 'hyd_drum_torque_maxP_Nm', 'hyd_avail_tension_kgf'
-     ],
-     getRows: () => lastHyWraps
+diff --git a/src/js/plots/depth-profiles.mjs b/src/js/plots/depth-profiles.mjs
+index 0f5cd2374d7095c3f3e9871e1299f4d4b8d4ef6c..b079c3ce11e7b4b73326331a77274608db6a108e 100644
+--- a/src/js/plots/depth-profiles.mjs
++++ b/src/js/plots/depth-profiles.mjs
+@@ -36,131 +36,140 @@ function getAccentColor() {
    }
- };
- 
- const SYSTEM_TYPE_SELECT_ID = 'system_type_select';
- const DEFAULT_SYSTEM_TYPE = 'electric';
- 
- // ---- Wire up events once DOM is ready ----
- document.addEventListener('DOMContentLoaded', () => {
-   setupInputPersistence();
- 
--  setupPresetSave();
--
-   setupComponentSelectors();
- 
-   setupCollapsibleToggles();
- 
-   setupDriveModeControls();
- 
-   setupCsvDownloads();
- 
-   setupPlotResizeToggles();
- 
-   setupAutoRecompute();
- 
-   updateBuildIndicator();
- 
-   setupTabs();
- 
-   document.querySelectorAll('.param-label').forEach(label => {
-     const code = label.dataset.code;
-     if (code) {
-       label.setAttribute('title', code);
-     }
-   });
- 
-   // Wave plot controls
-   q('wave_scenario').addEventListener('change', () => redrawPlots());
-@@ -372,227 +370,50 @@ function setupCollapsibleToggles() {
-     if (!body.id) {
-       collapseIdCounter += 1;
-       body.id = `collapse-body-${collapseIdCounter}`;
-     }
-     toggle.setAttribute('aria-controls', body.id);
- 
-     let expanded = defaultExpanded;
- 
-     const applyState = (value) => {
-       expanded = value;
-       toggle.textContent = expanded ? '[-]' : '[+]';
-       toggle.setAttribute('aria-expanded', expanded ? 'true' : 'false');
-       toggle.setAttribute('aria-label', expanded ? 'Collapse section' : 'Expand section');
-       body.hidden = !expanded;
-       container.classList.toggle('is-collapsed', !expanded);
-     };
- 
-     applyState(expanded);
- 
-     toggle.addEventListener('click', () => {
-       applyState(!expanded);
-     });
-   }
+   return '#2c56a3';
  }
  
--function setupPresetSave() {
--  const firstSection = document.querySelector('.input-section');
--  const host = firstSection && firstSection.parentElement ? firstSection.parentElement : null;
--  if (!firstSection || !host) return;
--
--  const container = document.createElement('section');
--  container.className = 'input-section preset-controls';
--
--  const title = document.createElement('h3');
--  title.className = 'input-section__title';
--  title.textContent = 'Presets';
--  container.appendChild(title);
--
--  const table = document.createElement('table');
--  table.className = 'worksheet';
--  const tbody = document.createElement('tbody');
--  table.appendChild(tbody);
--
--  const nameRow = document.createElement('tr');
--  const nameTh = document.createElement('th');
--  nameTh.scope = 'row';
--  const nameLabel = document.createElement('label');
--  nameLabel.className = 'param-label';
--  nameLabel.setAttribute('for', 'preset_name');
--  nameLabel.textContent = 'Preset Name';
--  nameTh.appendChild(nameLabel);
--
--  const nameInput = document.createElement('input');
--  nameInput.type = 'text';
--  nameInput.id = 'preset_name';
--  nameInput.placeholder = 'Enter a preset name';
--  nameInput.dataset.persist = 'off';
--
--  const nameValue = document.createElement('td');
--  nameValue.className = 'value';
--  nameValue.appendChild(nameInput);
--
--  const nameUnits = document.createElement('td');
--  nameUnits.className = 'units';
--  nameUnits.textContent = '–';
--
--  nameRow.appendChild(nameTh);
--  nameRow.appendChild(nameValue);
--  nameRow.appendChild(nameUnits);
--  tbody.appendChild(nameRow);
--
--  const descRow = document.createElement('tr');
--  const descTh = document.createElement('th');
--  descTh.scope = 'row';
--  const descLabel = document.createElement('label');
--  descLabel.className = 'param-label';
--  descLabel.setAttribute('for', 'preset_description');
--  descLabel.textContent = 'Description (optional)';
--  descTh.appendChild(descLabel);
--
--  const descInput = document.createElement('textarea');
--  descInput.id = 'preset_description';
--  descInput.rows = 2;
--  descInput.placeholder = 'Add context for this configuration';
--  descInput.dataset.persist = 'off';
--
--  const descValue = document.createElement('td');
--  descValue.className = 'value';
--  descValue.appendChild(descInput);
--
--  const descUnits = document.createElement('td');
--  descUnits.className = 'units';
--  descUnits.textContent = '–';
--
--  descRow.appendChild(descTh);
--  descRow.appendChild(descValue);
--  descRow.appendChild(descUnits);
--  tbody.appendChild(descRow);
--
--  const actionRow = document.createElement('tr');
--  const actionCell = document.createElement('td');
--  actionCell.colSpan = 3;
--  actionCell.className = 'value';
--
--  const actionWrap = document.createElement('div');
--  actionWrap.className = 'btnbar';
--
--  const status = document.createElement('span');
--  status.className = 'dim';
--  status.setAttribute('role', 'status');
--  status.setAttribute('aria-live', 'polite');
--
--  const saveBtn = document.createElement('button');
--  saveBtn.type = 'button';
--  saveBtn.textContent = 'Save preset';
--
--  const setStatus = (message, tone) => {
--    status.textContent = message;
--    status.classList.toggle('dim', tone === 'idle' || tone === 'pending');
--    status.style.color = '';
--    if (tone === 'error') {
--      status.classList.remove('dim');
--      status.style.color = 'var(--danger-600, #b42318)';
--    } else if (tone === 'success') {
--      status.classList.remove('dim');
--      status.style.color = 'var(--ink-700)';
--    }
--  };
--
--  setStatus('', 'idle');
--
--  saveBtn.addEventListener('click', async () => {
--    const name = nameInput.value.trim();
--    const description = descInput.value.trim();
--
--    if (!name) {
--      setStatus('Please enter a preset name before saving.', 'error');
--      nameInput.focus();
--      return;
--    }
--
--    const data = collectInputState();
--    const payload = { name, data };
--    if (description) payload.description = description;
--
--    setStatus('Saving preset…', 'pending');
--    saveBtn.disabled = true;
--
--    try {
--      const response = await fetch('/api/presets', {
--        method: 'POST',
--        headers: { 'Content-Type': 'application/json' },
--        body: JSON.stringify(payload)
--      });
--
--      if (!response.ok) {
--        let message = `Unable to save preset (status ${response.status}).`;
--        try {
--          const errorBody = await response.json();
--          if (errorBody && errorBody.error) {
--            if (errorBody.error.message) {
--              message = errorBody.error.message;
--            }
--            if (Array.isArray(errorBody.error.details) && errorBody.error.details.length) {
--              message += ` ${errorBody.error.details.join(' ')}`;
--            }
--          }
--        } catch (err) {
--          // Ignore JSON parse errors.
--        }
--        throw new Error(message);
--      }
--
--      let savedName = name;
--      try {
--        const result = await response.json();
--        if (result && result.preset && typeof result.preset.name === 'string') {
--          savedName = result.preset.name;
--        }
--      } catch (err) {
--        // Ignore JSON parse errors on success; we already have a 2xx response.
--      }
--
--      setStatus(`Preset “${savedName}” saved successfully.`, 'success');
--    } catch (err) {
--      const message = err instanceof Error && err.message ? err.message : 'Unable to save preset.';
--      setStatus(message, 'error');
--    } finally {
--      saveBtn.disabled = false;
--    }
--  });
--
--  actionWrap.appendChild(saveBtn);
--  actionWrap.appendChild(status);
--  actionCell.appendChild(actionWrap);
--  actionRow.appendChild(actionCell);
--  tbody.appendChild(actionRow);
--
--  container.appendChild(table);
--  host.insertBefore(container, firstSection);
--}
--
- function setupPlotResizeToggles() {
-   const toggles = document.querySelectorAll('[data-plot-toggle]');
-   toggles.forEach(btn => {
-     const col = btn.closest('.plot-column');
-     if (!col) return;
-     const initialExpanded = col.classList.contains('is-expanded');
-     btn.textContent = initialExpanded ? '[-]' : '[+]';
-     btn.setAttribute('aria-expanded', initialExpanded ? 'true' : 'false');
-     btn.addEventListener('click', () => {
-       const expanded = col.classList.toggle('is-expanded');
-       btn.textContent = expanded ? '[-]' : '[+]';
-       btn.setAttribute('aria-expanded', expanded ? 'true' : 'false');
-     });
-   });
+ /**
+  * Draw both depth profile plots (speed & tension).
+  *
+  * @param {SVGSVGElement} svgSpeed
+  * @param {SVGSVGElement} svgTension
+  * @param {Object} opts
+  * @param {'electric'|'hydraulic'} opts.scenario
+  * @param {Array<Object>} opts.elWraps
+  * @param {Array<Object>} opts.hyWraps
+  * @param {number} opts.payload_kg
+  * @param {number} opts.cable_w_kgpm
+  * @param {number} [opts.dead_end_m=0]
+  */
+ export function drawDepthProfiles(svgSpeed, svgTension, {
+   scenario = 'electric',
+   elWraps = [],
+   hyWraps = [],
+   payload_kg = 0,
+   cable_w_kgpm = 0,
+   dead_end_m = 0,
+   rated_speed_ms = null,
++  operating_depth_m = null,
++  rated_swl_kgf = null,
+   depth_xmin = 0,
+   depth_xmax = null,
+   speed_ymin = 0,
+   speed_ymax = null,
+   tension_ymin = 0,
+   tension_ymax = null
+ } = {}) {
+   const wraps = (scenario === 'electric') ? (elWraps || []) : (hyWraps || []);
+   const speedField = (scenario === 'electric')
+     ? 'line_speed_mpm'
+     : ['vavail', 'vAvail', 'v_available', 'v_available_mpm', 'v_avail', 'hyd_speed_available_mpm'];
+   const tensionField = (scenario === 'electric')
+     ? ['avail_tension_kgf', 't_avail_kgf', 'tAvail']
+     : ['Tavail,start', 'Tavail_start', 'tavail_start', 'tavail_start_kgf', 'hyd_avail_tension_kgf'];
+ 
+   // Build wrap intervals [depth_start, depth_end] with values
+   const deadEnd = Number.isFinite(dead_end_m) ? Math.max(0, dead_end_m) : 0;
+   const segments = wrapsToDepthSegments(wraps, speedField, tensionField, deadEnd, scenario);
+ 
+   // Sort deep to shallow by start depth
+   segments.sort((a, b) => (b.depth_start || 0) - (a.depth_start || 0));
+ 
+   // Extents
+   const maxDepth = segments.length
+     ? Math.max(...segments.map(S => Math.max(S.depth_start || 0, S.depth_end || 0)))
+     : 0;
+   const maxSpeedFromCandidates = segments.length
+     ? Math.max(0, ...segments.map(S => {
+         if (!Array.isArray(S.candidate_speeds_ms) || !S.candidate_speeds_ms.length) {
+           return S.speed_ms || 0;
+         }
+         return Math.max(0, ...S.candidate_speeds_ms.map(C => C.value_ms), S.speed_ms || 0);
+       }))
+     : 0;
+   const ratedSpeedMs = Number.isFinite(rated_speed_ms) ? Math.max(0, rated_speed_ms) : null;
++  const opDepth = Number.isFinite(operating_depth_m) ? Math.max(0, operating_depth_m) : null;
++  const ratedSwl = Number.isFinite(rated_swl_kgf) ? Math.max(0, rated_swl_kgf) : null;
+   const maxAvailT = Math.max(0, ...segments.map(S => S.avail_tension_kgf || 0));
+   const toNumber = val => {
+     if (val === null || val === undefined) return NaN;
+     if (typeof val === 'string') {
+       const trimmed = val.trim();
+       if (!trimmed) return NaN;
+       const parsed = Number(trimmed);
+       return Number.isFinite(parsed) ? parsed : NaN;
+     }
+     const num = Number(val);
+     return Number.isFinite(num) ? num : NaN;
+   };
+ 
+   let depthMin = toNumber(depth_xmin);
+   if (!Number.isFinite(depthMin) || depthMin < 0) depthMin = 0;
+ 
+   let depthMax = toNumber(depth_xmax);
+-  const autoDepthMax = Math.max(depthMin + 0.1, maxDepth);
++  const depthCandidates = [depthMin + 0.1];
++  if (Number.isFinite(maxDepth)) depthCandidates.push(maxDepth);
++  if (Number.isFinite(opDepth)) depthCandidates.push(opDepth);
++  const autoDepthMax = Math.max(...depthCandidates);
+   if (Number.isFinite(depthMax)) {
+     depthMax = Math.max(depthMin + 0.1, depthMax);
+   } else {
+     depthMax = autoDepthMax;
+   }
+   if (depthMax <= depthMin) depthMax = depthMin + 1;
+ 
+   let speedMin = toNumber(speed_ymin);
+   if (!Number.isFinite(speedMin) || speedMin < 0) speedMin = 0;
+ 
+   let speedMax = toNumber(speed_ymax);
+-  const autoSpeedMax = Math.max(speedMin + 0.1, 1, maxSpeedFromCandidates, ratedSpeedMs || 0);
++  const autoSpeedMax = Math.max(speedMin + 0.1, 3, maxSpeedFromCandidates, ratedSpeedMs || 0);
+   if (Number.isFinite(speedMax)) {
+     speedMax = Math.max(speedMin + 0.1, speedMax);
+   } else {
+     speedMax = autoSpeedMax;
+   }
+   if (speedMax <= speedMin) speedMax = speedMin + 1;
+ 
+   const tensionDepth = Math.max(maxDepth, depthMax);
+   const maxTheoT = payload_kg + cable_w_kgpm * tensionDepth;
+   const maxReqT = maxTheoT * TENSION_SAFETY_FACTOR;
+ 
+   let tensionMin = toNumber(tension_ymin);
+   if (!Number.isFinite(tensionMin) || tensionMin < 0) tensionMin = 0;
+ 
+   let tensionMax = toNumber(tension_ymax);
+-  const autoTensionMax = Math.max(tensionMin + 1, maxReqT, maxAvailT) * 1.05;
++  const swlTarget = Number.isFinite(ratedSwl) ? ratedSwl * 1.5 : 0;
++  const autoTensionBase = Math.max(tensionMin + 1, maxReqT, maxAvailT, swlTarget);
++  const autoTensionMax = autoTensionBase * 1.05;
+   if (Number.isFinite(tensionMax)) {
+     tensionMax = Math.max(tensionMin + 1, tensionMax);
+   } else {
+     tensionMax = autoTensionMax;
+   }
+   if (tensionMax <= tensionMin) tensionMax = tensionMin + 1;
+ 
+   const accentColor = getAccentColor();
+ 
+   // Render both
+   drawSpeedProfile(svgSpeed, segments, depthMin, depthMax, speedMin, speedMax, accentColor, ratedSpeedMs);
+   drawTensionProfile(svgTension, segments, depthMin, depthMax, tensionMin, tensionMax, payload_kg, cable_w_kgpm, accentColor);
  }
  
- function setupAutoRecompute() {
-   const inputs = Array.from(document.querySelectorAll('input, select, textarea'));
-   if (!inputs.length) return;
+ // ---------- Speed vs Depth ----------
+ function drawSpeedProfile(svg, segments, depthMin, depthMax, speedMin, speedMax, accentColor, ratedSpeedMs = null) {
+   while (svg.firstChild) svg.removeChild(svg.firstChild);
  
-   const handler = () => computeAll();
+   const ML = 64, MR = 18, MT = 18, MB = 46;
+   const W = svg.viewBox.baseVal.width || svg.clientWidth || 1000;
+   const H = svg.viewBox.baseVal.height || svg.clientHeight || 540;
+   const innerW = W - ML - MR, innerH = H - MT - MB;
  
-   inputs.forEach(el => {
-     if (el.tagName === 'SELECT') {
-       el.addEventListener('change', handler);
+   const clampDepth = d => Math.min(Math.max(d, depthMin), depthMax);
+   const clampSpeed = v => Math.min(Math.max(v, speedMin), speedMax);
