@@ -710,8 +710,8 @@ export const FIELD_MAPS = {
     h_hmot_rpm_max: 'hyd_motor_max_rpm'
   }),
   hpuMotor: /** @type {SelectConfig['fieldMap']} */ ({
-    h_emotor_hp: 'motor_hp',
-    h_emotor_rpm: 'motor_max_rpm'
+    motor_hp: 'h_emotor_hp',
+    motor_max_rpm: 'h_emotor_rpm'
   }),
   hpu: /** @type {SelectConfig['fieldMap']} */ ({
     h_pump_strings: 'h_pump_strings',

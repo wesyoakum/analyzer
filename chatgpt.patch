@@ -1,68 +1,65 @@
-diff --git a/src/js/main.mjs b/src/js/main.mjs
-index b92dd9f9d0b8395e4d48e41138cebdb9f7dc53c6..b19edbc925f8110888d7e724d554cb11d3bf3486 100644
---- a/src/js/main.mjs
-+++ b/src/js/main.mjs
-@@ -144,54 +144,61 @@ document.addEventListener('DOMContentLoaded', () => {
-     });
-   });
+diff --git a/src/js/utils.mjs b/src/js/utils.mjs
+index 34a549c2c7e02c337868005e7c3d485b40627301..a0933dcbd7c0cd2dcfb9e5c8a8117570dd7aea66 100644
+--- a/src/js/utils.mjs
++++ b/src/js/utils.mjs
+@@ -1,58 +1,45 @@
+ // ===== utils.mjs — shared constants, unit helpers, math, and SVG helpers =====
  
-   // Wave plot controls
-   q('wave_scenario').addEventListener('change', () => redrawPlots());
-   ['wave_tmin', 'wave_tmax', 'wave_vmin', 'wave_vmax', 'wave_hmin', 'wave_hmax']
-     .forEach(id => q(id).addEventListener('change', () => redrawPlots()));
+ // ---- Constants (SI-centric where possible) ----
+ export const IN_PER_MM = 1 / 25.4;
+ export const M_PER_IN  = 0.0254;
+ export const G         = 9.80665;          // m/s^2
+ export const W_PER_HP  = 745.7;            // W per hp (mechanical)
+ export const TWO_PI    = 2 * Math.PI;
+ export const CC_PER_GAL = 3785.411784;     // cc per US gallon
+ export const PSI_TO_PA  = 6894.757293;     // Pa per psi
  
-   // Depth plot controls
-   q('depth_scenario').addEventListener('change', () => redrawPlots());
-   ['depth_xmin', 'depth_xmax', 'depth_speed_ymin', 'depth_speed_ymax', 'depth_tension_ymin', 'depth_tension_ymax', 'depth_rated_speed_ms']
-     .forEach(id => q(id).addEventListener('change', () => redrawPlots()));
+ export const TENSION_SAFETY_FACTOR = 1.25; // Required tension = theoretical × 1.25 safety factor
  
-   // Initial compute
-   computeAll();
- });
+ export const constants = {
+   IN_PER_MM, M_PER_IN, G, W_PER_HP, TWO_PI, CC_PER_GAL, PSI_TO_PA
+ };
  
- const computeTimerLabel = 'computeAll total';
+ // ---- DOM helpers (kept tiny; only used by main & plot modules) ----
+-export const q = (id) => /** @type {HTMLElement|null} */ (document.getElementById(id));
+-export const read = (id) => {
+-  const el = /** @type {HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement | null} */ (q(id));
+-  if (!el || !('value' in el)) return NaN;
+-
+-  const rawValue = typeof el.value === 'string'
+-    ? el.value
+-    : el.value == null
+-      ? ''
+-      : String(el.value);
+-
+-  const normalized = rawValue.replace(',', '.');
+-  const parsed = parseFloat(normalized);
+-  return Number.isFinite(parsed) ? parsed : NaN;
+-};
++export const q = (id) => /** @type {HTMLElement} */ (document.getElementById(id));
++export const read = (id) => parseFloat(q(id).value.replace(',', '.'));
  
- /**
-  * Emit a console debug log that is easy to spot when tracing hangs.
-  * @param {string} message
-  * @param {Record<string, unknown>} [context]
-  */
- function logCompute(message, context) {
-+  const logFn =
-+    (typeof console !== 'undefined' && typeof console.info === 'function' && console.info.bind(console)) ||
-+    (typeof console !== 'undefined' && typeof console.log === 'function' && console.log.bind(console)) ||
-+    (typeof console !== 'undefined' && typeof console.debug === 'function' && console.debug.bind(console));
-+
-+  if (!logFn) return;
-+
-   if (context && Object.keys(context).length) {
--    console.debug(`[computeAll] ${message}`, context);
-+    logFn(`[computeAll] ${message}`, context);
-   } else {
--    console.debug(`[computeAll] ${message}`);
-+    logFn(`[computeAll] ${message}`);
-   }
+ // ---- Numeric helpers ----
+ export const truncToHalf = (x) => Math.floor(x * 2) / 2;
+ export const isWhole = (x, eps = 1e-9) => Math.abs(x - Math.round(x)) < eps;
+ 
+ // “nice” tick generator for axes
+ export function niceTicks(min, max, count = 6) {
+   const span = Math.max(1e-12, max - min);
+   const step0 = span / Math.max(1, count);
+   const mag = Math.pow(10, Math.floor(Math.log10(step0)));
+   const norm = step0 / mag;
+   const niceNorm = norm < 1.5 ? 1 : norm < 3 ? 2 : norm < 7 ? 5 : 10;
+   const step = niceNorm * mag;
+   const tmin = Math.ceil(min / step) * step;
+   const tmax = Math.floor(max / step) * step;
+   const ticks = [];
+   for (let v = tmin; v <= tmax + 1e-12; v += step) ticks.push(+v.toFixed(10));
+   return { ticks, step };
  }
  
- function updateBuildIndicator() {
-   const indicator = /** @type {HTMLElement|null} */ (document.getElementById('build-info'));
-   if (!indicator) return;
+ // ---- Mechanics / units helpers ----
  
-   const lastModified = new Date(document.lastModified);
-   if (Number.isNaN(lastModified.getTime())) {
-     indicator.textContent = `Updated ${document.lastModified}`;
-     return;
-   }
- 
-   const formatter = new Intl.DateTimeFormat('en-US', {
-     year: 'numeric',
-     month: 'short',
-     day: '2-digit',
-     hour: '2-digit',
-     minute: '2-digit',
-     second: '2-digit',
-     hour12: false,
-     timeZone: 'UTC'
-   });
- 
-   indicator.textContent = `Updated ${formatter.format(lastModified)} UTC`;
+ // Theoretical tension (kgf) from payload + cable-in-water weight per meter * deployed length
+ export const tension_kgf = (deployed_m, payload_kg, cable_w_kgpm) =>
+   +(payload_kg + cable_w_kgpm * deployed_m).toFixed(1);

@@ -1,10 +1,13 @@
 // ===== plots/depth-profiles.mjs  Speed vs Depth & Tension vs Depth (DOM-agnostic) =====
-import { niceTicks, svgEl, TENSION_SAFETY_FACTOR, tension_kgf } from '../utils.mjs';
+import { niceTicks, svgEl, TENSION_SAFETY_FACTOR } from '../utils.mjs';
 
 const CANDIDATE_POWER_COLOR = '#9249c6'; // purple
 const CANDIDATE_FLOW_COLOR = '#eed500'; // yellow
 const EXCEED_COLOR = '#c65353'; // red
+const TENSION_THEORETICAL_COLOR = '#7c8fc5'; // matches legend swatch
 const RATED_SPEED_COLOR = '#888888'; // gray
+const PITA_PINK = 'e056e8'; // pink
+const CLARS_BLUE = '#2163a5'; // blue
 
 const RATED_AVAILABLE_TOLERANCE = 1e-9;
 
@@ -91,8 +94,6 @@ export function drawDepthProfiles(svgSpeed, svgTension, {
     : 0;
   const ratedSpeedMs = Number.isFinite(rated_speed_ms) ? Math.max(0, rated_speed_ms) : null;
   const maxAvailT = Math.max(0, ...segments.map(S => S.avail_tension_kgf || 0));
-  const maxSegTheoT = Math.max(0, ...segments.map(S => S.tension_theoretical_kgf || 0));
-  const maxSegReqT = Math.max(0, ...segments.map(S => S.tension_required_kgf || 0));
   const toNumber = val => {
     const num = Number(val);
     return Number.isFinite(num) ? num : NaN;
@@ -130,13 +131,7 @@ export function drawDepthProfiles(svgSpeed, svgTension, {
   if (!Number.isFinite(tensionMin) || tensionMin < 0) tensionMin = 0;
 
   let tensionMax = toNumber(tension_ymax);
-  const autoTensionMax = Math.max(
-    tensionMin + 1,
-    maxReqT,
-    maxAvailT,
-    maxSegTheoT,
-    maxSegReqT
-  ) * 1.05;
+  const autoTensionMax = Math.max(tensionMin + 1, maxReqT, maxAvailT) * 1.05;
   if (Number.isFinite(tensionMax)) {
     tensionMax = Math.max(tensionMin + 1, tensionMax);
   } else {
@@ -383,79 +378,171 @@ function drawTensionProfile(svg, segments, depthMin, depthMax, tensionMin, tensi
     'text-anchor': 'middle', 'font-size': '12', fill: '#444'
   })).textContent = 'Tension (kgf)';
 
-  const pointData = segments.map(S => {
-    const depthVals = [];
-    if (Number.isFinite(S.depth_start)) depthVals.push(S.depth_start);
-    if (Number.isFinite(S.depth_end)) depthVals.push(S.depth_end);
-    if (!depthVals.length) return null;
-
-    const avgDepth = depthVals.reduce((sum, val) => sum + val, 0) / depthVals.length;
-    const depth = clampDepth(avgDepth);
-    if (depth < depthMin - 1e-9 || depth > depthMax + 1e-9) return null;
-
-    const avail = Number.isFinite(S.avail_tension_kgf) ? S.avail_tension_kgf : null;
-    const hasRequired = Number.isFinite(S.tension_required_kgf);
-    const hasTheoretical = Number.isFinite(S.tension_theoretical_kgf);
-
-    let tension = hasRequired ? S.tension_required_kgf : null;
-    let sourceLabel = hasRequired ? 'Required tension' : null;
-
-    if (!Number.isFinite(tension) && hasTheoretical) {
-      tension = S.tension_theoretical_kgf;
-      sourceLabel = 'Theoretical tension';
-    }
-
-    if (!Number.isFinite(tension) && Number.isFinite(payload_kg) && Number.isFinite(cable_w_kgpm)) {
-      const estimate = tension_kgf(depth, payload_kg, cable_w_kgpm);
-      if (Number.isFinite(estimate)) {
-        tension = +(estimate * TENSION_SAFETY_FACTOR).toFixed(1);
-        sourceLabel = 'Estimated required tension';
-      }
-    }
-
-    if (!Number.isFinite(tension)) return null;
-    if (tension < tensionMin - 1e-9 || tension > tensionMax + 1e-9) return null;
-
-    let color = accentColor;
-    if (Number.isFinite(avail) && tension > avail + 1e-3) color = EXCEED_COLOR;
-
-    const tooltipParts = [];
-    if (S.label) tooltipParts.push(S.label);
-    tooltipParts.push(`Depth ≈ ${depth.toFixed(1)} m`);
-    tooltipParts.push(`${sourceLabel || 'Tension'} ≈ ${Math.round(tension)} kgf`);
-    if (Number.isFinite(avail)) tooltipParts.push(`Available: ${Math.round(avail)} kgf`);
-
+  const normalizedSegments = segments.map(S => {
+    const depthStartRaw = Math.max(S.depth_start, S.depth_end);
+    const depthEndRaw = Math.min(S.depth_start, S.depth_end);
+    if (!Number.isFinite(depthStartRaw) || !Number.isFinite(depthEndRaw)) return null;
+    if (Math.max(depthStartRaw, depthEndRaw) < depthMin - 1e-9) return null;
+    if (Math.min(depthStartRaw, depthEndRaw) > depthMax + 1e-9) return null;
     return {
-      depth,
-      tension,
-      color,
-      title: tooltipParts.join('
-')
+      depth_start: clampDepth(depthStartRaw),
+      depth_end: clampDepth(depthEndRaw),
+      avail_tension_kgf: Number.isFinite(S.avail_tension_kgf) ? S.avail_tension_kgf : null
     };
   }).filter(Boolean);
 
-  pointData.sort((a, b) => a.depth - b.depth);
-
-  pointData.forEach(point => {
-    const circle = svgEl('circle', {
-      cx: sx(point.depth),
-      cy: sy(point.tension),
-      r: 5,
-      fill: point.color,
-      stroke: '#fff',
-      'stroke-width': 1.5
-    });
-    if (point.title) {
-      const title = svgEl('title', {});
-      title.textContent = point.title;
-      circle.appendChild(title);
-    }
-    svg.appendChild(circle);
+  segments.forEach(S => {
+    if (!Number.isFinite(S.avail_tension_kgf)) return;
+    if (S.avail_tension_kgf < tensionMin - 1e-9 || S.avail_tension_kgf > tensionMax + 1e-9) return;
+    const depthEnd = Math.min(S.depth_start, S.depth_end);
+    const depthStart = Math.max(S.depth_start, S.depth_end);
+    if (Math.max(depthStart, depthEnd) < depthMin - 1e-9) return;
+    if (Math.min(depthStart, depthEnd) > depthMax + 1e-9) return;
+    const x0 = sx(depthEnd);
+    const x1 = sx(depthStart);
+    if (Math.abs(x1 - x0) < 1e-6) return;
+    const y = sy(S.avail_tension_kgf);
+    svg.appendChild(svgEl('line', {
+      x1: x0,
+      y1: y,
+      x2: x1,
+      y2: y,
+      stroke: accentColor,
+      'stroke-width': 2,
+      'stroke-dasharray': '6 4'
+    }));
   });
+
+  const drawPieces = (pieces, { strokeWidth = 2, dash = null } = {}) => {
+    pieces.forEach(seg => {
+      const d0 = clampDepth(seg.d0);
+      const d1 = clampDepth(seg.d1);
+      if (Math.abs(d1 - d0) < 1e-6) return;
+      const pts = [
+        [sx(d0), sy(seg.T0)],
+        [sx(d1), sy(seg.T1)]
+      ];
+      const attrs = {
+        d: pathFrom(pts),
+        fill: 'none',
+        stroke: seg.color,
+        'stroke-width': strokeWidth
+      };
+      if (dash) attrs['stroke-dasharray'] = dash;
+      svg.appendChild(svgEl('path', attrs));
+    });
+  };
+
+  const theoreticalPieces = buildTheoreticalCurve(depthMin, depthMax, payload_kg, cable_w_kgpm);
+  drawPieces(theoreticalPieces, { strokeWidth: 2, dash: '6 4' });
+
+  const requiredPieces = buildTensionSegments(normalizedSegments, payload_kg, cable_w_kgpm, depthMin, depthMax, {
+    factor: TENSION_SAFETY_FACTOR,
+    colorBelow: accentColor,
+    colorAbove: EXCEED_COLOR
+  });
+  drawPieces(requiredPieces, { strokeWidth: 2.4 });
 
   if (tensionMin <= 0 && tensionMax >= 0) {
     svg.appendChild(svgEl('line', { x1: ML, y1: sy(0), x2: W - MR, y2: sy(0), stroke: '#bbb', 'stroke-dasharray': '4 4' }));
   }
+
+  function pathFrom(pts) {
+    if (!pts.length) return '';
+    let d = `M ${pts[0][0]} ${pts[0][1]}`;
+    for (let i = 1; i < pts.length; i++) d += ` L ${pts[i][0]} ${pts[i][1]}`;
+    return d;
+  }
+}
+
+function buildTheoreticalCurve(depthMin, depthMax, payload_kg, cable_w_kgpm) {
+  if (!Number.isFinite(depthMin) || !Number.isFinite(depthMax)) return [];
+  if (!Number.isFinite(payload_kg) || !Number.isFinite(cable_w_kgpm)) return [];
+
+  const clampedMin = Math.min(depthMin, depthMax);
+  const clampedMax = Math.max(depthMin, depthMax);
+  if (Math.abs(clampedMax - clampedMin) < 1e-9) return [];
+
+  return [{
+    d0: clampedMin,
+    d1: clampedMax,
+    color: TENSION_THEORETICAL_COLOR,
+    T0: payload_kg + cable_w_kgpm * clampedMin,
+    T1: payload_kg + cable_w_kgpm * clampedMax
+  }];
+}
+
+function buildTensionSegments(segments, payload_kg, cable_w_kgpm, depthMin, depthMax, {
+  factor = 1,
+  colorBelow,
+  colorAbove
+} = {}) {
+  const clampDepth = d => Math.min(Math.max(d, depthMin), depthMax);
+  const boundaries = new Set([depthMin, depthMax]);
+  segments.forEach(S => {
+    boundaries.add(clampDepth(S.depth_end));
+    boundaries.add(clampDepth(S.depth_start));
+  });
+  const sorted = [...boundaries].sort((a, b) => a - b);
+
+  const pieces = [];
+  for (let i = 0; i < sorted.length - 1; i++) {
+    const d0 = sorted[i];
+    const d1 = sorted[i + 1];
+    if (d1 - d0 < 1e-9) continue;
+    const mid = (d0 + d1) / 2;
+    const seg = segments.find(S => mid >= Math.min(S.depth_end, S.depth_start) - 1e-9 && mid <= Math.max(S.depth_end, S.depth_start) + 1e-9);
+    const avail = seg ? seg.avail_tension_kgf : null;
+    const baseT0 = payload_kg + cable_w_kgpm * d0;
+    const baseT1 = payload_kg + cable_w_kgpm * d1;
+    const T0 = baseT0 * factor;
+    const T1 = baseT1 * factor;
+
+    if (!Number.isFinite(avail) || !Number.isFinite(factor) || factor <= 0) {
+      pieces.push({ d0, d1, color: colorBelow, T0, T1 });
+      continue;
+    }
+
+    const above0 = T0 > avail + 1e-6;
+    const above1 = T1 > avail + 1e-6;
+
+    if (above0 === above1) {
+      pieces.push({ d0, d1, color: above0 ? colorAbove : colorBelow, T0, T1 });
+      continue;
+    }
+
+    const deltaT = T1 - T0;
+    if (Math.abs(deltaT) < 1e-9) {
+      pieces.push({ d0, d1, color: above0 ? colorAbove : colorBelow, T0, T1 });
+      continue;
+    }
+
+    const frac = Math.min(Math.max((avail - T0) / deltaT, 0), 1);
+    const dCross = d0 + frac * (d1 - d0);
+    const Tcross = T0 + frac * deltaT;
+    const firstColor = above0 ? colorAbove : colorBelow;
+    const secondColor = above0 ? colorBelow : colorAbove;
+
+    pieces.push({ d0, d1: dCross, color: firstColor, T0, T1: Tcross });
+    pieces.push({ d0: dCross, d1, color: secondColor, T0: Tcross, T1 });
+  }
+
+  // Merge adjacent pieces of same color
+  const merged = [];
+  for (const piece of pieces) {
+    if (!merged.length) {
+      merged.push({ ...piece });
+      continue;
+    }
+    const last = merged[merged.length - 1];
+    if (piece.color === last.color && Math.abs(piece.d0 - last.d1) < 1e-6) {
+      last.d1 = piece.d1;
+      last.T1 = piece.T1;
+    } else {
+      merged.push({ ...piece });
+    }
+  }
+  return merged;
 }
 
 function coerceNumeric(wrap, field) {
@@ -474,7 +561,6 @@ function coerceNumeric(wrap, field) {
   }
   return null;
 }
-
 
 function wrapsToDepthSegments(wraps, speedField, tensionField, deadEnd = 0, scenario = 'electric') {
   /** @type {Array<Object>} */
@@ -547,14 +633,6 @@ function wrapsToDepthSegments(wraps, speedField, tensionField, deadEnd = 0, scen
       filteredCandidates.push(candidate);
     }
     const tensionVal = coerceNumeric(wrap, tensionField);
-    const requiredVal = coerceNumeric(wrap, [
-      'tension_required_kgf',
-      'tension_req_kgf'
-    ]);
-    const theoreticalVal = coerceNumeric(wrap, [
-      'tension_theoretical_kgf',
-      'tension_theo_kgf'
-    ]);
 
     segments.push({
       depth_start: depthStart,
@@ -562,8 +640,6 @@ function wrapsToDepthSegments(wraps, speedField, tensionField, deadEnd = 0, scen
       speed_ms: speedMs,
       candidate_speeds_ms: filteredCandidates,
       avail_tension_kgf: Number.isFinite(tensionVal) ? tensionVal : null,
-      tension_required_kgf: Number.isFinite(requiredVal) ? requiredVal : null,
-      tension_theoretical_kgf: Number.isFinite(theoreticalVal) ? theoreticalVal : null,
       label: Number.isFinite(wrap.wrap_no)
         ? `W${wrap.wrap_no}`
         : (Number.isFinite(wrap.layer_no) ? `L${wrap.layer_no}` : '')

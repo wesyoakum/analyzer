@@ -16,21 +16,8 @@ export const constants = {
 };
 
 // ---- DOM helpers (kept tiny; only used by main & plot modules) ----
-export const q = (id) => /** @type {HTMLElement|null} */ (document.getElementById(id));
-export const read = (id) => {
-  const el = /** @type {HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement | null} */ (q(id));
-  if (!el || !('value' in el)) return NaN;
-
-  const rawValue = typeof el.value === 'string'
-    ? el.value
-    : el.value == null
-      ? ''
-      : String(el.value);
-
-  const normalized = rawValue.replace(',', '.');
-  const parsed = parseFloat(normalized);
-  return Number.isFinite(parsed) ? parsed : NaN;
-};
+export const q = (id) => /** @type {HTMLElement} */ (document.getElementById(id));
+export const read = (id) => parseFloat(q(id).value.replace(',', '.'));
 
 // ---- Numeric helpers ----
 export const truncToHalf = (x) => Math.floor(x * 2) / 2;

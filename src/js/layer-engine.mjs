@@ -91,16 +91,13 @@ export function calcLayers(cfg) {
   while (spooled_len_m + 1e-12 < cable_len_m) {
     let wraps_this_layer = max_wraps_per_layer;
 
-    // If max wraps is an integer, reduce even layers by 1 (but never below 1)
+    // If max wraps is an integer, reduce even layers by 1
     if (
       isWhole(max_wraps_per_layer) &&
-      (layer_no % 2 === 0) &&
-      max_wraps_per_layer > 1
+      (layer_no % 2 === 0)
     ) {
-      wraps_this_layer = max_wraps_per_layer - 1;
+      wraps_this_layer = Math.max(0, max_wraps_per_layer - 1);
     }
-
-    wraps_this_layer = Math.max(1, Math.floor(wraps_this_layer));
 
     const wrap_len_in = Math.PI * layer_dia_in;
     const wrap_len_m = wrap_len_in * M_PER_IN;
