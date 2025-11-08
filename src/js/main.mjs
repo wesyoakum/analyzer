@@ -158,6 +158,21 @@ document.addEventListener('DOMContentLoaded', () => {
   computeAll();
 });
 
+const computeTimerLabel = 'computeAll total';
+
+/**
+ * Emit a console debug log that is easy to spot when tracing hangs.
+ * @param {string} message
+ * @param {Record<string, unknown>} [context]
+ */
+function logCompute(message, context) {
+  if (context && Object.keys(context).length) {
+    console.debug(`[computeAll] ${message}`, context);
+  } else {
+    console.debug(`[computeAll] ${message}`);
+  }
+}
+
 function updateBuildIndicator() {
   const indicator = /** @type {HTMLElement|null} */ (document.getElementById('build-info'));
   if (!indicator) return;
@@ -514,6 +529,10 @@ function computeAll() {
   if (errBox) errBox.textContent = '';
   if (status) status.textContent = 'computing…';
 
+  const totalTimerLabel = `${computeTimerLabel} ${typeof performance !== 'undefined' && performance.now ? performance.now().toFixed(3) : Date.now()}`;
+  console.time(totalTimerLabel);
+  logCompute('starting computation', { timer: totalTimerLabel });
+
   try {
     // Geometry & load inputs
     const wraps_override_input = read('wraps_override');
@@ -581,7 +600,10 @@ function computeAll() {
     const torque_at_drum_maxP_factor = Math.max(gr1, 1) * Math.max(gr2, 1) * Math.max(motors, 1);
 
     // Generate wraps from geometry
+    console.time('computeAll calcLayers');
     const { rows, summary, meta } = calcLayers(cfg);
+    console.timeEnd('computeAll calcLayers');
+    logCompute('generated layer rows', { rows: rows.length });
 
     const wrapsNoteEl = /** @type {HTMLTableCellElement|null} */ (document.getElementById('wraps_note'));
     if (wrapsNoteEl) {
@@ -591,6 +613,7 @@ function computeAll() {
     }
 
     // Per-wrap calculations (electric + hydraulic)
+    console.time('computeAll perWrap');
     for (const r of rows) {
       // Base tension and torque at drum
       const theoretical_tension = tension_kgf(r.deployed_len_m, payload_kg, cable_w_kgpm);
@@ -700,19 +723,33 @@ function computeAll() {
         r.hyd_elec_input_hp_used = 0;
       }
     }
+    console.timeEnd('computeAll perWrap');
+    logCompute('per-wrap calculations complete');
 
     // ---- Drum visualization ----
+    console.time('computeAll drumVisualization');
     renderDrumVisualization(rows, summary, cfg, meta);
+    console.timeEnd('computeAll drumVisualization');
+    logCompute('drum visualization rendered');
 
     // ---- Aggregate into per-layer tables ----
+    console.time('computeAll aggregation');
     lastElLayer = electricEnabled ? rowsToElectricLayer(rows, payload_kg, cable_w_kgpm, gr1, gr2, motors) : [];
     lastHyLayer = hydraulicEnabled ? rowsToHydraulicLayer(rows) : [];
     lastElWraps = electricEnabled ? projectElectricWraps(rows) : [];
     lastHyWraps = hydraulicEnabled ? projectHydraulicWraps(rows) : [];
+    console.timeEnd('computeAll aggregation');
+    logCompute('aggregation complete', {
+      electricWraps: lastElWraps.length,
+      hydraulicWraps: lastHyWraps.length
+    });
 
     // ---- Render tables ----
+    console.time('computeAll renderTables');
     renderElectricTables(lastElLayer, lastElWraps, q('tbody_el_layer'), q('tbody_el_wraps'));
     renderHydraulicTables(lastHyLayer, lastHyWraps, q('tbody_hy_layer'), q('tbody_hy_wraps'));
+    console.timeEnd('computeAll renderTables');
+    logCompute('tables rendered');
 
     updateCsvButtonStates();
 
@@ -720,9 +757,13 @@ function computeAll() {
     if (status) status.textContent = 'results updated';
 
     // ---- Draw plots ----
+    console.time('computeAll redrawPlots');
     redrawPlots();
+    console.timeEnd('computeAll redrawPlots');
+    logCompute('plots redrawn');
   } catch (e) {
     console.error(e);
+    logCompute('error encountered', { error: e && e.message ? e.message : e });
     if (errBox) errBox.textContent = 'ERROR: ' + (e && e.message ? e.message : e);
     if (status) status.textContent = 'error';
     clearMinimumSystemHp();
@@ -730,6 +771,9 @@ function computeAll() {
     clearDrumVisualization();
     clearPlots();
     updateCsvButtonStates();
+  } finally {
+    console.timeEnd(totalTimerLabel);
+    logCompute('finished computation', { timer: totalTimerLabel });
   }
 }
 
