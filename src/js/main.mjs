@@ -10,7 +10,7 @@ import {
   TENSION_SAFETY_FACTOR
 } from './utils.mjs';
 
-import { setupInputPersistence, collectInputState } from './persist-inputs.mjs';
+import { setupInputPersistence } from './persist-inputs.mjs';
 
 import { calcLayers } from './layer-engine.mjs';
 
@@ -108,8 +108,6 @@ const DEFAULT_SYSTEM_TYPE = 'electric';
 // ---- Wire up events once DOM is ready ----
 document.addEventListener('DOMContentLoaded', () => {
   setupInputPersistence();
-
-  setupPresetSave();
 
   setupComponentSelectors();
 
@@ -392,183 +390,6 @@ function setupCollapsibleToggles() {
       applyState(!expanded);
     });
   }
-}
-
-function setupPresetSave() {
-  const firstSection = document.querySelector('.input-section');
-  const host = firstSection && firstSection.parentElement ? firstSection.parentElement : null;
-  if (!firstSection || !host) return;
-
-  const container = document.createElement('section');
-  container.className = 'input-section preset-controls';
-
-  const title = document.createElement('h3');
-  title.className = 'input-section__title';
-  title.textContent = 'Presets';
-  container.appendChild(title);
-
-  const table = document.createElement('table');
-  table.className = 'worksheet';
-  const tbody = document.createElement('tbody');
-  table.appendChild(tbody);
-
-  const nameRow = document.createElement('tr');
-  const nameTh = document.createElement('th');
-  nameTh.scope = 'row';
-  const nameLabel = document.createElement('label');
-  nameLabel.className = 'param-label';
-  nameLabel.setAttribute('for', 'preset_name');
-  nameLabel.textContent = 'Preset Name';
-  nameTh.appendChild(nameLabel);
-
-  const nameInput = document.createElement('input');
-  nameInput.type = 'text';
-  nameInput.id = 'preset_name';
-  nameInput.placeholder = 'Enter a preset name';
-  nameInput.dataset.persist = 'off';
-
-  const nameValue = document.createElement('td');
-  nameValue.className = 'value';
-  nameValue.appendChild(nameInput);
-
-  const nameUnits = document.createElement('td');
-  nameUnits.className = 'units';
-  nameUnits.textContent = '–';
-
-  nameRow.appendChild(nameTh);
-  nameRow.appendChild(nameValue);
-  nameRow.appendChild(nameUnits);
-  tbody.appendChild(nameRow);
-
-  const descRow = document.createElement('tr');
-  const descTh = document.createElement('th');
-  descTh.scope = 'row';
-  const descLabel = document.createElement('label');
-  descLabel.className = 'param-label';
-  descLabel.setAttribute('for', 'preset_description');
-  descLabel.textContent = 'Description (optional)';
-  descTh.appendChild(descLabel);
-
-  const descInput = document.createElement('textarea');
-  descInput.id = 'preset_description';
-  descInput.rows = 2;
-  descInput.placeholder = 'Add context for this configuration';
-  descInput.dataset.persist = 'off';
-
-  const descValue = document.createElement('td');
-  descValue.className = 'value';
-  descValue.appendChild(descInput);
-
-  const descUnits = document.createElement('td');
-  descUnits.className = 'units';
-  descUnits.textContent = '–';
-
-  descRow.appendChild(descTh);
-  descRow.appendChild(descValue);
-  descRow.appendChild(descUnits);
-  tbody.appendChild(descRow);
-
-  const actionRow = document.createElement('tr');
-  const actionCell = document.createElement('td');
-  actionCell.colSpan = 3;
-  actionCell.className = 'value';
-
-  const actionWrap = document.createElement('div');
-  actionWrap.className = 'btnbar';
-
-  const status = document.createElement('span');
-  status.className = 'dim';
-  status.setAttribute('role', 'status');
-  status.setAttribute('aria-live', 'polite');
-
-  const saveBtn = document.createElement('button');
-  saveBtn.type = 'button';
-  saveBtn.textContent = 'Save preset';
-
-  const setStatus = (message, tone) => {
-    status.textContent = message;
-    status.classList.toggle('dim', tone === 'idle' || tone === 'pending');
-    status.style.color = '';
-    if (tone === 'error') {
-      status.classList.remove('dim');
-      status.style.color = 'var(--danger-600, #b42318)';
-    } else if (tone === 'success') {
-      status.classList.remove('dim');
-      status.style.color = 'var(--ink-700)';
-    }
-  };
-
-  setStatus('', 'idle');
-
-  saveBtn.addEventListener('click', async () => {
-    const name = nameInput.value.trim();
-    const description = descInput.value.trim();
-
-    if (!name) {
-      setStatus('Please enter a preset name before saving.', 'error');
-      nameInput.focus();
-      return;
-    }
-
-    const data = collectInputState();
-    const payload = { name, data };
-    if (description) payload.description = description;
-
-    setStatus('Saving preset…', 'pending');
-    saveBtn.disabled = true;
-
-    try {
-      const response = await fetch('/api/presets', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(payload)
-      });
-
-      if (!response.ok) {
-        let message = `Unable to save preset (status ${response.status}).`;
-        try {
-          const errorBody = await response.json();
-          if (errorBody && errorBody.error) {
-            if (errorBody.error.message) {
-              message = errorBody.error.message;
-            }
-            if (Array.isArray(errorBody.error.details) && errorBody.error.details.length) {
-              message += ` ${errorBody.error.details.join(' ')}`;
-            }
-          }
-        } catch (err) {
-          // Ignore JSON parse errors.
-        }
-        throw new Error(message);
-      }
-
-      let savedName = name;
-      try {
-        const result = await response.json();
-        if (result && result.preset && typeof result.preset.name === 'string') {
-          savedName = result.preset.name;
-        }
-      } catch (err) {
-        // Ignore JSON parse errors on success; we already have a 2xx response.
-      }
-
-      setStatus(`Preset “${savedName}” saved successfully.`, 'success');
-    } catch (err) {
-      const message = err instanceof Error && err.message ? err.message : 'Unable to save preset.';
-      setStatus(message, 'error');
-    } finally {
-      saveBtn.disabled = false;
-    }
-  });
-
-  actionWrap.appendChild(saveBtn);
-  actionWrap.appendChild(status);
-  actionCell.appendChild(actionWrap);
-  actionRow.appendChild(actionCell);
-  tbody.appendChild(actionRow);
-
-  container.appendChild(table);
-  host.insertBefore(container, firstSection);
 }
 
 function setupPlotResizeToggles() {

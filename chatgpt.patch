@@ -1,233 +1,325 @@
-diff --git a/src/js/persist-inputs.mjs b/src/js/persist-inputs.mjs
-index 4196ac87d2517bf79ed118083e684017c4b673fe..a43c244c0e4293bee16dd98d2a5bcb1dbd67ac47 100644
---- a/src/js/persist-inputs.mjs
-+++ b/src/js/persist-inputs.mjs
-@@ -1,35 +1,37 @@
--const DEFAULT_STORAGE_KEY = 'analyzer.inputs.v2';
--const SKIP_INPUT_TYPES = new Set([
--  'button',
--  'file',
--  'hidden',
--  'image',
--  'password',
--  'reset',
--  'submit'
--]);
-+const DEFAULT_STORAGE_KEY = 'analyzer.inputs.v2';
-+const SKIP_INPUT_TYPES = new Set([
-+  'button',
-+  'file',
-+  'hidden',
-+  'image',
-+  'password',
-+  'reset',
-+  'submit'
-+]);
-+
-+let cachedTargets = null;
+diff --git a/src/js/main.mjs b/src/js/main.mjs
+index 3f13e6d7cb40733b2eb23de5fec524fe1eb00646..99e3db8954fa1533c09c70ecd271befde28f7cfc 100644
+--- a/src/js/main.mjs
++++ b/src/js/main.mjs
+@@ -1,38 +1,38 @@
+ // ===== main.mjs app bootstrap, compute, render, plots =====
  
- function isPersistable(el) {
-   if (!el || !el.id || el.disabled) return false;
-   if (el.dataset && el.dataset.persist === 'off') return false;
-   if (el.tagName === 'INPUT' && SKIP_INPUT_TYPES.has(el.type)) return false;
-   return true;
- }
+ import {
+   q, read,
+   G, W_PER_HP, PSI_TO_PA, CC_PER_GAL, M_PER_IN,
+   tension_kgf, elec_available_tension_kgf,
+   gpm_from_cc_rev_and_rpm, rpm_from_gpm_and_disp,
+   psi_from_torque_and_disp_Nm_cc, torque_per_motor_from_pressure_Pa,
+   line_speed_mpm_from_motor_rpm, hp_from_psi_and_gpm,
+   TENSION_SAFETY_FACTOR
+ } from './utils.mjs';
  
- function readValue(el) {
-   if (!el) return undefined;
-   if (el.tagName === 'INPUT') {
-     const type = el.type;
-     if (type === 'checkbox') {
-       return el.checked;
+-import { setupInputPersistence, collectInputState } from './persist-inputs.mjs';
++import { setupInputPersistence } from './persist-inputs.mjs';
+ 
+ import { calcLayers } from './layer-engine.mjs';
+ 
+ import {
+   rowsToElectricLayer, projectElectricWraps, renderElectricTables
+ } from './electric.mjs';
+ 
+ import {
+   rowsToHydraulicLayer, projectHydraulicWraps, renderHydraulicTables
+ } from './hydraulic.mjs';
+ 
+ import { drawWaveContours, drawWaveHeightContours } from './plots/wave-contours.mjs';
+ import { drawDepthProfiles } from './plots/depth-profiles.mjs';
+ import { setupComponentSelectors } from './component-selectors.mjs';
+ import { renderDrumVisualization, clearDrumVisualization } from './drum-visual.mjs';
+ 
+ // ---- App state for plots/tables ----
+ let lastElLayer = [], lastElWraps = [];
+ let lastHyLayer = [], lastHyWraps = [];
+ 
+ const CSV_BUTTON_SPECS = {
+   csv_el_layer: {
+     filename: () => 'electric-layer.csv',
+     columns: [
+       'layer_no', 'layer_dia_in', 'pre_on_drum_m', 'pre_deployed_m',
+@@ -87,52 +87,50 @@ const CSV_BUTTON_SPECS = {
+     columns: [
+       'wrap_no', 'layer_no', 'layer_dia_in', 'wrap_len_in', 'pre_spooled_len_m',
+       'spooled_len_m', 'deployed_len_m', 'tension_theoretical_kgf',
+       'tension_required_kgf', 'hyd_P_required_psi', 'hyd_speed_power_mpm',
+       'hyd_speed_flow_mpm', 'hyd_speed_available_mpm', 'hyd_hp_used_at_available',
+       'hyd_elec_input_hp_used', 'hyd_drum_torque_maxP_Nm', 'hyd_avail_tension_kgf'
+     ],
+     header: [
+       'wrap_no', 'layer_no', 'layer_dia_in', 'wrap_len_in', 'pre_spooled_len_m',
+       'spooled_len_m', 'deployed_len_m', 'tension_theoretical_kgf',
+       'tension_required_kgf', 'hyd_P_required_psi', 'hyd_speed_power_mpm',
+       'hyd_speed_flow_mpm', 'hyd_speed_available_mpm', 'hyd_hp_used_at_available',
+       'hyd_elec_input_hp_used', 'hyd_drum_torque_maxP_Nm', 'hyd_avail_tension_kgf'
+     ],
+     getRows: () => lastHyWraps
+   }
+ };
+ 
+ const SYSTEM_TYPE_SELECT_ID = 'system_type_select';
+ const DEFAULT_SYSTEM_TYPE = 'electric';
+ 
+ // ---- Wire up events once DOM is ready ----
+ document.addEventListener('DOMContentLoaded', () => {
+   setupInputPersistence();
+ 
+-  setupPresetSave();
+-
+   setupComponentSelectors();
+ 
+   setupCollapsibleToggles();
+ 
+   setupDriveModeControls();
+ 
+   setupCsvDownloads();
+ 
+   setupPlotResizeToggles();
+ 
+   setupAutoRecompute();
+ 
+   updateBuildIndicator();
+ 
+   setupTabs();
+ 
+   document.querySelectorAll('.param-label').forEach(label => {
+     const code = label.dataset.code;
+     if (code) {
+       label.setAttribute('title', code);
      }
-     if (type === 'radio') {
-       return el.checked ? el.value : undefined;
-     }
-     if (type === 'number') {
-       return el.value;
-     }
-     return el.value;
-   }
-   if (el.tagName === 'SELECT') {
-     if (el.multiple) {
-@@ -83,108 +85,128 @@ function loadState(storage, key) {
-   }
- }
- 
- function serializeState(storage, key, state) {
-   try {
-     storage.setItem(key, JSON.stringify(state));
-   } catch (err) {
-     console.warn('Unable to persist inputs:', err);
-   }
- }
- 
- function getStorage() {
-   if (typeof window === 'undefined' || !window.localStorage) return null;
-   try {
-     const { localStorage } = window;
-     const probe = `${DEFAULT_STORAGE_KEY}__probe__`;
-     localStorage.setItem(probe, '1');
-     localStorage.removeItem(probe);
-     return localStorage;
-   } catch (err) {
-     console.warn('Input persistence disabled:', err);
-     return null;
-   }
- }
- 
--function eventNamesFor(el) {
--  if (el.tagName === 'SELECT') return ['change'];
--  if (el.tagName === 'TEXTAREA') return ['input', 'change'];
--  if (el.tagName !== 'INPUT') return ['input', 'change'];
--
--  switch (el.type) {
--    case 'checkbox':
--    case 'radio':
--    case 'range':
--    case 'color':
--      return ['change'];
--    default:
--      return ['input', 'change'];
--  }
--}
--
--export function setupInputPersistence({ storageKey = DEFAULT_STORAGE_KEY } = {}) {
--  const storage = getStorage();
--  if (!storage) return;
--
--  const targets = Array.from(document.querySelectorAll('input[id], select[id], textarea[id]'))
--    .filter(isPersistable);
--  if (!targets.length) return;
--  const targetSet = new Set(targets);
--
--  let state = loadState(storage, storageKey);
--  targets.forEach(el => {
--    applyValue(el, state[el.id]);
-+function eventNamesFor(el) {
-+  if (el.tagName === 'SELECT') return ['change'];
-+  if (el.tagName === 'TEXTAREA') return ['input', 'change'];
-+  if (el.tagName !== 'INPUT') return ['input', 'change'];
-+
-+  switch (el.type) {
-+    case 'checkbox':
-+    case 'radio':
-+    case 'range':
-+    case 'color':
-+      return ['change'];
-+    default:
-+      return ['input', 'change'];
-+  }
-+}
-+
-+function resolveTargets() {
-+  if (cachedTargets && cachedTargets.length) {
-+    cachedTargets = cachedTargets.filter(isPersistable);
-+    if (cachedTargets.length) return cachedTargets;
-+  }
-+  cachedTargets = Array.from(document.querySelectorAll('input[id], select[id], textarea[id]'))
-+    .filter(isPersistable);
-+  return cachedTargets;
-+}
-+
-+function collectStateFromTargets(targets) {
-+  const next = {};
-+  targets.forEach(el => {
-+    if (!isPersistable(el)) return;
-+    const value = readValue(el);
-+    if (value !== undefined) {
-+      next[el.id] = value;
-+    }
-+  });
-+  return next;
-+}
-+
-+export function setupInputPersistence({ storageKey = DEFAULT_STORAGE_KEY } = {}) {
-+  const storage = getStorage();
-+  if (!storage) return;
-+
-+  const targets = resolveTargets();
-+  if (!targets.length) return;
-+  cachedTargets = targets;
-+  const targetSet = new Set(targets);
-+
-+  let state = loadState(storage, storageKey);
-+  targets.forEach(el => {
-+    applyValue(el, state[el.id]);
    });
  
-   let pending = false;
-   const flush = () => {
-     pending = false;
--    const next = {};
--    targets.forEach(el => {
--      if (!isPersistable(el)) return;
--      const value = readValue(el);
--      if (value !== undefined) {
--        next[el.id] = value;
--      }
--    });
--    state = next;
--    serializeState(storage, storageKey, state);
--  };
-+    state = collectStateFromTargets(targets);
-+    serializeState(storage, storageKey, state);
-+  };
- 
-   const schedule = (immediate = false) => {
-     if (immediate) {
-       flush();
-       return;
+   // Wave plot controls
+   q('wave_scenario').addEventListener('change', () => redrawPlots());
+@@ -372,227 +370,50 @@ function setupCollapsibleToggles() {
+     if (!body.id) {
+       collapseIdCounter += 1;
+       body.id = `collapse-body-${collapseIdCounter}`;
      }
-     if (pending) return;
-     pending = true;
-     if (typeof requestAnimationFrame === 'function') {
-       requestAnimationFrame(flush);
-     } else {
-       setTimeout(flush, 0);
-     }
-   };
+     toggle.setAttribute('aria-controls', body.id);
  
-   const handler = (event) => {
-     if (!targetSet.has(event.target)) return;
-     schedule();
-   };
+     let expanded = defaultExpanded;
  
-   targets.forEach(el => {
-     eventNamesFor(el).forEach(evt => {
-       el.addEventListener(evt, handler);
+     const applyState = (value) => {
+       expanded = value;
+       toggle.textContent = expanded ? '[-]' : '[+]';
+       toggle.setAttribute('aria-expanded', expanded ? 'true' : 'false');
+       toggle.setAttribute('aria-label', expanded ? 'Collapse section' : 'Expand section');
+       body.hidden = !expanded;
+       container.classList.toggle('is-collapsed', !expanded);
+     };
+ 
+     applyState(expanded);
+ 
+     toggle.addEventListener('click', () => {
+       applyState(!expanded);
      });
-   });
+   }
+ }
  
-   window.addEventListener('beforeunload', () => schedule(true));
--  window.addEventListener('storage', evt => {
--    if (evt.storageArea !== storage) return;
--    if (evt.key && evt.key !== storageKey) return;
--    const raw = evt.key === storageKey ? evt.newValue : storage.getItem(storageKey);
--    state = parseState(raw);
--    targets.forEach(el => {
--      applyValue(el, state[el.id]);
--    });
+-function setupPresetSave() {
+-  const firstSection = document.querySelector('.input-section');
+-  const host = firstSection && firstSection.parentElement ? firstSection.parentElement : null;
+-  if (!firstSection || !host) return;
+-
+-  const container = document.createElement('section');
+-  container.className = 'input-section preset-controls';
+-
+-  const title = document.createElement('h3');
+-  title.className = 'input-section__title';
+-  title.textContent = 'Presets';
+-  container.appendChild(title);
+-
+-  const table = document.createElement('table');
+-  table.className = 'worksheet';
+-  const tbody = document.createElement('tbody');
+-  table.appendChild(tbody);
+-
+-  const nameRow = document.createElement('tr');
+-  const nameTh = document.createElement('th');
+-  nameTh.scope = 'row';
+-  const nameLabel = document.createElement('label');
+-  nameLabel.className = 'param-label';
+-  nameLabel.setAttribute('for', 'preset_name');
+-  nameLabel.textContent = 'Preset Name';
+-  nameTh.appendChild(nameLabel);
+-
+-  const nameInput = document.createElement('input');
+-  nameInput.type = 'text';
+-  nameInput.id = 'preset_name';
+-  nameInput.placeholder = 'Enter a preset name';
+-  nameInput.dataset.persist = 'off';
+-
+-  const nameValue = document.createElement('td');
+-  nameValue.className = 'value';
+-  nameValue.appendChild(nameInput);
+-
+-  const nameUnits = document.createElement('td');
+-  nameUnits.className = 'units';
+-  nameUnits.textContent = '–';
+-
+-  nameRow.appendChild(nameTh);
+-  nameRow.appendChild(nameValue);
+-  nameRow.appendChild(nameUnits);
+-  tbody.appendChild(nameRow);
+-
+-  const descRow = document.createElement('tr');
+-  const descTh = document.createElement('th');
+-  descTh.scope = 'row';
+-  const descLabel = document.createElement('label');
+-  descLabel.className = 'param-label';
+-  descLabel.setAttribute('for', 'preset_description');
+-  descLabel.textContent = 'Description (optional)';
+-  descTh.appendChild(descLabel);
+-
+-  const descInput = document.createElement('textarea');
+-  descInput.id = 'preset_description';
+-  descInput.rows = 2;
+-  descInput.placeholder = 'Add context for this configuration';
+-  descInput.dataset.persist = 'off';
+-
+-  const descValue = document.createElement('td');
+-  descValue.className = 'value';
+-  descValue.appendChild(descInput);
+-
+-  const descUnits = document.createElement('td');
+-  descUnits.className = 'units';
+-  descUnits.textContent = '–';
+-
+-  descRow.appendChild(descTh);
+-  descRow.appendChild(descValue);
+-  descRow.appendChild(descUnits);
+-  tbody.appendChild(descRow);
+-
+-  const actionRow = document.createElement('tr');
+-  const actionCell = document.createElement('td');
+-  actionCell.colSpan = 3;
+-  actionCell.className = 'value';
+-
+-  const actionWrap = document.createElement('div');
+-  actionWrap.className = 'btnbar';
+-
+-  const status = document.createElement('span');
+-  status.className = 'dim';
+-  status.setAttribute('role', 'status');
+-  status.setAttribute('aria-live', 'polite');
+-
+-  const saveBtn = document.createElement('button');
+-  saveBtn.type = 'button';
+-  saveBtn.textContent = 'Save preset';
+-
+-  const setStatus = (message, tone) => {
+-    status.textContent = message;
+-    status.classList.toggle('dim', tone === 'idle' || tone === 'pending');
+-    status.style.color = '';
+-    if (tone === 'error') {
+-      status.classList.remove('dim');
+-      status.style.color = 'var(--danger-600, #b42318)';
+-    } else if (tone === 'success') {
+-      status.classList.remove('dim');
+-      status.style.color = 'var(--ink-700)';
+-    }
+-  };
+-
+-  setStatus('', 'idle');
+-
+-  saveBtn.addEventListener('click', async () => {
+-    const name = nameInput.value.trim();
+-    const description = descInput.value.trim();
+-
+-    if (!name) {
+-      setStatus('Please enter a preset name before saving.', 'error');
+-      nameInput.focus();
+-      return;
+-    }
+-
+-    const data = collectInputState();
+-    const payload = { name, data };
+-    if (description) payload.description = description;
+-
+-    setStatus('Saving preset…', 'pending');
+-    saveBtn.disabled = true;
+-
+-    try {
+-      const response = await fetch('/api/presets', {
+-        method: 'POST',
+-        headers: { 'Content-Type': 'application/json' },
+-        body: JSON.stringify(payload)
+-      });
+-
+-      if (!response.ok) {
+-        let message = `Unable to save preset (status ${response.status}).`;
+-        try {
+-          const errorBody = await response.json();
+-          if (errorBody && errorBody.error) {
+-            if (errorBody.error.message) {
+-              message = errorBody.error.message;
+-            }
+-            if (Array.isArray(errorBody.error.details) && errorBody.error.details.length) {
+-              message += ` ${errorBody.error.details.join(' ')}`;
+-            }
+-          }
+-        } catch (err) {
+-          // Ignore JSON parse errors.
+-        }
+-        throw new Error(message);
+-      }
+-
+-      let savedName = name;
+-      try {
+-        const result = await response.json();
+-        if (result && result.preset && typeof result.preset.name === 'string') {
+-          savedName = result.preset.name;
+-        }
+-      } catch (err) {
+-        // Ignore JSON parse errors on success; we already have a 2xx response.
+-      }
+-
+-      setStatus(`Preset “${savedName}” saved successfully.`, 'success');
+-    } catch (err) {
+-      const message = err instanceof Error && err.message ? err.message : 'Unable to save preset.';
+-      setStatus(message, 'error');
+-    } finally {
+-      saveBtn.disabled = false;
+-    }
 -  });
 -
--  schedule();
+-  actionWrap.appendChild(saveBtn);
+-  actionWrap.appendChild(status);
+-  actionCell.appendChild(actionWrap);
+-  actionRow.appendChild(actionCell);
+-  tbody.appendChild(actionRow);
+-
+-  container.appendChild(table);
+-  host.insertBefore(container, firstSection);
 -}
-\ No newline at end of file
-+  window.addEventListener('storage', evt => {
-+    if (evt.storageArea !== storage) return;
-+    if (evt.key && evt.key !== storageKey) return;
-+    const raw = evt.key === storageKey ? evt.newValue : storage.getItem(storageKey);
-+    state = parseState(raw);
-+    targets.forEach(el => {
-+      applyValue(el, state[el.id]);
-+    });
-+  });
-+
-+  schedule();
-+}
-+
-+export function collectInputState() {
-+  const targets = resolveTargets();
-+  if (!targets.length) return {};
-+  return collectStateFromTargets(targets);
-+}
+-
+ function setupPlotResizeToggles() {
+   const toggles = document.querySelectorAll('[data-plot-toggle]');
+   toggles.forEach(btn => {
+     const col = btn.closest('.plot-column');
+     if (!col) return;
+     const initialExpanded = col.classList.contains('is-expanded');
+     btn.textContent = initialExpanded ? '[-]' : '[+]';
+     btn.setAttribute('aria-expanded', initialExpanded ? 'true' : 'false');
+     btn.addEventListener('click', () => {
+       const expanded = col.classList.toggle('is-expanded');
+       btn.textContent = expanded ? '[-]' : '[+]';
+       btn.setAttribute('aria-expanded', expanded ? 'true' : 'false');
+     });
+   });
+ }
+ 
+ function setupAutoRecompute() {
+   const inputs = Array.from(document.querySelectorAll('input, select, textarea'));
+   if (!inputs.length) return;
+ 
+   const handler = () => computeAll();
+ 
+   inputs.forEach(el => {
+     if (el.tagName === 'SELECT') {
+       el.addEventListener('change', handler);
