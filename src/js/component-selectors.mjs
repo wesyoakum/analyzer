@@ -11,6 +11,12 @@
  * @property {number|string|boolean} [motor_max_rpm]
  * @property {number|string|boolean} [motor_hp]
  * @property {number|string|boolean} [motor_tmax_Nm]
+ * @property {number|string|boolean} [system_type_select]
+ * @property {number|string|boolean} [winch_type_select]
+ * @property {number|string|boolean} [rated_swl_kgf]
+ * @property {number|string|boolean} [rated_speed_mpm]
+ * @property {number|string|boolean} [dead_m]
+ * @property {number|string|boolean} [depth_m]
  * @property {number|string|boolean} [pump_disp_cc]
  * @property {number|string|boolean} [pump_max_psi]
  * @property {number|string|boolean} [hyd_motor_disp_cc]
@@ -20,32 +26,37 @@
   * @property {number|string|boolean} [c_mm]
   * @property {number|string|boolean} [depth_m]
   * @property {number|string|boolean} [dead_m]
-  * @property {number|string|boolean} [c_w_kgpm]
-  * @property {number|string|boolean} [core_in]
-  * @property {number|string|boolean} [flange_dia_in]
-  * @property {number|string|boolean} [ftf_in]
-  * @property {number|string|boolean} [lebus_in]
-  * @property {number|string|boolean} [pack]
-  * @property {number|string|boolean} [wraps_override]
-  * @property {number|string|boolean} [motors]
-  * @property {number|string|boolean} [h_pump_strings]
-  * @property {string} [gearbox_select]
-  * @property {string} [electric_motor_select]
-  * @property {string} [hydraulic_pump_select]
-  * @property {string} [hydraulic_motor_select]
-  * @property {string} [cable_select]
-  * @property {string} [drum_select]
-  * @property {string} [payload_select]
-  * @property {string} [hpu_select]
-  * @property {string} [hpu_motor_select]
+ * @property {number|string|boolean} [c_w_kgpm]
+ * @property {number|string|boolean} [core_in]
+ * @property {number|string|boolean} [flange_dia_in]
+ * @property {number|string|boolean} [ftf_in]
+ * @property {number|string|boolean} [lebus_in]
+ * @property {number|string|boolean} [pack]
+ * @property {number|string|boolean} [wraps_override]
+ * @property {number|string|boolean} [motors]
+ * @property {number|string|boolean} [gearbox_select]
+ * @property {number|string|boolean} [electric_motor_select]
+ * @property {number|string|boolean} [hydraulic_motor_select]
+ * @property {number|string|boolean} [hydraulic_pump_select]
+ * @property {number|string|boolean} [payload_select]
+ * @property {number|string|boolean} [cable_select]
+ * @property {number|string|boolean} [drum_select]
+ * @property {number|string|boolean} [h_pump_strings]
+ * @property {string} [hpu_select]
+ * @property {string} [hpu_motor_select]
+ * @property {number|string|boolean} [h_emotor_hp]
+ * @property {number|string|boolean} [h_emotor_rpm]
  */
 
 /**
  * @typedef {Object} SelectConfig
  * @property {string} selectId
  * @property {ComponentOption[]} options
+ * @property {string} type
+ * @property {string} label
  * @property {Record<string, keyof ComponentOption>} fieldMap
  * @property {boolean} [initialSkipEvents]
+ * @property {ComponentOption[]} [customOptions]
  */
 
 /** @type {ComponentOption[]} */
@@ -661,19 +672,29 @@ export const SYSTEM_OPTIONS = [
   {
     pn: 'WINCH-513',
     description: 'Placeholder 513 Winch system',
+    system_type_select: 'electric',
+    winch_type_select: 'conventional',
     cable_select: 'CB-30-3000',
     drum_select: 'DR-705-118',
     payload_select: 'PL-8000',
     hpu_select: 'HPU-2S-210',
     hpu_motor_select: 'LAM75-18-365TC',
+    rated_swl_kgf: 8000,
+    rated_speed_mpm: 30,
+    dead_m: 100,
+    depth_m: 3000,
     core_in: 70.5,
     flange_dia_in: 122,
     ftf_in: 118,
     lebus_in: 0.75,
     pack: 0.88,
+    wraps_override: 10,
     motors: 6,
     h_pump_strings: 2,
     gearbox_select: 'GB-123',
+    gr1: 20,
+    gr2: 5,
+    gearbox_max_torque_Nm: 6000,
     electric_motor_select: 'EM-200-4P',
     hydraulic_pump_select: 'HP-210A',
     hydraulic_motor_select: 'HM-1580'
@@ -681,19 +702,29 @@ export const SYSTEM_OPTIONS = [
   {
     pn: 'WINCH-900',
     description: 'Placeholder 900 Winch system',
+    system_type_select: 'hydraulic',
+    winch_type_select: 'traction',
     cable_select: 'CB-32-3500',
     drum_select: 'DR-82-132',
     payload_select: 'PL-10000',
     hpu_select: 'HPU-2S-250',
     hpu_motor_select: 'LAM110-12-444TC',
+    rated_swl_kgf: 12000,
+    rated_speed_mpm: 25,
+    dead_m: 120,
+    depth_m: 3500,
     core_in: 82,
     flange_dia_in: 138,
     ftf_in: 132,
     lebus_in: 0.6,
     pack: 0.9,
+    wraps_override: 12,
     motors: 4,
     h_pump_strings: 3,
     gearbox_select: 'GB-2050',
+    gr1: 22,
+    gr2: 6,
+    gearbox_max_torque_Nm: 8200,
     electric_motor_select: 'EM-250-6P',
     hydraulic_pump_select: 'HP-250C',
     hydraulic_motor_select: 'HM-2090'
@@ -720,7 +751,8 @@ export const FIELD_MAPS = {
   }),
   gearbox: /** @type {SelectConfig['fieldMap']} */ ({
     gr1: 'gear_ratio_stage1',
-    gr2: 'gear_ratio_stage2'
+    gr2: 'gear_ratio_stage2',
+    gearbox_max_torque_Nm: 'gearbox_max_torque_Nm'
   }),
   electricMotor: /** @type {SelectConfig['fieldMap']} */ ({
     motor_eff: 'motor_eff',
@@ -743,23 +775,34 @@ export const FIELD_MAPS = {
   hpu: /** @type {SelectConfig['fieldMap']} */ ({
     h_pump_strings: 'h_pump_strings',
     h_emotor_hp: 'h_emotor_hp',
+    h_emotor_rpm: 'h_emotor_rpm',
     h_pump_cc: 'pump_disp_cc',
     hpu_motor_select: 'hpu_motor_select',
     hydraulic_pump_select: 'hydraulic_pump_select'
   }),
   system: /** @type {SelectConfig['fieldMap']} */ ({
+    system_type_select: 'system_type_select',
+    winch_type_select: 'winch_type_select',
     cable_select: 'cable_select',
     drum_select: 'drum_select',
     payload_select: 'payload_select',
+    rated_swl_kgf: 'rated_swl_kgf',
+    rated_speed_mpm: 'rated_speed_mpm',
+    dead_m: 'dead_m',
+    depth_m: 'depth_m',
     core_in: 'core_in',
     ftf_in: 'ftf_in',
     lebus_in: 'lebus_in',
     pack: 'pack',
+    wraps_override: 'wraps_override',
     motors: 'motors',
     h_pump_strings: 'h_pump_strings',
     hpu_select: 'hpu_select',
     hpu_motor_select: 'hpu_motor_select',
     gearbox_select: 'gearbox_select',
+    gr1: 'gear_ratio_stage1',
+    gr2: 'gear_ratio_stage2',
+    gearbox_max_torque_Nm: 'gearbox_max_torque_Nm',
     electric_motor_select: 'electric_motor_select',
     hydraulic_pump_select: 'hydraulic_pump_select',
     hydraulic_motor_select: 'hydraulic_motor_select'
@@ -771,57 +814,248 @@ const SELECT_CONFIGS = [
   {
     selectId: 'cable_select',
     options: CABLE_OPTIONS,
+    type: 'cable',
+    label: 'Cable',
     fieldMap: FIELD_MAPS.cable
   },
   {
     selectId: 'drum_select',
     options: DRUM_OPTIONS,
+    type: 'drum',
+    label: 'Drum',
     fieldMap: FIELD_MAPS.drum
   },
   {
     selectId: 'payload_select',
     options: PAYLOAD_OPTIONS,
+    type: 'payload',
+    label: 'Payload',
     fieldMap: FIELD_MAPS.payload
   },
   {
     selectId: 'gearbox_select',
     options: GEARBOX_OPTIONS,
+    type: 'gearbox',
+    label: 'Gearbox',
     fieldMap: FIELD_MAPS.gearbox
   },
   {
     selectId: 'electric_motor_select',
     options: ELECTRIC_MOTOR_OPTIONS,
+    type: 'electric-motor',
+    label: 'Electric Motor',
     fieldMap: FIELD_MAPS.electricMotor
   },
   {
     selectId: 'hpu_motor_select',
     options: ELECTRIC_MOTOR_OPTIONS,
+    type: 'hpu-motor',
+    label: 'HPU Motor',
     fieldMap: FIELD_MAPS.hpuMotor
   },
   {
     selectId: 'hpu_select',
     options: HPU_OPTIONS,
+    type: 'hpu',
+    label: 'HPU',
     fieldMap: FIELD_MAPS.hpu
   },
   {
     selectId: 'hydraulic_pump_select',
     options: HYDRAULIC_PUMP_OPTIONS,
+    type: 'hydraulic-pump',
+    label: 'Hydraulic Pump',
     fieldMap: FIELD_MAPS.hydraulicPump
   },
   {
     selectId: 'hydraulic_motor_select',
     options: HYDRAULIC_MOTOR_OPTIONS,
+    type: 'hydraulic-motor',
+    label: 'Hydraulic Motor',
     fieldMap: FIELD_MAPS.hydraulicMotor
   },
   {
     selectId: 'system_select',
     options: SYSTEM_OPTIONS,
+    type: 'system',
+    label: 'System',
     fieldMap: FIELD_MAPS.system,
     initialSkipEvents: false
   }
 ];
 
 const watchedInputs = new Set();
+const CREATE_NEW_VALUE = '__component_create_new__';
+const COMPONENT_STORAGE_PREFIX = 'analyzer.components.';
+/** @type {Map<string, ComponentOption[]>} */
+const memoryCustomOptions = new Map();
+let cachedComponentStorage;
+
+function getComponentStorage() {
+  if (cachedComponentStorage !== undefined) return cachedComponentStorage;
+  if (typeof window === 'undefined' || !window.localStorage) {
+    cachedComponentStorage = null;
+    return cachedComponentStorage;
+  }
+  try {
+    const { localStorage } = window;
+    const probe = `${COMPONENT_STORAGE_PREFIX}__probe__`;
+    localStorage.setItem(probe, '1');
+    localStorage.removeItem(probe);
+    cachedComponentStorage = localStorage;
+  } catch (err) {
+    console.warn('Component preset storage disabled:', err);
+    cachedComponentStorage = null;
+  }
+  return cachedComponentStorage;
+}
+
+function loadCustomOptions(type) {
+  const storage = getComponentStorage();
+  if (storage) {
+    try {
+      const raw = storage.getItem(`${COMPONENT_STORAGE_PREFIX}${type}`);
+      if (raw) {
+        const parsed = JSON.parse(raw);
+        if (Array.isArray(parsed)) {
+          return parsed
+            .filter(opt => opt && typeof opt.pn === 'string')
+            .map(opt => ({ ...opt, name: opt.name ?? opt.pn }));
+        }
+      }
+    } catch (err) {
+      console.warn(`Unable to read custom ${type} options:`, err);
+    }
+  }
+  const fallback = memoryCustomOptions.get(type);
+  return fallback ? fallback.map(opt => ({ ...opt })) : [];
+}
+
+function saveCustomOptions(type, options) {
+  const clean = options.map(opt => ({ ...opt }));
+  memoryCustomOptions.set(type, clean);
+  const storage = getComponentStorage();
+  if (!storage) return;
+  try {
+    storage.setItem(`${COMPONENT_STORAGE_PREFIX}${type}`, JSON.stringify(clean));
+  } catch (err) {
+    console.warn(`Unable to persist custom ${type} options:`, err);
+  }
+}
+
+function allOptions(config) {
+  const base = Array.isArray(config.options) ? config.options : [];
+  const custom = Array.isArray(config.customOptions) ? config.customOptions : [];
+  return base.concat(custom);
+}
+
+function findOption(config, pn) {
+  return allOptions(config).find(opt => opt.pn === pn);
+}
+
+function readFieldValue(inputId) {
+  const el = /** @type {HTMLElement|null} */ (document.getElementById(inputId));
+  if (!el) return undefined;
+  if (el instanceof HTMLInputElement) {
+    if (el.type === 'checkbox') {
+      return el.checked;
+    }
+    if (el.type === 'number') {
+      if (el.value === '') return undefined;
+      const num = Number(el.value);
+      return Number.isNaN(num) ? undefined : num;
+    }
+    return el.value;
+  }
+  if (el instanceof HTMLSelectElement) {
+    return el.value;
+  }
+  if (el instanceof HTMLTextAreaElement) {
+    return el.value;
+  }
+  return el.textContent ?? undefined;
+}
+
+function collectValuesForConfig(config) {
+  const result = {};
+  Object.entries(config.fieldMap).forEach(([inputId, optionKey]) => {
+    const value = readFieldValue(inputId);
+    if (value !== undefined) {
+      result[optionKey] = value;
+    }
+  });
+  return result;
+}
+
+function populateSelectOptions(selectEl, config, { selectedValue } = {}) {
+  const prior = selectedValue !== undefined ? selectedValue : selectEl.value;
+  selectEl.innerHTML = '';
+  const manualOpt = document.createElement('option');
+  manualOpt.value = '';
+  manualOpt.textContent = 'Custom (manual input)';
+  selectEl.appendChild(manualOpt);
+
+  allOptions(config).forEach(option => {
+    const opt = document.createElement('option');
+    opt.value = option.pn;
+    opt.textContent = describeOption(config, option);
+    selectEl.appendChild(opt);
+  });
+
+  const createOpt = document.createElement('option');
+  createOpt.value = CREATE_NEW_VALUE;
+  createOpt.textContent = 'Create New';
+  selectEl.appendChild(createOpt);
+
+  if (prior && prior !== CREATE_NEW_VALUE && findOption(config, prior)) {
+    selectEl.value = prior;
+  } else if (prior === '') {
+    selectEl.value = '';
+  } else {
+    selectEl.value = '';
+  }
+}
+
+function handleCreateNew(config, selectEl) {
+  const label = config.label || 'component';
+  const pnInput = window.prompt(`Enter a part number for the new ${label} preset:`);
+  if (pnInput == null) {
+    return null;
+  }
+  const pn = pnInput.trim();
+  if (!pn) {
+    window.alert('A part number is required to create a preset.');
+    return null;
+  }
+
+  const existing = allOptions(config).find(opt => opt.pn.toLowerCase() === pn.toLowerCase());
+  if (existing) {
+    window.alert(`A preset with part number "${pn}" already exists.`);
+    return null;
+  }
+
+  const descriptionInput = window.prompt(`Enter a description for ${pn}:`);
+  const description = descriptionInput == null ? '' : descriptionInput.trim();
+
+  const values = collectValuesForConfig(config);
+  /** @type {ComponentOption} */
+  const option = {
+    pn,
+    name: pn,
+    ...values
+  };
+  if (description) {
+    option.description = description;
+  }
+
+  if (!Array.isArray(config.customOptions)) {
+    config.customOptions = [];
+  }
+  config.customOptions.push(option);
+  saveCustomOptions(config.type, config.customOptions);
+  populateSelectOptions(selectEl, config, { selectedValue: pn });
+  return pn;
+}
 
 function describeOption(config, option) {
   const parts = [option.name ?? option.pn];
@@ -867,7 +1101,7 @@ function attachWatcher(inputId) {
 function applySelection(config, pn, { skipEvents = false } = {}) {
   const selectEl = /** @type {HTMLSelectElement|null} */ (document.getElementById(config.selectId));
   if (!selectEl) return;
-  const option = config.options.find(opt => opt.pn === pn);
+  const option = findOption(config, pn);
   const fieldEntries = Object.entries(config.fieldMap);
   if (!option) {
     fieldEntries.forEach(([inputId]) => {
@@ -918,40 +1152,53 @@ export function setupComponentSelectors() {
   SELECT_CONFIGS.forEach(config => {
     const selectEl = /** @type {HTMLSelectElement|null} */ (document.getElementById(config.selectId));
     if (!selectEl) return;
+    config.customOptions = loadCustomOptions(config.type);
+
     const initialValue = selectEl.value;
     const { initialSkipEvents = true } = config;
 
-    // Populate the select list
-    // Clear any existing dynamic options while preserving the first custom option
-    const firstOption = selectEl.querySelector('option');
-    selectEl.innerHTML = '';
-    if (firstOption && firstOption.value === '') {
-      selectEl.appendChild(firstOption);
-    } else {
-      const opt = document.createElement('option');
-      opt.value = '';
-      opt.textContent = 'Custom (manual input)';
-      selectEl.appendChild(opt);
-    }
-
-    config.options.forEach(option => {
-      const opt = document.createElement('option');
-      opt.value = option.pn;
-      opt.textContent = describeOption(config, option);
-      selectEl.appendChild(opt);
-    });
-
-    selectEl.value = initialValue;
+    populateSelectOptions(selectEl, config, { selectedValue: initialValue });
 
     Object.keys(config.fieldMap).forEach(inputId => attachWatcher(inputId));
 
+    let previousValue = selectEl.value && selectEl.value !== CREATE_NEW_VALUE ? selectEl.value : '';
+    let suppressNext = false;
+
+    const ensureOptionApplied = (value, { skipEvents = false } = {}) => {
+      applySelection(config, value, { skipEvents });
+    };
+
     selectEl.addEventListener('change', () => {
-      applySelection(config, selectEl.value);
+      if (suppressNext) {
+        suppressNext = false;
+        previousValue = selectEl.value;
+        ensureOptionApplied(selectEl.value);
+        return;
+      }
+
+      const value = selectEl.value;
+      if (value === CREATE_NEW_VALUE) {
+        selectEl.value = previousValue;
+        const createdPn = handleCreateNew(config, selectEl);
+        if (createdPn) {
+          previousValue = createdPn;
+          suppressNext = true;
+          selectEl.value = createdPn;
+          ensureOptionApplied(createdPn);
+          selectEl.dispatchEvent(new Event('change', { bubbles: true }));
+        } else {
+          ensureOptionApplied(previousValue);
+        }
+        return;
+      }
+
+      previousValue = value;
+      ensureOptionApplied(value);
     });
 
     // Apply persisted selection if present
     if (selectEl.value) {
-      applySelection(config, selectEl.value, { skipEvents: initialSkipEvents });
+      ensureOptionApplied(selectEl.value, { skipEvents: initialSkipEvents });
     }
   });
 }

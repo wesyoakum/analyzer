@@ -9,6 +9,8 @@ const SKIP_INPUT_TYPES = new Set([
   'submit'
 ]);
 
+let cachedTargets = null;
+
 function isPersistable(el) {
   if (!el || !el.id || el.disabled) return false;
   if (el.dataset && el.dataset.persist === 'off') return false;
@@ -121,13 +123,35 @@ function eventNamesFor(el) {
   }
 }
 
+function resolveTargets() {
+  if (cachedTargets && cachedTargets.length) {
+    cachedTargets = cachedTargets.filter(isPersistable);
+    if (cachedTargets.length) return cachedTargets;
+  }
+  cachedTargets = Array.from(document.querySelectorAll('input[id], select[id], textarea[id]'))
+    .filter(isPersistable);
+  return cachedTargets;
+}
+
+function collectStateFromTargets(targets) {
+  const next = {};
+  targets.forEach(el => {
+    if (!isPersistable(el)) return;
+    const value = readValue(el);
+    if (value !== undefined) {
+      next[el.id] = value;
+    }
+  });
+  return next;
+}
+
 export function setupInputPersistence({ storageKey = DEFAULT_STORAGE_KEY } = {}) {
   const storage = getStorage();
   if (!storage) return;
 
-  const targets = Array.from(document.querySelectorAll('input[id], select[id], textarea[id]'))
-    .filter(isPersistable);
+  const targets = resolveTargets();
   if (!targets.length) return;
+  cachedTargets = targets;
   const targetSet = new Set(targets);
 
   let state = loadState(storage, storageKey);
@@ -138,15 +162,7 @@ export function setupInputPersistence({ storageKey = DEFAULT_STORAGE_KEY } = {})
   let pending = false;
   const flush = () => {
     pending = false;
-    const next = {};
-    targets.forEach(el => {
-      if (!isPersistable(el)) return;
-      const value = readValue(el);
-      if (value !== undefined) {
-        next[el.id] = value;
-      }
-    });
-    state = next;
+    state = collectStateFromTargets(targets);
     serializeState(storage, storageKey, state);
   };
 
@@ -187,4 +203,10 @@ export function setupInputPersistence({ storageKey = DEFAULT_STORAGE_KEY } = {})
   });
 
   schedule();
-}
+}
+
+export function collectInputState() {
+  const targets = resolveTargets();
+  if (!targets.length) return {};
+  return collectStateFromTargets(targets);
+}

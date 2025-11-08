@@ -1,239 +1,233 @@
-diff --git a/server/index.js b/server/index.js
-new file mode 100644
-index 0000000000000000000000000000000000000000..f111262629c0b0c77a9de2444e0423d1d5825a20
---- /dev/null
-+++ b/server/index.js
-@@ -0,0 +1,233 @@
-+import express from 'express';
-+import path from 'path';
-+import { fileURLToPath } from 'url';
-+import fs from 'fs/promises';
-+import crypto from 'crypto';
+diff --git a/src/js/persist-inputs.mjs b/src/js/persist-inputs.mjs
+index 4196ac87d2517bf79ed118083e684017c4b673fe..a43c244c0e4293bee16dd98d2a5bcb1dbd67ac47 100644
+--- a/src/js/persist-inputs.mjs
++++ b/src/js/persist-inputs.mjs
+@@ -1,35 +1,37 @@
+-const DEFAULT_STORAGE_KEY = 'analyzer.inputs.v2';
+-const SKIP_INPUT_TYPES = new Set([
+-  'button',
+-  'file',
+-  'hidden',
+-  'image',
+-  'password',
+-  'reset',
+-  'submit'
+-]);
++const DEFAULT_STORAGE_KEY = 'analyzer.inputs.v2';
++const SKIP_INPUT_TYPES = new Set([
++  'button',
++  'file',
++  'hidden',
++  'image',
++  'password',
++  'reset',
++  'submit'
++]);
 +
-+const __filename = fileURLToPath(import.meta.url);
-+const __dirname = path.dirname(__filename);
++let cachedTargets = null;
+ 
+ function isPersistable(el) {
+   if (!el || !el.id || el.disabled) return false;
+   if (el.dataset && el.dataset.persist === 'off') return false;
+   if (el.tagName === 'INPUT' && SKIP_INPUT_TYPES.has(el.type)) return false;
+   return true;
+ }
+ 
+ function readValue(el) {
+   if (!el) return undefined;
+   if (el.tagName === 'INPUT') {
+     const type = el.type;
+     if (type === 'checkbox') {
+       return el.checked;
+     }
+     if (type === 'radio') {
+       return el.checked ? el.value : undefined;
+     }
+     if (type === 'number') {
+       return el.value;
+     }
+     return el.value;
+   }
+   if (el.tagName === 'SELECT') {
+     if (el.multiple) {
+@@ -83,108 +85,128 @@ function loadState(storage, key) {
+   }
+ }
+ 
+ function serializeState(storage, key, state) {
+   try {
+     storage.setItem(key, JSON.stringify(state));
+   } catch (err) {
+     console.warn('Unable to persist inputs:', err);
+   }
+ }
+ 
+ function getStorage() {
+   if (typeof window === 'undefined' || !window.localStorage) return null;
+   try {
+     const { localStorage } = window;
+     const probe = `${DEFAULT_STORAGE_KEY}__probe__`;
+     localStorage.setItem(probe, '1');
+     localStorage.removeItem(probe);
+     return localStorage;
+   } catch (err) {
+     console.warn('Input persistence disabled:', err);
+     return null;
+   }
+ }
+ 
+-function eventNamesFor(el) {
+-  if (el.tagName === 'SELECT') return ['change'];
+-  if (el.tagName === 'TEXTAREA') return ['input', 'change'];
+-  if (el.tagName !== 'INPUT') return ['input', 'change'];
+-
+-  switch (el.type) {
+-    case 'checkbox':
+-    case 'radio':
+-    case 'range':
+-    case 'color':
+-      return ['change'];
+-    default:
+-      return ['input', 'change'];
+-  }
+-}
+-
+-export function setupInputPersistence({ storageKey = DEFAULT_STORAGE_KEY } = {}) {
+-  const storage = getStorage();
+-  if (!storage) return;
+-
+-  const targets = Array.from(document.querySelectorAll('input[id], select[id], textarea[id]'))
+-    .filter(isPersistable);
+-  if (!targets.length) return;
+-  const targetSet = new Set(targets);
+-
+-  let state = loadState(storage, storageKey);
+-  targets.forEach(el => {
+-    applyValue(el, state[el.id]);
++function eventNamesFor(el) {
++  if (el.tagName === 'SELECT') return ['change'];
++  if (el.tagName === 'TEXTAREA') return ['input', 'change'];
++  if (el.tagName !== 'INPUT') return ['input', 'change'];
 +
-+const app = express();
-+const PORT = process.env.PORT || 3000;
-+const STATIC_ROOT = path.resolve(__dirname, '..', 'src');
-+const DATA_DIR = path.resolve(__dirname, '..', 'data');
-+const PRESET_STORE = path.join(DATA_DIR, 'presets.json');
-+const LOCK_FILE = path.join(DATA_DIR, 'presets.lock');
-+
-+function generateId() {
-+  if (typeof crypto.randomUUID === 'function') {
-+    return crypto.randomUUID();
++  switch (el.type) {
++    case 'checkbox':
++    case 'radio':
++    case 'range':
++    case 'color':
++      return ['change'];
++    default:
++      return ['input', 'change'];
 +  }
-+  return crypto.randomBytes(16).toString('hex');
 +}
 +
-+app.use(express.json({ limit: '1mb' }));
-+app.use(express.static(STATIC_ROOT));
++function resolveTargets() {
++  if (cachedTargets && cachedTargets.length) {
++    cachedTargets = cachedTargets.filter(isPersistable);
++    if (cachedTargets.length) return cachedTargets;
++  }
++  cachedTargets = Array.from(document.querySelectorAll('input[id], select[id], textarea[id]'))
++    .filter(isPersistable);
++  return cachedTargets;
++}
 +
-+function sendError(res, statusCode, message, details) {
-+  res.status(statusCode).json({
-+    error: { message, ...(details ? { details } : {}) },
++function collectStateFromTargets(targets) {
++  const next = {};
++  targets.forEach(el => {
++    if (!isPersistable(el)) return;
++    const value = readValue(el);
++    if (value !== undefined) {
++      next[el.id] = value;
++    }
 +  });
++  return next;
 +}
 +
-+function validatePresetPayload(payload) {
-+  const errors = [];
++export function setupInputPersistence({ storageKey = DEFAULT_STORAGE_KEY } = {}) {
++  const storage = getStorage();
++  if (!storage) return;
 +
-+  if (typeof payload !== 'object' || payload === null || Array.isArray(payload)) {
-+    errors.push('Preset body must be a JSON object.');
-+    return { valid: false, errors };
-+  }
++  const targets = resolveTargets();
++  if (!targets.length) return;
++  cachedTargets = targets;
++  const targetSet = new Set(targets);
 +
-+  if (typeof payload.name !== 'string' || payload.name.trim().length === 0) {
-+    errors.push('Preset "name" must be a non-empty string.');
-+  }
-+
-+  if (payload.description !== undefined && typeof payload.description !== 'string') {
-+    errors.push('Preset "description" must be a string when provided.');
-+  }
-+
-+  if (payload.data === undefined) {
-+    errors.push('Preset "data" field is required.');
-+  } else if (typeof payload.data !== 'object' || payload.data === null || Array.isArray(payload.data)) {
-+    errors.push('Preset "data" must be an object.');
-+  }
-+
-+  if (payload.metadata !== undefined && (typeof payload.metadata !== 'object' || payload.metadata === null || Array.isArray(payload.metadata))) {
-+    errors.push('Preset "metadata" must be an object when provided.');
-+  }
-+
-+  if (payload.id !== undefined && typeof payload.id !== 'string') {
-+    errors.push('Preset "id" must be a string when provided.');
-+  }
-+
-+  return { valid: errors.length === 0, errors };
-+}
-+
-+async function ensureStore() {
-+  await fs.mkdir(DATA_DIR, { recursive: true });
-+  try {
-+    await fs.access(PRESET_STORE);
-+  } catch (err) {
-+    await fs.writeFile(PRESET_STORE, '[]', 'utf8');
-+  }
-+}
-+
-+async function withFileLock(fn) {
-+  await ensureStore();
-+  let lockHandle;
-+  while (true) {
-+    try {
-+      lockHandle = await fs.open(LOCK_FILE, 'wx');
-+      break;
-+    } catch (err) {
-+      if (err.code === 'EEXIST') {
-+        await new Promise((resolve) => setTimeout(resolve, 50));
-+      } else {
-+        throw err;
-+      }
-+    }
-+  }
-+
-+  try {
-+    return await fn();
-+  } finally {
-+    try {
-+      await lockHandle?.close();
-+    } catch (err) {
-+      console.error('Failed to close lock handle', err);
-+    }
-+    try {
-+      await fs.unlink(LOCK_FILE);
-+    } catch (err) {
-+      if (err.code !== 'ENOENT') {
-+        console.error('Failed to remove lock file', err);
-+      }
-+    }
-+  }
-+}
-+
-+async function readPresets() {
-+  await ensureStore();
-+  const raw = await fs.readFile(PRESET_STORE, 'utf8');
-+  try {
-+    const parsed = JSON.parse(raw);
-+    if (!Array.isArray(parsed)) {
-+      throw new Error('Preset store is not an array');
-+    }
-+    return parsed;
-+  } catch (err) {
-+    throw new Error(`Unable to parse presets file: ${err.message}`);
-+  }
-+}
-+
-+async function writePresets(presets) {
-+  const tmpPath = `${PRESET_STORE}.tmp`;
-+  const serialized = JSON.stringify(presets, null, 2);
-+  await fs.writeFile(tmpPath, serialized, 'utf8');
-+  await fs.rename(tmpPath, PRESET_STORE);
-+}
-+
-+app.get('/api/presets', async (req, res, next) => {
-+  try {
-+    const presets = await readPresets();
-+    res.json({ presets });
-+  } catch (err) {
-+    next(err);
-+  }
-+});
-+
-+app.get('/api/presets/:id', async (req, res, next) => {
-+  try {
-+    const presets = await readPresets();
-+    const preset = presets.find((item) => item.id === req.params.id);
-+    if (!preset) {
-+      return sendError(res, 404, 'Preset not found.');
-+    }
-+    res.json({ preset });
-+  } catch (err) {
-+    next(err);
-+  }
-+});
-+
-+app.post('/api/presets', async (req, res, next) => {
-+  const payload = req.body;
-+  const { valid, errors } = validatePresetPayload(payload);
-+  if (!valid) {
-+    return sendError(res, 400, 'Invalid preset payload.', errors);
-+  }
-+
-+  const description =
-+    typeof payload.description === 'string' && payload.description.trim().length > 0
-+      ? payload.description.trim()
-+      : undefined;
-+
-+  const presetToSave = {
-+    id: payload.id && typeof payload.id === 'string' ? payload.id : generateId(),
-+    name: payload.name.trim(),
-+    ...(description ? { description } : {}),
-+    data: payload.data,
-+    ...(payload.metadata !== undefined ? { metadata: payload.metadata } : {}),
-+    updatedAt: new Date().toISOString(),
++  let state = loadState(storage, storageKey);
++  targets.forEach(el => {
++    applyValue(el, state[el.id]);
+   });
+ 
+   let pending = false;
+   const flush = () => {
+     pending = false;
+-    const next = {};
+-    targets.forEach(el => {
+-      if (!isPersistable(el)) return;
+-      const value = readValue(el);
+-      if (value !== undefined) {
+-        next[el.id] = value;
+-      }
+-    });
+-    state = next;
+-    serializeState(storage, storageKey, state);
+-  };
++    state = collectStateFromTargets(targets);
++    serializeState(storage, storageKey, state);
 +  };
-+
-+  try {
-+    const result = await withFileLock(async () => {
-+      const presets = await readPresets();
-+      const existingIndex = presets.findIndex((item) => item.id === presetToSave.id);
-+      if (existingIndex >= 0) {
-+        presetToSave.createdAt = presets[existingIndex].createdAt ?? new Date().toISOString();
-+        presets[existingIndex] = { ...presets[existingIndex], ...presetToSave };
-+      } else {
-+        presetToSave.createdAt = new Date().toISOString();
-+        presets.push(presetToSave);
-+      }
-+      await writePresets(presets);
-+      return { presets, isNew: existingIndex === -1 };
+ 
+   const schedule = (immediate = false) => {
+     if (immediate) {
+       flush();
+       return;
+     }
+     if (pending) return;
+     pending = true;
+     if (typeof requestAnimationFrame === 'function') {
+       requestAnimationFrame(flush);
+     } else {
+       setTimeout(flush, 0);
+     }
+   };
+ 
+   const handler = (event) => {
+     if (!targetSet.has(event.target)) return;
+     schedule();
+   };
+ 
+   targets.forEach(el => {
+     eventNamesFor(el).forEach(evt => {
+       el.addEventListener(evt, handler);
+     });
+   });
+ 
+   window.addEventListener('beforeunload', () => schedule(true));
+-  window.addEventListener('storage', evt => {
+-    if (evt.storageArea !== storage) return;
+-    if (evt.key && evt.key !== storageKey) return;
+-    const raw = evt.key === storageKey ? evt.newValue : storage.getItem(storageKey);
+-    state = parseState(raw);
+-    targets.forEach(el => {
+-      applyValue(el, state[el.id]);
+-    });
+-  });
+-
+-  schedule();
+-}
+\ No newline at end of file
++  window.addEventListener('storage', evt => {
++    if (evt.storageArea !== storage) return;
++    if (evt.key && evt.key !== storageKey) return;
++    const raw = evt.key === storageKey ? evt.newValue : storage.getItem(storageKey);
++    state = parseState(raw);
++    targets.forEach(el => {
++      applyValue(el, state[el.id]);
 +    });
++  });
 +
-+    const status = result.isNew ? 201 : 200;
-+    res.status(status).json({ preset: presetToSave });
-+  } catch (err) {
-+    next(err);
-+  }
-+});
++  schedule();
++}
 +
-+app.delete('/api/presets/:id', async (req, res, next) => {
-+  const presetId = req.params.id;
-+  try {
-+    const removed = await withFileLock(async () => {
-+      const presets = await readPresets();
-+      const index = presets.findIndex((item) => item.id === presetId);
-+      if (index === -1) {
-+        return false;
-+      }
-+      presets.splice(index, 1);
-+      await writePresets(presets);
-+      return true;
-+    });
-+
-+    if (!removed) {
-+      return sendError(res, 404, 'Preset not found.');
-+    }
-+
-+    res.status(204).send();
-+  } catch (err) {
-+    next(err);
-+  }
-+});
-+
-+app.use((req, res, next) => {
-+  if (req.method === 'GET' && req.accepts('html')) {
-+    return res.sendFile(path.join(STATIC_ROOT, 'index.html'));
-+  }
-+  return sendError(res, 404, 'Not found.');
-+});
-+
-+app.use((err, req, res, next) => {
-+  console.error(err);
-+  sendError(res, 500, 'Internal server error.');
-+});
-+
-+app.listen(PORT, () => {
-+  console.log(`Server listening on http://localhost:${PORT}`);
-+});
++export function collectInputState() {
++  const targets = resolveTargets();
++  if (!targets.length) return {};
++  return collectStateFromTargets(targets);
++}
