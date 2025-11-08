@@ -1,8 +1,8 @@
 diff --git a/src/index.html b/src/index.html
-index 9423248f670ea7bc4a0b26a379982da5ac64440d..b98f1784635360ae94afeb03c791eaa54a1b8ac2 100644
+index 9423248f670ea7bc4a0b26a379982da5ac64440d..41fc85ef1cad1075c2ad4d658c4011615fdcdfa1 100644
 --- a/src/index.html
 +++ b/src/index.html
-@@ -1,87 +1,105 @@
+@@ -1,88 +1,88 @@
  <!doctype html>
  <html lang="en">
  <head>
@@ -25,59 +25,40 @@ index 9423248f670ea7bc4a0b26a379982da5ac64440d..b98f1784635360ae94afeb03c791eaa5
 -      <button class="tab-btn active" data-target="panel-inputs">Section 1: Inputs</button>
 -      <button class="tab-btn" data-target="panel-performance">Section 2: Performance Plots</button>
 -      <button class="tab-btn" data-target="panel-results">Section 3: Layer &amp; Wrap Tables</button>
--    </nav>
-+    <div class="tab-bar">
-+      <nav class="tabs" aria-label="App sections" role="tablist">
-+        <button
-+          id="tab-inputs"
-+          class="tab-btn active"
-+          type="button"
-+          role="tab"
-+          data-target="panel-inputs"
-+          aria-controls="panel-inputs"
-+          aria-selected="true"
-+          tabindex="0"
-+        >
-+          Section 1: Inputs
-+        </button>
-+        <button
-+          id="tab-performance"
-+          class="tab-btn"
-+          type="button"
-+          role="tab"
-+          data-target="panel-performance"
-+          aria-controls="panel-performance"
-+          aria-selected="false"
-+          tabindex="-1"
-+        >
-+          Section 2: Performance Plots
-+        </button>
-+        <button
-+          id="tab-results"
-+          class="tab-btn"
-+          type="button"
-+          role="tab"
-+          data-target="panel-results"
-+          aria-controls="panel-results"
-+          aria-selected="false"
-+          tabindex="-1"
-+        >
-+          Section 3: Layer &amp; Wrap Tables
-+        </button>
-+        <button
-+          id="tab-instructions"
-+          class="tab-btn"
-+          type="button"
-+          role="tab"
-+          data-target="panel-instructions"
-+          aria-controls="panel-instructions"
-+          aria-selected="false"
-+          tabindex="-1"
-+        >
-+          Instructions
-+        </button>
-+      </nav>
-+    </div>
++    <nav class="tabs" aria-label="App sections" role="tablist">
++      <button
++        class="tab-btn active"
++        id="tab-inputs"
++        type="button"
++        role="tab"
++        aria-selected="true"
++        aria-controls="panel-inputs"
++      >Section 1: Inputs</button>
++      <button
++        class="tab-btn"
++        id="tab-performance"
++        type="button"
++        role="tab"
++        aria-selected="false"
++        aria-controls="panel-performance"
++      >Section 2: Performance Plots</button>
++      <button
++        class="tab-btn"
++        id="tab-results"
++        type="button"
++        role="tab"
++        aria-selected="false"
++        aria-controls="panel-results"
++      >Section 3: Layer &amp; Wrap Tables</button>
++      <button
++        class="tab-btn"
++        id="tab-instructions"
++        type="button"
++        role="tab"
++        aria-selected="false"
++        aria-controls="panel-instructions"
++      >Section 4: Instructions</button>
+     </nav>
  
 -    <div id="panel-inputs" class="panel active">
 -      <section class="card actions" aria-labelledby="input-actions-title">
@@ -89,14 +70,7 @@ index 9423248f670ea7bc4a0b26a379982da5ac64440d..b98f1784635360ae94afeb03c791eaa5
 -        </div>
 -        <p class="dim">Remove any saved values and restore the default numbers for every field.</p>
 -      </section>
-+    <div
-+      id="panel-inputs"
-+      class="panel panel--with-floating-action active"
-+      role="tabpanel"
-+      aria-labelledby="tab-inputs"
-+      tabindex="0"
-+    >
- 
+-
 -      <section class="card info-card" id="component-catalog-card" aria-labelledby="component-catalog-instructions">
 -        <h2 class="section-title" id="component-catalog-instructions">How to update component presets</h2>
 -        <p>
@@ -124,8 +98,17 @@ index 9423248f670ea7bc4a0b26a379982da5ac64440d..b98f1784635360ae94afeb03c791eaa5
 -          will revert the dropdown to <em>Custom (manual input)</em> automatically.
 -        </p>
 -      </section>
-+      <button id="clear_inputs" class="panel-floating-action" type="button">Clear all inputs</button>
- 
+-
++    <div
++      id="panel-inputs"
++      class="panel active"
++      role="tabpanel"
++      tabindex="0"
++      aria-labelledby="tab-inputs"
++    >
++      <div class="panel-toolbar">
++        <button id="clear_inputs" type="button">Clear all inputs</button>
++      </div>
        <details class="card collapsible" open>
          <summary class="collapsible-summary">
            <h2 class="section-title">Section 1: Drum and Cable Inputs</h2>
@@ -150,7 +133,8 @@ index 9423248f670ea7bc4a0b26a379982da5ac64440d..b98f1784635360ae94afeb03c791eaa5
                      </th>
                      <td class="value">
                        <select id="system_select">
-@@ -290,57 +308,69 @@
+                         <option value="">Custom (manual input)</option>
+@@ -290,57 +290,69 @@
                        <label class="param-label" for="payload_kg" data-code="payload_kg">Payload in Water <span class="symbol" aria-hidden="true">W<sub>payload</sub></span></label>
                      </th>
                      <td class="value"><input id="payload_kg" type="number" step="1" value="8000"></td>
@@ -181,7 +165,7 @@ index 9423248f670ea7bc4a0b26a379982da5ac64440d..b98f1784635360ae94afeb03c791eaa5
 +                    </th>
 +                    <td class="value">
 +                      <select id="system_type_select">
-+                        <option value="electric" selected>Electric</option>
++                        <option value="electric">Electric</option>
 +                        <option value="hydraulic">Hydraulic</option>
 +                      </select>
 +                    </td>
@@ -197,8 +181,8 @@ index 9423248f670ea7bc4a0b26a379982da5ac64440d..b98f1784635360ae94afeb03c791eaa5
 -                        <label for="drive_hydraulic_enabled"><input id="drive_hydraulic_enabled" type="checkbox" checked> Hydraulic</label>
 -                      </div>
 +                      <select id="winch_type_select">
-+                        <option value="conventional" selected>Conventional</option>
-+                        <option value="traction">Traction Winch</option>
++                        <option value="conventional">Conventional</option>
++                        <option value="traction">Traction</option>
 +                      </select>
                      </td>
                      <td class="units">–</td>
@@ -225,7 +209,7 @@ index 9423248f670ea7bc4a0b26a379982da5ac64440d..b98f1784635360ae94afeb03c791eaa5
                    </thead>
                    <tbody>
                      <tr>
-@@ -547,51 +577,58 @@
+@@ -547,51 +559,60 @@
                      </select>
                    </td>
                    <td class="units">–</td>
@@ -259,6 +243,8 @@ index 9423248f670ea7bc4a0b26a379982da5ac64440d..b98f1784635360ae94afeb03c791eaa5
 +      aria-labelledby="tab-performance"
 +      tabindex="0"
 +      hidden
++      aria-hidden="true"
++      aria-live="polite"
 +    >
        <section class="card wave-card">
          <div class="card-header">
@@ -285,7 +271,7 @@ index 9423248f670ea7bc4a0b26a379982da5ac64440d..b98f1784635360ae94afeb03c791eaa5
              </table>
            </div>
            <div class="plot-controls__group">
-@@ -811,51 +848,58 @@
+@@ -811,51 +832,60 @@
                  <div class="legitem"><span class="swatch light dashed"></span><span>Candidate speeds (V<sub>p</sub>, V<sub>Q</sub>)</span></div>
                </div>
              </div>
@@ -319,6 +305,8 @@ index 9423248f670ea7bc4a0b26a379982da5ac64440d..b98f1784635360ae94afeb03c791eaa5
 +      aria-labelledby="tab-results"
 +      tabindex="0"
 +      hidden
++      aria-hidden="true"
++      aria-live="polite"
 +    >
        <div class="card" id="drum_card">
          <div class="section-title">Section 3: Drum Visualization</div>
@@ -345,7 +333,7 @@ index 9423248f670ea7bc4a0b26a379982da5ac64440d..b98f1784635360ae94afeb03c791eaa5
            <thead>
              <tr>
                <th title="layer_no">L#<br>(–)</th>
-@@ -953,30 +997,67 @@
+@@ -953,30 +983,68 @@
                  <th title="wrap_no">W#<br>(–)</th>
                  <th title="layer_no">L#<br>(–)</th>
                  <th title="layer_dia_in">D<sub>layer</sub><br>(in)</th>
@@ -378,6 +366,7 @@ index 9423248f670ea7bc4a0b26a379982da5ac64440d..b98f1784635360ae94afeb03c791eaa5
 +      aria-labelledby="tab-instructions"
 +      tabindex="0"
 +      hidden
++      aria-hidden="true"
 +    >
 +      <section class="card info-card" id="component-catalog-card" aria-labelledby="component-catalog-instructions">
 +        <h2 class="section-title" id="component-catalog-instructions">How to update component presets</h2>

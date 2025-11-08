@@ -16,51 +16,51 @@
     <div id="err"></div>
     <div id="status" aria-live="polite" class="status" role="status"></div>
 
-    <nav class="tabs" aria-label="App sections">
-      <button class="tab-btn active" data-target="panel-inputs">Section 1: Inputs</button>
-      <button class="tab-btn" data-target="panel-performance">Section 2: Performance Plots</button>
-      <button class="tab-btn" data-target="panel-results">Section 3: Layer &amp; Wrap Tables</button>
+    <nav class="tabs" aria-label="App sections" role="tablist">
+      <button
+        class="tab-btn active"
+        id="tab-inputs"
+        type="button"
+        role="tab"
+        aria-selected="true"
+        aria-controls="panel-inputs"
+      >Section 1: Inputs</button>
+      <button
+        class="tab-btn"
+        id="tab-performance"
+        type="button"
+        role="tab"
+        aria-selected="false"
+        aria-controls="panel-performance"
+      >Section 2: Performance Plots</button>
+      <button
+        class="tab-btn"
+        id="tab-results"
+        type="button"
+        role="tab"
+        aria-selected="false"
+        aria-controls="panel-results"
+      >Section 3: Layer &amp; Wrap Tables</button>
+      <button
+        class="tab-btn"
+        id="tab-instructions"
+        type="button"
+        role="tab"
+        aria-selected="false"
+        aria-controls="panel-instructions"
+      >Section 4: Instructions</button>
     </nav>
 
-    <div id="panel-inputs" class="panel active">
-      <section class="card actions" aria-labelledby="input-actions-title">
-        <div class="card-header">
-          <h2 class="section-title" id="input-actions-title">Quick actions</h2>
-          <div class="card-header-actions">
-            <button id="clear_inputs" type="button">Clear all inputs</button>
-          </div>
-        </div>
-        <p class="dim">Remove any saved values and restore the default numbers for every field.</p>
-      </section>
-
-      <section class="card info-card" id="component-catalog-card" aria-labelledby="component-catalog-instructions">
-        <h2 class="section-title" id="component-catalog-instructions">How to update component presets</h2>
-        <p>
-          The component dropdowns now read from dedicated catalogs in
-          <code>src/js/component-selectors.mjs</code>. Add or edit part numbers directly in the matching
-          array to make them available across the app.
-        </p>
-        <ol>
-          <li>
-            Open <code>src/js/component-selectors.mjs</code> and locate the array that matches the component
-            type you want to change (for example <code>GEARBOX_OPTIONS</code> or
-            <code>ELECTRIC_MOTOR_OPTIONS</code>).
-          </li>
-          <li>
-            Add a new object with the part number, description, and any field values that should autofill
-            when the part is selected. Follow the existing entries as a template.
-          </li>
-          <li>
-            Save the file and refresh the page. The new entry will appear under the corresponding dropdown
-            and auto-populate the linked form inputs.
-          </li>
-        </ol>
-        <p class="dim">
-          Tip: if you need to clear a selection after experimenting, change any populated value and the app
-          will revert the dropdown to <em>Custom (manual input)</em> automatically.
-        </p>
-      </section>
-
+    <div
+      id="panel-inputs"
+      class="panel active"
+      role="tabpanel"
+      tabindex="0"
+      aria-labelledby="tab-inputs"
+    >
+      <div class="panel-toolbar">
+        <button id="clear_inputs" type="button">Clear all inputs</button>
+      </div>
       <details class="card collapsible" open>
         <summary class="collapsible-summary">
           <h2 class="section-title">Section 1: Drum and Cable Inputs</h2>
@@ -312,13 +312,25 @@
                 <tbody>
                   <tr>
                     <th scope="row">
-                      <span class="param-label" data-code="drive_modes">Enabled Drive Types</span>
+                      <label class="param-label" for="system_type_select" data-code="system_type">System Type</label>
                     </th>
                     <td class="value">
-                      <div class="toggle-group">
-                        <label for="drive_electric_enabled"><input id="drive_electric_enabled" type="checkbox" checked> Electric</label>
-                        <label for="drive_hydraulic_enabled"><input id="drive_hydraulic_enabled" type="checkbox" checked> Hydraulic</label>
-                      </div>
+                      <select id="system_type_select">
+                        <option value="electric">Electric</option>
+                        <option value="hydraulic">Hydraulic</option>
+                      </select>
+                    </td>
+                    <td class="units">–</td>
+                  </tr>
+                  <tr>
+                    <th scope="row">
+                      <label class="param-label" for="winch_type_select" data-code="winch_type">Winch Type</label>
+                    </th>
+                    <td class="value">
+                      <select id="winch_type_select">
+                        <option value="conventional">Conventional</option>
+                        <option value="traction">Traction</option>
+                      </select>
                     </td>
                     <td class="units">–</td>
                   </tr>
@@ -569,7 +581,16 @@
       </section>
     </div>
 
-    <div id="panel-performance" class="panel">
+    <div
+      id="panel-performance"
+      class="panel"
+      role="tabpanel"
+      aria-labelledby="tab-performance"
+      tabindex="0"
+      hidden
+      aria-hidden="true"
+      aria-live="polite"
+    >
       <section class="card wave-card">
         <div class="card-header">
           <h2 class="section-title">Section 2: Wave Contours</h2>
@@ -833,7 +854,16 @@
       </section>
     </div>
 
-    <div id="panel-results" class="panel">
+    <div
+      id="panel-results"
+      class="panel"
+      role="tabpanel"
+      aria-labelledby="tab-results"
+      tabindex="0"
+      hidden
+      aria-hidden="true"
+      aria-live="polite"
+    >
       <div class="card" id="drum_card">
         <div class="section-title">Section 3: Drum Visualization</div>
         <div class="drum-visual">
@@ -975,8 +1005,46 @@
       </details>
     </div>
 
+    <div
+      id="panel-instructions"
+      class="panel"
+      role="tabpanel"
+      aria-labelledby="tab-instructions"
+      tabindex="0"
+      hidden
+      aria-hidden="true"
+    >
+      <section class="card info-card" id="component-catalog-card" aria-labelledby="component-catalog-instructions">
+        <h2 class="section-title" id="component-catalog-instructions">How to update component presets</h2>
+        <p>
+          The component dropdowns now read from dedicated catalogs in
+          <code>src/js/component-selectors.mjs</code>. Add or edit part numbers directly in the matching
+          array to make them available across the app.
+        </p>
+        <ol>
+          <li>
+            Open <code>src/js/component-selectors.mjs</code> and locate the array that matches the component
+            type you want to change (for example <code>GEARBOX_OPTIONS</code> or
+            <code>ELECTRIC_MOTOR_OPTIONS</code>).
+          </li>
+          <li>
+            Add a new object with the part number, description, and any field values that should autofill
+            when the part is selected. Follow the existing entries as a template.
+          </li>
+          <li>
+            Save the file and refresh the page. The new entry will appear under the corresponding dropdown
+            and auto-populate the linked form inputs.
+          </li>
+        </ol>
+        <p class="dim">
+          Tip: if you need to clear a selection after experimenting, change any populated value and the app
+          will revert the dropdown to <em>Custom (manual input)</em> automatically.
+        </p>
+      </section>
+    </div>
+
     <!-- Main app script -->
     <script type="module" src="js/main.mjs"></script>
   </div>
 </body>
-</html>
+</html>

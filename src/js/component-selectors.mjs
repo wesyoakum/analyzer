@@ -51,12 +51,6 @@
 /** @type {ComponentOption[]} */
 export const CABLE_OPTIONS = [
   {
-    pn: '42mm Umbilical',
-    description: 'Typical WROV Umbilical',
-    c_mm: 42,
-    c_w_kgpm: 3.8
-  },
-  {
     pn: '.681 Umbilical',
     description: '0.681 in diameter umbilical',
     c_mm: 17.3
@@ -633,24 +627,28 @@ export const HYDRAULIC_MOTOR_OPTIONS = [
 export const HPU_OPTIONS = [
   {
     pn: 'CTH1025',
+    name: 'CTH1025',
     description: '25 hp AC motor, 1 pump string',
     h_pump_strings: 1,
     h_emotor_hp: 25
   },
   {
     pn: 'CTH1030',
+    name: 'CTH1030',
     description: '30 hp AC motor, 1 pump string',
     h_pump_strings: 1,
     h_emotor_hp: 30
   },
   {
     pn: 'CTH2150',
+    name: 'CTH2150',
     description: '75 hp AC motors, 2 pump strings',
     h_pump_strings: 2,
     h_emotor_hp: 75
   },
   {
     pn: 'CTH2300',
+    name: 'CTH2300',
     description: '150 hp AC motors, 2 pump strings, 210 cc pumps',
     h_pump_strings: 2,
     h_emotor_hp: 150,

@@ -123,21 +123,13 @@ document.addEventListener('DOMContentLoaded', () => {
 
   updateBuildIndicator();
 
+  setupTabs();
+
   document.querySelectorAll('.param-label').forEach(label => {
     const code = label.dataset.code;
     if (code) {
       label.setAttribute('title', code);
     }
-  });
-
-  // Tabs
-  document.querySelectorAll('.tab-btn').forEach(b => {
-    b.addEventListener('click', () => {
-      document.querySelectorAll('.tab-btn').forEach(x => x.classList.remove('active'));
-      document.querySelectorAll('.panel').forEach(x => x.classList.remove('active'));
-      b.classList.add('active');
-      document.getElementById(b.dataset.target).classList.add('active');
-    });
   });
 
   // Wave plot controls
@@ -176,6 +168,91 @@ function updateBuildIndicator() {
   });
 
   indicator.textContent = `Updated ${formatter.format(lastModified)} UTC`;
+}
+
+function setupTabs() {
+  /** @type {Array<{tab: HTMLElement, panel: HTMLElement}>} */
+  const tabEntries = [];
+  document.querySelectorAll('[role="tab"]').forEach(tabEl => {
+    const controls = tabEl.getAttribute('aria-controls');
+    const panel = controls ? /** @type {HTMLElement|null} */ (document.getElementById(controls)) : null;
+    if (!panel) return;
+    tabEntries.push({ tab: /** @type {HTMLElement} */ (tabEl), panel });
+  });
+
+  if (!tabEntries.length) return;
+
+  /** @param {HTMLElement} el */
+  const isDisabled = el => el.hasAttribute('disabled');
+
+  const enabledTabs = () => tabEntries.map(entry => entry.tab).filter(tab => !isDisabled(tab));
+
+  const activate = (nextTab, { setFocus = false } = {}) => {
+    tabEntries.forEach(({ tab, panel }) => {
+      const isActive = tab === nextTab;
+      tab.classList.toggle('active', isActive);
+      tab.setAttribute('aria-selected', isActive ? 'true' : 'false');
+      tab.tabIndex = isActive ? 0 : -1;
+
+      panel.classList.toggle('active', isActive);
+      panel.toggleAttribute('hidden', !isActive);
+      panel.setAttribute('aria-hidden', isActive ? 'false' : 'true');
+      panel.tabIndex = isActive ? 0 : -1;
+    });
+
+    if (setFocus) {
+      nextTab.focus();
+    }
+  };
+
+  const focusRelative = (currentTab, delta) => {
+    const tabs = enabledTabs();
+    if (!tabs.length) return;
+    const currentIndex = tabs.indexOf(currentTab);
+    if (currentIndex === -1) return;
+    const nextIndex = (currentIndex + delta + tabs.length) % tabs.length;
+    activate(tabs[nextIndex], { setFocus: true });
+  };
+
+  const focusEdge = (first = true) => {
+    const tabs = enabledTabs();
+    if (!tabs.length) return;
+    activate(first ? tabs[0] : tabs[tabs.length - 1], { setFocus: true });
+  };
+
+  tabEntries.forEach(({ tab }) => {
+    tab.addEventListener('click', () => activate(tab));
+    tab.addEventListener('keydown', evt => {
+      switch (evt.key) {
+        case 'ArrowLeft':
+        case 'ArrowUp':
+          evt.preventDefault();
+          focusRelative(tab, -1);
+          break;
+        case 'ArrowRight':
+        case 'ArrowDown':
+          evt.preventDefault();
+          focusRelative(tab, 1);
+          break;
+        case 'Home':
+          evt.preventDefault();
+          focusEdge(true);
+          break;
+        case 'End':
+          evt.preventDefault();
+          focusEdge(false);
+          break;
+        default:
+          break;
+      }
+    });
+  });
+
+  const initialTab = tabEntries
+    .map(entry => entry.tab)
+    .find(tab => tab.classList.contains('active') || tab.getAttribute('aria-selected') === 'true');
+
+  activate(initialTab || tabEntries[0].tab);
 }
 
 function setupCsvDownloads() {

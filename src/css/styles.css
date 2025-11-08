@@ -516,12 +516,18 @@ nav.tabs {
   box-shadow: 0 3px 0 rgba(20, 34, 56, 0.12);
 }
 
-.tab-btn.active {
+.tab-btn.active,
+.tab-btn[aria-selected="true"] {
   background: var(--paper);
   color: var(--ink-900);
   box-shadow: none;
   position: relative;
   top: 2px;
+}
+
+.tab-btn:focus-visible {
+  outline: 3px solid var(--accent);
+  outline-offset: 2px;
 }
 
 .panel {
@@ -535,6 +541,13 @@ nav.tabs {
 
 .panel .card:first-of-type {
   margin-top: 0;
+}
+
+.panel-toolbar {
+  display: flex;
+  justify-content: flex-end;
+  gap: 12px;
+  margin-bottom: 12px;
 }
 
 .drum-visual {
