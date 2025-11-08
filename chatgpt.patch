@@ -1,16 +1,8 @@
 diff --git a/src/js/main.mjs b/src/js/main.mjs
-index fb2423ddbb756963bd2311f1392710ed790a905c..b92dd9f9d0b8395e4d48e41138cebdb9f7dc53c6 100644
+index b92dd9f9d0b8395e4d48e41138cebdb9f7dc53c6..b19edbc925f8110888d7e724d554cb11d3bf3486 100644
 --- a/src/js/main.mjs
 +++ b/src/js/main.mjs
-@@ -136,50 +136,65 @@ document.addEventListener('DOMContentLoaded', () => {
- 
-   // Tabs
-   document.querySelectorAll('.tab-btn').forEach(b => {
-     b.addEventListener('click', () => {
-       document.querySelectorAll('.tab-btn').forEach(x => x.classList.remove('active'));
-       document.querySelectorAll('.panel').forEach(x => x.classList.remove('active'));
-       b.classList.add('active');
-       document.getElementById(b.dataset.target).classList.add('active');
+@@ -144,54 +144,61 @@ document.addEventListener('DOMContentLoaded', () => {
      });
    });
  
@@ -28,21 +20,30 @@ index fb2423ddbb756963bd2311f1392710ed790a905c..b92dd9f9d0b8395e4d48e41138cebdb9
    computeAll();
  });
  
-+const computeTimerLabel = 'computeAll total';
+ const computeTimerLabel = 'computeAll total';
+ 
+ /**
+  * Emit a console debug log that is easy to spot when tracing hangs.
+  * @param {string} message
+  * @param {Record<string, unknown>} [context]
+  */
+ function logCompute(message, context) {
++  const logFn =
++    (typeof console !== 'undefined' && typeof console.info === 'function' && console.info.bind(console)) ||
++    (typeof console !== 'undefined' && typeof console.log === 'function' && console.log.bind(console)) ||
++    (typeof console !== 'undefined' && typeof console.debug === 'function' && console.debug.bind(console));
 +
-+/**
-+ * Emit a console debug log that is easy to spot when tracing hangs.
-+ * @param {string} message
-+ * @param {Record<string, unknown>} [context]
-+ */
-+function logCompute(message, context) {
-+  if (context && Object.keys(context).length) {
-+    console.debug(`[computeAll] ${message}`, context);
-+  } else {
-+    console.debug(`[computeAll] ${message}`);
-+  }
-+}
++  if (!logFn) return;
 +
+   if (context && Object.keys(context).length) {
+-    console.debug(`[computeAll] ${message}`, context);
++    logFn(`[computeAll] ${message}`, context);
+   } else {
+-    console.debug(`[computeAll] ${message}`);
++    logFn(`[computeAll] ${message}`);
+   }
+ }
+ 
  function updateBuildIndicator() {
    const indicator = /** @type {HTMLElement|null} */ (document.getElementById('build-info'));
    if (!indicator) return;
@@ -65,228 +66,3 @@ index fb2423ddbb756963bd2311f1392710ed790a905c..b92dd9f9d0b8395e4d48e41138cebdb9
    });
  
    indicator.textContent = `Updated ${formatter.format(lastModified)} UTC`;
- }
- 
- function setupCsvDownloads() {
-@@ -492,50 +507,54 @@ function updateScenarioOptions(selectId, electricEnabled, hydraulicEnabled) {
-       if (opt.hidden !== disabled) opt.hidden = disabled;
-       if (disabled && opt.selected) needsChange = true;
-     }
-   });
- 
-   if (needsChange) {
-     if (electricEnabled) {
-       selectEl.value = 'electric';
-     } else if (hydraulicEnabled) {
-       selectEl.value = 'hydraulic';
-     } else {
-       const first = Array.from(selectEl.options).find(opt => !opt.disabled);
-       if (first) selectEl.value = first.value;
-     }
-     selectEl.dispatchEvent(new Event('change', { bubbles: true }));
-   }
- }
- 
- // ---- Core compute + render ----
- function computeAll() {
-   const errBox = /** @type {HTMLElement|null} */ (document.getElementById('err'));
-   const status = /** @type {HTMLElement|null} */ (document.getElementById('status'));
-   if (errBox) errBox.textContent = '';
-   if (status) status.textContent = 'computing…';
- 
-+  const totalTimerLabel = `${computeTimerLabel} ${typeof performance !== 'undefined' && performance.now ? performance.now().toFixed(3) : Date.now()}`;
-+  console.time(totalTimerLabel);
-+  logCompute('starting computation', { timer: totalTimerLabel });
-+
-   try {
-     // Geometry & load inputs
-     const wraps_override_input = read('wraps_override');
-     const wraps_per_layer_override = (
-       Number.isFinite(wraps_override_input) && wraps_override_input > 0
-     ) ? wraps_override_input : undefined;
- 
-     const cfg = {
-       cable_dia_mm: read('c_mm'),
-       operating_depth_m: read('depth_m'),
-       dead_end_m: read('dead_m'),
-       core_dia_in: read('core_in'),
-       flange_dia_in: read('flange_dia_in'),
-       flange_to_flange_in: read('ftf_in'),
-       lebus_thk_in: read('lebus_in'),
-       packing_factor: read('pack'),
-       wraps_per_layer_override
-     };
-     const payload_kg = read('payload_kg');
-     const cable_w_kgpm = read('c_w_kgpm');
- 
-     const rated_speed_mpm = read('rated_speed_mpm');
-     const rated_swl_kgf = read('rated_swl_kgf');
-     const system_efficiency = read('system_efficiency');
- 
-@@ -559,60 +578,64 @@ function computeAll() {
-     const motor_tmax = read('motor_tmax');
-     const P_per_motor_W = motor_hp * motor_eff * W_PER_HP;
- 
-     // Hydraulic inputs
-     const h_strings = positiveOr(read('h_pump_strings'), 0);
-     const h_emotor_hp = positiveOr(read('h_emotor_hp'), 0);
-     const h_emotor_eff = positiveOr(read('h_emotor_eff'), 0); // electro-hydraulic efficiency
-     const h_emotor_rpm = positiveOr(read('h_emotor_rpm'), 0);
-     const h_pump_cc = positiveOr(read('h_pump_cc'), 0);
-     const h_max_psi = positiveOr(read('h_max_psi'), 0);
-     const h_hmot_cc = positiveOr(read('h_hmot_cc'), 0);
-     const h_hmot_rpm_cap = positiveOr(read('h_hmot_rpm_max'), Infinity);
- 
-     // Usable hydraulic hp & flow from pump strings
-     const hp_str_usable = h_emotor_hp * h_emotor_eff;
-     const hp_tot_usable = hp_str_usable * h_strings;
-     const q_str_gpm = gpm_from_cc_rev_and_rpm(h_pump_cc, h_emotor_rpm);
-     const q_tot_gpm = q_str_gpm * h_strings;
- 
-     // Max-pressure torque per hydraulic motor and at drum (pressure-limited)
-     const dP_Pa = h_max_psi * PSI_TO_PA;
-     const torque_per_hmotor_maxP = torque_per_motor_from_pressure_Pa(dP_Pa, h_hmot_cc); // N·m per motor at max P
-     const torque_at_drum_maxP_factor = Math.max(gr1, 1) * Math.max(gr2, 1) * Math.max(motors, 1);
- 
-     // Generate wraps from geometry
-+    console.time('computeAll calcLayers');
-     const { rows, summary, meta } = calcLayers(cfg);
-+    console.timeEnd('computeAll calcLayers');
-+    logCompute('generated layer rows', { rows: rows.length });
- 
-     const wrapsNoteEl = /** @type {HTMLTableCellElement|null} */ (document.getElementById('wraps_note'));
-     if (wrapsNoteEl) {
-       const calcWraps = meta && Number.isFinite(meta.wraps_per_layer_calc) ? meta.wraps_per_layer_calc : undefined;
-       const display = (typeof calcWraps === 'number') ? calcWraps.toFixed(1) : '–';
-       wrapsNoteEl.textContent = `Leave blank or set to 0 to use calculated wraps (always truncated to .0/.5). Auto-calculated wraps per layer: ${display}.`;
-     }
- 
-     // Per-wrap calculations (electric + hydraulic)
-+    console.time('computeAll perWrap');
-     for (const r of rows) {
-       // Base tension and torque at drum
-       const theoretical_tension = tension_kgf(r.deployed_len_m, payload_kg, cable_w_kgpm);
-       const required_tension = +(theoretical_tension * TENSION_SAFETY_FACTOR).toFixed(1);
-       r.tension_theoretical_kgf = theoretical_tension;
-       r.tension_kgf = required_tension;
-       const tension_N = required_tension * G;
-       const radius_m = (r.layer_dia_in * M_PER_IN) / 2;
-       r.torque_Nm = +(tension_N * radius_m).toFixed(1);
- 
-       // ----- ELECTRIC per wrap -----
-       if (electricEnabled) {
-         const motorTorque_e = r.torque_Nm / (denom_mech || 1);
-         r.motor_torque_Nm = +motorTorque_e.toFixed(2);
- 
-         // RPM limited by available power per motor and capped by motor max rpm
-         let rpm_power_e = 0;
-         if (P_per_motor_W > 0 && motorTorque_e > 0) {
-           rpm_power_e = (P_per_motor_W / motorTorque_e) * 60 / (2 * Math.PI);
-         } else if (P_per_motor_W > 0 && motorTorque_e === 0) {
-           rpm_power_e = Number.POSITIVE_INFINITY;
-         } else {
-           rpm_power_e = 0;
-         }
-         const rpm_capped_e = Math.min(Number.isFinite(motor_max_rpm) ? motor_max_rpm : Infinity, rpm_power_e);
-@@ -678,80 +701,101 @@ function computeAll() {
-           const motor_rpm_needed = drum_rpm_needed * (Math.max(gr1, 1) * Math.max(gr2, 1));
-           const gpm_per_motor_needed = (motor_rpm_needed * h_hmot_cc) / CC_PER_GAL;
-           const gpm_total_needed = Math.max(motors, 1) * gpm_per_motor_needed;
-           const gpm_used = Math.min(gpm_total_needed, q_tot_gpm);
-           hp_used_at_available = hp_from_psi_and_gpm(P_power_psi, gpm_used);
-           if (hp_used_at_available > hp_tot_usable) hp_used_at_available = hp_tot_usable;
-         }
- 
-         r.hyd_P_required_psi = Math.round(P_req_psi);
-         r.hyd_speed_power_mpm = +speed_power_mpm.toFixed(2);
-         r.hyd_speed_flow_mpm = +speed_flow_mpm.toFixed(2);
-         r.hyd_speed_available_mpm = +speed_avail_mpm.toFixed(2);
-         r.hyd_hp_used_at_available = +hp_used_at_available.toFixed(2);
-         r.hyd_elec_input_hp_used = +((h_emotor_eff > 0 ? r.hyd_hp_used_at_available / h_emotor_eff : 0)).toFixed(2);
-       } else {
-         r.hyd_drum_torque_maxP_Nm = 0;
-         r.hyd_avail_tension_kgf = 0;
-         r.hyd_P_required_psi = 0;
-         r.hyd_speed_power_mpm = 0;
-         r.hyd_speed_flow_mpm = 0;
-         r.hyd_speed_available_mpm = 0;
-         r.hyd_hp_used_at_available = 0;
-         r.hyd_elec_input_hp_used = 0;
-       }
-     }
-+    console.timeEnd('computeAll perWrap');
-+    logCompute('per-wrap calculations complete');
- 
-     // ---- Drum visualization ----
-+    console.time('computeAll drumVisualization');
-     renderDrumVisualization(rows, summary, cfg, meta);
-+    console.timeEnd('computeAll drumVisualization');
-+    logCompute('drum visualization rendered');
- 
-     // ---- Aggregate into per-layer tables ----
-+    console.time('computeAll aggregation');
-     lastElLayer = electricEnabled ? rowsToElectricLayer(rows, payload_kg, cable_w_kgpm, gr1, gr2, motors) : [];
-     lastHyLayer = hydraulicEnabled ? rowsToHydraulicLayer(rows) : [];
-     lastElWraps = electricEnabled ? projectElectricWraps(rows) : [];
-     lastHyWraps = hydraulicEnabled ? projectHydraulicWraps(rows) : [];
-+    console.timeEnd('computeAll aggregation');
-+    logCompute('aggregation complete', {
-+      electricWraps: lastElWraps.length,
-+      hydraulicWraps: lastHyWraps.length
-+    });
- 
-     // ---- Render tables ----
-+    console.time('computeAll renderTables');
-     renderElectricTables(lastElLayer, lastElWraps, q('tbody_el_layer'), q('tbody_el_wraps'));
-     renderHydraulicTables(lastHyLayer, lastHyWraps, q('tbody_hy_layer'), q('tbody_hy_wraps'));
-+    console.timeEnd('computeAll renderTables');
-+    logCompute('tables rendered');
- 
-     updateCsvButtonStates();
- 
-     // ---- Update status ----
-     if (status) status.textContent = 'results updated';
- 
-     // ---- Draw plots ----
-+    console.time('computeAll redrawPlots');
-     redrawPlots();
-+    console.timeEnd('computeAll redrawPlots');
-+    logCompute('plots redrawn');
-   } catch (e) {
-     console.error(e);
-+    logCompute('error encountered', { error: e && e.message ? e.message : e });
-     if (errBox) errBox.textContent = 'ERROR: ' + (e && e.message ? e.message : e);
-     if (status) status.textContent = 'error';
-     clearMinimumSystemHp();
-     lastElLayer = lastElWraps = lastHyLayer = lastHyWraps = [];
-     clearDrumVisualization();
-     clearPlots();
-     updateCsvButtonStates();
-+  } finally {
-+    console.timeEnd(totalTimerLabel);
-+    logCompute('finished computation', { timer: totalTimerLabel });
-   }
- }
- 
- // ---- Plot redraw helper (uses decoupled plotting modules) ----
- function redrawPlots() {
-   // Wave contours (optional - skip if controls/SVGs absent)
-   const waveScenarioEl = /** @type {HTMLSelectElement|null} */ (document.getElementById('wave_scenario'));
-   const waveTminEl = /** @type {HTMLInputElement|null} */ (document.getElementById('wave_tmin'));
-   const waveTmaxEl = /** @type {HTMLInputElement|null} */ (document.getElementById('wave_tmax'));
-   const waveVminEl = /** @type {HTMLInputElement|null} */ (document.getElementById('wave_vmin'));
-   const waveVmaxEl = /** @type {HTMLInputElement|null} */ (document.getElementById('wave_vmax'));
-   const waveHminEl = /** @type {HTMLInputElement|null} */ (document.getElementById('wave_hmin'));
-   const waveHmaxEl = /** @type {HTMLInputElement|null} */ (document.getElementById('wave_hmax'));
-   const waveSvg = /** @type {SVGSVGElement|null} */ (document.getElementById('wave_svg'));
-   const waveSvgHeight = /** @type {SVGSVGElement|null} */ (document.getElementById('wave_svg_height'));
- 
-   const parseInput = (el) => {
-     if (!el) return NaN;
-     return parseFloat((el.value || '').replace(',', '.'));
-   };
- 
-   if (waveScenarioEl && waveTminEl && waveTmaxEl && waveHmaxEl && waveSvg && waveSvgHeight) {
-     const TminVal = parseInput(waveTminEl);
-     const TmaxVal = parseInput(waveTmaxEl);
-     const speedMinVal = parseInput(waveVminEl);

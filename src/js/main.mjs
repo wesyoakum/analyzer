@@ -166,10 +166,17 @@ const computeTimerLabel = 'computeAll total';
  * @param {Record<string, unknown>} [context]
  */
 function logCompute(message, context) {
+  const logFn =
+    (typeof console !== 'undefined' && typeof console.info === 'function' && console.info.bind(console)) ||
+    (typeof console !== 'undefined' && typeof console.log === 'function' && console.log.bind(console)) ||
+    (typeof console !== 'undefined' && typeof console.debug === 'function' && console.debug.bind(console));
+
+  if (!logFn) return;
+
   if (context && Object.keys(context).length) {
-    console.debug(`[computeAll] ${message}`, context);
+    logFn(`[computeAll] ${message}`, context);
   } else {
-    console.debug(`[computeAll] ${message}`);
+    logFn(`[computeAll] ${message}`);
   }
 }
 
