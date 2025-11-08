@@ -1,0 +1,233 @@
+import express from 'express';
+import path from 'path';
+import { fileURLToPath } from 'url';
+import fs from 'fs/promises';
+import crypto from 'crypto';
+
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
+
+const app = express();
+const PORT = process.env.PORT || 3000;
+const STATIC_ROOT = path.resolve(__dirname, '..', 'src');
+const DATA_DIR = path.resolve(__dirname, '..', 'data');
+const PRESET_STORE = path.join(DATA_DIR, 'presets.json');
+const LOCK_FILE = path.join(DATA_DIR, 'presets.lock');
+
+function generateId() {
+  if (typeof crypto.randomUUID === 'function') {
+    return crypto.randomUUID();
+  }
+  return crypto.randomBytes(16).toString('hex');
+}
+
+app.use(express.json({ limit: '1mb' }));
+app.use(express.static(STATIC_ROOT));
+
+function sendError(res, statusCode, message, details) {
+  res.status(statusCode).json({
+    error: { message, ...(details ? { details } : {}) },
+  });
+}
+
+function validatePresetPayload(payload) {
+  const errors = [];
+
+  if (typeof payload !== 'object' || payload === null || Array.isArray(payload)) {
+    errors.push('Preset body must be a JSON object.');
+    return { valid: false, errors };
+  }
+
+  if (typeof payload.name !== 'string' || payload.name.trim().length === 0) {
+    errors.push('Preset "name" must be a non-empty string.');
+  }
+
+  if (payload.description !== undefined && typeof payload.description !== 'string') {
+    errors.push('Preset "description" must be a string when provided.');
+  }
+
+  if (payload.data === undefined) {
+    errors.push('Preset "data" field is required.');
+  } else if (typeof payload.data !== 'object' || payload.data === null || Array.isArray(payload.data)) {
+    errors.push('Preset "data" must be an object.');
+  }
+
+  if (payload.metadata !== undefined && (typeof payload.metadata !== 'object' || payload.metadata === null || Array.isArray(payload.metadata))) {
+    errors.push('Preset "metadata" must be an object when provided.');
+  }
+
+  if (payload.id !== undefined && typeof payload.id !== 'string') {
+    errors.push('Preset "id" must be a string when provided.');
+  }
+
+  return { valid: errors.length === 0, errors };
+}
+
+async function ensureStore() {
+  await fs.mkdir(DATA_DIR, { recursive: true });
+  try {
+    await fs.access(PRESET_STORE);
+  } catch (err) {
+    await fs.writeFile(PRESET_STORE, '[]', 'utf8');
+  }
+}
+
+async function withFileLock(fn) {
+  await ensureStore();
+  let lockHandle;
+  while (true) {
+    try {
+      lockHandle = await fs.open(LOCK_FILE, 'wx');
+      break;
+    } catch (err) {
+      if (err.code === 'EEXIST') {
+        await new Promise((resolve) => setTimeout(resolve, 50));
+      } else {
+        throw err;
+      }
+    }
+  }
+
+  try {
+    return await fn();
+  } finally {
+    try {
+      await lockHandle?.close();
+    } catch (err) {
+      console.error('Failed to close lock handle', err);
+    }
+    try {
+      await fs.unlink(LOCK_FILE);
+    } catch (err) {
+      if (err.code !== 'ENOENT') {
+        console.error('Failed to remove lock file', err);
+      }
+    }
+  }
+}
+
+async function readPresets() {
+  await ensureStore();
+  const raw = await fs.readFile(PRESET_STORE, 'utf8');
+  try {
+    const parsed = JSON.parse(raw);
+    if (!Array.isArray(parsed)) {
+      throw new Error('Preset store is not an array');
+    }
+    return parsed;
+  } catch (err) {
+    throw new Error(`Unable to parse presets file: ${err.message}`);
+  }
+}
+
+async function writePresets(presets) {
+  const tmpPath = `${PRESET_STORE}.tmp`;
+  const serialized = JSON.stringify(presets, null, 2);
+  await fs.writeFile(tmpPath, serialized, 'utf8');
+  await fs.rename(tmpPath, PRESET_STORE);
+}
+
+app.get('/api/presets', async (req, res, next) => {
+  try {
+    const presets = await readPresets();
+    res.json({ presets });
+  } catch (err) {
+    next(err);
+  }
+});
+
+app.get('/api/presets/:id', async (req, res, next) => {
+  try {
+    const presets = await readPresets();
+    const preset = presets.find((item) => item.id === req.params.id);
+    if (!preset) {
+      return sendError(res, 404, 'Preset not found.');
+    }
+    res.json({ preset });
+  } catch (err) {
+    next(err);
+  }
+});
+
+app.post('/api/presets', async (req, res, next) => {
+  const payload = req.body;
+  const { valid, errors } = validatePresetPayload(payload);
+  if (!valid) {
+    return sendError(res, 400, 'Invalid preset payload.', errors);
+  }
+
+  const description =
+    typeof payload.description === 'string' && payload.description.trim().length > 0
+      ? payload.description.trim()
+      : undefined;
+
+  const presetToSave = {
+    id: payload.id && typeof payload.id === 'string' ? payload.id : generateId(),
+    name: payload.name.trim(),
+    ...(description ? { description } : {}),
+    data: payload.data,
+    ...(payload.metadata !== undefined ? { metadata: payload.metadata } : {}),
+    updatedAt: new Date().toISOString(),
+  };
+
+  try {
+    const result = await withFileLock(async () => {
+      const presets = await readPresets();
+      const existingIndex = presets.findIndex((item) => item.id === presetToSave.id);
+      if (existingIndex >= 0) {
+        presetToSave.createdAt = presets[existingIndex].createdAt ?? new Date().toISOString();
+        presets[existingIndex] = { ...presets[existingIndex], ...presetToSave };
+      } else {
+        presetToSave.createdAt = new Date().toISOString();
+        presets.push(presetToSave);
+      }
+      await writePresets(presets);
+      return { presets, isNew: existingIndex === -1 };
+    });
+
+    const status = result.isNew ? 201 : 200;
+    res.status(status).json({ preset: presetToSave });
+  } catch (err) {
+    next(err);
+  }
+});
+
+app.delete('/api/presets/:id', async (req, res, next) => {
+  const presetId = req.params.id;
+  try {
+    const removed = await withFileLock(async () => {
+      const presets = await readPresets();
+      const index = presets.findIndex((item) => item.id === presetId);
+      if (index === -1) {
+        return false;
+      }
+      presets.splice(index, 1);
+      await writePresets(presets);
+      return true;
+    });
+
+    if (!removed) {
+      return sendError(res, 404, 'Preset not found.');
+    }
+
+    res.status(204).send();
+  } catch (err) {
+    next(err);
+  }
+});
+
+app.use((req, res, next) => {
+  if (req.method === 'GET' && req.accepts('html')) {
+    return res.sendFile(path.join(STATIC_ROOT, 'index.html'));
+  }
+  return sendError(res, 404, 'Not found.');
+});
+
+app.use((err, req, res, next) => {
+  console.error(err);
+  sendError(res, 500, 'Internal server error.');
+});
+
+app.listen(PORT, () => {
+  console.log(`Server listening on http://localhost:${PORT}`);
+});
