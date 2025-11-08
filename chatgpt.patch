@@ -1,8 +1,8 @@
 diff --git a/src/js/persist-inputs.mjs b/src/js/persist-inputs.mjs
-index 2e4ffa0300ea473f8399cc8881eabc4005d7c909..75817337653dd604f33326eeb871216fbbe31601 100644
+index 2e4ffa0300ea473f8399cc8881eabc4005d7c909..cecd1a102275e7b399710bdeb035951d73f94d36 100644
 --- a/src/js/persist-inputs.mjs
 +++ b/src/js/persist-inputs.mjs
-@@ -165,26 +165,102 @@ export function setupInputPersistence({ storageKey = DEFAULT_STORAGE_KEY } = {})
+@@ -165,26 +165,93 @@ export function setupInputPersistence({ storageKey = DEFAULT_STORAGE_KEY } = {})
    };
  
    const handler = (event) => {
@@ -32,58 +32,47 @@ index 2e4ffa0300ea473f8399cc8881eabc4005d7c909..75817337653dd604f33326eeb871216f
 \ No newline at end of file
 +}
 +
-+function resetElementToDefault(el) {
++function resetElement(el) {
 +  if (!el) return;
++  if (el.dataset) {
++    delete el.dataset.componentSelect;
++    delete el.dataset.componentPn;
++    delete el.dataset.componentSuppress;
++  }
 +
 +  if (el.tagName === 'INPUT') {
-+    const input = /** @type {HTMLInputElement} */ (el);
-+    const type = input.type;
++    const type = el.type;
 +    if (type === 'checkbox' || type === 'radio') {
-+      input.checked = Boolean(input.defaultChecked);
++      el.checked = el.defaultChecked;
 +      return;
 +    }
-+    input.value = input.defaultValue ?? '';
++    el.value = el.defaultValue ?? '';
 +    return;
 +  }
 +
 +  if (el.tagName === 'SELECT') {
-+    const select = /** @type {HTMLSelectElement} */ (el);
-+    const options = Array.from(select.options);
-+    if (select.multiple) {
++    const options = Array.from(el.options);
++    if (el.multiple) {
 +      options.forEach(opt => {
 +        opt.selected = opt.defaultSelected;
 +      });
 +    } else {
-+      const defaultOpt = options.find(opt => opt.defaultSelected);
++      options.forEach(opt => { opt.selected = false; });
++      const defaultOpt = options.find(opt => opt.defaultSelected) || options[0];
 +      if (defaultOpt) {
-+        select.value = defaultOpt.value;
-+      } else if (options.length) {
-+        select.selectedIndex = 0;
++        defaultOpt.selected = true;
++        el.value = defaultOpt.value;
 +      } else {
-+        select.value = '';
++        el.selectedIndex = -1;
++        el.value = '';
 +      }
 +    }
 +    return;
 +  }
 +
 +  if (el.tagName === 'TEXTAREA') {
-+    const textarea = /** @type {HTMLTextAreaElement} */ (el);
-+    textarea.value = textarea.defaultValue ?? '';
-+    return;
++    el.value = el.defaultValue ?? '';
 +  }
-+
-+  if ('value' in el) {
-+    el.value = '';
-+  } else if ('textContent' in el) {
-+    el.textContent = '';
-+  }
-+}
-+
-+function dispatchResetEvents(el) {
-+  if (!el) return;
-+  eventNamesFor(el).forEach(evt => {
-+    el.dispatchEvent(new Event(evt, { bubbles: true }));
-+  });
 +}
 +
 +export function clearPersistedInputs({ storageKey = DEFAULT_STORAGE_KEY, triggerEvents = true } = {}) {
@@ -98,12 +87,14 @@ index 2e4ffa0300ea473f8399cc8881eabc4005d7c909..75817337653dd604f33326eeb871216f
 +
 +  const targets = Array.from(document.querySelectorAll('input[id], select[id], textarea[id]'))
 +    .filter(isPersistable);
++
 +  if (!targets.length) return;
 +
 +  targets.forEach(el => {
-+    resetElementToDefault(el);
-+    if (triggerEvents) {
-+      dispatchResetEvents(el);
-+    }
++    resetElement(el);
++    if (!triggerEvents) return;
++    eventNamesFor(el).forEach(evt => {
++      el.dispatchEvent(new Event(evt, { bubbles: true }));
++    });
 +  });
 +}

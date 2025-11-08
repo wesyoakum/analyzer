@@ -188,3 +188,70 @@ export function setupInputPersistence({ storageKey = DEFAULT_STORAGE_KEY } = {})
 
   schedule();
 }
+
+function resetElement(el) {
+  if (!el) return;
+  if (el.dataset) {
+    delete el.dataset.componentSelect;
+    delete el.dataset.componentPn;
+    delete el.dataset.componentSuppress;
+  }
+
+  if (el.tagName === 'INPUT') {
+    const type = el.type;
+    if (type === 'checkbox' || type === 'radio') {
+      el.checked = el.defaultChecked;
+      return;
+    }
+    el.value = el.defaultValue ?? '';
+    return;
+  }
+
+  if (el.tagName === 'SELECT') {
+    const options = Array.from(el.options);
+    if (el.multiple) {
+      options.forEach(opt => {
+        opt.selected = opt.defaultSelected;
+      });
+    } else {
+      options.forEach(opt => { opt.selected = false; });
+      const defaultOpt = options.find(opt => opt.defaultSelected) || options[0];
+      if (defaultOpt) {
+        defaultOpt.selected = true;
+        el.value = defaultOpt.value;
+      } else {
+        el.selectedIndex = -1;
+        el.value = '';
+      }
+    }
+    return;
+  }
+
+  if (el.tagName === 'TEXTAREA') {
+    el.value = el.defaultValue ?? '';
+  }
+}
+
+export function clearPersistedInputs({ storageKey = DEFAULT_STORAGE_KEY, triggerEvents = true } = {}) {
+  const storage = getStorage();
+  if (storage) {
+    try {
+      storage.removeItem(storageKey);
+    } catch (err) {
+      console.warn('Unable to clear persisted inputs:', err);
+    }
+  }
+
+  const targets = Array.from(document.querySelectorAll('input[id], select[id], textarea[id]'))
+    .filter(isPersistable);
+
+  if (!targets.length) return;
+
+  targets.forEach(el => {
+    resetElement(el);
+    if (!triggerEvents) return;
+    eventNamesFor(el).forEach(evt => {
+      el.dispatchEvent(new Event(evt, { bubbles: true }));
+    });
+  });
+}
