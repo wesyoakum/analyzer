@@ -95,6 +95,13 @@ export function drawDepthProfiles(svgSpeed, svgTension, {
   const ratedSpeedMs = Number.isFinite(rated_speed_ms) ? Math.max(0, rated_speed_ms) : null;
   const maxAvailT = Math.max(0, ...segments.map(S => S.avail_tension_kgf || 0));
   const toNumber = val => {
+    if (val === null || val === undefined) return NaN;
+    if (typeof val === 'string') {
+      const trimmed = val.trim();
+      if (!trimmed) return NaN;
+      const parsed = Number(trimmed);
+      return Number.isFinite(parsed) ? parsed : NaN;
+    }
     const num = Number(val);
     return Number.isFinite(num) ? num : NaN;
   };
