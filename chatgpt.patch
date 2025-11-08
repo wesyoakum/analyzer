@@ -1,62 +1,158 @@
-diff --git a/src/js/plots/depth-profiles.mjs b/src/js/plots/depth-profiles.mjs
-index b0e01d8351365040ec20dfd8de54c47a31d9217f..0f5cd2374d7095c3f3e9871e1299f4d4b8d4ef6c 100644
---- a/src/js/plots/depth-profiles.mjs
-+++ b/src/js/plots/depth-profiles.mjs
-@@ -73,50 +73,57 @@ export function drawDepthProfiles(svgSpeed, svgTension, {
-     ? ['avail_tension_kgf', 't_avail_kgf', 'tAvail']
-     : ['Tavail,start', 'Tavail_start', 'tavail_start', 'tavail_start_kgf', 'hyd_avail_tension_kgf'];
- 
-   // Build wrap intervals [depth_start, depth_end] with values
-   const deadEnd = Number.isFinite(dead_end_m) ? Math.max(0, dead_end_m) : 0;
-   const segments = wrapsToDepthSegments(wraps, speedField, tensionField, deadEnd, scenario);
- 
-   // Sort deep to shallow by start depth
-   segments.sort((a, b) => (b.depth_start || 0) - (a.depth_start || 0));
- 
-   // Extents
-   const maxDepth = segments.length
-     ? Math.max(...segments.map(S => Math.max(S.depth_start || 0, S.depth_end || 0)))
-     : 0;
-   const maxSpeedFromCandidates = segments.length
-     ? Math.max(0, ...segments.map(S => {
-         if (!Array.isArray(S.candidate_speeds_ms) || !S.candidate_speeds_ms.length) {
-           return S.speed_ms || 0;
-         }
-         return Math.max(0, ...S.candidate_speeds_ms.map(C => C.value_ms), S.speed_ms || 0);
-       }))
-     : 0;
-   const ratedSpeedMs = Number.isFinite(rated_speed_ms) ? Math.max(0, rated_speed_ms) : null;
-   const maxAvailT = Math.max(0, ...segments.map(S => S.avail_tension_kgf || 0));
-   const toNumber = val => {
-+    if (val === null || val === undefined) return NaN;
-+    if (typeof val === 'string') {
-+      const trimmed = val.trim();
-+      if (!trimmed) return NaN;
-+      const parsed = Number(trimmed);
-+      return Number.isFinite(parsed) ? parsed : NaN;
-+    }
-     const num = Number(val);
-     return Number.isFinite(num) ? num : NaN;
-   };
- 
-   let depthMin = toNumber(depth_xmin);
-   if (!Number.isFinite(depthMin) || depthMin < 0) depthMin = 0;
- 
-   let depthMax = toNumber(depth_xmax);
-   const autoDepthMax = Math.max(depthMin + 0.1, maxDepth);
-   if (Number.isFinite(depthMax)) {
-     depthMax = Math.max(depthMin + 0.1, depthMax);
-   } else {
-     depthMax = autoDepthMax;
+diff --git a/src/js/main.mjs b/src/js/main.mjs
+index 430f83e4076584490c54ce8fdfa1f07729b7a494..09bb7c8e85248344c54326b83f84abed64dfc675 100644
+--- a/src/js/main.mjs
++++ b/src/js/main.mjs
+@@ -80,54 +80,52 @@ const CSV_BUTTON_SPECS = {
+       'hyd_hp_used_at_available', 'hyd_elec_input_hp_used',
+       'hyd_drum_torque_at_maxP_Nm', 'hyd_avail_tension_kgf_at_start'
+     ],
+     getRows: () => lastHyLayer
+   },
+   csv_hy_wraps: {
+     filename: () => 'hydraulic-wraps.csv',
+     columns: [
+       'wrap_no', 'layer_no', 'layer_dia_in', 'wrap_len_in', 'pre_spooled_len_m',
+       'spooled_len_m', 'deployed_len_m', 'tension_theoretical_kgf',
+       'tension_required_kgf', 'hyd_P_required_psi', 'hyd_speed_power_mpm',
+       'hyd_speed_flow_mpm', 'hyd_speed_available_mpm', 'hyd_hp_used_at_available',
+       'hyd_elec_input_hp_used', 'hyd_drum_torque_maxP_Nm', 'hyd_avail_tension_kgf'
+     ],
+     header: [
+       'wrap_no', 'layer_no', 'layer_dia_in', 'wrap_len_in', 'pre_spooled_len_m',
+       'spooled_len_m', 'deployed_len_m', 'tension_theoretical_kgf',
+       'tension_required_kgf', 'hyd_P_required_psi', 'hyd_speed_power_mpm',
+       'hyd_speed_flow_mpm', 'hyd_speed_available_mpm', 'hyd_hp_used_at_available',
+       'hyd_elec_input_hp_used', 'hyd_drum_torque_maxP_Nm', 'hyd_avail_tension_kgf'
+     ],
+     getRows: () => lastHyWraps
    }
-   if (depthMax <= depthMin) depthMax = depthMin + 1;
+ };
  
-   let speedMin = toNumber(speed_ymin);
-   if (!Number.isFinite(speedMin) || speedMin < 0) speedMin = 0;
+-const DRIVE_MODE_CHECKBOX = {
+-  electric: 'drive_electric_enabled',
+-  hydraulic: 'drive_hydraulic_enabled'
+-};
++const SYSTEM_TYPE_SELECT_ID = 'system_type_select';
++const DEFAULT_SYSTEM_TYPE = 'electric';
  
-   let speedMax = toNumber(speed_ymax);
-   const autoSpeedMax = Math.max(speedMin + 0.1, 1, maxSpeedFromCandidates, ratedSpeedMs || 0);
-   if (Number.isFinite(speedMax)) {
-     speedMax = Math.max(speedMin + 0.1, speedMax);
-   } else {
-     speedMax = autoSpeedMax;
+ // ---- Wire up events once DOM is ready ----
+ document.addEventListener('DOMContentLoaded', () => {
+   setupInputPersistence();
+ 
+   setupComponentSelectors();
+ 
+   setupCollapsibleToggles();
+ 
+   setupDriveModeControls();
+ 
+   setupCsvDownloads();
+ 
+   setupPlotResizeToggles();
+ 
+   setupAutoRecompute();
+ 
+   updateBuildIndicator();
+ 
+   document.querySelectorAll('.param-label').forEach(label => {
+     const code = label.dataset.code;
+     if (code) {
+       label.setAttribute('title', code);
+     }
+   });
+@@ -365,86 +363,67 @@ function updateMinimumSystemHp(ratedSpeedMpm, ratedSwlKgf, efficiency) {
+   const validSpeed = Number.isFinite(ratedSpeedMpm) && ratedSpeedMpm > 0;
+   const validSwl = Number.isFinite(ratedSwlKgf) && ratedSwlKgf > 0;
+ 
+   if (!validSpeed || !validSwl) {
+     output.textContent = '–';
+     return;
+   }
+ 
+   const eff = Number.isFinite(efficiency) && efficiency > 0 ? efficiency : 1;
+   const force_N = ratedSwlKgf * G;
+   const speed_mps = ratedSpeedMpm / 60;
+   const base_power_W = force_N * speed_mps;
+   const base_hp = base_power_W / W_PER_HP;
+   const hp_with_eff = base_hp / eff;
+   const min_hp = hp_with_eff * 1.2;
+ 
+   output.textContent = Number.isFinite(min_hp) ? min_hp.toFixed(1) : '–';
+ }
+ 
+ function clearMinimumSystemHp() {
+   const output = /** @type {HTMLElement|null} */ (document.getElementById('system_min_hp'));
+   if (output) output.textContent = '–';
+ }
+ 
+ function setupDriveModeControls() {
+-  const toggles = [
+-    { mode: 'electric', el: /** @type {HTMLInputElement|null} */ (document.getElementById(DRIVE_MODE_CHECKBOX.electric)) },
+-    { mode: 'hydraulic', el: /** @type {HTMLInputElement|null} */ (document.getElementById(DRIVE_MODE_CHECKBOX.hydraulic)) }
+-  ];
+-
+-  const enforceAtLeastOne = (changedEl) => {
+-    const enabled = toggles.filter(t => t.el && t.el.checked);
+-    if (enabled.length === 0 && changedEl) {
+-      changedEl.checked = true;
+-    }
+-  };
+-
+-  toggles.forEach(({ el }) => {
+-    if (!el) return;
+-    el.addEventListener('change', () => {
+-      enforceAtLeastOne(el);
++  const select = /** @type {HTMLSelectElement|null} */ (document.getElementById(SYSTEM_TYPE_SELECT_ID));
++  if (select) {
++    const handler = () => {
+       syncDriveModeVisibility();
+-    });
+-  });
+-
+-  if (toggles.every(t => !t.el || !t.el.checked)) {
+-    const fallback = toggles.find(t => t.el);
+-    if (fallback && fallback.el) {
+-      fallback.el.checked = true;
+-    }
++    };
++    select.addEventListener('change', handler);
++    select.addEventListener('input', handler);
+   }
+ 
+   syncDriveModeVisibility();
+ }
+ 
+ function driveModeEnabled(mode) {
+-  const id = DRIVE_MODE_CHECKBOX[mode];
+-  if (!id) return true;
+-  const el = /** @type {HTMLInputElement|null} */ (document.getElementById(id));
+-  if (!el) return true;
+-  return el.checked;
++  const select = /** @type {HTMLSelectElement|null} */ (document.getElementById(SYSTEM_TYPE_SELECT_ID));
++  const rawValue = (select && select.value) ? select.value : DEFAULT_SYSTEM_TYPE;
++  const normalized = rawValue === 'electric' || rawValue === 'hydraulic' ? rawValue : DEFAULT_SYSTEM_TYPE;
++  return normalized === mode;
+ }
+ 
+ function syncDriveModeVisibility() {
+   const electricEnabled = driveModeEnabled('electric');
+   const hydraulicEnabled = driveModeEnabled('hydraulic');
+ 
+   document.querySelectorAll('[data-drive-scope]').forEach(el => {
+     const scope = el.getAttribute('data-drive-scope');
+     if (scope === 'electric') {
+       el.classList.toggle('is-hidden', !electricEnabled);
+     } else if (scope === 'hydraulic') {
+       el.classList.toggle('is-hidden', !hydraulicEnabled);
+     }
+   });
+ 
+   updateScenarioOptions('wave_scenario', electricEnabled, hydraulicEnabled);
+   updateScenarioOptions('depth_scenario', electricEnabled, hydraulicEnabled);
+ }
+ 
+ function updateScenarioOptions(selectId, electricEnabled, hydraulicEnabled) {
+   const selectEl = /** @type {HTMLSelectElement|null} */ (document.getElementById(selectId));
+   if (!selectEl) return;
+ 
+   let needsChange = false;
+   Array.from(selectEl.options).forEach(opt => {

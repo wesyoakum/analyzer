@@ -102,10 +102,8 @@ const CSV_BUTTON_SPECS = {
   }
 };
 
-const DRIVE_MODE_CHECKBOX = {
-  electric: 'drive_electric_enabled',
-  hydraulic: 'drive_hydraulic_enabled'
-};
+const SYSTEM_TYPE_SELECT_ID = 'system_type_select';
+const DEFAULT_SYSTEM_TYPE = 'electric';
 
 // ---- Wire up events once DOM is ready ----
 document.addEventListener('DOMContentLoaded', () => {
@@ -387,42 +385,23 @@ function clearMinimumSystemHp() {
 }
 
 function setupDriveModeControls() {
-  const toggles = [
-    { mode: 'electric', el: /** @type {HTMLInputElement|null} */ (document.getElementById(DRIVE_MODE_CHECKBOX.electric)) },
-    { mode: 'hydraulic', el: /** @type {HTMLInputElement|null} */ (document.getElementById(DRIVE_MODE_CHECKBOX.hydraulic)) }
-  ];
-
-  const enforceAtLeastOne = (changedEl) => {
-    const enabled = toggles.filter(t => t.el && t.el.checked);
-    if (enabled.length === 0 && changedEl) {
-      changedEl.checked = true;
-    }
-  };
-
-  toggles.forEach(({ el }) => {
-    if (!el) return;
-    el.addEventListener('change', () => {
-      enforceAtLeastOne(el);
+  const select = /** @type {HTMLSelectElement|null} */ (document.getElementById(SYSTEM_TYPE_SELECT_ID));
+  if (select) {
+    const handler = () => {
       syncDriveModeVisibility();
-    });
-  });
-
-  if (toggles.every(t => !t.el || !t.el.checked)) {
-    const fallback = toggles.find(t => t.el);
-    if (fallback && fallback.el) {
-      fallback.el.checked = true;
-    }
+    };
+    select.addEventListener('change', handler);
+    select.addEventListener('input', handler);
   }
 
   syncDriveModeVisibility();
 }
 
 function driveModeEnabled(mode) {
-  const id = DRIVE_MODE_CHECKBOX[mode];
-  if (!id) return true;
-  const el = /** @type {HTMLInputElement|null} */ (document.getElementById(id));
-  if (!el) return true;
-  return el.checked;
+  const select = /** @type {HTMLSelectElement|null} */ (document.getElementById(SYSTEM_TYPE_SELECT_ID));
+  const rawValue = (select && select.value) ? select.value : DEFAULT_SYSTEM_TYPE;
+  const normalized = rawValue === 'electric' || rawValue === 'hydraulic' ? rawValue : DEFAULT_SYSTEM_TYPE;
+  return normalized === mode;
 }
 
 function syncDriveModeVisibility() {

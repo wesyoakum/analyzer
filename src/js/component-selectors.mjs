@@ -55,6 +55,31 @@ export const CABLE_OPTIONS = [
     description: 'Typical WROV Umbilical',
     c_mm: 42,
     c_w_kgpm: 3.8
+  },
+  {
+    pn: '.681 Umbilical',
+    description: '0.681 in diameter umbilical',
+    c_mm: 17.3
+  },
+  {
+    pn: '.322 Umbilical',
+    description: '0.322 in diameter umbilical',
+    c_mm: 8.18
+  },
+  {
+    pn: '9/16 3x19 Wire Rope',
+    description: '9/16 in 3×19 wire rope',
+    c_mm: 14.29
+  },
+  {
+    pn: '34 mm Umbilical',
+    description: '34 mm diameter umbilical',
+    c_mm: 34
+  },
+  {
+    pn: '39 mm Umbilical',
+    description: '39 mm diameter umbilical',
+    c_mm: 39
   }
 ];
 
@@ -607,25 +632,29 @@ export const HYDRAULIC_MOTOR_OPTIONS = [
 /** @type {ComponentOption[]} */
 export const HPU_OPTIONS = [
   {
-    pn: 'HPU-2S-210',
-    description: '2 strings, LAM75-18-365TC, pump HP-210A',
-    h_pump_strings: 2,
-    hpu_motor_select: 'LAM75-18-365TC',
-    hydraulic_pump_select: 'HP-210A'
+    pn: 'CTH1025',
+    description: '25 hp AC motor, 1 pump string',
+    h_pump_strings: 1,
+    h_emotor_hp: 25
   },
   {
-    pn: 'HPU-3S-180',
-    description: '3 strings, LAM90-18-405TC, pump HP-180B',
-    h_pump_strings: 3,
-    hpu_motor_select: 'LAM90-18-405TC',
-    hydraulic_pump_select: 'HP-180B'
+    pn: 'CTH1030',
+    description: '30 hp AC motor, 1 pump string',
+    h_pump_strings: 1,
+    h_emotor_hp: 30
   },
   {
-    pn: 'HPU-2S-250',
-    description: '2 strings, LAM110-12-444TC, pump HP-250C',
+    pn: 'CTH2150',
+    description: '75 hp AC motors, 2 pump strings',
     h_pump_strings: 2,
-    hpu_motor_select: 'LAM110-12-444TC',
-    hydraulic_pump_select: 'HP-250C'
+    h_emotor_hp: 75
+  },
+  {
+    pn: 'CTH2300',
+    description: '150 hp AC motors, 2 pump strings, 210 cc pumps',
+    h_pump_strings: 2,
+    h_emotor_hp: 150,
+    pump_disp_cc: 210
   }
 ];
 
@@ -715,6 +744,8 @@ export const FIELD_MAPS = {
   }),
   hpu: /** @type {SelectConfig['fieldMap']} */ ({
     h_pump_strings: 'h_pump_strings',
+    h_emotor_hp: 'h_emotor_hp',
+    h_pump_cc: 'pump_disp_cc',
     hpu_motor_select: 'hpu_motor_select',
     hydraulic_pump_select: 'hydraulic_pump_select'
   }),

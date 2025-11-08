@@ -470,10 +470,35 @@ button:focus {
   text-align: center;
 }
 
+.tab-bar {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-end;
+  gap: 16px;
+  margin-top: 32px;
+}
+
+.tab-bar .tabs {
+  flex: 1 1 auto;
+}
+
+.tab-bar__actions {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  align-items: flex-end;
+  margin-left: auto;
+}
+
+.tab-bar__hint {
+  font-size: 13px;
+  text-align: right;
+  max-width: 240px;
+}
+
 nav.tabs {
   display: flex;
   gap: 12px;
-  margin-top: 32px;
   padding: 0 0 0 4px;
   border-bottom: 2px solid var(--paper-line-strong);
   flex-wrap: wrap;
@@ -766,6 +791,20 @@ th[title] {
 @media (max-width: 720px) {
   .sheet {
     padding: 24px 20px 36px;
+  }
+
+  .tab-bar {
+    gap: 12px;
+    align-items: stretch;
+  }
+
+  .tab-bar__actions {
+    width: 100%;
+    align-items: flex-start;
+  }
+
+  .tab-bar__hint {
+    text-align: left;
   }
 
   nav.tabs {
