@@ -1,36 +1,8 @@
 diff --git a/src/js/persist-inputs.mjs b/src/js/persist-inputs.mjs
-index 2e4ffa0300ea473f8399cc8881eabc4005d7c909..ccd9ef4bdc0d0b6fd385a66497a1a6c3e8f699f3 100644
+index 2e4ffa0300ea473f8399cc8881eabc4005d7c909..75817337653dd604f33326eeb871216fbbe31601 100644
 --- a/src/js/persist-inputs.mjs
 +++ b/src/js/persist-inputs.mjs
-@@ -1,26 +1,26 @@
--const DEFAULT_STORAGE_KEY = 'analyzer.inputs.v2';
-+export const DEFAULT_STORAGE_KEY = 'analyzer.inputs.v2';
- const SKIP_INPUT_TYPES = new Set([
-   'button',
-   'file',
-   'hidden',
-   'image',
-   'password',
-   'reset',
-   'submit'
- ]);
- 
- function isPersistable(el) {
-   if (!el || !el.id || el.disabled) return false;
-   if (el.dataset && el.dataset.persist === 'off') return false;
-   if (el.tagName === 'INPUT' && SKIP_INPUT_TYPES.has(el.type)) return false;
-   return true;
- }
- 
- function readValue(el) {
-   if (!el) return undefined;
-   if (el.tagName === 'INPUT') {
-     const type = el.type;
-     if (type === 'checkbox') {
-       return el.checked;
-     }
-     if (type === 'radio') {
-@@ -165,26 +165,95 @@ export function setupInputPersistence({ storageKey = DEFAULT_STORAGE_KEY } = {})
+@@ -165,26 +165,102 @@ export function setupInputPersistence({ storageKey = DEFAULT_STORAGE_KEY } = {})
    };
  
    const handler = (event) => {
@@ -62,47 +34,54 @@ index 2e4ffa0300ea473f8399cc8881eabc4005d7c909..ccd9ef4bdc0d0b6fd385a66497a1a6c3
 +
 +function resetElementToDefault(el) {
 +  if (!el) return;
-+  if (el instanceof HTMLInputElement) {
-+    delete el.dataset.componentSelect;
-+    delete el.dataset.componentPn;
-+    if (el.type === 'checkbox' || el.type === 'radio') {
-+      el.checked = el.defaultChecked;
-+    } else {
-+      el.value = el.defaultValue ?? '';
++
++  if (el.tagName === 'INPUT') {
++    const input = /** @type {HTMLInputElement} */ (el);
++    const type = input.type;
++    if (type === 'checkbox' || type === 'radio') {
++      input.checked = Boolean(input.defaultChecked);
++      return;
 +    }
++    input.value = input.defaultValue ?? '';
 +    return;
 +  }
-+  if (el instanceof HTMLSelectElement) {
-+    const options = Array.from(el.options);
-+    if (el.multiple) {
++
++  if (el.tagName === 'SELECT') {
++    const select = /** @type {HTMLSelectElement} */ (el);
++    const options = Array.from(select.options);
++    if (select.multiple) {
 +      options.forEach(opt => {
 +        opt.selected = opt.defaultSelected;
 +      });
 +    } else {
 +      const defaultOpt = options.find(opt => opt.defaultSelected);
 +      if (defaultOpt) {
-+        el.value = defaultOpt.value;
++        select.value = defaultOpt.value;
 +      } else if (options.length) {
-+        el.selectedIndex = 0;
++        select.selectedIndex = 0;
 +      } else {
-+        el.value = '';
++        select.value = '';
 +      }
 +    }
 +    return;
 +  }
-+  if (el instanceof HTMLTextAreaElement) {
-+    el.value = el.defaultValue ?? '';
++
++  if (el.tagName === 'TEXTAREA') {
++    const textarea = /** @type {HTMLTextAreaElement} */ (el);
++    textarea.value = textarea.defaultValue ?? '';
 +    return;
 +  }
-+  if ('textContent' in el) {
++
++  if ('value' in el) {
++    el.value = '';
++  } else if ('textContent' in el) {
 +    el.textContent = '';
 +  }
 +}
 +
 +function dispatchResetEvents(el) {
 +  if (!el) return;
-+  const events = eventNamesFor(el);
-+  events.forEach(evt => {
++  eventNamesFor(el).forEach(evt => {
 +    el.dispatchEvent(new Event(evt, { bubbles: true }));
 +  });
 +}
