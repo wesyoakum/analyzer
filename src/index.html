@@ -69,7 +69,7 @@
         <div class="collapsible-body">
           <div class="input-sections">
             <section class="input-section">
-              <h3 class="input-section__title">Predefined Winch System</h3>
+              <h3 class="input-section__title">System</h3>
               <table class="worksheet">
                 <thead>
                   <tr>
@@ -86,6 +86,30 @@
                     <td class="value">
                       <select id="system_select">
                         <option value="">Custom (manual input)</option>
+                      </select>
+                    </td>
+                    <td class="units">–</td>
+                  </tr>
+                  <tr>
+                    <th scope="row">
+                      <label class="param-label" for="system_type_select" data-code="system_type">System Type</label>
+                    </th>
+                    <td class="value">
+                      <select id="system_type_select">
+                        <option value="electric">Electric</option>
+                        <option value="hydraulic">Hydraulic</option>
+                      </select>
+                    </td>
+                    <td class="units">–</td>
+                  </tr>
+                  <tr>
+                    <th scope="row">
+                      <label class="param-label" for="winch_type_select" data-code="winch_type">Winch Type</label>
+                    </th>
+                    <td class="value">
+                      <select id="winch_type_select">
+                        <option value="conventional">Conventional</option>
+                        <option value="traction">Traction</option>
                       </select>
                     </td>
                     <td class="units">–</td>
@@ -310,30 +334,6 @@
                   </tr>
                 </thead>
                 <tbody>
-                  <tr>
-                    <th scope="row">
-                      <label class="param-label" for="system_type_select" data-code="system_type">System Type</label>
-                    </th>
-                    <td class="value">
-                      <select id="system_type_select">
-                        <option value="electric">Electric</option>
-                        <option value="hydraulic">Hydraulic</option>
-                      </select>
-                    </td>
-                    <td class="units">–</td>
-                  </tr>
-                  <tr>
-                    <th scope="row">
-                      <label class="param-label" for="winch_type_select" data-code="winch_type">Winch Type</label>
-                    </th>
-                    <td class="value">
-                      <select id="winch_type_select">
-                        <option value="conventional">Conventional</option>
-                        <option value="traction">Traction</option>
-                      </select>
-                    </td>
-                    <td class="units">–</td>
-                  </tr>
                   <tr>
                     <th scope="row">
                       <label class="param-label" for="motors" data-code="motors">Number of Drive Motors <span class="symbol" aria-hidden="true">N<sub>m</sub></span></label>
