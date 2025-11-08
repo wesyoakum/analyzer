@@ -1,158 +1,416 @@
-diff --git a/src/js/main.mjs b/src/js/main.mjs
-index 430f83e4076584490c54ce8fdfa1f07729b7a494..09bb7c8e85248344c54326b83f84abed64dfc675 100644
---- a/src/js/main.mjs
-+++ b/src/js/main.mjs
-@@ -80,54 +80,52 @@ const CSV_BUTTON_SPECS = {
-       'hyd_hp_used_at_available', 'hyd_elec_input_hp_used',
-       'hyd_drum_torque_at_maxP_Nm', 'hyd_avail_tension_kgf_at_start'
-     ],
-     getRows: () => lastHyLayer
-   },
-   csv_hy_wraps: {
-     filename: () => 'hydraulic-wraps.csv',
-     columns: [
-       'wrap_no', 'layer_no', 'layer_dia_in', 'wrap_len_in', 'pre_spooled_len_m',
-       'spooled_len_m', 'deployed_len_m', 'tension_theoretical_kgf',
-       'tension_required_kgf', 'hyd_P_required_psi', 'hyd_speed_power_mpm',
-       'hyd_speed_flow_mpm', 'hyd_speed_available_mpm', 'hyd_hp_used_at_available',
-       'hyd_elec_input_hp_used', 'hyd_drum_torque_maxP_Nm', 'hyd_avail_tension_kgf'
-     ],
-     header: [
-       'wrap_no', 'layer_no', 'layer_dia_in', 'wrap_len_in', 'pre_spooled_len_m',
-       'spooled_len_m', 'deployed_len_m', 'tension_theoretical_kgf',
-       'tension_required_kgf', 'hyd_P_required_psi', 'hyd_speed_power_mpm',
-       'hyd_speed_flow_mpm', 'hyd_speed_available_mpm', 'hyd_hp_used_at_available',
-       'hyd_elec_input_hp_used', 'hyd_drum_torque_maxP_Nm', 'hyd_avail_tension_kgf'
-     ],
-     getRows: () => lastHyWraps
-   }
- };
+diff --git a/src/index.html b/src/index.html
+index 9423248f670ea7bc4a0b26a379982da5ac64440d..b98f1784635360ae94afeb03c791eaa54a1b8ac2 100644
+--- a/src/index.html
++++ b/src/index.html
+@@ -1,87 +1,105 @@
+ <!doctype html>
+ <html lang="en">
+ <head>
+   <meta charset="utf-8" />
+   <title>Winch Analyzer</title>
+   <meta name="viewport" content="width=device-width, initial-scale=1" />
+   <link rel="stylesheet" href="css/styles.css" />
+ </head>
+ <body>
+   <div class="sheet">
+     <div class="build-indicator" id="build-info" aria-live="polite"></div>
+     <header class="page-header">
+       <img src="assets/winch-header%20140px.png" alt="TekMarines winch diagram" class="page-header__image" />
+       <h1 class="page-title">Winch Analyzer</h1>
+     </header>
+     <div id="err"></div>
+     <div id="status" aria-live="polite" class="status" role="status"></div>
  
--const DRIVE_MODE_CHECKBOX = {
--  electric: 'drive_electric_enabled',
--  hydraulic: 'drive_hydraulic_enabled'
--};
-+const SYSTEM_TYPE_SELECT_ID = 'system_type_select';
-+const DEFAULT_SYSTEM_TYPE = 'electric';
+-    <nav class="tabs" aria-label="App sections">
+-      <button class="tab-btn active" data-target="panel-inputs">Section 1: Inputs</button>
+-      <button class="tab-btn" data-target="panel-performance">Section 2: Performance Plots</button>
+-      <button class="tab-btn" data-target="panel-results">Section 3: Layer &amp; Wrap Tables</button>
+-    </nav>
++    <div class="tab-bar">
++      <nav class="tabs" aria-label="App sections" role="tablist">
++        <button
++          id="tab-inputs"
++          class="tab-btn active"
++          type="button"
++          role="tab"
++          data-target="panel-inputs"
++          aria-controls="panel-inputs"
++          aria-selected="true"
++          tabindex="0"
++        >
++          Section 1: Inputs
++        </button>
++        <button
++          id="tab-performance"
++          class="tab-btn"
++          type="button"
++          role="tab"
++          data-target="panel-performance"
++          aria-controls="panel-performance"
++          aria-selected="false"
++          tabindex="-1"
++        >
++          Section 2: Performance Plots
++        </button>
++        <button
++          id="tab-results"
++          class="tab-btn"
++          type="button"
++          role="tab"
++          data-target="panel-results"
++          aria-controls="panel-results"
++          aria-selected="false"
++          tabindex="-1"
++        >
++          Section 3: Layer &amp; Wrap Tables
++        </button>
++        <button
++          id="tab-instructions"
++          class="tab-btn"
++          type="button"
++          role="tab"
++          data-target="panel-instructions"
++          aria-controls="panel-instructions"
++          aria-selected="false"
++          tabindex="-1"
++        >
++          Instructions
++        </button>
++      </nav>
++    </div>
  
- // ---- Wire up events once DOM is ready ----
- document.addEventListener('DOMContentLoaded', () => {
-   setupInputPersistence();
+-    <div id="panel-inputs" class="panel active">
+-      <section class="card actions" aria-labelledby="input-actions-title">
+-        <div class="card-header">
+-          <h2 class="section-title" id="input-actions-title">Quick actions</h2>
+-          <div class="card-header-actions">
+-            <button id="clear_inputs" type="button">Clear all inputs</button>
+-          </div>
+-        </div>
+-        <p class="dim">Remove any saved values and restore the default numbers for every field.</p>
+-      </section>
++    <div
++      id="panel-inputs"
++      class="panel panel--with-floating-action active"
++      role="tabpanel"
++      aria-labelledby="tab-inputs"
++      tabindex="0"
++    >
  
-   setupComponentSelectors();
+-      <section class="card info-card" id="component-catalog-card" aria-labelledby="component-catalog-instructions">
+-        <h2 class="section-title" id="component-catalog-instructions">How to update component presets</h2>
+-        <p>
+-          The component dropdowns now read from dedicated catalogs in
+-          <code>src/js/component-selectors.mjs</code>. Add or edit part numbers directly in the matching
+-          array to make them available across the app.
+-        </p>
+-        <ol>
+-          <li>
+-            Open <code>src/js/component-selectors.mjs</code> and locate the array that matches the component
+-            type you want to change (for example <code>GEARBOX_OPTIONS</code> or
+-            <code>ELECTRIC_MOTOR_OPTIONS</code>).
+-          </li>
+-          <li>
+-            Add a new object with the part number, description, and any field values that should autofill
+-            when the part is selected. Follow the existing entries as a template.
+-          </li>
+-          <li>
+-            Save the file and refresh the page. The new entry will appear under the corresponding dropdown
+-            and auto-populate the linked form inputs.
+-          </li>
+-        </ol>
+-        <p class="dim">
+-          Tip: if you need to clear a selection after experimenting, change any populated value and the app
+-          will revert the dropdown to <em>Custom (manual input)</em> automatically.
+-        </p>
+-      </section>
++      <button id="clear_inputs" class="panel-floating-action" type="button">Clear all inputs</button>
  
-   setupCollapsibleToggles();
+       <details class="card collapsible" open>
+         <summary class="collapsible-summary">
+           <h2 class="section-title">Section 1: Drum and Cable Inputs</h2>
+           <span class="collapsible-hint" aria-hidden="true"></span>
+         </summary>
+         <div class="collapsible-body">
+           <div class="input-sections">
+             <section class="input-section">
+               <h3 class="input-section__title">Predefined Winch System</h3>
+               <table class="worksheet">
+                 <thead>
+                   <tr>
+                     <th scope="col">Parameter</th>
+                     <th scope="col" class="value">Input</th>
+                     <th scope="col" class="units">Units</th>
+                   </tr>
+                 </thead>
+                 <tbody>
+                   <tr>
+                     <th scope="row">
+                       <label class="param-label" for="system_select" data-code="system_select">Predefined Winch System</label>
+                     </th>
+                     <td class="value">
+                       <select id="system_select">
+@@ -290,57 +308,69 @@
+                       <label class="param-label" for="payload_kg" data-code="payload_kg">Payload in Water <span class="symbol" aria-hidden="true">W<sub>payload</sub></span></label>
+                     </th>
+                     <td class="value"><input id="payload_kg" type="number" step="1" value="8000"></td>
+                     <td class="units">kg</td>
+                   </tr>
+                   <tr class="note">
+                     <td colspan="3" class="dim">T(kgf) = payload + cable weight × deployed length (static).</td>
+                   </tr>
+                 </tbody>
+               </table>
+             </section>
  
-   setupDriveModeControls();
+             <section class="input-section">
+               <h3 class="input-section__title">Drivetrain</h3>
+               <table class="worksheet">
+                 <thead>
+                   <tr>
+                     <th scope="col">Parameter</th>
+                     <th scope="col" class="value">Input</th>
+                     <th scope="col" class="units">Units</th>
+                   </tr>
+                 </thead>
+                 <tbody>
+                   <tr>
+                     <th scope="row">
+-                      <span class="param-label" data-code="drive_modes">Enabled Drive Types</span>
++                      <label class="param-label" for="system_type_select" data-code="system_type">System Type</label>
++                    </th>
++                    <td class="value">
++                      <select id="system_type_select">
++                        <option value="electric" selected>Electric</option>
++                        <option value="hydraulic">Hydraulic</option>
++                      </select>
++                    </td>
++                    <td class="units">–</td>
++                  </tr>
++                  <tr>
++                    <th scope="row">
++                      <label class="param-label" for="winch_type_select" data-code="winch_type">Winch Type</label>
+                     </th>
+                     <td class="value">
+-                      <div class="toggle-group">
+-                        <label for="drive_electric_enabled"><input id="drive_electric_enabled" type="checkbox" checked> Electric</label>
+-                        <label for="drive_hydraulic_enabled"><input id="drive_hydraulic_enabled" type="checkbox" checked> Hydraulic</label>
+-                      </div>
++                      <select id="winch_type_select">
++                        <option value="conventional" selected>Conventional</option>
++                        <option value="traction">Traction Winch</option>
++                      </select>
+                     </td>
+                     <td class="units">–</td>
+                   </tr>
+                   <tr>
+                     <th scope="row">
+                       <label class="param-label" for="motors" data-code="motors">Number of Drive Motors <span class="symbol" aria-hidden="true">N<sub>m</sub></span></label>
+                     </th>
+                     <td class="value"><input id="motors" type="number" step="1" value="6"></td>
+                     <td class="units">count</td>
+                   </tr>
+                 </tbody>
+               </table>
  
-   setupCsvDownloads();
+               <section class="input-subsection">
+                 <h4 class="input-subsection__title">Predefined Gearbox Selector</h4>
+                 <table class="worksheet">
+                   <thead>
+                     <tr>
+                       <th scope="col">Parameter</th>
+                       <th scope="col" class="value">Input</th>
+                       <th scope="col" class="units">Units</th>
+                     </tr>
+                   </thead>
+                   <tbody>
+                     <tr>
+@@ -547,51 +577,58 @@
+                     </select>
+                   </td>
+                   <td class="units">–</td>
+                 </tr>
+                 <tr>
+                   <th scope="row">
+                     <label class="param-label" for="h_pump_cc" data-code="h_pump_cc">Pump Displacement <span class="symbol" aria-hidden="true">q<sub>pump</sub></span></label>
+                   </th>
+                   <td class="value"><input id="h_pump_cc" type="number" step="0.1" value="210"></td>
+                   <td class="units">cc/rev</td>
+                 </tr>
+                 <tr>
+                   <th scope="row">
+                     <label class="param-label" for="h_max_psi" data-code="h_max_psi">System Maximum Pressure <span class="symbol" aria-hidden="true">P<sub>max</sub></span></label>
+                   </th>
+                   <td class="value"><input id="h_max_psi" type="number" step="1" value="3500"></td>
+                   <td class="units">psi</td>
+                 </tr>
+               </tbody>
+             </table>
+           </section>
+         </div>
+       </section>
+     </div>
  
-   setupPlotResizeToggles();
+-    <div id="panel-performance" class="panel">
++    <div
++      id="panel-performance"
++      class="panel"
++      role="tabpanel"
++      aria-labelledby="tab-performance"
++      tabindex="0"
++      hidden
++    >
+       <section class="card wave-card">
+         <div class="card-header">
+           <h2 class="section-title">Section 2: Wave Contours</h2>
+         </div>
+         <div class="plot-controls">
+           <div class="plot-controls__group">
+             <div class="plot-controls__group-title">Scenario</div>
+             <table class="worksheet compact plot-controls__table">
+               <tbody>
+                 <tr>
+                   <th scope="row">
+                     <label class="param-label" for="wave_scenario" data-code="wave_scenario">Wave Scenario <span class="symbol" aria-hidden="true">S<sub>w</sub></span></label>
+                   </th>
+                   <td class="value">
+                     <select id="wave_scenario">
+                       <option value="electric" selected>Electric</option>
+                       <option value="hydraulic">Hydraulic</option>
+                     </select>
+                   </td>
+                   <td class="units">–</td>
+                 </tr>
+               </tbody>
+             </table>
+           </div>
+           <div class="plot-controls__group">
+@@ -811,51 +848,58 @@
+                 <div class="legitem"><span class="swatch light dashed"></span><span>Candidate speeds (V<sub>p</sub>, V<sub>Q</sub>)</span></div>
+               </div>
+             </div>
+           </div>
+           <div class="col plot-column">
+             <div class="plot-panel">
+               <div class="plot-panel__heading">
+                 <div class="plot-title">Tension vs Depth</div>
+                 <button type="button" class="plot-panel__toggle" data-plot-toggle aria-expanded="false">[+]</button>
+               </div>
+               <div class="plotwrap">
+                 <svg id="depth_tension_svg" viewBox="0 0 1000 540"></svg>
+               </div>
+               <div class="legend legend--compact">
+                 <div class="legitem"><span class="swatch theoretical"></span><span>Theoretical tension</span></div>
+                 <div class="legitem"><span class="swatch accent"></span><span>Required tension (with safety factor)</span></div>
+                 <div class="legitem"><span class="swatch accent dashed"></span><span>Available tension</span></div>
+                 <div class="legitem"><span class="swatch red"></span><span>Required above available</span></div>
+               </div>
+             </div>
+           </div>
+         </div>
+       </section>
+     </div>
  
-   setupAutoRecompute();
+-    <div id="panel-results" class="panel">
++    <div
++      id="panel-results"
++      class="panel"
++      role="tabpanel"
++      aria-labelledby="tab-results"
++      tabindex="0"
++      hidden
++    >
+       <div class="card" id="drum_card">
+         <div class="section-title">Section 3: Drum Visualization</div>
+         <div class="drum-visual">
+           <svg
+             id="drum_visual_svg"
+             class="drum-visual__svg"
+             viewBox="0 0 320 320"
+             role="img"
+             aria-labelledby="drum_visual_title"
+           >
+             <title id="drum_visual_title">Winch drum cross-section</title>
+           </svg>
+         </div>
+         <p class="drum-summary" id="drum_summary"></p>
+       </div>
  
-   updateBuildIndicator();
+       <div class="card" data-drive-scope="electric">
+         <div class="section-title">Section 3: Electric Layer Table</div>
+         <div class="btnbar">
+           <button id="csv_el_layer" type="button" disabled>Download CSV — Electric Layer</button>
+         </div>
+         <table>
+           <thead>
+             <tr>
+               <th title="layer_no">L#<br>(–)</th>
+@@ -953,30 +997,67 @@
+                 <th title="wrap_no">W#<br>(–)</th>
+                 <th title="layer_no">L#<br>(–)</th>
+                 <th title="layer_dia_in">D<sub>layer</sub><br>(in)</th>
+                 <th title="wrap_len_in">L<sub>wrap</sub><br>(in)</th>
+                 <th title="pre_spooled_len_m">pre_spool<br>(m)</th>
+                 <th title="spooled_len_m">on_drum<br>(m)</th>
+                 <th title="deployed_len_m">dep<br>(m)</th>
+                 <th title="tension_theoretical_kgf">T<sub>theo</sub><br>(kgf)</th>
+                 <th title="tension_required_kgf">T<sub>req</sub><br>(kgf)</th>
+                 <th title="hyd_P_required_psi">P<sub>req</sub><br>(psi)</th>
+                 <th title="hyd_speed_power_mpm">v<sub>P</sub><br>(m/min)</th>
+                 <th title="hyd_speed_flow_mpm">v<sub>Q</sub><br>(m/min)</th>
+                 <th title="hyd_speed_available_mpm">v<sub>avail</sub><br>(m/min)</th>
+                 <th title="hyd_hp_used_at_available">HP<sub>hyd_used</sub><br>(hp)</th>
+                 <th title="hyd_elec_input_hp_used">HP<sub>elec_in</sub><br>(hp)</th>
+                 <th title="hyd_drum_torque_maxP_Nm">τ<sub>drum@Pmax</sub><br>(N·m)</th>
+                 <th title="hyd_avail_tension_kgf">T<sub>avail</sub><br>(kgf)</th>
+               </tr>
+             </thead>
+             <tbody id="tbody_hy_wraps"></tbody>
+           </table>
+         </div>
+       </details>
+     </div>
  
-   document.querySelectorAll('.param-label').forEach(label => {
-     const code = label.dataset.code;
-     if (code) {
-       label.setAttribute('title', code);
-     }
-   });
-@@ -365,86 +363,67 @@ function updateMinimumSystemHp(ratedSpeedMpm, ratedSwlKgf, efficiency) {
-   const validSpeed = Number.isFinite(ratedSpeedMpm) && ratedSpeedMpm > 0;
-   const validSwl = Number.isFinite(ratedSwlKgf) && ratedSwlKgf > 0;
- 
-   if (!validSpeed || !validSwl) {
-     output.textContent = '–';
-     return;
-   }
- 
-   const eff = Number.isFinite(efficiency) && efficiency > 0 ? efficiency : 1;
-   const force_N = ratedSwlKgf * G;
-   const speed_mps = ratedSpeedMpm / 60;
-   const base_power_W = force_N * speed_mps;
-   const base_hp = base_power_W / W_PER_HP;
-   const hp_with_eff = base_hp / eff;
-   const min_hp = hp_with_eff * 1.2;
- 
-   output.textContent = Number.isFinite(min_hp) ? min_hp.toFixed(1) : '–';
- }
- 
- function clearMinimumSystemHp() {
-   const output = /** @type {HTMLElement|null} */ (document.getElementById('system_min_hp'));
-   if (output) output.textContent = '–';
- }
- 
- function setupDriveModeControls() {
--  const toggles = [
--    { mode: 'electric', el: /** @type {HTMLInputElement|null} */ (document.getElementById(DRIVE_MODE_CHECKBOX.electric)) },
--    { mode: 'hydraulic', el: /** @type {HTMLInputElement|null} */ (document.getElementById(DRIVE_MODE_CHECKBOX.hydraulic)) }
--  ];
--
--  const enforceAtLeastOne = (changedEl) => {
--    const enabled = toggles.filter(t => t.el && t.el.checked);
--    if (enabled.length === 0 && changedEl) {
--      changedEl.checked = true;
--    }
--  };
--
--  toggles.forEach(({ el }) => {
--    if (!el) return;
--    el.addEventListener('change', () => {
--      enforceAtLeastOne(el);
-+  const select = /** @type {HTMLSelectElement|null} */ (document.getElementById(SYSTEM_TYPE_SELECT_ID));
-+  if (select) {
-+    const handler = () => {
-       syncDriveModeVisibility();
--    });
--  });
--
--  if (toggles.every(t => !t.el || !t.el.checked)) {
--    const fallback = toggles.find(t => t.el);
--    if (fallback && fallback.el) {
--      fallback.el.checked = true;
--    }
-+    };
-+    select.addEventListener('change', handler);
-+    select.addEventListener('input', handler);
-   }
- 
-   syncDriveModeVisibility();
- }
- 
- function driveModeEnabled(mode) {
--  const id = DRIVE_MODE_CHECKBOX[mode];
--  if (!id) return true;
--  const el = /** @type {HTMLInputElement|null} */ (document.getElementById(id));
--  if (!el) return true;
--  return el.checked;
-+  const select = /** @type {HTMLSelectElement|null} */ (document.getElementById(SYSTEM_TYPE_SELECT_ID));
-+  const rawValue = (select && select.value) ? select.value : DEFAULT_SYSTEM_TYPE;
-+  const normalized = rawValue === 'electric' || rawValue === 'hydraulic' ? rawValue : DEFAULT_SYSTEM_TYPE;
-+  return normalized === mode;
- }
- 
- function syncDriveModeVisibility() {
-   const electricEnabled = driveModeEnabled('electric');
-   const hydraulicEnabled = driveModeEnabled('hydraulic');
- 
-   document.querySelectorAll('[data-drive-scope]').forEach(el => {
-     const scope = el.getAttribute('data-drive-scope');
-     if (scope === 'electric') {
-       el.classList.toggle('is-hidden', !electricEnabled);
-     } else if (scope === 'hydraulic') {
-       el.classList.toggle('is-hidden', !hydraulicEnabled);
-     }
-   });
- 
-   updateScenarioOptions('wave_scenario', electricEnabled, hydraulicEnabled);
-   updateScenarioOptions('depth_scenario', electricEnabled, hydraulicEnabled);
- }
- 
- function updateScenarioOptions(selectId, electricEnabled, hydraulicEnabled) {
-   const selectEl = /** @type {HTMLSelectElement|null} */ (document.getElementById(selectId));
-   if (!selectEl) return;
- 
-   let needsChange = false;
-   Array.from(selectEl.options).forEach(opt => {
++    <div
++      id="panel-instructions"
++      class="panel"
++      role="tabpanel"
++      aria-labelledby="tab-instructions"
++      tabindex="0"
++      hidden
++    >
++      <section class="card info-card" id="component-catalog-card" aria-labelledby="component-catalog-instructions">
++        <h2 class="section-title" id="component-catalog-instructions">How to update component presets</h2>
++        <p>
++          The component dropdowns now read from dedicated catalogs in
++          <code>src/js/component-selectors.mjs</code>. Add or edit part numbers directly in the matching
++          array to make them available across the app.
++        </p>
++        <ol>
++          <li>
++            Open <code>src/js/component-selectors.mjs</code> and locate the array that matches the component
++            type you want to change (for example <code>GEARBOX_OPTIONS</code> or
++            <code>ELECTRIC_MOTOR_OPTIONS</code>).
++          </li>
++          <li>
++            Add a new object with the part number, description, and any field values that should autofill
++            when the part is selected. Follow the existing entries as a template.
++          </li>
++          <li>
++            Save the file and refresh the page. The new entry will appear under the corresponding dropdown
++            and auto-populate the linked form inputs.
++          </li>
++        </ol>
++        <p class="dim">
++          Tip: if you need to clear a selection after experimenting, change any populated value and the app
++          will revert the dropdown to <em>Custom (manual input)</em> automatically.
++        </p>
++      </section>
++    </div>
++
+     <!-- Main app script -->
+     <script type="module" src="js/main.mjs"></script>
+   </div>
+ </body>
+ </html>
+\ No newline at end of file
