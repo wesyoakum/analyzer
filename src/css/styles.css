@@ -23,25 +23,6 @@ body {
   background: var(--paper-background);
 }
 
-.math {
-  padding: 4px 12px;
-  color: #f6f6f6;
-  font-family: "Cambria Math", "STIX Two Math", "Noto Serif Math", serif;
-  font-size: 1.05rem;
-  letter-spacing: 0.01em;
-}
-
-.math var {
-  font-style: italic;
-}
-
-.math sub {
-  font-size: 0.7em;
-  vertical-align: baseline;
-  position: relative;
-  bottom: -0.2em;
-}
-
 .sheet {
   max-width: 1200px;
   margin: 32px auto 64px;
