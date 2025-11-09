@@ -5,7 +5,21 @@
   <title>Winch Analyzer</title>
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <link rel="stylesheet" href="css/styles.css" />
+  <!-- KaTeX setup -->
   <link
+    rel="stylesheet"
+    href="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/katex.min.css"
+  />
+  <script
+    defer
+    src="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/katex.min.js"
+  ></script>
+  <script
+    defer
+    src="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/contrib/auto-render.min.js"
+    onload="renderMathInElement(document.body,{delimiters:[{left:'$$', right:'$$', display:true},{left:'\\[', right:'\\]', display:true},{left:'\\(', right:'\\)', display:false}], throwOnError:false});"
+  ></script>
+</head>
     rel="stylesheet"
     href="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.css"
     crossorigin="anonymous"
@@ -1220,54 +1234,48 @@
 
         <h3>A) Available Line Speed — Unitless Relations</h3>
         <ol>
+          <li><span class="math"><var>Q</var><sub>p,i</sub> / (<var>n</var><sub>e</sub> <var>D</var><sub>p</sub>) = &eta;<sub>vp</sub></span></li>
+          <li><span class="math"><var>Q</var><sub>tot</sub> / (<var>N</var><sub>p</sub> <var>Q</var><sub>p,i</sub>) = 1</span></li>
+          <li><span class="math"><var>Q</var><sub>m</sub> / (<var>Q</var><sub>tot</sub> / <var>N</var><sub>m</sub>) = 1</span></li>
+          <li><span class="math"><var>n</var><sub>m</sub> <var>D</var><sub>m</sub> / (&eta;<sub>vm</sub> <var>Q</var><sub>m</sub>) = 1</span></li>
           <li>
-            <span class="math" data-latex="\\frac{Q_{p,i}}{n_e D_p} = \\eta_{vp}">
-              Q<sub>p,i</sub> / (n<sub>e</sub> D<sub>p</sub>) = η<sub>vp</sub>
-            </span>
+            <span class="math"><var>n</var><sub>d</sub> / (<var>n</var><sub>m</sub> / <var>G</var><sub>tot</sub>) = 1</span>, where <var>G</var><sub>tot</sub> = <var>G</var><sub>gb</sub><var>G</var><sub>pr</sub>
           </li>
           <li>
-            <span class="math" data-latex="\\frac{Q_{tot}}{N_p Q_{p,i}} = 1">
-              Q<sub>tot</sub> / (N<sub>p</sub> Q<sub>p,i</sub>) = 1
-            </span>
+            <span class="math"><var>v</var><sub>flow</sub>(<var>z</var>) / ((&pi; <var>D</var><sub>&ell;</sub>(<var>z</var>) / 60) &times; <var>n</var><sub>d</sub>) = 1</span>
           </li>
-          <li>
-            <span class="math" data-latex="\\frac{Q_m}{Q_{tot}/N_m} = 1">
-              Q<sub>m</sub> / (Q<sub>tot</sub> / N<sub>m</sub>) = 1
-            </span>
-          </li>
-          <li>
-            <span class="math" data-latex="\\frac{n_m D_m}{\\eta_{vm} Q_m} = 1">
-              n<sub>m</sub> D<sub>m</sub> / (η<sub>vm</sub> Q<sub>m</sub>) = 1
-            </span>
-          </li>
-          <li>
-            <span class="math" data-latex="\\frac{n_d}{n_m / G_{tot}} = 1">
-              n<sub>d</sub> / (n<sub>m</sub> / G<sub>tot</sub>) = 1
-            </span>
-            , where
-            <span class="math" data-latex="G_{tot} = G_{gb} G_{pr}">G<sub>tot</sub> = G<sub>gb</sub> G<sub>pr</sub></span>
-          </li>
-          <li>
-            <span class="math" data-latex="\\frac{v_{\\mathrm{flow}}(z)}{(\\pi D_{\\ell}(z) / 60)\\, n_d} = 1">
-              v<sub>flow</sub>(z) / ((π D<sub>ℓ</sub>(z) / 60) × n<sub>d</sub>) = 1
-            </span>
-          </li>
-          <li>
-            <span class="math" data-latex="\\frac{P_{avail}}{\\eta_{em} P_{nom}} = 1">
-              P<sub>avail</sub> / (η<sub>em</sub> P<sub>nom</sub>) = 1
-            </span>
-          </li>
-          <li>
-            <span class="math" data-latex="\\frac{v_{\\mathrm{pwr}}(z) T(z)}{P_{avail}} = 1">
-              v<sub>pwr</sub>(z) T(z) / P<sub>avail</sub> = 1
-            </span>
-          </li>
-          <li>
-            <span class="math" data-latex="v_{\\mathrm{avail}}(z) = \\min\\!\\bigl(v_{\\mathrm{flow}}(z), v_{\\mathrm{pwr}}(z)\\bigr)">
-              v<sub>avail</sub>(z) = min(v<sub>flow</sub>(z), v<sub>pwr</sub>(z))
-            </span>
-          </li>
+          <li><span class="math"><var>P</var><sub>avail</sub> / (&eta;<sub>em</sub> <var>P</var><sub>nom</sub>) = 1</span></li>
+          <li><span class="math"><var>v</var><sub>pwr</sub>(<var>z</var>) <var>T</var>(<var>z</var>) / <var>P</var><sub>avail</sub> = 1</span></li>
+          <li><span class="math"><var>v</var><sub>avail</sub>(<var>z</var>) = min(<var>v</var><sub>flow</sub>(<var>z</var>), <var>v</var><sub>pwr</sub>(<var>z</var>))</span></li>
         </ol>
+
+        <!-- Equations -->
+        <div class="equations">
+          <p>
+            $$v_{flow}(z) =
+            \frac{\pi \, D_\ell(z)}{60}
+            \left(
+              \frac{
+                \eta_{vm}
+                \left(
+                  \dfrac{N_p \, \eta_{vp} \, n_e \, D_p}{N_m}
+                \right)
+              }{
+                D_m \, G_{gb} \, G_{pr}
+              }
+            \right)$$
+          </p>
+
+          <p>
+            $$v_{pwr}(z) =
+            \frac{\eta_{em} \, P_{nom}}{T(z)}$$
+          </p>
+
+          <p>
+            $$v_{avail}(z) =
+            \min\!\big(v_{flow}(z),\, v_{pwr}(z)\big)$$
+          </p>
+        </div>
 
         <h3>B) Tension vs Depth — Unitless Relations</h3>
         <ol start="10">
