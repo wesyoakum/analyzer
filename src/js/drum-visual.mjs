@@ -8,7 +8,9 @@ const FALLBACK_COLORS = {
   ink500: { r: 85, g: 99, b: 125 },
   ink700: { r: 47, g: 59, b: 84 },
   ink900: { r: 20, g: 34, b: 56 },
-  paper: { r: 255, g: 255, b: 255 }
+  paper: { r: 255, g: 255, b: 255 },
+  tensionLow: { r: 108, g: 43, b: 217 },
+  tensionHigh: { r: 249, g: 115, b: 22 }
 };
 
 const FALLBACK_HEX = {
@@ -17,7 +19,9 @@ const FALLBACK_HEX = {
   ink500: '#55637d',
   ink700: '#2f3b54',
   ink900: '#142238',
-  paper: '#ffffff'
+  paper: '#ffffff',
+  tensionLow: '#6c2bd9',
+  tensionHigh: '#f97316'
 };
 
 const SVG_BASE_HEIGHT = 360;
@@ -136,6 +140,8 @@ export function renderDrumVisualization(rows, summary, cfg, meta) {
   const ink700Rgb = parseCssColor(cssVar(styles, '--ink-700', FALLBACK_HEX.ink700), FALLBACK_COLORS.ink700);
   const ink900Rgb = parseCssColor(cssVar(styles, '--ink-900', FALLBACK_HEX.ink900), FALLBACK_COLORS.ink900);
   const paperRgb = parseCssColor(cssVar(styles, '--paper', FALLBACK_HEX.paper), FALLBACK_COLORS.paper);
+  const tensionLowRgb = parseCssColor(cssVar(styles, '--tension-low', FALLBACK_HEX.tensionLow), FALLBACK_COLORS.tensionLow);
+  const tensionHighRgb = parseCssColor(cssVar(styles, '--tension-high', FALLBACK_HEX.tensionHigh), FALLBACK_COLORS.tensionHigh);
   const cableFillCss = rgbToCss(mixRgb(accentRgb, paperRgb, 0.45), 0.82);
   const cableStrokeCss = rgbToCss(accentRgb, 0.94);
 
@@ -256,14 +262,44 @@ export function renderDrumVisualization(rows, summary, cfg, meta) {
     ? meta.wraps_per_layer_used
     : (cable_dia_in > 0 ? (Math.max(flange_to_flange_in || 0, 0) / Math.max(cable_dia_in, 1e-9)) : 0);
 
-  const wrapsByLayer = new Map();
+  const rowsByLayer = new Map();
   for (const row of rows) {
-    wrapsByLayer.set(row.layer_no, (wrapsByLayer.get(row.layer_no) || 0) + 1);
+    if (!rowsByLayer.has(row.layer_no)) rowsByLayer.set(row.layer_no, []);
+    rowsByLayer.get(row.layer_no).push(row);
   }
+
+  const getWrapTension = (wrapRow) => {
+    if (!wrapRow) return null;
+    const candidates = [wrapRow.tension_kgf, wrapRow.tension_required_kgf, wrapRow.tension_theoretical_kgf];
+    for (const value of candidates) {
+      if (Number.isFinite(value)) return value;
+    }
+    return null;
+  };
+
+  const tensionValues = rows
+    .map(getWrapTension)
+    .filter(value => Number.isFinite(value));
+  const hasTensionRange = tensionValues.length > 0;
+  const tensionMin = hasTensionRange ? Math.min(...tensionValues) : 0;
+  const tensionMax = hasTensionRange ? Math.max(...tensionValues) : 0;
+  const tensionSpan = Math.max(0, tensionMax - tensionMin);
+
+  const wrapFillColor = (wrapRow, fallbackCss) => {
+    if (!hasTensionRange) return fallbackCss;
+    const tension = getWrapTension(wrapRow);
+    if (!Number.isFinite(tension)) return fallbackCss;
+    const normalized = tensionSpan > 1e-9
+      ? (tension - tensionMin) / tensionSpan
+      : 0.5;
+    const clamped = Math.max(0, Math.min(1, normalized));
+    return rgbToCss(mixRgb(tensionLowRgb, tensionHighRgb, clamped), 0.9);
+  };
 
   if (cableRadiusPx > 0 && coreWidthPx > 0) {
     layersForViz.forEach(layer => {
-      const actualWraps = wrapsByLayer.get(layer.layer_no) || 0;
+      const rowsInLayer = rowsByLayer.get(layer.layer_no) || [];
+      const actualWraps = rowsInLayer.length;
       if (actualWraps <= 0) return;
       const centerOffsetPx = layer.center_radius_in * scale;
       const topY = centerY - centerOffsetPx;
@@ -301,11 +337,14 @@ export function renderDrumVisualization(rows, summary, cfg, meta) {
         if (cx - cableRadiusPx < spoolLeft - 1e-3) continue;
         if (cx + cableRadiusPx > spoolRight + 1e-3) continue;
 
+        const wrapRow = rowsInLayer[w];
+        const fillCss = wrapFillColor(wrapRow, layer.fillColor);
+
         svg.appendChild(svgEl('circle', {
           cx: cx.toFixed(2),
           cy: topY.toFixed(2),
           r: cableRadiusPx.toFixed(2),
-          fill: layer.fillColor,
+          fill: fillCss,
           stroke: layer.strokeColor,
           'stroke-width': strokeWidthAttr,
           'vector-effect': 'non-scaling-stroke'
@@ -315,7 +354,7 @@ export function renderDrumVisualization(rows, summary, cfg, meta) {
           cx: cx.toFixed(2),
           cy: bottomY.toFixed(2),
           r: cableRadiusPx.toFixed(2),
-          fill: layer.fillColor,
+          fill: fillCss,
           stroke: layer.strokeColor,
           'stroke-width': strokeWidthAttr,
           'vector-effect': 'non-scaling-stroke'
