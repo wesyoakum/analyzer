@@ -392,17 +392,23 @@ function setupCollapsibleToggles() {
 }
 
 function setupPlotResizeToggles() {
-  const toggles = document.querySelectorAll('[data-plot-toggle]');
+  const toggles = document.querySelectorAll('[data-plot-pair-toggle]');
   toggles.forEach(btn => {
-    const col = btn.closest('.plot-column');
-    if (!col) return;
-    const initialExpanded = col.classList.contains('is-expanded');
-    btn.textContent = initialExpanded ? '[-]' : '[+]';
-    btn.setAttribute('aria-expanded', initialExpanded ? 'true' : 'false');
-    btn.addEventListener('click', () => {
-      const expanded = col.classList.toggle('is-expanded');
+    const pair = btn.closest('[data-plot-pair]');
+    if (!pair) return;
+
+    const setState = (expanded) => {
+      pair.classList.toggle('is-expanded', expanded);
       btn.textContent = expanded ? '[-]' : '[+]';
       btn.setAttribute('aria-expanded', expanded ? 'true' : 'false');
+      btn.setAttribute('aria-label', expanded ? 'Collapse plots to two columns' : 'Expand plots to full width');
+    };
+
+    setState(pair.classList.contains('is-expanded'));
+
+    btn.addEventListener('click', () => {
+      const next = !pair.classList.contains('is-expanded');
+      setState(next);
     });
   });
 }

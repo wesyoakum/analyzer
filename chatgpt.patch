@@ -1,148 +1,80 @@
-diff --git a/src/js/plots/depth-profiles.mjs b/src/js/plots/depth-profiles.mjs
-index 0f5cd2374d7095c3f3e9871e1299f4d4b8d4ef6c..b079c3ce11e7b4b73326331a77274608db6a108e 100644
---- a/src/js/plots/depth-profiles.mjs
-+++ b/src/js/plots/depth-profiles.mjs
-@@ -36,131 +36,140 @@ function getAccentColor() {
-   }
-   return '#2c56a3';
- }
- 
- /**
-  * Draw both depth profile plots (speed & tension).
-  *
-  * @param {SVGSVGElement} svgSpeed
-  * @param {SVGSVGElement} svgTension
-  * @param {Object} opts
-  * @param {'electric'|'hydraulic'} opts.scenario
-  * @param {Array<Object>} opts.elWraps
-  * @param {Array<Object>} opts.hyWraps
-  * @param {number} opts.payload_kg
-  * @param {number} opts.cable_w_kgpm
-  * @param {number} [opts.dead_end_m=0]
-  */
- export function drawDepthProfiles(svgSpeed, svgTension, {
-   scenario = 'electric',
-   elWraps = [],
-   hyWraps = [],
-   payload_kg = 0,
-   cable_w_kgpm = 0,
-   dead_end_m = 0,
-   rated_speed_ms = null,
-+  operating_depth_m = null,
-+  rated_swl_kgf = null,
-   depth_xmin = 0,
-   depth_xmax = null,
-   speed_ymin = 0,
-   speed_ymax = null,
-   tension_ymin = 0,
-   tension_ymax = null
- } = {}) {
-   const wraps = (scenario === 'electric') ? (elWraps || []) : (hyWraps || []);
-   const speedField = (scenario === 'electric')
-     ? 'line_speed_mpm'
-     : ['vavail', 'vAvail', 'v_available', 'v_available_mpm', 'v_avail', 'hyd_speed_available_mpm'];
-   const tensionField = (scenario === 'electric')
-     ? ['avail_tension_kgf', 't_avail_kgf', 'tAvail']
-     : ['Tavail,start', 'Tavail_start', 'tavail_start', 'tavail_start_kgf', 'hyd_avail_tension_kgf'];
- 
-   // Build wrap intervals [depth_start, depth_end] with values
-   const deadEnd = Number.isFinite(dead_end_m) ? Math.max(0, dead_end_m) : 0;
-   const segments = wrapsToDepthSegments(wraps, speedField, tensionField, deadEnd, scenario);
- 
-   // Sort deep to shallow by start depth
-   segments.sort((a, b) => (b.depth_start || 0) - (a.depth_start || 0));
- 
-   // Extents
-   const maxDepth = segments.length
-     ? Math.max(...segments.map(S => Math.max(S.depth_start || 0, S.depth_end || 0)))
-     : 0;
-   const maxSpeedFromCandidates = segments.length
-     ? Math.max(0, ...segments.map(S => {
-         if (!Array.isArray(S.candidate_speeds_ms) || !S.candidate_speeds_ms.length) {
-           return S.speed_ms || 0;
-         }
-         return Math.max(0, ...S.candidate_speeds_ms.map(C => C.value_ms), S.speed_ms || 0);
-       }))
-     : 0;
-   const ratedSpeedMs = Number.isFinite(rated_speed_ms) ? Math.max(0, rated_speed_ms) : null;
-+  const opDepth = Number.isFinite(operating_depth_m) ? Math.max(0, operating_depth_m) : null;
-+  const ratedSwl = Number.isFinite(rated_swl_kgf) ? Math.max(0, rated_swl_kgf) : null;
-   const maxAvailT = Math.max(0, ...segments.map(S => S.avail_tension_kgf || 0));
-   const toNumber = val => {
-     if (val === null || val === undefined) return NaN;
-     if (typeof val === 'string') {
-       const trimmed = val.trim();
-       if (!trimmed) return NaN;
-       const parsed = Number(trimmed);
-       return Number.isFinite(parsed) ? parsed : NaN;
+diff --git a/src/js/main.mjs b/src/js/main.mjs
+index 8d2b15e87ee9f866d35341f359502d6d6eac623a..910341f6689bd3a5dc5d1ef36988d0b799e8363d 100644
+--- a/src/js/main.mjs
++++ b/src/js/main.mjs
+@@ -370,61 +370,67 @@ function setupCollapsibleToggles() {
+       collapseIdCounter += 1;
+       body.id = `collapse-body-${collapseIdCounter}`;
      }
-     const num = Number(val);
-     return Number.isFinite(num) ? num : NaN;
-   };
+     toggle.setAttribute('aria-controls', body.id);
  
-   let depthMin = toNumber(depth_xmin);
-   if (!Number.isFinite(depthMin) || depthMin < 0) depthMin = 0;
+     let expanded = defaultExpanded;
  
-   let depthMax = toNumber(depth_xmax);
--  const autoDepthMax = Math.max(depthMin + 0.1, maxDepth);
-+  const depthCandidates = [depthMin + 0.1];
-+  if (Number.isFinite(maxDepth)) depthCandidates.push(maxDepth);
-+  if (Number.isFinite(opDepth)) depthCandidates.push(opDepth);
-+  const autoDepthMax = Math.max(...depthCandidates);
-   if (Number.isFinite(depthMax)) {
-     depthMax = Math.max(depthMin + 0.1, depthMax);
-   } else {
-     depthMax = autoDepthMax;
+     const applyState = (value) => {
+       expanded = value;
+       toggle.textContent = expanded ? '[-]' : '[+]';
+       toggle.setAttribute('aria-expanded', expanded ? 'true' : 'false');
+       toggle.setAttribute('aria-label', expanded ? 'Collapse section' : 'Expand section');
+       body.hidden = !expanded;
+       container.classList.toggle('is-collapsed', !expanded);
+     };
+ 
+     applyState(expanded);
+ 
+     toggle.addEventListener('click', () => {
+       applyState(!expanded);
+     });
    }
-   if (depthMax <= depthMin) depthMax = depthMin + 1;
- 
-   let speedMin = toNumber(speed_ymin);
-   if (!Number.isFinite(speedMin) || speedMin < 0) speedMin = 0;
- 
-   let speedMax = toNumber(speed_ymax);
--  const autoSpeedMax = Math.max(speedMin + 0.1, 1, maxSpeedFromCandidates, ratedSpeedMs || 0);
-+  const autoSpeedMax = Math.max(speedMin + 0.1, 3, maxSpeedFromCandidates, ratedSpeedMs || 0);
-   if (Number.isFinite(speedMax)) {
-     speedMax = Math.max(speedMin + 0.1, speedMax);
-   } else {
-     speedMax = autoSpeedMax;
-   }
-   if (speedMax <= speedMin) speedMax = speedMin + 1;
- 
-   const tensionDepth = Math.max(maxDepth, depthMax);
-   const maxTheoT = payload_kg + cable_w_kgpm * tensionDepth;
-   const maxReqT = maxTheoT * TENSION_SAFETY_FACTOR;
- 
-   let tensionMin = toNumber(tension_ymin);
-   if (!Number.isFinite(tensionMin) || tensionMin < 0) tensionMin = 0;
- 
-   let tensionMax = toNumber(tension_ymax);
--  const autoTensionMax = Math.max(tensionMin + 1, maxReqT, maxAvailT) * 1.05;
-+  const swlTarget = Number.isFinite(ratedSwl) ? ratedSwl * 1.5 : 0;
-+  const autoTensionBase = Math.max(tensionMin + 1, maxReqT, maxAvailT, swlTarget);
-+  const autoTensionMax = autoTensionBase * 1.05;
-   if (Number.isFinite(tensionMax)) {
-     tensionMax = Math.max(tensionMin + 1, tensionMax);
-   } else {
-     tensionMax = autoTensionMax;
-   }
-   if (tensionMax <= tensionMin) tensionMax = tensionMin + 1;
- 
-   const accentColor = getAccentColor();
- 
-   // Render both
-   drawSpeedProfile(svgSpeed, segments, depthMin, depthMax, speedMin, speedMax, accentColor, ratedSpeedMs);
-   drawTensionProfile(svgTension, segments, depthMin, depthMax, tensionMin, tensionMax, payload_kg, cable_w_kgpm, accentColor);
  }
  
- // ---------- Speed vs Depth ----------
- function drawSpeedProfile(svg, segments, depthMin, depthMax, speedMin, speedMax, accentColor, ratedSpeedMs = null) {
-   while (svg.firstChild) svg.removeChild(svg.firstChild);
+ function setupPlotResizeToggles() {
+-  const toggles = document.querySelectorAll('[data-plot-toggle]');
++  const toggles = document.querySelectorAll('[data-plot-pair-toggle]');
+   toggles.forEach(btn => {
+-    const col = btn.closest('.plot-column');
+-    if (!col) return;
+-    const initialExpanded = col.classList.contains('is-expanded');
+-    btn.textContent = initialExpanded ? '[-]' : '[+]';
+-    btn.setAttribute('aria-expanded', initialExpanded ? 'true' : 'false');
+-    btn.addEventListener('click', () => {
+-      const expanded = col.classList.toggle('is-expanded');
++    const pair = btn.closest('[data-plot-pair]');
++    if (!pair) return;
++
++    const setState = (expanded) => {
++      pair.classList.toggle('is-expanded', expanded);
+       btn.textContent = expanded ? '[-]' : '[+]';
+       btn.setAttribute('aria-expanded', expanded ? 'true' : 'false');
++      btn.setAttribute('aria-label', expanded ? 'Collapse plots to two columns' : 'Expand plots to full width');
++    };
++
++    setState(pair.classList.contains('is-expanded'));
++
++    btn.addEventListener('click', () => {
++      const next = !pair.classList.contains('is-expanded');
++      setState(next);
+     });
+   });
+ }
  
-   const ML = 64, MR = 18, MT = 18, MB = 46;
-   const W = svg.viewBox.baseVal.width || svg.clientWidth || 1000;
-   const H = svg.viewBox.baseVal.height || svg.clientHeight || 540;
-   const innerW = W - ML - MR, innerH = H - MT - MB;
+ function setupAutoRecompute() {
+   const inputs = Array.from(document.querySelectorAll('input, select, textarea'));
+   if (!inputs.length) return;
  
-   const clampDepth = d => Math.min(Math.max(d, depthMin), depthMax);
-   const clampSpeed = v => Math.min(Math.max(v, speedMin), speedMax);
+   const handler = () => computeAll();
+ 
+   inputs.forEach(el => {
+     if (el.tagName === 'SELECT') {
+       el.addEventListener('change', handler);
+       return;
+     }
+ 
+     if (el.tagName === 'INPUT') {
+       const type = el.type;
+       if (type === 'checkbox' || type === 'radio' || type === 'range' || type === 'color') {
+         el.addEventListener('change', handler);
+         return;
+       }
+     }
+ 
+     el.addEventListener('input', handler);

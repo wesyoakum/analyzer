@@ -182,7 +182,7 @@ body {
   margin: 0 0 20px;
 }
 
-.plot-controls__group {
+.plot-controls__group { 
   flex: 1 1 260px;
   min-width: 240px;
 }
@@ -198,6 +198,58 @@ body {
 
 .plot-controls__table {
   max-width: none;
+}
+
+.plot-controls__custom {
+  flex: 1 1 100%;
+  border: 1px solid var(--paper-line-strong);
+  border-radius: 8px;
+  background: var(--accent-light);
+  padding: 0;
+  margin: 0;
+  overflow: hidden;
+}
+
+.plot-controls__custom summary {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 12px 16px;
+  cursor: pointer;
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--ink-700);
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+  list-style: none;
+}
+
+.plot-controls__custom summary::-webkit-details-marker,
+.plot-controls__custom summary::marker {
+  display: none;
+}
+
+.plot-controls__custom summary::after {
+  content: '[+]';
+  margin-left: auto;
+  color: var(--ink-500);
+  font-weight: 500;
+  font-size: 14px;
+}
+
+.plot-controls__custom[open] summary::after {
+  content: '[-]';
+}
+
+.plot-controls__custom-body {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 20px;
+  padding: 20px;
+  border-top: 1px solid var(--paper-line-strong);
+  background: var(--paper);
+  border-bottom-left-radius: 8px;
+  border-bottom-right-radius: 8px;
 }
 
 .toggle-group {
@@ -669,11 +721,43 @@ th[title] {
   color: var(--accent);
 }
 
+.plot-pair {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.plot-pair__actions {
+  display: flex;
+  justify-content: flex-end;
+}
+
+.plot-pair__toggle {
+  padding: 0;
+  min-width: 0;
+  font-size: 14px;
+  line-height: 1;
+  border: none;
+  background: none;
+  color: var(--ink-600);
+  cursor: pointer;
+}
+
+.plot-pair__toggle:hover,
+.plot-pair__toggle:focus-visible {
+  color: var(--accent);
+}
+
 .plot-column {
   position: relative;
 }
 
 .plot-column.is-expanded {
+  flex: 1 1 100%;
+  min-width: 100%;
+}
+
+.plot-pair.is-expanded .col {
   flex: 1 1 100%;
   min-width: 100%;
 }
