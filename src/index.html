@@ -1023,6 +1023,241 @@
       hidden
       aria-hidden="true"
     >
+      <section class="card info-card" id="hydraulic-core-equations" aria-labelledby="hydraulic-core-equations-title">
+        <h2 class="section-title" id="hydraulic-core-equations-title">Hydraulic Winch System — Core Equations (Unitless Form)</h2>
+
+        <h3>Symbols (reference units only)</h3>
+        <div class="scrollable-table">
+          <table>
+            <thead>
+              <tr>
+                <th scope="col">Symbol</th>
+                <th scope="col">Description</th>
+                <th scope="col">Units</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td><var>n</var><sub>e</sub></td>
+                <td>electric motor speed</td>
+                <td>rpm</td>
+              </tr>
+              <tr>
+                <td><var>D</var><sub>p</sub></td>
+                <td>pump displacement</td>
+                <td>cc/rev</td>
+              </tr>
+              <tr>
+                <td><var>N</var><sub>p</sub></td>
+                <td>number of pumps</td>
+                <td>–</td>
+              </tr>
+              <tr>
+                <td>&eta;<sub>vp</sub></td>
+                <td>pump volumetric efficiency</td>
+                <td>–</td>
+              </tr>
+              <tr>
+                <td><var>Q</var><sub>p,i</sub></td>
+                <td>actual per-pump flow</td>
+                <td>cc/min</td>
+              </tr>
+              <tr>
+                <td><var>Q</var><sub>tot</sub></td>
+                <td>total manifold flow</td>
+                <td>cc/min</td>
+              </tr>
+              <tr>
+                <td><var>N</var><sub>m</sub></td>
+                <td>number of motors in parallel</td>
+                <td>–</td>
+              </tr>
+              <tr>
+                <td><var>D</var><sub>m</sub></td>
+                <td>motor displacement</td>
+                <td>cc/rev</td>
+              </tr>
+              <tr>
+                <td>&eta;<sub>vm</sub></td>
+                <td>motor volumetric efficiency</td>
+                <td>–</td>
+              </tr>
+              <tr>
+                <td><var>n</var><sub>m</sub></td>
+                <td>motor speed</td>
+                <td>rpm</td>
+              </tr>
+              <tr>
+                <td><var>n</var><sub>d</sub></td>
+                <td>drum (ring) speed</td>
+                <td>rpm</td>
+              </tr>
+              <tr>
+                <td><var>G</var><sub>gb</sub></td>
+                <td>gearbox reduction</td>
+                <td>–</td>
+              </tr>
+              <tr>
+                <td><var>G</var><sub>pr</sub></td>
+                <td>pinion&rarr;ring reduction</td>
+                <td>–</td>
+              </tr>
+              <tr>
+                <td><var>G</var><sub>tot</sub></td>
+                <td>total reduction = <var>G</var><sub>gb</sub><var>G</var><sub>pr</sub></td>
+                <td>–</td>
+              </tr>
+              <tr>
+                <td><var>D</var><sub>&ell;</sub>(<var>z</var>)</td>
+                <td>effective layer diameter at depth <var>z</var></td>
+                <td>m</td>
+              </tr>
+              <tr>
+                <td><var>v</var><sub>flow</sub>(<var>z</var>)</td>
+                <td>flow-limited line speed</td>
+                <td>m/s</td>
+              </tr>
+              <tr>
+                <td><var>P</var><sub>nom</sub></td>
+                <td>total nominal electric motor power</td>
+                <td>kW</td>
+              </tr>
+              <tr>
+                <td>&eta;<sub>em</sub></td>
+                <td>electromechanical efficiency</td>
+                <td>–</td>
+              </tr>
+              <tr>
+                <td><var>P</var><sub>avail</sub></td>
+                <td>available shaft power</td>
+                <td>kW</td>
+              </tr>
+              <tr>
+                <td><var>T</var>(<var>z</var>)</td>
+                <td>operating line tension</td>
+                <td>N</td>
+              </tr>
+              <tr>
+                <td><var>v</var><sub>pwr</sub>(<var>z</var>)</td>
+                <td>power-limited line speed</td>
+                <td>m/s</td>
+              </tr>
+              <tr>
+                <td><var>v</var><sub>avail</sub>(<var>z</var>)</td>
+                <td>available line speed</td>
+                <td>m/s</td>
+              </tr>
+              <tr>
+                <td><var>W</var><sub>pay,sub</sub></td>
+                <td>payload weight in water</td>
+                <td>N</td>
+              </tr>
+              <tr>
+                <td><var>w</var><sub>c,sub</sub></td>
+                <td>cable weight in water per unit length</td>
+                <td>N/m</td>
+              </tr>
+              <tr>
+                <td><var>L</var></td>
+                <td>max usable cable length</td>
+                <td>m</td>
+              </tr>
+              <tr>
+                <td><var>T</var><sub>static</sub>(<var>z</var>)</td>
+                <td>static line tension</td>
+                <td>N</td>
+              </tr>
+              <tr>
+                <td>&Delta;<var>T</var><sub>a</sub>, &Delta;<var>T</var><sub>d</sub>, &Delta;<var>T</var><sub>h</sub></td>
+                <td>dynamic tension adders (accel, drag, heave)</td>
+                <td>N</td>
+              </tr>
+              <tr>
+                <td>&tau;<sub>m</sub></td>
+                <td>motor torque</td>
+                <td>N·m</td>
+              </tr>
+              <tr>
+                <td>&eta;<sub>train</sub></td>
+                <td>drivetrain efficiency</td>
+                <td>–</td>
+              </tr>
+              <tr>
+                <td>&eta;<sub>mm</sub></td>
+                <td>mechanical efficiency of motor</td>
+                <td>–</td>
+              </tr>
+              <tr>
+                <td><var>r</var><sub>&ell;</sub>(<var>z</var>)</td>
+                <td>effective layer radius</td>
+                <td>m</td>
+              </tr>
+              <tr>
+                <td><var>r</var><sub>core</sub></td>
+                <td>core radius</td>
+                <td>m</td>
+              </tr>
+              <tr>
+                <td><var>p</var><sub>c</sub></td>
+                <td>cable effective pitch (≈ cable dia × packing factor)</td>
+                <td>m</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+
+        <h3>A) Available Line Speed — Unitless Relations</h3>
+        <ol>
+          <li><span class="math"><var>Q</var><sub>p,i</sub> / (<var>n</var><sub>e</sub> <var>D</var><sub>p</sub>) = &eta;<sub>vp</sub></span></li>
+          <li><span class="math"><var>Q</var><sub>tot</sub> / (<var>N</var><sub>p</sub> <var>Q</var><sub>p,i</sub>) = 1</span></li>
+          <li><span class="math"><var>Q</var><sub>m</sub> / (<var>Q</var><sub>tot</sub> / <var>N</var><sub>m</sub>) = 1</span></li>
+          <li><span class="math"><var>n</var><sub>m</sub> <var>D</var><sub>m</sub> / (&eta;<sub>vm</sub> <var>Q</var><sub>m</sub>) = 1</span></li>
+          <li>
+            <span class="math"><var>n</var><sub>d</sub> / (<var>n</var><sub>m</sub> / <var>G</var><sub>tot</sub>) = 1</span>, where <var>G</var><sub>tot</sub> = <var>G</var><sub>gb</sub><var>G</var><sub>pr</sub>
+          </li>
+          <li>
+            <span class="math"><var>v</var><sub>flow</sub>(<var>z</var>) / ((&pi; <var>D</var><sub>&ell;</sub>(<var>z</var>) / 60) &times; <var>n</var><sub>d</sub>) = 1</span>
+          </li>
+          <li><span class="math"><var>P</var><sub>avail</sub> / (&eta;<sub>em</sub> <var>P</var><sub>nom</sub>) = 1</span></li>
+          <li><span class="math"><var>v</var><sub>pwr</sub>(<var>z</var>) <var>T</var>(<var>z</var>) / <var>P</var><sub>avail</sub> = 1</span></li>
+          <li><span class="math"><var>v</var><sub>avail</sub>(<var>z</var>) = min(<var>v</var><sub>flow</sub>(<var>z</var>), <var>v</var><sub>pwr</sub>(<var>z</var>))</span></li>
+        </ol>
+
+        <h3>B) Tension vs Depth — Unitless Relations</h3>
+        <ol start="10">
+          <li>
+            <span class="math">(<var>T</var><sub>static</sub>(<var>z</var>) - <var>W</var><sub>pay,sub</sub>) / (<var>w</var><sub>c,sub</sub> <var>z</var>) = 1</span>
+            <span class="note">for 0 &le; <var>z</var> &le; <var>L</var></span>
+          </li>
+          <li>
+            <span class="math">(<var>T</var><sub>static</sub>(<var>z</var>) - <var>W</var><sub>pay,sub</sub>) / (<var>w</var><sub>c,sub</sub> <var>L</var>) = 1</span>
+            <span class="note">for <var>z</var> &gt; <var>L</var></span>
+          </li>
+          <li>
+            <span class="math">(<var>T</var>(<var>z</var>) - <var>T</var><sub>static</sub>(<var>z</var>)) / (&Delta;<var>T</var><sub>a</sub> + &Delta;<var>T</var><sub>d</sub> + &Delta;<var>T</var><sub>h</sub>) = 1</span>
+          </li>
+          <li>
+            <span class="math"><var>T</var>(<var>z</var>) / (<var>T</var><sub>static</sub>(<var>z</var>) + &Delta;<var>T</var><sub>a</sub> + &Delta;<var>T</var><sub>d</sub> + &Delta;<var>T</var><sub>h</sub>) = 1</span>
+          </li>
+        </ol>
+
+        <h3>C) Cross-Checks (Optional)</h3>
+        <ol start="14">
+          <li>
+            <span class="math"><var>T</var><sub>cap</sub>(<var>z</var>) <var>r</var><sub>&ell;</sub>(<var>z</var>) <var>G</var><sub>tot</sub> / (&tau;<sub>m</sub> <var>N</var><sub>m</sub> &eta;<sub>train</sub>) = 1</span>
+          </li>
+          <li>
+            <span class="math">&tau;<sub>m</sub> / ((&Delta;<var>p</var> <var>D</var><sub>m</sub> &eta;<sub>mm</sub>) / (2&pi;)) = 1</span>
+          </li>
+          <li>
+            <span class="math"><var>D</var><sub>&ell;</sub>(<var>i</var>) / (2 <var>r</var><sub>core</sub> + 2 (<var>i</var> - 0.5) <var>p</var><sub>c</sub>) = 1</span>
+          </li>
+        </ol>
+
+        <p>
+          Each equation expresses the physical dependency as a pure ratio, enabling unit-consistent implementation regardless of the measurement system. All efficiencies, ratios, and reductions are dimensionless. Power-, flow-, and tension-limited speeds follow directly from these relationships.
+        </p>
+      </section>
       <section class="card info-card" id="component-catalog-card" aria-labelledby="component-catalog-instructions">
         <h2 class="section-title" id="component-catalog-instructions">How to update component presets</h2>
         <p>

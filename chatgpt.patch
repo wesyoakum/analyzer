@@ -1,80 +1,318 @@
-diff --git a/src/js/main.mjs b/src/js/main.mjs
-index 8d2b15e87ee9f866d35341f359502d6d6eac623a..910341f6689bd3a5dc5d1ef36988d0b799e8363d 100644
---- a/src/js/main.mjs
-+++ b/src/js/main.mjs
-@@ -370,61 +370,67 @@ function setupCollapsibleToggles() {
-       collapseIdCounter += 1;
-       body.id = `collapse-body-${collapseIdCounter}`;
-     }
-     toggle.setAttribute('aria-controls', body.id);
+diff --git a/src/index.html b/src/index.html
+index 86c0ab82218ac5fd4cd911937070ed6423944a10..2bc966800cf7b6c2cbd2d005a6e67c160922969f 100644
+--- a/src/index.html
++++ b/src/index.html
+@@ -964,64 +964,299 @@
+                 <th title="wrap_no">W#<br>(–)</th>
+                 <th title="layer_no">L#<br>(–)</th>
+                 <th title="layer_dia_in">D<sub>layer</sub><br>(in)</th>
+                 <th title="wrap_len_in">L<sub>wrap</sub><br>(in)</th>
+                 <th title="pre_spooled_len_m">pre_spool<br>(m)</th>
+                 <th title="spooled_len_m">on_drum<br>(m)</th>
+                 <th title="deployed_len_m">dep<br>(m)</th>
+                 <th title="tension_theoretical_kgf">T<sub>theo</sub><br>(kgf)</th>
+                 <th title="tension_required_kgf">T<sub>req</sub><br>(kgf)</th>
+                 <th title="hyd_P_required_psi">P<sub>req</sub><br>(psi)</th>
+                 <th title="hyd_speed_power_mpm">v<sub>P</sub><br>(m/min)</th>
+                 <th title="hyd_speed_flow_mpm">v<sub>Q</sub><br>(m/min)</th>
+                 <th title="hyd_speed_available_mpm">v<sub>avail</sub><br>(m/min)</th>
+                 <th title="hyd_hp_used_at_available">HP<sub>hyd_used</sub><br>(hp)</th>
+                 <th title="hyd_elec_input_hp_used">HP<sub>elec_in</sub><br>(hp)</th>
+                 <th title="hyd_drum_torque_maxP_Nm">τ<sub>drum@Pmax</sub><br>(N·m)</th>
+                 <th title="hyd_avail_tension_kgf">T<sub>avail</sub><br>(kgf)</th>
+               </tr>
+             </thead>
+             <tbody id="tbody_hy_wraps"></tbody>
+           </table>
+         </div>
+       </details>
+     </div>
  
-     let expanded = defaultExpanded;
- 
-     const applyState = (value) => {
-       expanded = value;
-       toggle.textContent = expanded ? '[-]' : '[+]';
-       toggle.setAttribute('aria-expanded', expanded ? 'true' : 'false');
-       toggle.setAttribute('aria-label', expanded ? 'Collapse section' : 'Expand section');
-       body.hidden = !expanded;
-       container.classList.toggle('is-collapsed', !expanded);
-     };
- 
-     applyState(expanded);
- 
-     toggle.addEventListener('click', () => {
-       applyState(!expanded);
-     });
-   }
- }
- 
- function setupPlotResizeToggles() {
--  const toggles = document.querySelectorAll('[data-plot-toggle]');
-+  const toggles = document.querySelectorAll('[data-plot-pair-toggle]');
-   toggles.forEach(btn => {
--    const col = btn.closest('.plot-column');
--    if (!col) return;
--    const initialExpanded = col.classList.contains('is-expanded');
--    btn.textContent = initialExpanded ? '[-]' : '[+]';
--    btn.setAttribute('aria-expanded', initialExpanded ? 'true' : 'false');
--    btn.addEventListener('click', () => {
--      const expanded = col.classList.toggle('is-expanded');
-+    const pair = btn.closest('[data-plot-pair]');
-+    if (!pair) return;
+-    <div
+-      id="panel-instructions"
+-      class="panel"
+-      role="tabpanel"
+-      aria-labelledby="tab-instructions"
+-      tabindex="0"
+-      hidden
+-      aria-hidden="true"
+-    >
+-      <section class="card info-card" id="component-catalog-card" aria-labelledby="component-catalog-instructions">
+-        <h2 class="section-title" id="component-catalog-instructions">How to update component presets</h2>
+-        <p>
+-          The component dropdowns now read from dedicated catalogs in
+-          <code>src/js/component-selectors.mjs</code>. Add or edit part numbers directly in the matching
++    <div
++      id="panel-instructions"
++      class="panel"
++      role="tabpanel"
++      aria-labelledby="tab-instructions"
++      tabindex="0"
++      hidden
++      aria-hidden="true"
++    >
++      <section class="card info-card" id="hydraulic-core-equations" aria-labelledby="hydraulic-core-equations-title">
++        <h2 class="section-title" id="hydraulic-core-equations-title">Hydraulic Winch System — Core Equations (Unitless Form)</h2>
 +
-+    const setState = (expanded) => {
-+      pair.classList.toggle('is-expanded', expanded);
-       btn.textContent = expanded ? '[-]' : '[+]';
-       btn.setAttribute('aria-expanded', expanded ? 'true' : 'false');
-+      btn.setAttribute('aria-label', expanded ? 'Collapse plots to two columns' : 'Expand plots to full width');
-+    };
++        <h3>Symbols (reference units only)</h3>
++        <div class="scrollable-table">
++          <table>
++            <thead>
++              <tr>
++                <th scope="col">Symbol</th>
++                <th scope="col">Description</th>
++                <th scope="col">Units</th>
++              </tr>
++            </thead>
++            <tbody>
++              <tr>
++                <td><var>n</var><sub>e</sub></td>
++                <td>electric motor speed</td>
++                <td>rpm</td>
++              </tr>
++              <tr>
++                <td><var>D</var><sub>p</sub></td>
++                <td>pump displacement</td>
++                <td>cc/rev</td>
++              </tr>
++              <tr>
++                <td><var>N</var><sub>p</sub></td>
++                <td>number of pumps</td>
++                <td>–</td>
++              </tr>
++              <tr>
++                <td>&eta;<sub>vp</sub></td>
++                <td>pump volumetric efficiency</td>
++                <td>–</td>
++              </tr>
++              <tr>
++                <td><var>Q</var><sub>p,i</sub></td>
++                <td>actual per-pump flow</td>
++                <td>cc/min</td>
++              </tr>
++              <tr>
++                <td><var>Q</var><sub>tot</sub></td>
++                <td>total manifold flow</td>
++                <td>cc/min</td>
++              </tr>
++              <tr>
++                <td><var>N</var><sub>m</sub></td>
++                <td>number of motors in parallel</td>
++                <td>–</td>
++              </tr>
++              <tr>
++                <td><var>D</var><sub>m</sub></td>
++                <td>motor displacement</td>
++                <td>cc/rev</td>
++              </tr>
++              <tr>
++                <td>&eta;<sub>vm</sub></td>
++                <td>motor volumetric efficiency</td>
++                <td>–</td>
++              </tr>
++              <tr>
++                <td><var>n</var><sub>m</sub></td>
++                <td>motor speed</td>
++                <td>rpm</td>
++              </tr>
++              <tr>
++                <td><var>n</var><sub>d</sub></td>
++                <td>drum (ring) speed</td>
++                <td>rpm</td>
++              </tr>
++              <tr>
++                <td><var>G</var><sub>gb</sub></td>
++                <td>gearbox reduction</td>
++                <td>–</td>
++              </tr>
++              <tr>
++                <td><var>G</var><sub>pr</sub></td>
++                <td>pinion&rarr;ring reduction</td>
++                <td>–</td>
++              </tr>
++              <tr>
++                <td><var>G</var><sub>tot</sub></td>
++                <td>total reduction = <var>G</var><sub>gb</sub><var>G</var><sub>pr</sub></td>
++                <td>–</td>
++              </tr>
++              <tr>
++                <td><var>D</var><sub>&ell;</sub>(<var>z</var>)</td>
++                <td>effective layer diameter at depth <var>z</var></td>
++                <td>m</td>
++              </tr>
++              <tr>
++                <td><var>v</var><sub>flow</sub>(<var>z</var>)</td>
++                <td>flow-limited line speed</td>
++                <td>m/s</td>
++              </tr>
++              <tr>
++                <td><var>P</var><sub>nom</sub></td>
++                <td>total nominal electric motor power</td>
++                <td>kW</td>
++              </tr>
++              <tr>
++                <td>&eta;<sub>em</sub></td>
++                <td>electromechanical efficiency</td>
++                <td>–</td>
++              </tr>
++              <tr>
++                <td><var>P</var><sub>avail</sub></td>
++                <td>available shaft power</td>
++                <td>kW</td>
++              </tr>
++              <tr>
++                <td><var>T</var>(<var>z</var>)</td>
++                <td>operating line tension</td>
++                <td>N</td>
++              </tr>
++              <tr>
++                <td><var>v</var><sub>pwr</sub>(<var>z</var>)</td>
++                <td>power-limited line speed</td>
++                <td>m/s</td>
++              </tr>
++              <tr>
++                <td><var>v</var><sub>avail</sub>(<var>z</var>)</td>
++                <td>available line speed</td>
++                <td>m/s</td>
++              </tr>
++              <tr>
++                <td><var>W</var><sub>pay,sub</sub></td>
++                <td>payload weight in water</td>
++                <td>N</td>
++              </tr>
++              <tr>
++                <td><var>w</var><sub>c,sub</sub></td>
++                <td>cable weight in water per unit length</td>
++                <td>N/m</td>
++              </tr>
++              <tr>
++                <td><var>L</var></td>
++                <td>max usable cable length</td>
++                <td>m</td>
++              </tr>
++              <tr>
++                <td><var>T</var><sub>static</sub>(<var>z</var>)</td>
++                <td>static line tension</td>
++                <td>N</td>
++              </tr>
++              <tr>
++                <td>&Delta;<var>T</var><sub>a</sub>, &Delta;<var>T</var><sub>d</sub>, &Delta;<var>T</var><sub>h</sub></td>
++                <td>dynamic tension adders (accel, drag, heave)</td>
++                <td>N</td>
++              </tr>
++              <tr>
++                <td>&tau;<sub>m</sub></td>
++                <td>motor torque</td>
++                <td>N·m</td>
++              </tr>
++              <tr>
++                <td>&eta;<sub>train</sub></td>
++                <td>drivetrain efficiency</td>
++                <td>–</td>
++              </tr>
++              <tr>
++                <td>&eta;<sub>mm</sub></td>
++                <td>mechanical efficiency of motor</td>
++                <td>–</td>
++              </tr>
++              <tr>
++                <td><var>r</var><sub>&ell;</sub>(<var>z</var>)</td>
++                <td>effective layer radius</td>
++                <td>m</td>
++              </tr>
++              <tr>
++                <td><var>r</var><sub>core</sub></td>
++                <td>core radius</td>
++                <td>m</td>
++              </tr>
++              <tr>
++                <td><var>p</var><sub>c</sub></td>
++                <td>cable effective pitch (≈ cable dia × packing factor)</td>
++                <td>m</td>
++              </tr>
++            </tbody>
++          </table>
++        </div>
 +
-+    setState(pair.classList.contains('is-expanded'));
++        <h3>A) Available Line Speed — Unitless Relations</h3>
++        <ol>
++          <li><span class="math"><var>Q</var><sub>p,i</sub> / (<var>n</var><sub>e</sub> <var>D</var><sub>p</sub>) = &eta;<sub>vp</sub></span></li>
++          <li><span class="math"><var>Q</var><sub>tot</sub> / (<var>N</var><sub>p</sub> <var>Q</var><sub>p,i</sub>) = 1</span></li>
++          <li><span class="math"><var>Q</var><sub>m</sub> / (<var>Q</var><sub>tot</sub> / <var>N</var><sub>m</sub>) = 1</span></li>
++          <li><span class="math"><var>n</var><sub>m</sub> <var>D</var><sub>m</sub> / (&eta;<sub>vm</sub> <var>Q</var><sub>m</sub>) = 1</span></li>
++          <li>
++            <span class="math"><var>n</var><sub>d</sub> / (<var>n</var><sub>m</sub> / <var>G</var><sub>tot</sub>) = 1</span>, where <var>G</var><sub>tot</sub> = <var>G</var><sub>gb</sub><var>G</var><sub>pr</sub>
++          </li>
++          <li>
++            <span class="math"><var>v</var><sub>flow</sub>(<var>z</var>) / ((&pi; <var>D</var><sub>&ell;</sub>(<var>z</var>) / 60) &times; <var>n</var><sub>d</sub>) = 1</span>
++          </li>
++          <li><span class="math"><var>P</var><sub>avail</sub> / (&eta;<sub>em</sub> <var>P</var><sub>nom</sub>) = 1</span></li>
++          <li><span class="math"><var>v</var><sub>pwr</sub>(<var>z</var>) <var>T</var>(<var>z</var>) / <var>P</var><sub>avail</sub> = 1</span></li>
++          <li><span class="math"><var>v</var><sub>avail</sub>(<var>z</var>) = min(<var>v</var><sub>flow</sub>(<var>z</var>), <var>v</var><sub>pwr</sub>(<var>z</var>))</span></li>
++        </ol>
 +
-+    btn.addEventListener('click', () => {
-+      const next = !pair.classList.contains('is-expanded');
-+      setState(next);
-     });
-   });
- }
++        <h3>B) Tension vs Depth — Unitless Relations</h3>
++        <ol start="10">
++          <li>
++            <span class="math">(<var>T</var><sub>static</sub>(<var>z</var>) - <var>W</var><sub>pay,sub</sub>) / (<var>w</var><sub>c,sub</sub> <var>z</var>) = 1</span>
++            <span class="note">for 0 &le; <var>z</var> &le; <var>L</var></span>
++          </li>
++          <li>
++            <span class="math">(<var>T</var><sub>static</sub>(<var>z</var>) - <var>W</var><sub>pay,sub</sub>) / (<var>w</var><sub>c,sub</sub> <var>L</var>) = 1</span>
++            <span class="note">for <var>z</var> &gt; <var>L</var></span>
++          </li>
++          <li>
++            <span class="math">(<var>T</var>(<var>z</var>) - <var>T</var><sub>static</sub>(<var>z</var>)) / (&Delta;<var>T</var><sub>a</sub> + &Delta;<var>T</var><sub>d</sub> + &Delta;<var>T</var><sub>h</sub>) = 1</span>
++          </li>
++          <li>
++            <span class="math"><var>T</var>(<var>z</var>) / (<var>T</var><sub>static</sub>(<var>z</var>) + &Delta;<var>T</var><sub>a</sub> + &Delta;<var>T</var><sub>d</sub> + &Delta;<var>T</var><sub>h</sub>) = 1</span>
++          </li>
++        </ol>
++
++        <h3>C) Cross-Checks (Optional)</h3>
++        <ol start="14">
++          <li>
++            <span class="math"><var>T</var><sub>cap</sub>(<var>z</var>) <var>r</var><sub>&ell;</sub>(<var>z</var>) <var>G</var><sub>tot</sub> / (&tau;<sub>m</sub> <var>N</var><sub>m</sub> &eta;<sub>train</sub>) = 1</span>
++          </li>
++          <li>
++            <span class="math">&tau;<sub>m</sub> / ((&Delta;<var>p</var> <var>D</var><sub>m</sub> &eta;<sub>mm</sub>) / (2&pi;)) = 1</span>
++          </li>
++          <li>
++            <span class="math"><var>D</var><sub>&ell;</sub>(<var>i</var>) / (2 <var>r</var><sub>core</sub> + 2 (<var>i</var> - 0.5) <var>p</var><sub>c</sub>) = 1</span>
++          </li>
++        </ol>
++
++        <p>
++          Each equation expresses the physical dependency as a pure ratio, enabling unit-consistent implementation regardless of the measurement system. All efficiencies, ratios, and reductions are dimensionless. Power-, flow-, and tension-limited speeds follow directly from these relationships.
++        </p>
++      </section>
++      <section class="card info-card" id="component-catalog-card" aria-labelledby="component-catalog-instructions">
++        <h2 class="section-title" id="component-catalog-instructions">How to update component presets</h2>
++        <p>
++          The component dropdowns now read from dedicated catalogs in
++          <code>src/js/component-selectors.mjs</code>. Add or edit part numbers directly in the matching
+           array to make them available across the app.
+         </p>
+         <ol>
+           <li>
+             Open <code>src/js/component-selectors.mjs</code> and locate the array that matches the component
+             type you want to change (for example <code>GEARBOX_OPTIONS</code> or
+             <code>ELECTRIC_MOTOR_OPTIONS</code>).
+           </li>
+           <li>
+             Add a new object with the part number, description, and any field values that should autofill
+             when the part is selected. Follow the existing entries as a template.
+           </li>
+           <li>
+             Save the file and refresh the page. The new entry will appear under the corresponding dropdown
+             and auto-populate the linked form inputs.
+           </li>
+         </ol>
+         <p class="dim">
+           Tip: if you need to clear a selection after experimenting, change any populated value and the app
+           will revert the dropdown to <em>Custom (manual input)</em> automatically.
+         </p>
+       </section>
+     </div>
  
- function setupAutoRecompute() {
-   const inputs = Array.from(document.querySelectorAll('input, select, textarea'));
-   if (!inputs.length) return;
- 
-   const handler = () => computeAll();
- 
-   inputs.forEach(el => {
-     if (el.tagName === 'SELECT') {
-       el.addEventListener('change', handler);
-       return;
-     }
- 
-     if (el.tagName === 'INPUT') {
-       const type = el.type;
-       if (type === 'checkbox' || type === 'radio' || type === 'range' || type === 'color') {
-         el.addEventListener('change', handler);
-         return;
-       }
-     }
- 
-     el.addEventListener('input', handler);
+     <!-- Main app script -->
