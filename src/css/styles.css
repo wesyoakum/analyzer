@@ -705,6 +705,37 @@ th[title] {
   flex: 1;
 }
 
+.plot-panel__refresh,
+.card-header__refresh {
+  padding: 0;
+  min-width: 0;
+  border: none;
+  background: none;
+  font-size: 12px;
+  font-weight: 600;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+  color: var(--ink-700);
+  cursor: pointer;
+  text-decoration: underline;
+  text-underline-offset: 2px;
+}
+
+.plot-panel__refresh {
+  align-self: flex-start;
+}
+
+.card-header__refresh {
+  align-self: center;
+}
+
+.plot-panel__refresh:hover,
+.plot-panel__refresh:focus-visible,
+.card-header__refresh:hover,
+.card-header__refresh:focus-visible {
+  color: var(--accent);
+}
+
 .plot-panel__toggle {
   padding: 0;
   min-width: 0;

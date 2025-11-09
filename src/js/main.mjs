@@ -30,6 +30,8 @@ import { renderDrumVisualization, clearDrumVisualization } from './drum-visual.m
 // ---- App state for plots/tables ----
 let lastElLayer = [], lastElWraps = [];
 let lastHyLayer = [], lastHyWraps = [];
+/** @type {{ rows: any, summary: any, cfg: any, meta: any } | null} */
+let lastDrumState = null;
 
 const CSV_BUTTON_SPECS = {
   csv_el_layer: {
@@ -118,6 +120,8 @@ document.addEventListener('DOMContentLoaded', () => {
   setupCsvDownloads();
 
   setupPlotResizeToggles();
+
+  setupManualRefreshControls();
 
   setupAutoRecompute();
 
@@ -411,6 +415,35 @@ function setupPlotResizeToggles() {
       setState(next);
     });
   });
+}
+
+function setupManualRefreshControls() {
+  const statusEl = /** @type {HTMLElement|null} */ (document.getElementById('status'));
+
+  const updateStatus = (message) => {
+    if (statusEl) statusEl.textContent = message;
+  };
+
+  const plotButtons = document.querySelectorAll('[data-plot-refresh]');
+  plotButtons.forEach(btn => {
+    btn.addEventListener('click', () => {
+      redrawPlots();
+      updateStatus('plots refreshed');
+    });
+  });
+
+  const drumButton = /** @type {HTMLButtonElement|null} */ (document.querySelector('[data-drum-refresh]'));
+  if (drumButton) {
+    drumButton.addEventListener('click', () => {
+      if (lastDrumState) {
+        const { rows, summary, cfg, meta } = lastDrumState;
+        renderDrumVisualization(rows, summary, cfg, meta);
+        updateStatus('drum diagram refreshed');
+      } else {
+        computeAll();
+      }
+    });
+  }
 }
 
 function setupAutoRecompute() {
@@ -735,6 +768,7 @@ function computeAll() {
     }
 
     // ---- Drum visualization ----
+    lastDrumState = { rows, summary, cfg, meta };
     renderDrumVisualization(rows, summary, cfg, meta);
 
     // ---- Aggregate into per-layer tables ----
@@ -760,6 +794,7 @@ function computeAll() {
     if (status) status.textContent = 'error';
     clearMinimumSystemHp();
     lastElLayer = lastElWraps = lastHyLayer = lastHyWraps = [];
+    lastDrumState = null;
     clearDrumVisualization();
     clearPlots();
     updateCsvButtonStates();

@@ -1,318 +1,268 @@
-diff --git a/src/index.html b/src/index.html
-index 86c0ab82218ac5fd4cd911937070ed6423944a10..2bc966800cf7b6c2cbd2d005a6e67c160922969f 100644
---- a/src/index.html
-+++ b/src/index.html
-@@ -964,64 +964,299 @@
-                 <th title="wrap_no">W#<br>(–)</th>
-                 <th title="layer_no">L#<br>(–)</th>
-                 <th title="layer_dia_in">D<sub>layer</sub><br>(in)</th>
-                 <th title="wrap_len_in">L<sub>wrap</sub><br>(in)</th>
-                 <th title="pre_spooled_len_m">pre_spool<br>(m)</th>
-                 <th title="spooled_len_m">on_drum<br>(m)</th>
-                 <th title="deployed_len_m">dep<br>(m)</th>
-                 <th title="tension_theoretical_kgf">T<sub>theo</sub><br>(kgf)</th>
-                 <th title="tension_required_kgf">T<sub>req</sub><br>(kgf)</th>
-                 <th title="hyd_P_required_psi">P<sub>req</sub><br>(psi)</th>
-                 <th title="hyd_speed_power_mpm">v<sub>P</sub><br>(m/min)</th>
-                 <th title="hyd_speed_flow_mpm">v<sub>Q</sub><br>(m/min)</th>
-                 <th title="hyd_speed_available_mpm">v<sub>avail</sub><br>(m/min)</th>
-                 <th title="hyd_hp_used_at_available">HP<sub>hyd_used</sub><br>(hp)</th>
-                 <th title="hyd_elec_input_hp_used">HP<sub>elec_in</sub><br>(hp)</th>
-                 <th title="hyd_drum_torque_maxP_Nm">τ<sub>drum@Pmax</sub><br>(N·m)</th>
-                 <th title="hyd_avail_tension_kgf">T<sub>avail</sub><br>(kgf)</th>
-               </tr>
-             </thead>
-             <tbody id="tbody_hy_wraps"></tbody>
-           </table>
-         </div>
-       </details>
-     </div>
+diff --git a/src/js/main.mjs b/src/js/main.mjs
+index 910341f6689bd3a5dc5d1ef36988d0b799e8363d..5ca4a2b665787064c590cc7b842c688674436f82 100644
+--- a/src/js/main.mjs
++++ b/src/js/main.mjs
+@@ -8,50 +8,52 @@ import {
+   psi_from_torque_and_disp_Nm_cc, torque_per_motor_from_pressure_Pa,
+   line_speed_mpm_from_motor_rpm, hp_from_psi_and_gpm,
+   TENSION_SAFETY_FACTOR
+ } from './utils.mjs';
  
--    <div
--      id="panel-instructions"
--      class="panel"
--      role="tabpanel"
--      aria-labelledby="tab-instructions"
--      tabindex="0"
--      hidden
--      aria-hidden="true"
--    >
--      <section class="card info-card" id="component-catalog-card" aria-labelledby="component-catalog-instructions">
--        <h2 class="section-title" id="component-catalog-instructions">How to update component presets</h2>
--        <p>
--          The component dropdowns now read from dedicated catalogs in
--          <code>src/js/component-selectors.mjs</code>. Add or edit part numbers directly in the matching
-+    <div
-+      id="panel-instructions"
-+      class="panel"
-+      role="tabpanel"
-+      aria-labelledby="tab-instructions"
-+      tabindex="0"
-+      hidden
-+      aria-hidden="true"
-+    >
-+      <section class="card info-card" id="hydraulic-core-equations" aria-labelledby="hydraulic-core-equations-title">
-+        <h2 class="section-title" id="hydraulic-core-equations-title">Hydraulic Winch System — Core Equations (Unitless Form)</h2>
-+
-+        <h3>Symbols (reference units only)</h3>
-+        <div class="scrollable-table">
-+          <table>
-+            <thead>
-+              <tr>
-+                <th scope="col">Symbol</th>
-+                <th scope="col">Description</th>
-+                <th scope="col">Units</th>
-+              </tr>
-+            </thead>
-+            <tbody>
-+              <tr>
-+                <td><var>n</var><sub>e</sub></td>
-+                <td>electric motor speed</td>
-+                <td>rpm</td>
-+              </tr>
-+              <tr>
-+                <td><var>D</var><sub>p</sub></td>
-+                <td>pump displacement</td>
-+                <td>cc/rev</td>
-+              </tr>
-+              <tr>
-+                <td><var>N</var><sub>p</sub></td>
-+                <td>number of pumps</td>
-+                <td>–</td>
-+              </tr>
-+              <tr>
-+                <td>&eta;<sub>vp</sub></td>
-+                <td>pump volumetric efficiency</td>
-+                <td>–</td>
-+              </tr>
-+              <tr>
-+                <td><var>Q</var><sub>p,i</sub></td>
-+                <td>actual per-pump flow</td>
-+                <td>cc/min</td>
-+              </tr>
-+              <tr>
-+                <td><var>Q</var><sub>tot</sub></td>
-+                <td>total manifold flow</td>
-+                <td>cc/min</td>
-+              </tr>
-+              <tr>
-+                <td><var>N</var><sub>m</sub></td>
-+                <td>number of motors in parallel</td>
-+                <td>–</td>
-+              </tr>
-+              <tr>
-+                <td><var>D</var><sub>m</sub></td>
-+                <td>motor displacement</td>
-+                <td>cc/rev</td>
-+              </tr>
-+              <tr>
-+                <td>&eta;<sub>vm</sub></td>
-+                <td>motor volumetric efficiency</td>
-+                <td>–</td>
-+              </tr>
-+              <tr>
-+                <td><var>n</var><sub>m</sub></td>
-+                <td>motor speed</td>
-+                <td>rpm</td>
-+              </tr>
-+              <tr>
-+                <td><var>n</var><sub>d</sub></td>
-+                <td>drum (ring) speed</td>
-+                <td>rpm</td>
-+              </tr>
-+              <tr>
-+                <td><var>G</var><sub>gb</sub></td>
-+                <td>gearbox reduction</td>
-+                <td>–</td>
-+              </tr>
-+              <tr>
-+                <td><var>G</var><sub>pr</sub></td>
-+                <td>pinion&rarr;ring reduction</td>
-+                <td>–</td>
-+              </tr>
-+              <tr>
-+                <td><var>G</var><sub>tot</sub></td>
-+                <td>total reduction = <var>G</var><sub>gb</sub><var>G</var><sub>pr</sub></td>
-+                <td>–</td>
-+              </tr>
-+              <tr>
-+                <td><var>D</var><sub>&ell;</sub>(<var>z</var>)</td>
-+                <td>effective layer diameter at depth <var>z</var></td>
-+                <td>m</td>
-+              </tr>
-+              <tr>
-+                <td><var>v</var><sub>flow</sub>(<var>z</var>)</td>
-+                <td>flow-limited line speed</td>
-+                <td>m/s</td>
-+              </tr>
-+              <tr>
-+                <td><var>P</var><sub>nom</sub></td>
-+                <td>total nominal electric motor power</td>
-+                <td>kW</td>
-+              </tr>
-+              <tr>
-+                <td>&eta;<sub>em</sub></td>
-+                <td>electromechanical efficiency</td>
-+                <td>–</td>
-+              </tr>
-+              <tr>
-+                <td><var>P</var><sub>avail</sub></td>
-+                <td>available shaft power</td>
-+                <td>kW</td>
-+              </tr>
-+              <tr>
-+                <td><var>T</var>(<var>z</var>)</td>
-+                <td>operating line tension</td>
-+                <td>N</td>
-+              </tr>
-+              <tr>
-+                <td><var>v</var><sub>pwr</sub>(<var>z</var>)</td>
-+                <td>power-limited line speed</td>
-+                <td>m/s</td>
-+              </tr>
-+              <tr>
-+                <td><var>v</var><sub>avail</sub>(<var>z</var>)</td>
-+                <td>available line speed</td>
-+                <td>m/s</td>
-+              </tr>
-+              <tr>
-+                <td><var>W</var><sub>pay,sub</sub></td>
-+                <td>payload weight in water</td>
-+                <td>N</td>
-+              </tr>
-+              <tr>
-+                <td><var>w</var><sub>c,sub</sub></td>
-+                <td>cable weight in water per unit length</td>
-+                <td>N/m</td>
-+              </tr>
-+              <tr>
-+                <td><var>L</var></td>
-+                <td>max usable cable length</td>
-+                <td>m</td>
-+              </tr>
-+              <tr>
-+                <td><var>T</var><sub>static</sub>(<var>z</var>)</td>
-+                <td>static line tension</td>
-+                <td>N</td>
-+              </tr>
-+              <tr>
-+                <td>&Delta;<var>T</var><sub>a</sub>, &Delta;<var>T</var><sub>d</sub>, &Delta;<var>T</var><sub>h</sub></td>
-+                <td>dynamic tension adders (accel, drag, heave)</td>
-+                <td>N</td>
-+              </tr>
-+              <tr>
-+                <td>&tau;<sub>m</sub></td>
-+                <td>motor torque</td>
-+                <td>N·m</td>
-+              </tr>
-+              <tr>
-+                <td>&eta;<sub>train</sub></td>
-+                <td>drivetrain efficiency</td>
-+                <td>–</td>
-+              </tr>
-+              <tr>
-+                <td>&eta;<sub>mm</sub></td>
-+                <td>mechanical efficiency of motor</td>
-+                <td>–</td>
-+              </tr>
-+              <tr>
-+                <td><var>r</var><sub>&ell;</sub>(<var>z</var>)</td>
-+                <td>effective layer radius</td>
-+                <td>m</td>
-+              </tr>
-+              <tr>
-+                <td><var>r</var><sub>core</sub></td>
-+                <td>core radius</td>
-+                <td>m</td>
-+              </tr>
-+              <tr>
-+                <td><var>p</var><sub>c</sub></td>
-+                <td>cable effective pitch (≈ cable dia × packing factor)</td>
-+                <td>m</td>
-+              </tr>
-+            </tbody>
-+          </table>
-+        </div>
-+
-+        <h3>A) Available Line Speed — Unitless Relations</h3>
-+        <ol>
-+          <li><span class="math"><var>Q</var><sub>p,i</sub> / (<var>n</var><sub>e</sub> <var>D</var><sub>p</sub>) = &eta;<sub>vp</sub></span></li>
-+          <li><span class="math"><var>Q</var><sub>tot</sub> / (<var>N</var><sub>p</sub> <var>Q</var><sub>p,i</sub>) = 1</span></li>
-+          <li><span class="math"><var>Q</var><sub>m</sub> / (<var>Q</var><sub>tot</sub> / <var>N</var><sub>m</sub>) = 1</span></li>
-+          <li><span class="math"><var>n</var><sub>m</sub> <var>D</var><sub>m</sub> / (&eta;<sub>vm</sub> <var>Q</var><sub>m</sub>) = 1</span></li>
-+          <li>
-+            <span class="math"><var>n</var><sub>d</sub> / (<var>n</var><sub>m</sub> / <var>G</var><sub>tot</sub>) = 1</span>, where <var>G</var><sub>tot</sub> = <var>G</var><sub>gb</sub><var>G</var><sub>pr</sub>
-+          </li>
-+          <li>
-+            <span class="math"><var>v</var><sub>flow</sub>(<var>z</var>) / ((&pi; <var>D</var><sub>&ell;</sub>(<var>z</var>) / 60) &times; <var>n</var><sub>d</sub>) = 1</span>
-+          </li>
-+          <li><span class="math"><var>P</var><sub>avail</sub> / (&eta;<sub>em</sub> <var>P</var><sub>nom</sub>) = 1</span></li>
-+          <li><span class="math"><var>v</var><sub>pwr</sub>(<var>z</var>) <var>T</var>(<var>z</var>) / <var>P</var><sub>avail</sub> = 1</span></li>
-+          <li><span class="math"><var>v</var><sub>avail</sub>(<var>z</var>) = min(<var>v</var><sub>flow</sub>(<var>z</var>), <var>v</var><sub>pwr</sub>(<var>z</var>))</span></li>
-+        </ol>
-+
-+        <h3>B) Tension vs Depth — Unitless Relations</h3>
-+        <ol start="10">
-+          <li>
-+            <span class="math">(<var>T</var><sub>static</sub>(<var>z</var>) - <var>W</var><sub>pay,sub</sub>) / (<var>w</var><sub>c,sub</sub> <var>z</var>) = 1</span>
-+            <span class="note">for 0 &le; <var>z</var> &le; <var>L</var></span>
-+          </li>
-+          <li>
-+            <span class="math">(<var>T</var><sub>static</sub>(<var>z</var>) - <var>W</var><sub>pay,sub</sub>) / (<var>w</var><sub>c,sub</sub> <var>L</var>) = 1</span>
-+            <span class="note">for <var>z</var> &gt; <var>L</var></span>
-+          </li>
-+          <li>
-+            <span class="math">(<var>T</var>(<var>z</var>) - <var>T</var><sub>static</sub>(<var>z</var>)) / (&Delta;<var>T</var><sub>a</sub> + &Delta;<var>T</var><sub>d</sub> + &Delta;<var>T</var><sub>h</sub>) = 1</span>
-+          </li>
-+          <li>
-+            <span class="math"><var>T</var>(<var>z</var>) / (<var>T</var><sub>static</sub>(<var>z</var>) + &Delta;<var>T</var><sub>a</sub> + &Delta;<var>T</var><sub>d</sub> + &Delta;<var>T</var><sub>h</sub>) = 1</span>
-+          </li>
-+        </ol>
-+
-+        <h3>C) Cross-Checks (Optional)</h3>
-+        <ol start="14">
-+          <li>
-+            <span class="math"><var>T</var><sub>cap</sub>(<var>z</var>) <var>r</var><sub>&ell;</sub>(<var>z</var>) <var>G</var><sub>tot</sub> / (&tau;<sub>m</sub> <var>N</var><sub>m</sub> &eta;<sub>train</sub>) = 1</span>
-+          </li>
-+          <li>
-+            <span class="math">&tau;<sub>m</sub> / ((&Delta;<var>p</var> <var>D</var><sub>m</sub> &eta;<sub>mm</sub>) / (2&pi;)) = 1</span>
-+          </li>
-+          <li>
-+            <span class="math"><var>D</var><sub>&ell;</sub>(<var>i</var>) / (2 <var>r</var><sub>core</sub> + 2 (<var>i</var> - 0.5) <var>p</var><sub>c</sub>) = 1</span>
-+          </li>
-+        </ol>
-+
-+        <p>
-+          Each equation expresses the physical dependency as a pure ratio, enabling unit-consistent implementation regardless of the measurement system. All efficiencies, ratios, and reductions are dimensionless. Power-, flow-, and tension-limited speeds follow directly from these relationships.
-+        </p>
-+      </section>
-+      <section class="card info-card" id="component-catalog-card" aria-labelledby="component-catalog-instructions">
-+        <h2 class="section-title" id="component-catalog-instructions">How to update component presets</h2>
-+        <p>
-+          The component dropdowns now read from dedicated catalogs in
-+          <code>src/js/component-selectors.mjs</code>. Add or edit part numbers directly in the matching
-           array to make them available across the app.
-         </p>
-         <ol>
-           <li>
-             Open <code>src/js/component-selectors.mjs</code> and locate the array that matches the component
-             type you want to change (for example <code>GEARBOX_OPTIONS</code> or
-             <code>ELECTRIC_MOTOR_OPTIONS</code>).
-           </li>
-           <li>
-             Add a new object with the part number, description, and any field values that should autofill
-             when the part is selected. Follow the existing entries as a template.
-           </li>
-           <li>
-             Save the file and refresh the page. The new entry will appear under the corresponding dropdown
-             and auto-populate the linked form inputs.
-           </li>
-         </ol>
-         <p class="dim">
-           Tip: if you need to clear a selection after experimenting, change any populated value and the app
-           will revert the dropdown to <em>Custom (manual input)</em> automatically.
-         </p>
-       </section>
-     </div>
+ import { setupInputPersistence } from './persist-inputs.mjs';
  
-     <!-- Main app script -->
+ import { calcLayers } from './layer-engine.mjs';
+ 
+ import {
+   rowsToElectricLayer, projectElectricWraps, renderElectricTables
+ } from './electric.mjs';
+ 
+ import {
+   rowsToHydraulicLayer, projectHydraulicWraps, renderHydraulicTables
+ } from './hydraulic.mjs';
+ 
+ import { drawWaveContours, drawWaveHeightContours } from './plots/wave-contours.mjs';
+ import { drawDepthProfiles } from './plots/depth-profiles.mjs';
+ import { setupComponentSelectors } from './component-selectors.mjs';
+ import { renderDrumVisualization, clearDrumVisualization } from './drum-visual.mjs';
+ 
+ // ---- App state for plots/tables ----
+ let lastElLayer = [], lastElWraps = [];
+ let lastHyLayer = [], lastHyWraps = [];
++/** @type {{ rows: any, summary: any, cfg: any, meta: any } | null} */
++let lastDrumState = null;
+ 
+ const CSV_BUTTON_SPECS = {
+   csv_el_layer: {
+     filename: () => 'electric-layer.csv',
+     columns: [
+       'layer_no', 'layer_dia_in', 'pre_on_drum_m', 'pre_deployed_m',
+       'post_on_drum_m', 'post_deployed_m', 'max_tension_theoretical_kgf',
+       'max_tension_required_kgf', 'max_torque_Nm', 'max_motor_torque_Nm',
+       'motor_rpm_at_start', 'line_speed_at_start_mpm', 'avail_tension_kgf_at_start'
+     ],
+     header: [
+       'layer_no', 'layer_dia_in', 'pre_on_drum_m', 'pre_deployed_m',
+       'post_on_drum_m', 'post_deployed_m', 'max_tension_theoretical_kgf',
+       'max_tension_required_kgf', 'max_torque_Nm', 'max_motor_torque_Nm',
+       'motor_rpm_at_start', 'line_speed_at_start_mpm', 'avail_tension_kgf_at_start'
+     ],
+     getRows: () => lastElLayer
+   },
+   csv_el_wraps: {
+     filename: () => 'electric-wraps.csv',
+     columns: [
+       'wrap_no', 'layer_no', 'layer_dia_in', 'wrap_len_in', 'pre_spooled_len_m',
+       'spooled_len_m', 'deployed_len_m', 'tension_theoretical_kgf',
+       'tension_required_kgf', 'torque_Nm', 'motor_torque_Nm', 'motor_rpm',
+       'line_speed_mpm', 'avail_tension_kgf'
+@@ -97,50 +99,52 @@ const CSV_BUTTON_SPECS = {
+       'tension_required_kgf', 'hyd_P_required_psi', 'hyd_speed_power_mpm',
+       'hyd_speed_flow_mpm', 'hyd_speed_available_mpm', 'hyd_hp_used_at_available',
+       'hyd_elec_input_hp_used', 'hyd_drum_torque_maxP_Nm', 'hyd_avail_tension_kgf'
+     ],
+     getRows: () => lastHyWraps
+   }
+ };
+ 
+ const SYSTEM_TYPE_SELECT_ID = 'system_type_select';
+ const DEFAULT_SYSTEM_TYPE = 'electric';
+ 
+ // ---- Wire up events once DOM is ready ----
+ document.addEventListener('DOMContentLoaded', () => {
+   setupInputPersistence();
+ 
+   setupComponentSelectors();
+ 
+   setupCollapsibleToggles();
+ 
+   setupDriveModeControls();
+ 
+   setupCsvDownloads();
+ 
+   setupPlotResizeToggles();
+ 
++  setupManualRefreshControls();
++
+   setupAutoRecompute();
+ 
+   updateBuildIndicator();
+ 
+   setupTabs();
+ 
+   document.querySelectorAll('.param-label').forEach(label => {
+     const code = label.dataset.code;
+     if (code) {
+       label.setAttribute('title', code);
+     }
+   });
+ 
+   // Wave plot controls
+   q('wave_scenario').addEventListener('change', () => redrawPlots());
+   ['wave_tmin', 'wave_tmax', 'wave_vmin', 'wave_vmax', 'wave_hmin', 'wave_hmax']
+     .forEach(id => q(id).addEventListener('change', () => redrawPlots()));
+ 
+   // Depth plot controls
+   ['depth_xmin', 'depth_xmax', 'depth_speed_ymin', 'depth_speed_ymax', 'depth_tension_ymin', 'depth_tension_ymax']
+     .forEach(id => q(id).addEventListener('change', () => redrawPlots()));
+ 
+   // Initial compute
+   computeAll();
+ });
+@@ -391,50 +395,79 @@ function setupCollapsibleToggles() {
+   }
+ }
+ 
+ function setupPlotResizeToggles() {
+   const toggles = document.querySelectorAll('[data-plot-pair-toggle]');
+   toggles.forEach(btn => {
+     const pair = btn.closest('[data-plot-pair]');
+     if (!pair) return;
+ 
+     const setState = (expanded) => {
+       pair.classList.toggle('is-expanded', expanded);
+       btn.textContent = expanded ? '[-]' : '[+]';
+       btn.setAttribute('aria-expanded', expanded ? 'true' : 'false');
+       btn.setAttribute('aria-label', expanded ? 'Collapse plots to two columns' : 'Expand plots to full width');
+     };
+ 
+     setState(pair.classList.contains('is-expanded'));
+ 
+     btn.addEventListener('click', () => {
+       const next = !pair.classList.contains('is-expanded');
+       setState(next);
+     });
+   });
+ }
+ 
++function setupManualRefreshControls() {
++  const statusEl = /** @type {HTMLElement|null} */ (document.getElementById('status'));
++
++  const updateStatus = (message) => {
++    if (statusEl) statusEl.textContent = message;
++  };
++
++  const plotButtons = document.querySelectorAll('[data-plot-refresh]');
++  plotButtons.forEach(btn => {
++    btn.addEventListener('click', () => {
++      redrawPlots();
++      updateStatus('plots refreshed');
++    });
++  });
++
++  const drumButton = /** @type {HTMLButtonElement|null} */ (document.querySelector('[data-drum-refresh]'));
++  if (drumButton) {
++    drumButton.addEventListener('click', () => {
++      if (lastDrumState) {
++        const { rows, summary, cfg, meta } = lastDrumState;
++        renderDrumVisualization(rows, summary, cfg, meta);
++        updateStatus('drum diagram refreshed');
++      } else {
++        computeAll();
++      }
++    });
++  }
++}
++
+ function setupAutoRecompute() {
+   const inputs = Array.from(document.querySelectorAll('input, select, textarea'));
+   if (!inputs.length) return;
+ 
+   const handler = () => computeAll();
+ 
+   inputs.forEach(el => {
+     if (el.tagName === 'SELECT') {
+       el.addEventListener('change', handler);
+       return;
+     }
+ 
+     if (el.tagName === 'INPUT') {
+       const type = el.type;
+       if (type === 'checkbox' || type === 'radio' || type === 'range' || type === 'color') {
+         el.addEventListener('change', handler);
+         return;
+       }
+     }
+ 
+     el.addEventListener('input', handler);
+     el.addEventListener('change', handler);
+   });
+ }
+ 
+@@ -713,75 +746,77 @@ function computeAll() {
+           const gpm_total_needed = Math.max(motors, 1) * gpm_per_motor_needed;
+           const gpm_used = Math.min(gpm_total_needed, q_tot_gpm);
+           hp_used_at_available = hp_from_psi_and_gpm(P_power_psi, gpm_used);
+           if (hp_used_at_available > hp_tot_usable) hp_used_at_available = hp_tot_usable;
+         }
+ 
+         r.hyd_P_required_psi = Math.round(P_req_psi);
+         r.hyd_speed_power_mpm = +speed_power_mpm.toFixed(2);
+         r.hyd_speed_flow_mpm = +speed_flow_mpm.toFixed(2);
+         r.hyd_speed_available_mpm = +speed_avail_mpm.toFixed(2);
+         r.hyd_hp_used_at_available = +hp_used_at_available.toFixed(2);
+         r.hyd_elec_input_hp_used = +((h_emotor_eff > 0 ? r.hyd_hp_used_at_available / h_emotor_eff : 0)).toFixed(2);
+       } else {
+         r.hyd_drum_torque_maxP_Nm = 0;
+         r.hyd_avail_tension_kgf = 0;
+         r.hyd_P_required_psi = 0;
+         r.hyd_speed_power_mpm = 0;
+         r.hyd_speed_flow_mpm = 0;
+         r.hyd_speed_available_mpm = 0;
+         r.hyd_hp_used_at_available = 0;
+         r.hyd_elec_input_hp_used = 0;
+       }
+     }
+ 
+     // ---- Drum visualization ----
++    lastDrumState = { rows, summary, cfg, meta };
+     renderDrumVisualization(rows, summary, cfg, meta);
+ 
+     // ---- Aggregate into per-layer tables ----
+     lastElLayer = electricEnabled ? rowsToElectricLayer(rows, payload_kg, cable_w_kgpm, gr1, gr2, motors) : [];
+     lastHyLayer = hydraulicEnabled ? rowsToHydraulicLayer(rows) : [];
+     lastElWraps = electricEnabled ? projectElectricWraps(rows) : [];
+     lastHyWraps = hydraulicEnabled ? projectHydraulicWraps(rows) : [];
+ 
+     // ---- Render tables ----
+     renderElectricTables(lastElLayer, lastElWraps, q('tbody_el_layer'), q('tbody_el_wraps'));
+     renderHydraulicTables(lastHyLayer, lastHyWraps, q('tbody_hy_layer'), q('tbody_hy_wraps'));
+ 
+     updateCsvButtonStates();
+ 
+     // ---- Update status ----
+     if (status) status.textContent = 'results updated';
+ 
+     // ---- Draw plots ----
+     redrawPlots();
+   } catch (e) {
+     console.error(e);
+     if (errBox) errBox.textContent = 'ERROR: ' + (e && e.message ? e.message : e);
+     if (status) status.textContent = 'error';
+     clearMinimumSystemHp();
+     lastElLayer = lastElWraps = lastHyLayer = lastHyWraps = [];
++    lastDrumState = null;
+     clearDrumVisualization();
+     clearPlots();
+     updateCsvButtonStates();
+   }
+ }
+ 
+ // ---- Plot redraw helper (uses decoupled plotting modules) ----
+ function redrawPlots() {
+   // Wave contours (optional - skip if controls/SVGs absent)
+   const waveScenarioEl = /** @type {HTMLSelectElement|null} */ (document.getElementById('wave_scenario'));
+   const waveTminEl = /** @type {HTMLInputElement|null} */ (document.getElementById('wave_tmin'));
+   const waveTmaxEl = /** @type {HTMLInputElement|null} */ (document.getElementById('wave_tmax'));
+   const waveVminEl = /** @type {HTMLInputElement|null} */ (document.getElementById('wave_vmin'));
+   const waveVmaxEl = /** @type {HTMLInputElement|null} */ (document.getElementById('wave_vmax'));
+   const waveHminEl = /** @type {HTMLInputElement|null} */ (document.getElementById('wave_hmin'));
+   const waveHmaxEl = /** @type {HTMLInputElement|null} */ (document.getElementById('wave_hmax'));
+   const waveSvg = /** @type {SVGSVGElement|null} */ (document.getElementById('wave_svg'));
+   const waveSvgHeight = /** @type {SVGSVGElement|null} */ (document.getElementById('wave_svg_height'));
+ 
+   const parseInput = (el) => {
+     if (!el) return NaN;
+     return parseFloat((el.value || '').replace(',', '.'));
+   };
+ 
+   if (waveScenarioEl && waveTminEl && waveTmaxEl && waveHmaxEl && waveSvg && waveSvgHeight) {
