@@ -108,6 +108,15 @@ body {
   color: var(--ink-700);
 }
 
+.math {
+  font-variant-numeric: lining-nums tabular-nums;
+  white-space: nowrap;
+}
+
+.math > .katex {
+  font-size: 1em;
+}
+
 .card:first-of-type {
   margin-top: 0;
 }

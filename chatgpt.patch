@@ -1,258 +1,300 @@
-diff --git a/src/js/drum-visual.mjs b/src/js/drum-visual.mjs
-index 6211e04e1a463fb102d756253a0a62440f805e07..618d9680012db6e536b665795791aab866c38998 100644
---- a/src/js/drum-visual.mjs
-+++ b/src/js/drum-visual.mjs
-@@ -1,45 +1,49 @@
- // ===== drum-visual.mjs â€” render drum cross-section + summary =====
+diff --git a/src/index.html b/src/index.html
+index 46e00bea0be9cfd4844fca01b6de0d12419eea45..b01b6cda13b04b284aeb2641fb6def2c254e54c8 100644
+--- a/src/index.html
++++ b/src/index.html
+@@ -1,32 +1,37 @@
+ <!doctype html>
+ <html lang="en">
+ <head>
+   <meta charset="utf-8" />
+   <title>Winch Analyzer</title>
+   <meta name="viewport" content="width=device-width, initial-scale=1" />
+-  <link rel="stylesheet" href="css/styles.css" />
++  <link rel="stylesheet" href="css/styles.css" />
++  <link
++    rel="stylesheet"
++    href="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.css"
++    crossorigin="anonymous"
++  />
+ </head>
+ <body>
+   <div class="sheet">
+     <div class="build-indicator" id="build-info" aria-live="polite"></div>
+     <header class="page-header">
+       <img src="assets/winch-header%20140px.png" alt="TekMarines winch diagram" class="page-header__image" />
+       <h1 class="page-title">Winch Analyzer</h1>
+     </header>
+     <div id="err"></div>
+     <div id="status" aria-live="polite" class="status" role="status"></div>
  
- import { svgEl, IN_PER_MM, isWhole } from './utils.mjs';
+     <nav class="tabs" aria-label="App sections" role="tablist">
+       <button
+         class="tab-btn active"
+         id="tab-inputs"
+         type="button"
+         role="tab"
+         aria-selected="true"
+         aria-controls="panel-inputs"
+       >Section 1: Inputs</button>
+       <button
+         class="tab-btn"
+         id="tab-performance"
+         type="button"
+         role="tab"
+@@ -1193,109 +1198,206 @@
+                 <td>&eta;<sub>mm</sub></td>
+                 <td>mechanical efficiency of motor</td>
+                 <td>–</td>
+               </tr>
+               <tr>
+                 <td><var>r</var><sub>&ell;</sub>(<var>z</var>)</td>
+                 <td>effective layer radius</td>
+                 <td>m</td>
+               </tr>
+               <tr>
+                 <td><var>r</var><sub>core</sub></td>
+                 <td>core radius</td>
+                 <td>m</td>
+               </tr>
+               <tr>
+                 <td><var>p</var><sub>c</sub></td>
+                 <td>cable effective pitch (≈ cable dia × packing factor)</td>
+                 <td>m</td>
+               </tr>
+             </tbody>
+           </table>
+         </div>
  
- const FALLBACK_COLORS = {
-   accent: { r: 44, g: 86, b: 163 },
-   accentLight: { r: 237, g: 242, b: 255 },
-   ink500: { r: 85, g: 99, b: 125 },
-   ink700: { r: 47, g: 59, b: 84 },
-   ink900: { r: 20, g: 34, b: 56 },
--  paper: { r: 255, g: 255, b: 255 }
-+  paper: { r: 255, g: 255, b: 255 },
-+  tensionLow: { r: 108, g: 43, b: 217 },
-+  tensionHigh: { r: 249, g: 115, b: 22 }
- };
+         <h3>A) Available Line Speed — Unitless Relations</h3>
+         <ol>
+-          <li><span class="math"><var>Q</var><sub>p,i</sub> / (<var>n</var><sub>e</sub> <var>D</var><sub>p</sub>) = &eta;<sub>vp</sub></span></li>
+-          <li><span class="math"><var>Q</var><sub>tot</sub> / (<var>N</var><sub>p</sub> <var>Q</var><sub>p,i</sub>) = 1</span></li>
+-          <li><span class="math"><var>Q</var><sub>m</sub> / (<var>Q</var><sub>tot</sub> / <var>N</var><sub>m</sub>) = 1</span></li>
+-          <li><span class="math"><var>n</var><sub>m</sub> <var>D</var><sub>m</sub> / (&eta;<sub>vm</sub> <var>Q</var><sub>m</sub>) = 1</span></li>
+-          <li>
+-            <span class="math"><var>n</var><sub>d</sub> / (<var>n</var><sub>m</sub> / <var>G</var><sub>tot</sub>) = 1</span>, where <var>G</var><sub>tot</sub> = <var>G</var><sub>gb</sub><var>G</var><sub>pr</sub>
+-          </li>
+-          <li>
+-            <span class="math"><var>v</var><sub>flow</sub>(<var>z</var>) / ((&pi; <var>D</var><sub>&ell;</sub>(<var>z</var>) / 60) &times; <var>n</var><sub>d</sub>) = 1</span>
+-          </li>
+-          <li><span class="math"><var>P</var><sub>avail</sub> / (&eta;<sub>em</sub> <var>P</var><sub>nom</sub>) = 1</span></li>
+-          <li><span class="math"><var>v</var><sub>pwr</sub>(<var>z</var>) <var>T</var>(<var>z</var>) / <var>P</var><sub>avail</sub> = 1</span></li>
+-          <li><span class="math"><var>v</var><sub>avail</sub>(<var>z</var>) = min(<var>v</var><sub>flow</sub>(<var>z</var>), <var>v</var><sub>pwr</sub>(<var>z</var>))</span></li>
++          <li>
++            <span class="math" data-latex="\\frac{Q_{p,i}}{n_e D_p} = \\eta_{vp}">
++              Q<sub>p,i</sub> / (n<sub>e</sub> D<sub>p</sub>) = η<sub>vp</sub>
++            </span>
++          </li>
++          <li>
++            <span class="math" data-latex="\\frac{Q_{tot}}{N_p Q_{p,i}} = 1">
++              Q<sub>tot</sub> / (N<sub>p</sub> Q<sub>p,i</sub>) = 1
++            </span>
++          </li>
++          <li>
++            <span class="math" data-latex="\\frac{Q_m}{Q_{tot}/N_m} = 1">
++              Q<sub>m</sub> / (Q<sub>tot</sub> / N<sub>m</sub>) = 1
++            </span>
++          </li>
++          <li>
++            <span class="math" data-latex="\\frac{n_m D_m}{\\eta_{vm} Q_m} = 1">
++              n<sub>m</sub> D<sub>m</sub> / (η<sub>vm</sub> Q<sub>m</sub>) = 1
++            </span>
++          </li>
++          <li>
++            <span class="math" data-latex="\\frac{n_d}{n_m / G_{tot}} = 1">
++              n<sub>d</sub> / (n<sub>m</sub> / G<sub>tot</sub>) = 1
++            </span>
++            , where
++            <span class="math" data-latex="G_{tot} = G_{gb} G_{pr}">G<sub>tot</sub> = G<sub>gb</sub> G<sub>pr</sub></span>
++          </li>
++          <li>
++            <span class="math" data-latex="\\frac{v_{\\mathrm{flow}}(z)}{(\\pi D_{\\ell}(z) / 60)\\, n_d} = 1">
++              v<sub>flow</sub>(z) / ((π D<sub>ℓ</sub>(z) / 60) × n<sub>d</sub>) = 1
++            </span>
++          </li>
++          <li>
++            <span class="math" data-latex="\\frac{P_{avail}}{\\eta_{em} P_{nom}} = 1">
++              P<sub>avail</sub> / (η<sub>em</sub> P<sub>nom</sub>) = 1
++            </span>
++          </li>
++          <li>
++            <span class="math" data-latex="\\frac{v_{\\mathrm{pwr}}(z) T(z)}{P_{avail}} = 1">
++              v<sub>pwr</sub>(z) T(z) / P<sub>avail</sub> = 1
++            </span>
++          </li>
++          <li>
++            <span class="math" data-latex="v_{\\mathrm{avail}}(z) = \\min\\!\\bigl(v_{\\mathrm{flow}}(z), v_{\\mathrm{pwr}}(z)\\bigr)">
++              v<sub>avail</sub>(z) = min(v<sub>flow</sub>(z), v<sub>pwr</sub>(z))
++            </span>
++          </li>
+         </ol>
  
- const FALLBACK_HEX = {
-   accent: '#2c56a3',
-   accentLight: '#edf2ff',
-   ink500: '#55637d',
-   ink700: '#2f3b54',
-   ink900: '#142238',
--  paper: '#ffffff'
-+  paper: '#ffffff',
-+  tensionLow: '#6c2bd9',
-+  tensionHigh: '#f97316'
- };
- 
- const SVG_BASE_HEIGHT = 360;
- const SVG_MARGIN = 28;
- 
- /**
-  * Parse a CSS color string into RGB components.
-  * Supports #rgb[a], #rrggbb[aa], and rgb()/rgba().
-  * Returns fallback if parsing fails.
-  */
- function parseCssColor(value, fallback) {
-   if (!value) return { ...fallback };
-   const v = value.trim();
-   if (!v) return { ...fallback };
- 
-   if (v.startsWith('#')) {
-     const hex = v.slice(1);
-     if (hex.length === 3 || hex.length === 4) {
-       const r = parseInt(hex[0] + hex[0], 16);
-       const g = parseInt(hex[1] + hex[1], 16);
-       const b = parseInt(hex[2] + hex[2], 16);
-       if (Number.isFinite(r) && Number.isFinite(g) && Number.isFinite(b)) {
-         return { r, g, b };
-       }
-     } else if (hex.length === 6 || hex.length === 8) {
-@@ -114,50 +118,52 @@ export function renderDrumVisualization(rows, summary, cfg, meta) {
-   if (!rows || !rows.length || !summary || !cfg) {
-     emptyState(summaryEl, titleEl, svg);
-     return;
-   }
- 
-   const { total_layers, total_wraps, cable_len_m, full_drum_dia_in } = summary;
-   const {
-     cable_dia_mm,
-     core_dia_in,
-     flange_dia_in,
-     flange_to_flange_in,
-     lebus_thk_in,
-     packing_factor
-   } = cfg;
- 
-   const cable_dia_in = Math.max(0, (cable_dia_mm || 0) * IN_PER_MM);
-   const packingFactor = Number.isFinite(packing_factor) ? Math.max(packing_factor, 0) : 0.877;
- 
-   while (svg.firstChild) svg.removeChild(svg.firstChild);
- 
-   const styles = getComputedStyle(document.documentElement);
-   const accentRgb = parseCssColor(cssVar(styles, '--accent', FALLBACK_HEX.accent), FALLBACK_COLORS.accent);
-   const ink700Rgb = parseCssColor(cssVar(styles, '--ink-700', FALLBACK_HEX.ink700), FALLBACK_COLORS.ink700);
-   const ink900Rgb = parseCssColor(cssVar(styles, '--ink-900', FALLBACK_HEX.ink900), FALLBACK_COLORS.ink900);
-   const paperRgb = parseCssColor(cssVar(styles, '--paper', FALLBACK_HEX.paper), FALLBACK_COLORS.paper);
-+  const tensionLowRgb = parseCssColor(cssVar(styles, '--tension-low', FALLBACK_HEX.tensionLow), FALLBACK_COLORS.tensionLow);
-+  const tensionHighRgb = parseCssColor(cssVar(styles, '--tension-high', FALLBACK_HEX.tensionHigh), FALLBACK_COLORS.tensionHigh);
-   const cableFillCss = rgbToCss(mixRgb(accentRgb, paperRgb, 0.45), 0.82);
-   const cableStrokeCss = rgbToCss(accentRgb, 0.94);
- 
-   const uniqueLayers = [];
-   const seen = new Set();
-   for (const row of rows) {
-     if (seen.has(row.layer_no)) continue;
-     seen.add(row.layer_no);
-     uniqueLayers.push({ layer_no: row.layer_no });
-   }
- 
-   const baseRadiusIn = Math.max(0,
-     (core_dia_in || 0) / 2 +
-     (lebus_thk_in || 0) +
-     (cable_dia_in > 0 ? cable_dia_in / 2 : 0)
-   );
- 
-   const layersForViz = uniqueLayers.map(layer => {
-     const zeroBased = Math.max(0, layer.layer_no - 1);
-     const centerRadiusIn = baseRadiusIn + zeroBased * cable_dia_in * packingFactor;
-     return {
-       layer_no: layer.layer_no,
-       center_radius_in: centerRadiusIn,
-       fillColor: cableFillCss,
-       strokeColor: cableStrokeCss
-@@ -234,110 +240,143 @@ export function renderDrumVisualization(rows, summary, cfg, meta) {
-     }));
- 
-     svg.appendChild(svgEl('rect', {
-       ...flangeRectAttrs,
-       x: spoolRight.toFixed(2)
-     }));
-   }
- 
-   const axisColor = rgbToCss(ink700Rgb, 0.18);
-   svg.appendChild(svgEl('line', {
-     x1: spoolLeft.toFixed(2),
-     y1: centerY.toFixed(2),
-     x2: spoolRight.toFixed(2),
-     y2: centerY.toFixed(2),
-     stroke: axisColor,
-     'stroke-width': strokeWidthAttr,
-     'vector-effect': 'non-scaling-stroke',
-     'stroke-dasharray': '6 6'
-   }));
- 
-   const cableRadiusPx = cable_dia_in > 0 ? (cable_dia_in / 2) * scale : 0;
-   const theoreticalWrapsPerLayer = meta && Number.isFinite(meta.wraps_per_layer_used)
-     ? meta.wraps_per_layer_used
-     : (cable_dia_in > 0 ? (Math.max(flange_to_flange_in || 0, 0) / Math.max(cable_dia_in, 1e-9)) : 0);
- 
--  const wrapsByLayer = new Map();
-+  const rowsByLayer = new Map();
-   for (const row of rows) {
--    wrapsByLayer.set(row.layer_no, (wrapsByLayer.get(row.layer_no) || 0) + 1);
-+    if (!rowsByLayer.has(row.layer_no)) rowsByLayer.set(row.layer_no, []);
-+    rowsByLayer.get(row.layer_no).push(row);
-   }
- 
-+  const getWrapTension = (wrapRow) => {
-+    if (!wrapRow) return null;
-+    const candidates = [wrapRow.tension_kgf, wrapRow.tension_required_kgf, wrapRow.tension_theoretical_kgf];
-+    for (const value of candidates) {
-+      if (Number.isFinite(value)) return value;
-+    }
-+    return null;
-+  };
+         <h3>B) Tension vs Depth — Unitless Relations</h3>
+         <ol start="10">
+           <li>
+-            <span class="math">(<var>T</var><sub>static</sub>(<var>z</var>) - <var>W</var><sub>pay,sub</sub>) / (<var>w</var><sub>c,sub</sub> <var>z</var>) = 1</span>
+-            <span class="note">for 0 &le; <var>z</var> &le; <var>L</var></span>
+-          </li>
+-          <li>
+-            <span class="math">(<var>T</var><sub>static</sub>(<var>z</var>) - <var>W</var><sub>pay,sub</sub>) / (<var>w</var><sub>c,sub</sub> <var>L</var>) = 1</span>
+-            <span class="note">for <var>z</var> &gt; <var>L</var></span>
+-          </li>
+-          <li>
+-            <span class="math">(<var>T</var>(<var>z</var>) - <var>T</var><sub>static</sub>(<var>z</var>)) / (&Delta;<var>T</var><sub>a</sub> + &Delta;<var>T</var><sub>d</sub> + &Delta;<var>T</var><sub>h</sub>) = 1</span>
+-          </li>
+-          <li>
+-            <span class="math"><var>T</var>(<var>z</var>) / (<var>T</var><sub>static</sub>(<var>z</var>) + &Delta;<var>T</var><sub>a</sub> + &Delta;<var>T</var><sub>d</sub> + &Delta;<var>T</var><sub>h</sub>) = 1</span>
+-          </li>
+-        </ol>
+-
+-        <h3>C) Cross-Checks (Optional)</h3>
+-        <ol start="14">
+-          <li>
+-            <span class="math"><var>T</var><sub>cap</sub>(<var>z</var>) <var>r</var><sub>&ell;</sub>(<var>z</var>) <var>G</var><sub>tot</sub> / (&tau;<sub>m</sub> <var>N</var><sub>m</sub> &eta;<sub>train</sub>) = 1</span>
+-          </li>
+-          <li>
+-            <span class="math">&tau;<sub>m</sub> / ((&Delta;<var>p</var> <var>D</var><sub>m</sub> &eta;<sub>mm</sub>) / (2&pi;)) = 1</span>
+-          </li>
+-          <li>
+-            <span class="math"><var>D</var><sub>&ell;</sub>(<var>i</var>) / (2 <var>r</var><sub>core</sub> + 2 (<var>i</var> - 0.5) <var>p</var><sub>c</sub>) = 1</span>
+-          </li>
+-        </ol>
+-
+-        <p>
+-          Each equation expresses the physical dependency as a pure ratio, enabling unit-consistent implementation regardless of the measurement system. All efficiencies, ratios, and reductions are dimensionless. Power-, flow-, and tension-limited speeds follow directly from these relationships.
+-        </p>
++            <span class="math" data-latex="\\frac{T_{\\mathrm{static}}(z) - W_{\\mathrm{pay,sub}}}{w_{c,\\mathrm{sub}} z} = 1">
++              (T<sub>static</sub>(z) - W<sub>pay,sub</sub>) / (w<sub>c,sub</sub> z) = 1
++            </span>
++            <span class="note">for 0 &le; <var>z</var> &le; <var>L</var></span>
++          </li>
++          <li>
++            <span class="math" data-latex="\\frac{T_{\\mathrm{static}}(z) - W_{\\mathrm{pay,sub}}}{w_{c,\\mathrm{sub}} L} = 1">
++              (T<sub>static</sub>(z) - W<sub>pay,sub</sub>) / (w<sub>c,sub</sub> L) = 1
++            </span>
++            <span class="note">for <var>z</var> &gt; <var>L</var></span>
++          </li>
++          <li>
++            <span class="math" data-latex="\\frac{T(z) - T_{\\mathrm{static}}(z)}{\\Delta T_a + \\Delta T_d + \\Delta T_h} = 1">
++              (T(z) - T<sub>static</sub>(z)) / (ΔT<sub>a</sub> + ΔT<sub>d</sub> + ΔT<sub>h</sub>) = 1
++            </span>
++          </li>
++          <li>
++            <span class="math" data-latex="\\frac{T(z)}{T_{\\mathrm{static}}(z) + \\Delta T_a + \\Delta T_d + \\Delta T_h} = 1">
++              T(z) / (T<sub>static</sub>(z) + ΔT<sub>a</sub> + ΔT<sub>d</sub> + ΔT<sub>h</sub>) = 1
++            </span>
++          </li>
++        </ol>
 +
-+  const tensionValues = rows
-+    .map(getWrapTension)
-+    .filter(value => Number.isFinite(value));
-+  const hasTensionRange = tensionValues.length > 0;
-+  const tensionMin = hasTensionRange ? Math.min(...tensionValues) : 0;
-+  const tensionMax = hasTensionRange ? Math.max(...tensionValues) : 0;
-+  const tensionSpan = Math.max(0, tensionMax - tensionMin);
++        <h3>C) Cross-Checks (Optional)</h3>
++        <ol start="14">
++          <li>
++            <span class="math" data-latex="\\frac{T_{\\mathrm{cap}}(z)\\, r_{\\ell}(z)\\, G_{tot}}{\\tau_m N_m \\eta_{\\mathrm{train}}} = 1">
++              T<sub>cap</sub>(z) r<sub>ℓ</sub>(z) G<sub>tot</sub> / (τ<sub>m</sub> N<sub>m</sub> η<sub>train</sub>) = 1
++            </span>
++          </li>
++          <li>
++            <span class="math" data-latex="\\frac{\\tau_m}{(\\Delta p \\; D_m \\eta_{mm}) / (2\\pi)} = 1">
++              τ<sub>m</sub> / ((Δp D<sub>m</sub> η<sub>mm</sub>) / (2π)) = 1
++            </span>
++          </li>
++          <li>
++            <span class="math" data-latex="\\frac{D_{\\ell}(i)}{2 r_{\\mathrm{core}} + 2 (i - 0.5) p_c} = 1">
++              D<sub>ℓ</sub>(i) / (2 r<sub>core</sub> + 2 (i - 0.5) p<sub>c</sub>) = 1
++            </span>
++          </li>
++        </ol>
 +
-+  const wrapFillColor = (wrapRow, fallbackCss) => {
-+    if (!hasTensionRange) return fallbackCss;
-+    const tension = getWrapTension(wrapRow);
-+    if (!Number.isFinite(tension)) return fallbackCss;
-+    const normalized = tensionSpan > 1e-9
-+      ? (tension - tensionMin) / tensionSpan
-+      : 0.5;
-+    const clamped = Math.max(0, Math.min(1, normalized));
-+    return rgbToCss(mixRgb(tensionLowRgb, tensionHighRgb, clamped), 0.9);
-+  };
++        <h3>D) Deployment Checks</h3>
++        <p>
++          Use these quick checks when validating simulation output against the normalized relations above.
++        </p>
++        <ul>
++          <li>
++            <span class="math" data-latex="T_{\\mathrm{hoist}}(z) = T_{\\mathrm{static}}(z) + \\Delta T_a + \\Delta T_d + \\Delta T_h">
++              T<sub>hoist</sub>(z) = T<sub>static</sub>(z) + ΔT<sub>a</sub> + ΔT<sub>d</sub> + ΔT<sub>h</sub>
++            </span>
++            consolidates the static and dynamic contributors into a single hoisting load profile.
++          </li>
++          <li>
++            <span class="math" data-latex="P_{\\mathrm{req}}(z) = T(z) \\cdot v_{\\mathrm{avail}}(z)">
++              P<sub>req</sub>(z) = T(z) · v<sub>avail</sub>(z)
++            </span>
++            offers a spot-check on power demand at any depth when comparing to drive sizing limits.
++          </li>
++        </ul>
 +
-   if (cableRadiusPx > 0 && coreWidthPx > 0) {
-     layersForViz.forEach(layer => {
--      const actualWraps = wrapsByLayer.get(layer.layer_no) || 0;
-+      const rowsInLayer = rowsByLayer.get(layer.layer_no) || [];
-+      const actualWraps = rowsInLayer.length;
-       if (actualWraps <= 0) return;
-       const centerOffsetPx = layer.center_radius_in * scale;
-       const topY = centerY - centerOffsetPx;
-       const bottomY = centerY + centerOffsetPx;
++        <p>
++          Each equation expresses the physical dependency as a pure ratio, enabling unit-consistent implementation regardless of the measurement system. All efficiencies, ratios, and reductions are dimensionless. Power-, flow-, and tension-limited speeds follow directly from these relationships.
++        </p>
+       </section>
+       <section class="card info-card" id="component-catalog-card" aria-labelledby="component-catalog-instructions">
+         <h2 class="section-title" id="component-catalog-instructions">How to update component presets</h2>
+         <p>
+           The component dropdowns now read from dedicated catalogs in
+           <code>src/js/component-selectors.mjs</code>. Add or edit part numbers directly in the matching
+           array to make them available across the app.
+         </p>
+         <ol>
+           <li>
+             Open <code>src/js/component-selectors.mjs</code> and locate the array that matches the component
+             type you want to change (for example <code>GEARBOX_OPTIONS</code> or
+             <code>ELECTRIC_MOTOR_OPTIONS</code>).
+           </li>
+           <li>
+             Add a new object with the part number, description, and any field values that should autofill
+             when the part is selected. Follow the existing entries as a template.
+           </li>
+           <li>
+             Save the file and refresh the page. The new entry will appear under the corresponding dropdown
+             and auto-populate the linked form inputs.
+           </li>
+         </ol>
+         <p class="dim">
+           Tip: if you need to clear a selection after experimenting, change any populated value and the app
+           will revert the dropdown to <em>Custom (manual input)</em> automatically.
+         </p>
+       </section>
+     </div>
  
-       const wrapSlots = Number.isFinite(theoreticalWrapsPerLayer) && theoreticalWrapsPerLayer > 0
-         ? theoreticalWrapsPerLayer
-         : actualWraps;
-       const spacingDivisor = wrapSlots > 1 ? wrapSlots - 1 : 0;
-       const spacingIn = spacingDivisor > 0
-         ? (Math.max(flange_to_flange_in || 0, 0) - Math.max(cable_dia_in, 0)) / spacingDivisor
-         : 0;
-       const spacingPx = Math.max(spacingIn, 0) * scale;
-       const startFromLeft = (layer.layer_no % 2) === 1;
-       let startCx = startFromLeft
-         ? spoolLeft + cableRadiusPx
-         : spoolRight - cableRadiusPx;
-       const delta = startFromLeft ? spacingPx : -spacingPx;
- 
-       let wrapsToDraw = actualWraps;
-       if (
-         Number.isFinite(theoreticalWrapsPerLayer) &&
-         isWhole(theoreticalWrapsPerLayer) &&
-         (layer.layer_no % 2 === 0)
-       ) {
-         const evenLayerMax = Math.max(Math.round(theoreticalWrapsPerLayer) - 1, 0);
-         wrapsToDraw = Math.min(wrapsToDraw, evenLayerMax);
-         if (!startFromLeft && spacingPx > 0) {
-           startCx -= spacingPx / 2;
-         }
-       }
- 
-       for (let w = 0; w < wrapsToDraw; w++) {
-         const cx = startCx + w * delta;
-         if (cx - cableRadiusPx < spoolLeft - 1e-3) continue;
-         if (cx + cableRadiusPx > spoolRight + 1e-3) continue;
- 
-+        const wrapRow = rowsInLayer[w];
-+        const fillCss = wrapFillColor(wrapRow, layer.fillColor);
+-    <!-- Main app script -->
+-    <script type="module" src="js/main.mjs"></script>
+-  </div>
+-</body>
+-</html>
+\ No newline at end of file
++    <script
++      defer
++      src="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.js"
++      crossorigin="anonymous"
++    ></script>
++    <script>
++      window.addEventListener('DOMContentLoaded', () => {
++        if (!window.katex) {
++          console.warn('KaTeX library not available, skipping math rendering.');
++          return;
++        }
 +
-         svg.appendChild(svgEl('circle', {
-           cx: cx.toFixed(2),
-           cy: topY.toFixed(2),
-           r: cableRadiusPx.toFixed(2),
--          fill: layer.fillColor,
-+          fill: fillCss,
-           stroke: layer.strokeColor,
-           'stroke-width': strokeWidthAttr,
-           'vector-effect': 'non-scaling-stroke'
-         }));
- 
-         svg.appendChild(svgEl('circle', {
-           cx: cx.toFixed(2),
-           cy: bottomY.toFixed(2),
-           r: cableRadiusPx.toFixed(2),
--          fill: layer.fillColor,
-+          fill: fillCss,
-           stroke: layer.strokeColor,
-           'stroke-width': strokeWidthAttr,
-           'vector-effect': 'non-scaling-stroke'
-         }));
-       }
-     });
-   }
- 
-   // Summary & accessibility copy
-   const cableLenDigits = cable_len_m >= 1000 ? 0 : cable_len_m >= 10 ? 1 : 2;
-   const cableDiaDigits = cable_dia_mm >= 50 ? 0 : cable_dia_mm >= 10 ? 1 : 2;
-   const layerWord = total_layers === 1 ? 'layer' : 'layers';
-   const wrapWord = total_wraps === 1 ? 'wrap' : 'wraps';
-   const summaryLine = `${fmt(cable_len_m, cableLenDigits)} m of ${fmt(cable_dia_mm, cableDiaDigits)} mm cable on ${fmt(total_layers, 0)} ${layerWord} with ${fmt(total_wraps, 0)} total ${wrapWord}`;
-   const wrapsPerLayer = meta && Number.isFinite(meta.wraps_per_layer_used)
-     ? ` (≈${fmt(meta.wraps_per_layer_used, 1)} wraps per layer)`
-     : '';
-   const geometryParts = [
-     `core Ø ${fmt(core_dia_in, 2)} in`,
-     `flange-to-flange ${fmt(flange_to_flange_in, 2)} in`,
-     `flange Ø ${fmt(flange_dia_in, 2)} in`,
-     `Lebus liner ${fmt(lebus_thk_in, 3)} in`,
-     `full drum Ø ${fmt(full_drum_dia_in, 2)} in`
-   ];
-   const geometryLine = `Drum geometry: ${geometryParts.join(', ')}.`;
++        document.querySelectorAll('.math[data-latex]').forEach((el) => {
++          const latex = el.dataset.latex;
++
++          if (!latex) return;
++
++          try {
++            window.katex.render(latex, el, {
++              throwOnError: false,
++            });
++            el.setAttribute('role', 'math');
++            el.setAttribute('aria-label', latex);
++          } catch (error) {
++            console.error('KaTeX render failed for expression:', latex, error);
++          }
++        });
++      });
++    </script>
++
++    <!-- Main app script -->
++    <script type="module" src="js/main.mjs"></script>
++  </div>
++</body>
++</html>

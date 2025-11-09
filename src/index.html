@@ -5,6 +5,11 @@
   <title>Winch Analyzer</title>
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <link rel="stylesheet" href="css/styles.css" />
+  <link
+    rel="stylesheet"
+    href="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.css"
+    crossorigin="anonymous"
+  />
 </head>
 <body>
   <div class="sheet">
@@ -1215,51 +1220,118 @@
 
         <h3>A) Available Line Speed — Unitless Relations</h3>
         <ol>
-          <li><span class="math"><var>Q</var><sub>p,i</sub> / (<var>n</var><sub>e</sub> <var>D</var><sub>p</sub>) = &eta;<sub>vp</sub></span></li>
-          <li><span class="math"><var>Q</var><sub>tot</sub> / (<var>N</var><sub>p</sub> <var>Q</var><sub>p,i</sub>) = 1</span></li>
-          <li><span class="math"><var>Q</var><sub>m</sub> / (<var>Q</var><sub>tot</sub> / <var>N</var><sub>m</sub>) = 1</span></li>
-          <li><span class="math"><var>n</var><sub>m</sub> <var>D</var><sub>m</sub> / (&eta;<sub>vm</sub> <var>Q</var><sub>m</sub>) = 1</span></li>
           <li>
-            <span class="math"><var>n</var><sub>d</sub> / (<var>n</var><sub>m</sub> / <var>G</var><sub>tot</sub>) = 1</span>, where <var>G</var><sub>tot</sub> = <var>G</var><sub>gb</sub><var>G</var><sub>pr</sub>
+            <span class="math" data-latex="\\frac{Q_{p,i}}{n_e D_p} = \\eta_{vp}">
+              Q<sub>p,i</sub> / (n<sub>e</sub> D<sub>p</sub>) = η<sub>vp</sub>
+            </span>
           </li>
           <li>
-            <span class="math"><var>v</var><sub>flow</sub>(<var>z</var>) / ((&pi; <var>D</var><sub>&ell;</sub>(<var>z</var>) / 60) &times; <var>n</var><sub>d</sub>) = 1</span>
+            <span class="math" data-latex="\\frac{Q_{tot}}{N_p Q_{p,i}} = 1">
+              Q<sub>tot</sub> / (N<sub>p</sub> Q<sub>p,i</sub>) = 1
+            </span>
           </li>
-          <li><span class="math"><var>P</var><sub>avail</sub> / (&eta;<sub>em</sub> <var>P</var><sub>nom</sub>) = 1</span></li>
-          <li><span class="math"><var>v</var><sub>pwr</sub>(<var>z</var>) <var>T</var>(<var>z</var>) / <var>P</var><sub>avail</sub> = 1</span></li>
-          <li><span class="math"><var>v</var><sub>avail</sub>(<var>z</var>) = min(<var>v</var><sub>flow</sub>(<var>z</var>), <var>v</var><sub>pwr</sub>(<var>z</var>))</span></li>
+          <li>
+            <span class="math" data-latex="\\frac{Q_m}{Q_{tot}/N_m} = 1">
+              Q<sub>m</sub> / (Q<sub>tot</sub> / N<sub>m</sub>) = 1
+            </span>
+          </li>
+          <li>
+            <span class="math" data-latex="\\frac{n_m D_m}{\\eta_{vm} Q_m} = 1">
+              n<sub>m</sub> D<sub>m</sub> / (η<sub>vm</sub> Q<sub>m</sub>) = 1
+            </span>
+          </li>
+          <li>
+            <span class="math" data-latex="\\frac{n_d}{n_m / G_{tot}} = 1">
+              n<sub>d</sub> / (n<sub>m</sub> / G<sub>tot</sub>) = 1
+            </span>
+            , where
+            <span class="math" data-latex="G_{tot} = G_{gb} G_{pr}">G<sub>tot</sub> = G<sub>gb</sub> G<sub>pr</sub></span>
+          </li>
+          <li>
+            <span class="math" data-latex="\\frac{v_{\\mathrm{flow}}(z)}{(\\pi D_{\\ell}(z) / 60)\\, n_d} = 1">
+              v<sub>flow</sub>(z) / ((π D<sub>ℓ</sub>(z) / 60) × n<sub>d</sub>) = 1
+            </span>
+          </li>
+          <li>
+            <span class="math" data-latex="\\frac{P_{avail}}{\\eta_{em} P_{nom}} = 1">
+              P<sub>avail</sub> / (η<sub>em</sub> P<sub>nom</sub>) = 1
+            </span>
+          </li>
+          <li>
+            <span class="math" data-latex="\\frac{v_{\\mathrm{pwr}}(z) T(z)}{P_{avail}} = 1">
+              v<sub>pwr</sub>(z) T(z) / P<sub>avail</sub> = 1
+            </span>
+          </li>
+          <li>
+            <span class="math" data-latex="v_{\\mathrm{avail}}(z) = \\min\\!\\bigl(v_{\\mathrm{flow}}(z), v_{\\mathrm{pwr}}(z)\\bigr)">
+              v<sub>avail</sub>(z) = min(v<sub>flow</sub>(z), v<sub>pwr</sub>(z))
+            </span>
+          </li>
         </ol>
 
         <h3>B) Tension vs Depth — Unitless Relations</h3>
         <ol start="10">
           <li>
-            <span class="math">(<var>T</var><sub>static</sub>(<var>z</var>) - <var>W</var><sub>pay,sub</sub>) / (<var>w</var><sub>c,sub</sub> <var>z</var>) = 1</span>
+            <span class="math" data-latex="\\frac{T_{\\mathrm{static}}(z) - W_{\\mathrm{pay,sub}}}{w_{c,\\mathrm{sub}} z} = 1">
+              (T<sub>static</sub>(z) - W<sub>pay,sub</sub>) / (w<sub>c,sub</sub> z) = 1
+            </span>
             <span class="note">for 0 &le; <var>z</var> &le; <var>L</var></span>
           </li>
           <li>
-            <span class="math">(<var>T</var><sub>static</sub>(<var>z</var>) - <var>W</var><sub>pay,sub</sub>) / (<var>w</var><sub>c,sub</sub> <var>L</var>) = 1</span>
+            <span class="math" data-latex="\\frac{T_{\\mathrm{static}}(z) - W_{\\mathrm{pay,sub}}}{w_{c,\\mathrm{sub}} L} = 1">
+              (T<sub>static</sub>(z) - W<sub>pay,sub</sub>) / (w<sub>c,sub</sub> L) = 1
+            </span>
             <span class="note">for <var>z</var> &gt; <var>L</var></span>
           </li>
           <li>
-            <span class="math">(<var>T</var>(<var>z</var>) - <var>T</var><sub>static</sub>(<var>z</var>)) / (&Delta;<var>T</var><sub>a</sub> + &Delta;<var>T</var><sub>d</sub> + &Delta;<var>T</var><sub>h</sub>) = 1</span>
+            <span class="math" data-latex="\\frac{T(z) - T_{\\mathrm{static}}(z)}{\\Delta T_a + \\Delta T_d + \\Delta T_h} = 1">
+              (T(z) - T<sub>static</sub>(z)) / (ΔT<sub>a</sub> + ΔT<sub>d</sub> + ΔT<sub>h</sub>) = 1
+            </span>
           </li>
           <li>
-            <span class="math"><var>T</var>(<var>z</var>) / (<var>T</var><sub>static</sub>(<var>z</var>) + &Delta;<var>T</var><sub>a</sub> + &Delta;<var>T</var><sub>d</sub> + &Delta;<var>T</var><sub>h</sub>) = 1</span>
+            <span class="math" data-latex="\\frac{T(z)}{T_{\\mathrm{static}}(z) + \\Delta T_a + \\Delta T_d + \\Delta T_h} = 1">
+              T(z) / (T<sub>static</sub>(z) + ΔT<sub>a</sub> + ΔT<sub>d</sub> + ΔT<sub>h</sub>) = 1
+            </span>
           </li>
         </ol>
 
         <h3>C) Cross-Checks (Optional)</h3>
         <ol start="14">
           <li>
-            <span class="math"><var>T</var><sub>cap</sub>(<var>z</var>) <var>r</var><sub>&ell;</sub>(<var>z</var>) <var>G</var><sub>tot</sub> / (&tau;<sub>m</sub> <var>N</var><sub>m</sub> &eta;<sub>train</sub>) = 1</span>
+            <span class="math" data-latex="\\frac{T_{\\mathrm{cap}}(z)\\, r_{\\ell}(z)\\, G_{tot}}{\\tau_m N_m \\eta_{\\mathrm{train}}} = 1">
+              T<sub>cap</sub>(z) r<sub>ℓ</sub>(z) G<sub>tot</sub> / (τ<sub>m</sub> N<sub>m</sub> η<sub>train</sub>) = 1
+            </span>
           </li>
           <li>
-            <span class="math">&tau;<sub>m</sub> / ((&Delta;<var>p</var> <var>D</var><sub>m</sub> &eta;<sub>mm</sub>) / (2&pi;)) = 1</span>
+            <span class="math" data-latex="\\frac{\\tau_m}{(\\Delta p \\; D_m \\eta_{mm}) / (2\\pi)} = 1">
+              τ<sub>m</sub> / ((Δp D<sub>m</sub> η<sub>mm</sub>) / (2π)) = 1
+            </span>
           </li>
           <li>
-            <span class="math"><var>D</var><sub>&ell;</sub>(<var>i</var>) / (2 <var>r</var><sub>core</sub> + 2 (<var>i</var> - 0.5) <var>p</var><sub>c</sub>) = 1</span>
+            <span class="math" data-latex="\\frac{D_{\\ell}(i)}{2 r_{\\mathrm{core}} + 2 (i - 0.5) p_c} = 1">
+              D<sub>ℓ</sub>(i) / (2 r<sub>core</sub> + 2 (i - 0.5) p<sub>c</sub>) = 1
+            </span>
           </li>
         </ol>
+
+        <h3>D) Deployment Checks</h3>
+        <p>
+          Use these quick checks when validating simulation output against the normalized relations above.
+        </p>
+        <ul>
+          <li>
+            <span class="math" data-latex="T_{\\mathrm{hoist}}(z) = T_{\\mathrm{static}}(z) + \\Delta T_a + \\Delta T_d + \\Delta T_h">
+              T<sub>hoist</sub>(z) = T<sub>static</sub>(z) + ΔT<sub>a</sub> + ΔT<sub>d</sub> + ΔT<sub>h</sub>
+            </span>
+            consolidates the static and dynamic contributors into a single hoisting load profile.
+          </li>
+          <li>
+            <span class="math" data-latex="P_{\\mathrm{req}}(z) = T(z) \\cdot v_{\\mathrm{avail}}(z)">
+              P<sub>req</sub>(z) = T(z) · v<sub>avail</sub>(z)
+            </span>
+            offers a spot-check on power demand at any depth when comparing to drive sizing limits.
+          </li>
+        </ul>
 
         <p>
           Each equation expresses the physical dependency as a pure ratio, enabling unit-consistent implementation regardless of the measurement system. All efficiencies, ratios, and reductions are dimensionless. Power-, flow-, and tension-limited speeds follow directly from these relationships.
@@ -1294,8 +1366,38 @@
       </section>
     </div>
 
+    <script
+      defer
+      src="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.js"
+      crossorigin="anonymous"
+    ></script>
+    <script>
+      window.addEventListener('DOMContentLoaded', () => {
+        if (!window.katex) {
+          console.warn('KaTeX library not available, skipping math rendering.');
+          return;
+        }
+
+        document.querySelectorAll('.math[data-latex]').forEach((el) => {
+          const latex = el.dataset.latex;
+
+          if (!latex) return;
+
+          try {
+            window.katex.render(latex, el, {
+              throwOnError: false,
+            });
+            el.setAttribute('role', 'math');
+            el.setAttribute('aria-label', latex);
+          } catch (error) {
+            console.error('KaTeX render failed for expression:', latex, error);
+          }
+        });
+      });
+    </script>
+
     <!-- Main app script -->
     <script type="module" src="js/main.mjs"></script>
   </div>
 </body>
-</html>
+</html>
