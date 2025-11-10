@@ -1,197 +1,238 @@
-diff --git a/src/index.html b/src/index.html
-index 9e44f494ca3a7849c7b1e317b1c6f982e0640410..a658a533a9d9fb5bb39bd58a97bee04c928026c1 100644
---- a/src/index.html
-+++ b/src/index.html
-@@ -1319,148 +1319,172 @@
-                 <td><span class="math" data-latex="\eta_{mm}"></span></td>
-                 <td>mechanical efficiency of motor</td>
-                 <td>–</td>
-               </tr>
-               <tr>
-                 <td><span class="math" data-latex="r_{\ell}(z)"></span></td>
-                 <td>effective layer radius</td>
-                 <td>m</td>
-               </tr>
-               <tr>
-                 <td><span class="math" data-latex="r_{core}"></span></td>
-                 <td>core radius</td>
-                 <td>m</td>
-               </tr>
-               <tr>
-                 <td><span class="math" data-latex="p_{c}"></span></td>
-                 <td>cable effective pitch (≈ cable dia × packing factor)</td>
-                 <td>m</td>
-               </tr>
-             </tbody>
-           </table>
-         </div>
+diff --git a/src/js/component-selectors.mjs b/src/js/component-selectors.mjs
+index 26fed08f9a55ebef7534ee7d2bc6cccf87e937c7..2c204b8dd28af4bbe7f6e8c1b92d71c3f7b090dd 100644
+--- a/src/js/component-selectors.mjs
++++ b/src/js/component-selectors.mjs
+@@ -994,89 +994,157 @@ function populateSelectOptions(selectEl, config, { selectedValue } = {}) {
+   manualOpt.value = '';
+   manualOpt.textContent = 'Custom (manual input)';
+   selectEl.appendChild(manualOpt);
  
-         <h3>A) Available Line Speed — Unitless Relations</h3>
-         <ol>
--          <li><span class="math" data-latex="Q_{p,i} / (n_e D_p) = \eta_{vp}"></span></li>
--          <li><span class="math" data-latex="Q_{tot} / (N_p Q_{p,i}) = 1"></span></li>
--          <li><span class="math" data-latex="Q_{m} / (Q_{tot} / N_{m}) = 1"></span></li>
--          <li><span class="math" data-latex="n_{m} D_{m} / (\eta_{vm} Q_{m}) = 1"></span></li>
-+          <li><p>$$Q_{p,i} = \eta_{vp}\, n_e\, D_p$$</p></li>
-+          <li><p>$$Q_{tot} = N_p\, Q_{p,i}$$</p></li>
-+          <li><p>$$Q_{m} = \dfrac{Q_{tot}}{N_{m}}$$</p></li>
-+          <li><p>$$n_{m} = \dfrac{\eta_{vm}\, Q_{m}}{D_{m}}$$</p></li>
-           <li>
--            <span class="math" data-latex="n_{d} / (n_{m} / G_{tot}) = 1"></span>, where
--            <span class="math" data-latex="G_{tot} = G_{gb} G_{pr}"></span>
-+            <p>$$n_{d} = \dfrac{n_{m}}{G_{tot}}$$</p>
-+            <p>$$G_{tot} = G_{gb} \, G_{pr}$$</p>
-           </li>
-           <li>
--            <span class="math" data-latex="v_{flow}(z) / ((\pi D_{\ell}(z) / 60) \times n_{d}) = 1"></span>
-+            <p>
-+              $$v_{flow}(z) = \left( \frac{\pi \, D_{\ell}(z)}{60} \right) n_{d}$$
-+            </p>
-+          </li>
-+          <li><p>$$P_{avail} = \eta_{em}\, P_{nom}$$</p></li>
-+          <li><p>$$v_{pwr}(z) = \dfrac{P_{avail}}{T(z)}$$</p></li>
-+          <li>
-+            <p>
-+              $$v_{avail}(z) = \min\!\big(v_{flow}(z),\, v_{pwr}(z)\big)$$
-+            </p>
-           </li>
--          <li><span class="math" data-latex="P_{avail} / (\eta_{em} P_{nom}) = 1"></span></li>
--          <li><span class="math" data-latex="v_{pwr}(z) T(z) / P_{avail} = 1"></span></li>
--          <li><span class="math" data-latex="v_{avail}(z) = \min\big(v_{flow}(z), v_{pwr}(z)\big)"></span></li>
-         </ol>
+   allOptions(config).forEach(option => {
+     const opt = document.createElement('option');
+     opt.value = option.pn;
+     opt.textContent = describeOption(config, option);
+     selectEl.appendChild(opt);
+   });
  
-         <!-- Equations -->
-         <div class="equations">
-           <p>
-             $$v_{flow}(z) =
-             \frac{\pi \, D_\ell(z)}{60}
-             \left(
-               \frac{
-                 \eta_{vm}
-                 \left(
-                   \dfrac{N_p \, \eta_{vp} \, n_e \, D_p}{N_m}
-                 \right)
-               }{
-                 D_m \, G_{gb} \, G_{pr}
-               }
-             \right)$$
-           </p>
+   const createOpt = document.createElement('option');
+   createOpt.value = CREATE_NEW_VALUE;
+   createOpt.textContent = 'Create New';
+   selectEl.appendChild(createOpt);
  
-           <p>
-             $$v_{pwr}(z) =
-             \frac{\eta_{em} \, P_{nom}}{T(z)}$$
-           </p>
+   if (prior && prior !== CREATE_NEW_VALUE && findOption(config, prior)) {
+     selectEl.value = prior;
+   } else if (prior === '') {
+     selectEl.value = '';
+   } else {
+     selectEl.value = '';
+   }
+ }
  
-           <p>
-             $$v_{avail}(z) =
-             \min\!\big(v_{flow}(z),\, v_{pwr}(z)\big)$$
-           </p>
-         </div>
+-function handleCreateNew(config, selectEl) {
++async function handleCreateNew(config, selectEl) {
+   const label = config.label || 'component';
+   const pnInput = window.prompt(`Enter a part number for the new ${label} preset:`);
+   if (pnInput == null) {
+     return null;
+   }
+   const pn = pnInput.trim();
+   if (!pn) {
+     window.alert('A part number is required to create a preset.');
+     return null;
+   }
  
-         <h3>B) Tension vs Depth — Unitless Relations</h3>
-         <ol start="10">
-           <li>
--            <span class="math" data-latex="\frac{T_{\mathrm{static}}(z) - W_{\mathrm{pay,sub}}}{w_{c,\mathrm{sub}} z} = 1"></span>
-+            <p>
-+              $$T_{\mathrm{static}}(z) = W_{\mathrm{pay,sub}} + w_{c,\mathrm{sub}}\, z$$
-+            </p>
-             <span class="note">
-               for
-               <span class="math" data-latex="0 \le z \le L"></span>
-             </span>
-           </li>
-           <li>
--            <span class="math" data-latex="\frac{T_{\mathrm{static}}(z) - W_{\mathrm{pay,sub}}}{w_{c,\mathrm{sub}} L} = 1"></span>
-+            <p>
-+              $$T_{\mathrm{static}}(z) = W_{\mathrm{pay,sub}} + w_{c,\mathrm{sub}}\, L$$
-+            </p>
-             <span class="note">
-               for
-               <span class="math" data-latex="z > L"></span>
-             </span>
-           </li>
-           <li>
--            <span class="math" data-latex="\frac{T(z) - T_{\mathrm{static}}(z)}{\Delta T_a + \Delta T_d + \Delta T_h} = 1"></span>
-+            <p>
-+              $$T(z) = T_{\mathrm{static}}(z) + \Delta T_a + \Delta T_d + \Delta T_h$$
-+            </p>
-           </li>
-           <li>
--            <span class="math" data-latex="\frac{T(z)}{T_{\mathrm{static}}(z) + \Delta T_a + \Delta T_d + \Delta T_h} = 1"></span>
-+            <p>
-+              $$T(z) = T_{\mathrm{static}}(z) + \Delta T_a + \Delta T_d + \Delta T_h$$
-+            </p>
-           </li>
-         </ol>
+   const existing = allOptions(config).find(opt => opt.pn.toLowerCase() === pn.toLowerCase());
+   if (existing) {
+     window.alert(`A preset with part number "${pn}" already exists.`);
+     return null;
+   }
  
-         <h3>C) Cross-Checks (Optional)</h3>
-         <ol start="14">
-           <li>
--            <span class="math" data-latex="\frac{T_{\mathrm{cap}}(z)\, r_{\ell}(z)\, G_{tot}}{\tau_m N_m \, \eta_{\mathrm{train}}} = 1"></span>
-+            <p>
-+              $$T_{\mathrm{cap}}(z) = \dfrac{\tau_m N_m\, \eta_{\mathrm{train}}}{r_{\ell}(z)\, G_{tot}}$$
-+            </p>
-           </li>
-           <li>
--            <span class="math" data-latex="\frac{\tau_m}{(\Delta p \, D_m \, \eta_{mm}) / (2\pi)} = 1"></span>
-+            <p>
-+              $$\tau_m = \dfrac{\Delta p\, D_m\, \eta_{mm}}{2\pi}$$
-+            </p>
-           </li>
-           <li>
--            <span class="math" data-latex="\frac{D_{\ell}(i)}{2 r_{\mathrm{core}} + 2 (i - 0.5) p_c} = 1"></span>
-+            <p>
-+              $$D_{\ell}(i) = 2 r_{\mathrm{core}} + 2 (i - 0.5) p_c$$
-+            </p>
-           </li>
-         </ol>
+   const descriptionInput = window.prompt(`Enter a description for ${pn}:`);
+   const description = descriptionInput == null ? '' : descriptionInput.trim();
  
-         <h3>D) Deployment Checks</h3>
-         <p>
-           Use these quick checks when validating simulation output against the normalized relations above.
-         </p>
-         <ul>
-           <li>
--            <span class="math" data-latex="T_{\mathrm{hoist}}(z) = T_{\mathrm{static}}(z) + \Delta T_a + \Delta T_d + \Delta T_h"></span>
-+            <p>
-+              $$T_{\mathrm{hoist}}(z) = T_{\mathrm{static}}(z) + \Delta T_a + \Delta T_d + \Delta T_h$$
-+            </p>
-             consolidates the static and dynamic contributors into a single hoisting load profile.
-           </li>
-           <li>
--            <span class="math" data-latex="P_{\mathrm{req}}(z) = T(z) \\cdot v_{\mathrm{avail}}(z)"></span>
-+            <p>
-+              $$P_{\mathrm{req}}(z) = T(z) \, v_{\mathrm{avail}}(z)$$
-+            </p>
-             offers a spot-check on power demand at any depth when comparing to drive sizing limits.
-           </li>
-         </ul>
+   const values = collectValuesForConfig(config);
+-  /** @type {ComponentOption} */
+-  const option = {
+-    pn,
++  const metadata = { pn };
++  if (config.type) {
++    metadata.type = config.type;
++  }
++  if (config.label) {
++    metadata.label = config.label;
++  }
++
++  const payload = {
+     name: pn,
+-    ...values
++    ...(description ? { description } : {}),
++    data: values,
++    metadata
+   };
+-  if (description) {
+-    option.description = description;
+-  }
  
-         <p>
--          Each equation expresses the physical dependency as a pure ratio, enabling unit-consistent implementation regardless of the measurement system. All efficiencies, ratios, and reductions are dimensionless. Power-, flow-, and tension-limited speeds follow directly from these relationships.
-+          Each equation isolates the dependent quantity on the left-hand side for quick substitution while preserving unit-consistent implementation across measurement systems. All efficiencies, ratios, and reductions are dimensionless. Power-, flow-, and tension-limited speeds follow directly from these relationships.
-         </p>
-       </section>
-       <section class="card info-card" id="component-catalog-card" aria-labelledby="component-catalog-instructions">
-         <h2 class="section-title" id="component-catalog-instructions">How to update component presets</h2>
-         <p>
-           The component dropdowns now read from dedicated catalogs in
-           <code>src/js/component-selectors.mjs</code>. Add or edit part numbers directly in the matching
-           array to make them available across the app.
-         </p>
-         <ol>
-           <li>
-             Open <code>src/js/component-selectors.mjs</code> and locate the array that matches the component
-             type you want to change (for example <code>GEARBOX_OPTIONS</code> or
-             <code>ELECTRIC_MOTOR_OPTIONS</code>).
-           </li>
-           <li>
-             Add a new object with the part number, description, and any field values that should autofill
-             when the part is selected. Follow the existing entries as a template.
-           </li>
-           <li>
-             Save the file and refresh the page. The new entry will appear under the corresponding dropdown
-             and auto-populate the linked form inputs.
-           </li>
-         </ol>
-         <p class="dim">
+-  if (!Array.isArray(config.customOptions)) {
+-    config.customOptions = [];
++  const wasDisabled = selectEl.disabled;
++  selectEl.disabled = true;
++  try {
++    const response = await fetch('/api/presets', {
++      method: 'POST',
++      headers: {
++        'Content-Type': 'application/json'
++      },
++      body: JSON.stringify(payload)
++    });
++
++    if (!response.ok) {
++      let message = `Failed to create ${label} preset.`;
++      try {
++        const errorBody = await response.json();
++        if (errorBody?.error?.message) {
++          message = errorBody.error.message;
++          if (Array.isArray(errorBody.error.details) && errorBody.error.details.length) {
++            message = `${message}\n- ${errorBody.error.details.join('\n- ')}`;
++          }
++        }
++      } catch (err) {
++        // Ignore JSON parsing errors; fall back to generic message.
++      }
++      window.alert(message);
++      return null;
++    }
++
++    let body;
++    try {
++      body = await response.json();
++    } catch (err) {
++      window.alert('Failed to parse server response when creating preset.');
++      return null;
++    }
++
++    const preset = body?.preset;
++    if (!preset || typeof preset.id !== 'string') {
++      window.alert('Server response did not include the created preset.');
++      return null;
++    }
++
++    const presetData =
++      preset && typeof preset.data === 'object' && preset.data !== null && !Array.isArray(preset.data)
++        ? preset.data
++        : values;
++
++    /** @type {ComponentOption} */
++    const option = {
++      pn,
++      name: preset.name ?? pn,
++      ...(preset.description ? { description: preset.description } : {}),
++      ...presetData,
++      id: preset.id
++    };
++
++    if (!Array.isArray(config.customOptions)) {
++      config.customOptions = [];
++    }
++    config.customOptions.push(option);
++    saveCustomOptions(config.type, config.customOptions);
++    populateSelectOptions(selectEl, config, { selectedValue: pn });
++    return pn;
++  } catch (err) {
++    const message = err instanceof Error ? err.message : String(err);
++    window.alert(`Unable to create ${label} preset: ${message}`);
++    return null;
++  } finally {
++    selectEl.disabled = wasDisabled;
+   }
+-  config.customOptions.push(option);
+-  saveCustomOptions(config.type, config.customOptions);
+-  populateSelectOptions(selectEl, config, { selectedValue: pn });
+-  return pn;
+ }
+ 
+ function describeOption(config, option) {
+   const parts = [option.name ?? option.pn];
+   if (option.description) parts.push(option.description);
+   return parts.join(' — ');
+ }
+ 
+ function attachWatcher(inputId) {
+   if (watchedInputs.has(inputId)) return;
+   const el = /** @type {HTMLElement|null} */ (document.getElementById(inputId));
+   if (!el) return;
+   const handler = () => {
+     if (el.dataset.componentSuppress === '1') return;
+     const selectId = el.dataset.componentSelect;
+     if (!selectId) return;
+     delete el.dataset.componentSelect;
+     delete el.dataset.componentPn;
+     const selectEl = /** @type {HTMLSelectElement|null} */ (document.getElementById(selectId));
+     if (selectEl && selectEl.value) {
+       selectEl.value = '';
+       selectEl.dispatchEvent(new Event('change', { bubbles: true }));
+     }
+   };
+   if (el instanceof HTMLInputElement) {
+@@ -1146,59 +1214,59 @@ function applySelection(config, pn, { skipEvents = false } = {}) {
+     }
+     delete inputEl.dataset.componentSuppress;
+   });
+ }
+ 
+ export function setupComponentSelectors() {
+   SELECT_CONFIGS.forEach(config => {
+     const selectEl = /** @type {HTMLSelectElement|null} */ (document.getElementById(config.selectId));
+     if (!selectEl) return;
+     config.customOptions = loadCustomOptions(config.type);
+ 
+     const initialValue = selectEl.value;
+     const { initialSkipEvents = true } = config;
+ 
+     populateSelectOptions(selectEl, config, { selectedValue: initialValue });
+ 
+     Object.keys(config.fieldMap).forEach(inputId => attachWatcher(inputId));
+ 
+     let previousValue = selectEl.value && selectEl.value !== CREATE_NEW_VALUE ? selectEl.value : '';
+     let suppressNext = false;
+ 
+     const ensureOptionApplied = (value, { skipEvents = false } = {}) => {
+       applySelection(config, value, { skipEvents });
+     };
+ 
+-    selectEl.addEventListener('change', () => {
++    selectEl.addEventListener('change', async () => {
+       if (suppressNext) {
+         suppressNext = false;
+         previousValue = selectEl.value;
+         ensureOptionApplied(selectEl.value);
+         return;
+       }
+ 
+       const value = selectEl.value;
+       if (value === CREATE_NEW_VALUE) {
+         selectEl.value = previousValue;
+-        const createdPn = handleCreateNew(config, selectEl);
++        const createdPn = await handleCreateNew(config, selectEl);
+         if (createdPn) {
+           previousValue = createdPn;
+           suppressNext = true;
+           selectEl.value = createdPn;
+           ensureOptionApplied(createdPn);
+           selectEl.dispatchEvent(new Event('change', { bubbles: true }));
+         } else {
+           ensureOptionApplied(previousValue);
+         }
+         return;
+       }
+ 
+       previousValue = value;
+       ensureOptionApplied(value);
+     });
+ 
+     // Apply persisted selection if present
+     if (selectEl.value) {
+       ensureOptionApplied(selectEl.value, { skipEvents: initialSkipEvents });
+     }
+   });
+ }

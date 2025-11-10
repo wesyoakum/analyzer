@@ -1016,7 +1016,7 @@ function populateSelectOptions(selectEl, config, { selectedValue } = {}) {
   }
 }
 
-function handleCreateNew(config, selectEl) {
+async function handleCreateNew(config, selectEl) {
   const label = config.label || 'component';
   const pnInput = window.prompt(`Enter a part number for the new ${label} preset:`);
   if (pnInput == null) {
@@ -1038,23 +1038,91 @@ function handleCreateNew(config, selectEl) {
   const description = descriptionInput == null ? '' : descriptionInput.trim();
 
   const values = collectValuesForConfig(config);
-  /** @type {ComponentOption} */
-  const option = {
-    pn,
-    name: pn,
-    ...values
-  };
-  if (description) {
-    option.description = description;
+  const metadata = { pn };
+  if (config.type) {
+    metadata.type = config.type;
+  }
+  if (config.label) {
+    metadata.label = config.label;
   }
 
-  if (!Array.isArray(config.customOptions)) {
-    config.customOptions = [];
+  const payload = {
+    name: pn,
+    ...(description ? { description } : {}),
+    data: values,
+    metadata
+  };
+
+  const wasDisabled = selectEl.disabled;
+  selectEl.disabled = true;
+  try {
+    const response = await fetch('/api/presets', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify(payload)
+    });
+
+    if (!response.ok) {
+      let message = `Failed to create ${label} preset.`;
+      try {
+        const errorBody = await response.json();
+        if (errorBody?.error?.message) {
+          message = errorBody.error.message;
+          if (Array.isArray(errorBody.error.details) && errorBody.error.details.length) {
+            message = `${message}\n- ${errorBody.error.details.join('\n- ')}`;
+          }
+        }
+      } catch (err) {
+        // Ignore JSON parsing errors; fall back to generic message.
+      }
+      window.alert(message);
+      return null;
+    }
+
+    let body;
+    try {
+      body = await response.json();
+    } catch (err) {
+      window.alert('Failed to parse server response when creating preset.');
+      return null;
+    }
+
+    const preset = body?.preset;
+    if (!preset || typeof preset.id !== 'string') {
+      window.alert('Server response did not include the created preset.');
+      return null;
+    }
+
+    const presetData =
+      preset && typeof preset.data === 'object' && preset.data !== null && !Array.isArray(preset.data)
+        ? preset.data
+        : values;
+
+    /** @type {ComponentOption} */
+    const option = {
+      pn,
+      name: preset.name ?? pn,
+      ...(preset.description ? { description: preset.description } : {}),
+      ...presetData,
+      id: preset.id
+    };
+
+    if (!Array.isArray(config.customOptions)) {
+      config.customOptions = [];
+    }
+    config.customOptions.push(option);
+    saveCustomOptions(config.type, config.customOptions);
+    populateSelectOptions(selectEl, config, { selectedValue: pn });
+    return pn;
+  } catch (err) {
+    const message = err instanceof Error ? err.message : String(err);
+    window.alert(`Unable to create ${label} preset: ${message}`);
+    return null;
+  } finally {
+    selectEl.disabled = wasDisabled;
   }
-  config.customOptions.push(option);
-  saveCustomOptions(config.type, config.customOptions);
-  populateSelectOptions(selectEl, config, { selectedValue: pn });
-  return pn;
 }
 
 function describeOption(config, option) {
@@ -1168,7 +1236,7 @@ export function setupComponentSelectors() {
       applySelection(config, value, { skipEvents });
     };
 
-    selectEl.addEventListener('change', () => {
+    selectEl.addEventListener('change', async () => {
       if (suppressNext) {
         suppressNext = false;
         previousValue = selectEl.value;
@@ -1179,7 +1247,7 @@ export function setupComponentSelectors() {
       const value = selectEl.value;
       if (value === CREATE_NEW_VALUE) {
         selectEl.value = previousValue;
-        const createdPn = handleCreateNew(config, selectEl);
+        const createdPn = await handleCreateNew(config, selectEl);
         if (createdPn) {
           previousValue = createdPn;
           suppressNext = true;
