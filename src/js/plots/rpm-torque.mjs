@@ -1,9 +1,6 @@
 // ===== plots/rpm-torque.mjs — Hydraulic available RPM vs torque =====
 import { niceTicks, svgEl, svgPathFromPoints } from '../utils.mjs';
 
-const FLOW_COLOR = '#eed500';
-const POWER_COLOR = '#9249c6';
-
 function getAccentColor() {
   if (typeof window !== 'undefined' && typeof document !== 'undefined' && window.getComputedStyle) {
     const val = window.getComputedStyle(document.documentElement).getPropertyValue('--accent');
@@ -28,9 +25,7 @@ export function drawHydraulicRpmTorque(svg, { wraps = [] } = {}) {
       wrap: w.wrap_no,
       layer: w.layer_no,
       torque: toNumber(w.torque_Nm),
-      rpmAvail: toNumber(w.hyd_drum_rpm_available),
-      rpmFlow: toNumber(w.hyd_drum_rpm_flow),
-      rpmPower: toNumber(w.hyd_drum_rpm_power)
+      rpmAvail: toNumber(w.hyd_drum_rpm_available)
     }))
     .filter(d => Number.isFinite(d.torque) && d.torque > 0 && Number.isFinite(d.rpmAvail) && d.rpmAvail >= 0);
 
@@ -61,11 +56,7 @@ export function drawHydraulicRpmTorque(svg, { wraps = [] } = {}) {
   const torqueExtent = Math.max(torqueMin + 1, torqueMaxData);
   const { step: torqueStep } = niceTicks(torqueMin, torqueExtent, 6);
   const torqueMax = torqueMin + Math.max(1, Math.ceil((torqueExtent - torqueMin) / Math.max(torqueStep, 1e-9))) * Math.max(torqueStep, 1e-9);
-  const rpmMaxCandidate = Math.max(
-    Math.max(...data.map(d => d.rpmAvail)),
-    Math.max(...data.map(d => Number.isFinite(d.rpmFlow) ? d.rpmFlow : 0)),
-    Math.max(...data.map(d => Number.isFinite(d.rpmPower) ? d.rpmPower : 0))
-  );
+  const rpmMaxCandidate = Math.max(...data.map(d => d.rpmAvail));
   const rpmMin = 0;
   const rpmMax = Math.max(rpmMin + 1, rpmMaxCandidate * 1.1);
 
@@ -129,28 +120,6 @@ export function drawHydraulicRpmTorque(svg, { wraps = [] } = {}) {
 
     return svgPathFromPoints(points.map(([torque, rpm]) => [sx(torque), sy(rpm)]));
   };
-
-  const flowPath = pathFor('rpmFlow');
-  if (flowPath) {
-    svg.appendChild(svgEl('path', {
-      d: flowPath,
-      fill: 'none',
-      stroke: FLOW_COLOR,
-      'stroke-width': 2,
-      'stroke-dasharray': '6 4'
-    }));
-  }
-
-  const powerPath = pathFor('rpmPower');
-  if (powerPath) {
-    svg.appendChild(svgEl('path', {
-      d: powerPath,
-      fill: 'none',
-      stroke: POWER_COLOR,
-      'stroke-width': 2,
-      'stroke-dasharray': '2 6'
-    }));
-  }
 
   const availPath = pathFor('rpmAvail', { dropAtMaxTorque: true });
   if (availPath) {
