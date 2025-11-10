@@ -57,7 +57,10 @@ export function drawHydraulicRpmTorque(svg, { wraps = [] } = {}) {
   const innerH = H - MT - MB;
 
   const torqueMin = 0;
-  const torqueMax = Math.max(torqueMin + 1, Math.max(...data.map(d => d.torque)) * 1.05);
+  const torqueMaxData = Math.max(...data.map(d => d.torque));
+  const torqueExtent = Math.max(torqueMin + 1, torqueMaxData);
+  const { step: torqueStep } = niceTicks(torqueMin, torqueExtent, 6);
+  const torqueMax = torqueMin + Math.max(1, Math.ceil((torqueExtent - torqueMin) / Math.max(torqueStep, 1e-9))) * Math.max(torqueStep, 1e-9);
   const rpmMaxCandidate = Math.max(
     Math.max(...data.map(d => d.rpmAvail)),
     Math.max(...data.map(d => Number.isFinite(d.rpmFlow) ? d.rpmFlow : 0)),
