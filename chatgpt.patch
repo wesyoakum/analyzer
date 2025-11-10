@@ -1,172 +1,196 @@
-diff --git a/src/index.html b/src/index.html
-index 46e00bea0be9cfd4844fca01b6de0d12419eea45..294f387ebc0191e64d621a50163a93d5d3096d67 100644
---- a/src/index.html
-+++ b/src/index.html
-@@ -1,33 +1,47 @@
- <!doctype html>
- <html lang="en">
- <head>
--  <meta charset="utf-8" />
--  <title>Winch Analyzer</title>
--  <meta name="viewport" content="width=device-width, initial-scale=1" />
--  <link rel="stylesheet" href="css/styles.css" />
--</head>
-+  <meta charset="utf-8" />
-+  <title>Winch Analyzer</title>
-+  <meta name="viewport" content="width=device-width, initial-scale=1" />
-+  <link rel="stylesheet" href="css/styles.css" />
-+  <!-- KaTeX setup -->
-+  <link
-+    rel="stylesheet"
-+    href="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/katex.min.css"
-+  />
-+  <script
-+    defer
-+    src="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/katex.min.js"
-+  ></script>
-+  <script
-+    defer
-+    src="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/contrib/auto-render.min.js"
-+    onload="renderMathInElement(document.body,{delimiters:[{left:'$$', right:'$$', display:true},{left:'\\[', right:'\\]', display:true},{left:'\\(', right:'\\)', display:false}], throwOnError:false});"
-+  ></script>
-+</head>
- <body>
-   <div class="sheet">
-     <div class="build-indicator" id="build-info" aria-live="polite"></div>
-     <header class="page-header">
-       <img src="assets/winch-header%20140px.png" alt="TekMarines winch diagram" class="page-header__image" />
-       <h1 class="page-title">Winch Analyzer</h1>
-     </header>
-     <div id="err"></div>
-     <div id="status" aria-live="polite" class="status" role="status"></div>
+diff --git a/src/js/main.mjs b/src/js/main.mjs
+index 5ca4a2b665787064c590cc7b842c688674436f82..f53bbcb884343dde6d9c6a118133777cf759c71c 100644
+--- a/src/js/main.mjs
++++ b/src/js/main.mjs
+@@ -4,50 +4,51 @@ import {
+   q, read,
+   G, W_PER_HP, PSI_TO_PA, CC_PER_GAL, M_PER_IN,
+   tension_kgf, elec_available_tension_kgf,
+   gpm_from_cc_rev_and_rpm, rpm_from_gpm_and_disp,
+   psi_from_torque_and_disp_Nm_cc, torque_per_motor_from_pressure_Pa,
+   line_speed_mpm_from_motor_rpm, hp_from_psi_and_gpm,
+   TENSION_SAFETY_FACTOR
+ } from './utils.mjs';
  
-     <nav class="tabs" aria-label="App sections" role="tablist">
-       <button
-         class="tab-btn active"
-         id="tab-inputs"
-         type="button"
-         role="tab"
-         aria-selected="true"
-         aria-controls="panel-inputs"
-       >Section 1: Inputs</button>
-       <button
-         class="tab-btn"
-         id="tab-performance"
-         type="button"
-         role="tab"
-         aria-selected="false"
-@@ -1191,68 +1205,96 @@
-               </tr>
-               <tr>
-                 <td>&eta;<sub>mm</sub></td>
-                 <td>mechanical efficiency of motor</td>
-                 <td>–</td>
-               </tr>
-               <tr>
-                 <td><var>r</var><sub>&ell;</sub>(<var>z</var>)</td>
-                 <td>effective layer radius</td>
-                 <td>m</td>
-               </tr>
-               <tr>
-                 <td><var>r</var><sub>core</sub></td>
-                 <td>core radius</td>
-                 <td>m</td>
-               </tr>
-               <tr>
-                 <td><var>p</var><sub>c</sub></td>
-                 <td>cable effective pitch (≈ cable dia × packing factor)</td>
-                 <td>m</td>
-               </tr>
-             </tbody>
-           </table>
-         </div>
+ import { setupInputPersistence } from './persist-inputs.mjs';
  
--        <h3>A) Available Line Speed — Unitless Relations</h3>
--        <ol>
--          <li><span class="math"><var>Q</var><sub>p,i</sub> / (<var>n</var><sub>e</sub> <var>D</var><sub>p</sub>) = &eta;<sub>vp</sub></span></li>
--          <li><span class="math"><var>Q</var><sub>tot</sub> / (<var>N</var><sub>p</sub> <var>Q</var><sub>p,i</sub>) = 1</span></li>
--          <li><span class="math"><var>Q</var><sub>m</sub> / (<var>Q</var><sub>tot</sub> / <var>N</var><sub>m</sub>) = 1</span></li>
--          <li><span class="math"><var>n</var><sub>m</sub> <var>D</var><sub>m</sub> / (&eta;<sub>vm</sub> <var>Q</var><sub>m</sub>) = 1</span></li>
--          <li>
--            <span class="math"><var>n</var><sub>d</sub> / (<var>n</var><sub>m</sub> / <var>G</var><sub>tot</sub>) = 1</span>, where <var>G</var><sub>tot</sub> = <var>G</var><sub>gb</sub><var>G</var><sub>pr</sub>
--          </li>
--          <li>
--            <span class="math"><var>v</var><sub>flow</sub>(<var>z</var>) / ((&pi; <var>D</var><sub>&ell;</sub>(<var>z</var>) / 60) &times; <var>n</var><sub>d</sub>) = 1</span>
--          </li>
--          <li><span class="math"><var>P</var><sub>avail</sub> / (&eta;<sub>em</sub> <var>P</var><sub>nom</sub>) = 1</span></li>
--          <li><span class="math"><var>v</var><sub>pwr</sub>(<var>z</var>) <var>T</var>(<var>z</var>) / <var>P</var><sub>avail</sub> = 1</span></li>
--          <li><span class="math"><var>v</var><sub>avail</sub>(<var>z</var>) = min(<var>v</var><sub>flow</sub>(<var>z</var>), <var>v</var><sub>pwr</sub>(<var>z</var>))</span></li>
--        </ol>
--
--        <h3>B) Tension vs Depth — Unitless Relations</h3>
-+        <h3>A) Available Line Speed — Unitless Relations</h3>
-+        <ol>
-+          <li><span class="math"><var>Q</var><sub>p,i</sub> / (<var>n</var><sub>e</sub> <var>D</var><sub>p</sub>) = &eta;<sub>vp</sub></span></li>
-+          <li><span class="math"><var>Q</var><sub>tot</sub> / (<var>N</var><sub>p</sub> <var>Q</var><sub>p,i</sub>) = 1</span></li>
-+          <li><span class="math"><var>Q</var><sub>m</sub> / (<var>Q</var><sub>tot</sub> / <var>N</var><sub>m</sub>) = 1</span></li>
-+          <li><span class="math"><var>n</var><sub>m</sub> <var>D</var><sub>m</sub> / (&eta;<sub>vm</sub> <var>Q</var><sub>m</sub>) = 1</span></li>
-+          <li>
-+            <span class="math"><var>n</var><sub>d</sub> / (<var>n</var><sub>m</sub> / <var>G</var><sub>tot</sub>) = 1</span>, where <var>G</var><sub>tot</sub> = <var>G</var><sub>gb</sub><var>G</var><sub>pr</sub>
-+          </li>
-+          <li>
-+            <span class="math"><var>v</var><sub>flow</sub>(<var>z</var>) / ((&pi; <var>D</var><sub>&ell;</sub>(<var>z</var>) / 60) &times; <var>n</var><sub>d</sub>) = 1</span>
-+          </li>
-+          <li><span class="math"><var>P</var><sub>avail</sub> / (&eta;<sub>em</sub> <var>P</var><sub>nom</sub>) = 1</span></li>
-+          <li><span class="math"><var>v</var><sub>pwr</sub>(<var>z</var>) <var>T</var>(<var>z</var>) / <var>P</var><sub>avail</sub> = 1</span></li>
-+          <li><span class="math"><var>v</var><sub>avail</sub>(<var>z</var>) = min(<var>v</var><sub>flow</sub>(<var>z</var>), <var>v</var><sub>pwr</sub>(<var>z</var>))</span></li>
-+        </ol>
-+
-+        <!-- Equations -->
-+        <div class="equations">
-+          <p>
-+            $$v_{flow}(z) =
-+            \frac{\pi \, D_\ell(z)}{60}
-+            \left(
-+              \frac{
-+                \eta_{vm}
-+                \left(
-+                  \dfrac{N_p \, \eta_{vp} \, n_e \, D_p}{N_m}
-+                \right)
-+              }{
-+                D_m \, G_{gb} \, G_{pr}
-+              }
-+            \right)$$
-+          </p>
-+
-+          <p>
-+            $$v_{pwr}(z) =
-+            \frac{\eta_{em} \, P_{nom}}{T(z)}$$
-+          </p>
-+
-+          <p>
-+            $$v_{avail}(z) =
-+            \min\!\big(v_{flow}(z),\, v_{pwr}(z)\big)$$
-+          </p>
-+        </div>
-+
-+        <h3>B) Tension vs Depth — Unitless Relations</h3>
-         <ol start="10">
-           <li>
-             <span class="math">(<var>T</var><sub>static</sub>(<var>z</var>) - <var>W</var><sub>pay,sub</sub>) / (<var>w</var><sub>c,sub</sub> <var>z</var>) = 1</span>
-             <span class="note">for 0 &le; <var>z</var> &le; <var>L</var></span>
-           </li>
-           <li>
-             <span class="math">(<var>T</var><sub>static</sub>(<var>z</var>) - <var>W</var><sub>pay,sub</sub>) / (<var>w</var><sub>c,sub</sub> <var>L</var>) = 1</span>
-             <span class="note">for <var>z</var> &gt; <var>L</var></span>
-           </li>
-           <li>
-             <span class="math">(<var>T</var>(<var>z</var>) - <var>T</var><sub>static</sub>(<var>z</var>)) / (&Delta;<var>T</var><sub>a</sub> + &Delta;<var>T</var><sub>d</sub> + &Delta;<var>T</var><sub>h</sub>) = 1</span>
-           </li>
-           <li>
-             <span class="math"><var>T</var>(<var>z</var>) / (<var>T</var><sub>static</sub>(<var>z</var>) + &Delta;<var>T</var><sub>a</sub> + &Delta;<var>T</var><sub>d</sub> + &Delta;<var>T</var><sub>h</sub>) = 1</span>
-           </li>
-         </ol>
+ import { calcLayers } from './layer-engine.mjs';
  
-         <h3>C) Cross-Checks (Optional)</h3>
-         <ol start="14">
-           <li>
-             <span class="math"><var>T</var><sub>cap</sub>(<var>z</var>) <var>r</var><sub>&ell;</sub>(<var>z</var>) <var>G</var><sub>tot</sub> / (&tau;<sub>m</sub> <var>N</var><sub>m</sub> &eta;<sub>train</sub>) = 1</span>
-           </li>
-           <li>
-             <span class="math">&tau;<sub>m</sub> / ((&Delta;<var>p</var> <var>D</var><sub>m</sub> &eta;<sub>mm</sub>) / (2&pi;)) = 1</span>
-           </li>
+ import {
+   rowsToElectricLayer, projectElectricWraps, renderElectricTables
+ } from './electric.mjs';
+ 
+ import {
+   rowsToHydraulicLayer, projectHydraulicWraps, renderHydraulicTables
+ } from './hydraulic.mjs';
+ 
+ import { drawWaveContours, drawWaveHeightContours } from './plots/wave-contours.mjs';
+ import { drawDepthProfiles } from './plots/depth-profiles.mjs';
+ import { setupComponentSelectors } from './component-selectors.mjs';
+ import { renderDrumVisualization, clearDrumVisualization } from './drum-visual.mjs';
++import { renderLatexFragments } from './katex-renderer.mjs';
+ 
+ // ---- App state for plots/tables ----
+ let lastElLayer = [], lastElWraps = [];
+ let lastHyLayer = [], lastHyWraps = [];
+ /** @type {{ rows: any, summary: any, cfg: any, meta: any } | null} */
+ let lastDrumState = null;
+ 
+ const CSV_BUTTON_SPECS = {
+   csv_el_layer: {
+     filename: () => 'electric-layer.csv',
+     columns: [
+       'layer_no', 'layer_dia_in', 'pre_on_drum_m', 'pre_deployed_m',
+       'post_on_drum_m', 'post_deployed_m', 'max_tension_theoretical_kgf',
+       'max_tension_required_kgf', 'max_torque_Nm', 'max_motor_torque_Nm',
+       'motor_rpm_at_start', 'line_speed_at_start_mpm', 'avail_tension_kgf_at_start'
+     ],
+     header: [
+       'layer_no', 'layer_dia_in', 'pre_on_drum_m', 'pre_deployed_m',
+       'post_on_drum_m', 'post_deployed_m', 'max_tension_theoretical_kgf',
+       'max_tension_required_kgf', 'max_torque_Nm', 'max_motor_torque_Nm',
+       'motor_rpm_at_start', 'line_speed_at_start_mpm', 'avail_tension_kgf_at_start'
+     ],
+     getRows: () => lastElLayer
+   },
+   csv_el_wraps: {
+@@ -107,70 +108,86 @@ const CSV_BUTTON_SPECS = {
+ const SYSTEM_TYPE_SELECT_ID = 'system_type_select';
+ const DEFAULT_SYSTEM_TYPE = 'electric';
+ 
+ // ---- Wire up events once DOM is ready ----
+ document.addEventListener('DOMContentLoaded', () => {
+   setupInputPersistence();
+ 
+   setupComponentSelectors();
+ 
+   setupCollapsibleToggles();
+ 
+   setupDriveModeControls();
+ 
+   setupCsvDownloads();
+ 
+   setupPlotResizeToggles();
+ 
+   setupManualRefreshControls();
+ 
+   setupAutoRecompute();
+ 
+   updateBuildIndicator();
+ 
+   setupTabs();
+ 
++  renderDocumentMath();
++
+   document.querySelectorAll('.param-label').forEach(label => {
+     const code = label.dataset.code;
+     if (code) {
+       label.setAttribute('title', code);
+     }
+   });
+ 
+   // Wave plot controls
+   q('wave_scenario').addEventListener('change', () => redrawPlots());
+   ['wave_tmin', 'wave_tmax', 'wave_vmin', 'wave_vmax', 'wave_hmin', 'wave_hmax']
+     .forEach(id => q(id).addEventListener('change', () => redrawPlots()));
+ 
+   // Depth plot controls
+   ['depth_xmin', 'depth_xmax', 'depth_speed_ymin', 'depth_speed_ymax', 'depth_tension_ymin', 'depth_tension_ymax']
+     .forEach(id => q(id).addEventListener('change', () => redrawPlots()));
+ 
+   // Initial compute
+   computeAll();
+ });
+ 
++function renderDocumentMath() {
++  if (typeof window.renderMathInElement === 'function') {
++    window.renderMathInElement(document.body, {
++      delimiters: [
++        { left: '$$', right: '$$', display: true },
++        { left: '\\[', right: '\\]', display: true },
++        { left: '\\(', right: '\\)', display: false }
++      ],
++      throwOnError: false
++    });
++  }
++  renderLatexFragments(document.body);
++}
++
+ function updateBuildIndicator() {
+   const indicator = /** @type {HTMLElement|null} */ (document.getElementById('build-info'));
+   if (!indicator) return;
+ 
+   const lastModified = new Date(document.lastModified);
+   if (Number.isNaN(lastModified.getTime())) {
+     indicator.textContent = `Updated ${document.lastModified}`;
+     return;
+   }
+ 
+   const formatter = new Intl.DateTimeFormat('en-US', {
+     year: 'numeric',
+     month: 'short',
+     day: '2-digit',
+     hour: '2-digit',
+     minute: '2-digit',
+     second: '2-digit',
+     hour12: false,
+     timeZone: 'UTC'
+   });
+ 
+   indicator.textContent = `Updated ${formatter.format(lastModified)} UTC`;
+ }
+ 
+ function setupTabs() {
+@@ -759,50 +776,52 @@ function computeAll() {
+         r.hyd_drum_torque_maxP_Nm = 0;
+         r.hyd_avail_tension_kgf = 0;
+         r.hyd_P_required_psi = 0;
+         r.hyd_speed_power_mpm = 0;
+         r.hyd_speed_flow_mpm = 0;
+         r.hyd_speed_available_mpm = 0;
+         r.hyd_hp_used_at_available = 0;
+         r.hyd_elec_input_hp_used = 0;
+       }
+     }
+ 
+     // ---- Drum visualization ----
+     lastDrumState = { rows, summary, cfg, meta };
+     renderDrumVisualization(rows, summary, cfg, meta);
+ 
+     // ---- Aggregate into per-layer tables ----
+     lastElLayer = electricEnabled ? rowsToElectricLayer(rows, payload_kg, cable_w_kgpm, gr1, gr2, motors) : [];
+     lastHyLayer = hydraulicEnabled ? rowsToHydraulicLayer(rows) : [];
+     lastElWraps = electricEnabled ? projectElectricWraps(rows) : [];
+     lastHyWraps = hydraulicEnabled ? projectHydraulicWraps(rows) : [];
+ 
+     // ---- Render tables ----
+     renderElectricTables(lastElLayer, lastElWraps, q('tbody_el_layer'), q('tbody_el_wraps'));
+     renderHydraulicTables(lastHyLayer, lastHyWraps, q('tbody_hy_layer'), q('tbody_hy_wraps'));
+ 
++    renderLatexFragments(document.body);
++
+     updateCsvButtonStates();
+ 
+     // ---- Update status ----
+     if (status) status.textContent = 'results updated';
+ 
+     // ---- Draw plots ----
+     redrawPlots();
+   } catch (e) {
+     console.error(e);
+     if (errBox) errBox.textContent = 'ERROR: ' + (e && e.message ? e.message : e);
+     if (status) status.textContent = 'error';
+     clearMinimumSystemHp();
+     lastElLayer = lastElWraps = lastHyLayer = lastHyWraps = [];
+     lastDrumState = null;
+     clearDrumVisualization();
+     clearPlots();
+     updateCsvButtonStates();
+   }
+ }
+ 
+ // ---- Plot redraw helper (uses decoupled plotting modules) ----
+ function redrawPlots() {
+   // Wave contours (optional - skip if controls/SVGs absent)
+   const waveScenarioEl = /** @type {HTMLSelectElement|null} */ (document.getElementById('wave_scenario'));
+   const waveTminEl = /** @type {HTMLInputElement|null} */ (document.getElementById('wave_tmin'));

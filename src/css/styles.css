@@ -333,6 +333,12 @@ body {
   font-variant-numeric: normal;
 }
 
+.symbol .katex,
+.symbol .katex * {
+  color: inherit;
+  font-weight: inherit;
+}
+
 .collapsible {
   padding: 0;
 }

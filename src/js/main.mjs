@@ -26,6 +26,7 @@ import { drawWaveContours, drawWaveHeightContours } from './plots/wave-contours.
 import { drawDepthProfiles } from './plots/depth-profiles.mjs';
 import { setupComponentSelectors } from './component-selectors.mjs';
 import { renderDrumVisualization, clearDrumVisualization } from './drum-visual.mjs';
+import { renderLatexFragments } from './katex-renderer.mjs';
 
 // ---- App state for plots/tables ----
 let lastElLayer = [], lastElWraps = [];
@@ -129,6 +130,8 @@ document.addEventListener('DOMContentLoaded', () => {
 
   setupTabs();
 
+  renderDocumentMath();
+
   document.querySelectorAll('.param-label').forEach(label => {
     const code = label.dataset.code;
     if (code) {
@@ -148,6 +151,20 @@ document.addEventListener('DOMContentLoaded', () => {
   // Initial compute
   computeAll();
 });
+
+function renderDocumentMath() {
+  if (typeof window.renderMathInElement === 'function') {
+    window.renderMathInElement(document.body, {
+      delimiters: [
+        { left: '$$', right: '$$', display: true },
+        { left: '\\[', right: '\\]', display: true },
+        { left: '\\(', right: '\\)', display: false }
+      ],
+      throwOnError: false
+    });
+  }
+  renderLatexFragments(document.body);
+}
 
 function updateBuildIndicator() {
   const indicator = /** @type {HTMLElement|null} */ (document.getElementById('build-info'));
@@ -780,6 +797,8 @@ function computeAll() {
     // ---- Render tables ----
     renderElectricTables(lastElLayer, lastElWraps, q('tbody_el_layer'), q('tbody_el_wraps'));
     renderHydraulicTables(lastHyLayer, lastHyWraps, q('tbody_hy_layer'), q('tbody_hy_wraps'));
+
+    renderLatexFragments(document.body);
 
     updateCsvButtonStates();
 
