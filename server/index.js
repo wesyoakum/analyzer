@@ -161,13 +161,14 @@ app.post('/api/presets', async (req, res, next) => {
       ? payload.description.trim()
       : undefined;
 
+  const timestamp = new Date().toISOString();
   const presetToSave = {
     id: payload.id && typeof payload.id === 'string' ? payload.id : generateId(),
     name: payload.name.trim(),
     ...(description ? { description } : {}),
     data: payload.data,
     ...(payload.metadata !== undefined ? { metadata: payload.metadata } : {}),
-    updatedAt: new Date().toISOString(),
+    updatedAt: timestamp,
   };
 
   try {
@@ -175,18 +176,25 @@ app.post('/api/presets', async (req, res, next) => {
       const presets = await readPresets();
       const existingIndex = presets.findIndex((item) => item.id === presetToSave.id);
       if (existingIndex >= 0) {
-        presetToSave.createdAt = presets[existingIndex].createdAt ?? new Date().toISOString();
-        presets[existingIndex] = { ...presets[existingIndex], ...presetToSave };
-      } else {
-        presetToSave.createdAt = new Date().toISOString();
-        presets.push(presetToSave);
+        const existingPreset = presets[existingIndex];
+        const mergedPreset = {
+          ...existingPreset,
+          ...presetToSave,
+          createdAt: existingPreset.createdAt ?? timestamp,
+        };
+        presets[existingIndex] = mergedPreset;
+        await writePresets(presets);
+        return { preset: mergedPreset, isNew: false };
       }
+
+      const presetToInsert = { ...presetToSave, createdAt: timestamp };
+      presets.push(presetToInsert);
       await writePresets(presets);
-      return { presets, isNew: existingIndex === -1 };
+      return { preset: presetToInsert, isNew: true };
     });
 
     const status = result.isNew ? 201 : 200;
-    res.status(status).json({ preset: presetToSave });
+    res.status(status).json({ preset: result.preset });
   } catch (err) {
     next(err);
   }
