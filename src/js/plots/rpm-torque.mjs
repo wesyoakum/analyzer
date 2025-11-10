@@ -110,7 +110,22 @@ export function drawHydraulicRpmTorque(svg, { wraps = [] } = {}) {
   ylabel.textContent = 'Motor RPM (per motor)';
   svg.appendChild(ylabel);
 
-  const pathFor = (field) => svgPathFromPoints(data.map(d => [sx(d.torque), sy(d[field])]).filter(pt => Number.isFinite(pt[0]) && Number.isFinite(pt[1])));
+  const pathFor = (field, { dropAtMaxTorque = false } = {}) => {
+    const points = data
+      .map(d => [d.torque, d[field]])
+      .filter(([torque, rpm]) => Number.isFinite(torque) && Number.isFinite(rpm));
+
+    if (!points.length) return '';
+
+    if (dropAtMaxTorque) {
+      const lastPoint = points[points.length - 1];
+      if (lastPoint && lastPoint[1] > rpmMin + 1e-9) {
+        points.push([lastPoint[0], rpmMin]);
+      }
+    }
+
+    return svgPathFromPoints(points.map(([torque, rpm]) => [sx(torque), sy(rpm)]));
+  };
 
   const flowPath = pathFor('rpmFlow');
   if (flowPath) {
@@ -134,7 +149,7 @@ export function drawHydraulicRpmTorque(svg, { wraps = [] } = {}) {
     }));
   }
 
-  const availPath = pathFor('rpmAvail');
+  const availPath = pathFor('rpmAvail', { dropAtMaxTorque: true });
   if (availPath) {
     svg.appendChild(svgEl('path', {
       d: availPath,
