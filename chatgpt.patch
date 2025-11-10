@@ -1,173 +1,326 @@
-diff --git a/src/js/plots/rpm-torque.mjs b/src/js/plots/rpm-torque.mjs
-index 86fa72cce528914886cc9755cef480d8da580a25..e37a47abffb6ba3d68ea5dd512b97820f907b2ab 100644
---- a/src/js/plots/rpm-torque.mjs
-+++ b/src/js/plots/rpm-torque.mjs
-@@ -1,93 +1,84 @@
- // ===== plots/rpm-torque.mjs — Hydraulic available RPM vs torque =====
- import { niceTicks, svgEl, svgPathFromPoints } from '../utils.mjs';
+diff --git a/main.js b/main.js
+index 896e980c785e43cf3289570d7e9dcf02bab94df8..729f7e3d3933b8ee631b35925900fc28c86f14a7 100644
+--- a/main.js
++++ b/main.js
+@@ -1,27 +1,38 @@
+ // Configuration management
+ const CONFIG_KEY = 'winch_configs';
++const BIKITY_BASE_URL = (window.BIKITY_API_BASE || '').replace(/\/$/, '');
++const BIKITY_CONFIG_ENDPOINT_OVERRIDE = (window.BIKITY_CONFIG_ENDPOINT || '').replace(/\/$/, '');
++const BIKITY_DISABLE_SYNC = Boolean(window.BIKITY_DISABLE_SYNC);
++const CONFIG_SERVER_ENDPOINT = (BIKITY_CONFIG_ENDPOINT_OVERRIDE
++  ? BIKITY_CONFIG_ENDPOINT_OVERRIDE
++  : `${BIKITY_BASE_URL}/api/configs`).replace(/^\/\//, '/');
++
++const configServerState = {
++  disabled: typeof fetch !== 'function' || BIKITY_DISABLE_SYNC,
++  endpoint: CONFIG_SERVER_ENDPOINT
++};
  
--const FLOW_COLOR = '#eed500';
--const POWER_COLOR = '#9249c6';
--
- function getAccentColor() {
-   if (typeof window !== 'undefined' && typeof document !== 'undefined' && window.getComputedStyle) {
-     const val = window.getComputedStyle(document.documentElement).getPropertyValue('--accent');
-     if (val) return val.trim();
-   }
-   return '#2c56a3';
+ // Default configurations bundled with the app
+ const DEFAULT_CONFIGS = {
+   "CTW513": {
+     winch_type: "hydraulic",
+     winch_model: "CTW513",
+     use_ahc: true,
+     req_swl: 13000,
+     req_speed: 90,
+     wave_height: 3,
+     wave_period: 10,
+     avg_offset_speed: 0,
+     sel_umb_dia: 41,
+     sel_cable_length: 3500,
+     sel_umb_weight: 1.2,
+     sel_drum_core_dia: 70,
+     sel_drum_lebus_thickness: 0.625,
+     sel_drum_flange_dia: 110,
+     sel_drum_flange_to_flange: 91.5,
+     sel_drum_wraps_per_layer: 0,
+     sel_payload_weight: 1537,
+     sel_elec_motor_power: 150,
+     sel_hyd_system_psi_max: 4000,
+     sel_hyd_mech_efficiency: 0.85,
+     sel_pinion_ratio: 5.24,
+@@ -91,50 +102,129 @@ if (typeof Chart !== 'undefined') {
+     beforeDraw: (chart, args, opts) => {
+       const {left, top, width, height} = chart.chartArea;
+       const ctx = chart.ctx;
+       ctx.save();
+       ctx.fillStyle = opts.color || '#212121';
+       ctx.fillRect(left, top, width, height);
+       ctx.restore();
+     }
+   });
  }
  
- /**
-  * Draw available hydraulic drum RPM as a function of torque demand.
-  * The available RPM is the lower of the flow-limited and power-limited RPM.
-  * @param {SVGSVGElement} svg
-  * @param {Object} opts
-  * @param {Array<Object>} [opts.wraps]
-  */
- export function drawHydraulicRpmTorque(svg, { wraps = [] } = {}) {
-   if (!svg) return;
-   while (svg.firstChild) svg.removeChild(svg.firstChild);
+ function getConfigs() {
+   try {
+     const stored = JSON.parse(localStorage.getItem(CONFIG_KEY)) || {};
+     const merged = { ...DEFAULT_CONFIGS, ...stored };
+     const missing = Object.keys(DEFAULT_CONFIGS).filter(k => !(k in stored));
+     if (missing.length > 0) {
+       localStorage.setItem(CONFIG_KEY, JSON.stringify(merged));
+     }
+     return merged;
+   } catch (e) {
+     return { ...DEFAULT_CONFIGS };
+   }
+ }
  
-   const data = (Array.isArray(wraps) ? wraps : [])
-     .map(w => ({
-       wrap: w.wrap_no,
-       layer: w.layer_no,
-       torque: toNumber(w.torque_Nm),
--      rpmAvail: toNumber(w.hyd_drum_rpm_available),
--      rpmFlow: toNumber(w.hyd_drum_rpm_flow),
--      rpmPower: toNumber(w.hyd_drum_rpm_power)
-+      rpmAvail: toNumber(w.hyd_drum_rpm_available)
-     }))
-     .filter(d => Number.isFinite(d.torque) && d.torque > 0 && Number.isFinite(d.rpmAvail) && d.rpmAvail >= 0);
++function configServerAvailable() {
++  return !configServerState.disabled && typeof fetch === 'function';
++}
++
++function disableConfigServer(err) {
++  if (!configServerState.disabled) {
++    console.warn('Disabling configuration server sync', err);
++  }
++  configServerState.disabled = true;
++}
++
++async function requestConfigServer(path = '', options = {}) {
++  if (!configServerAvailable()) return null;
++  try {
++    const { ignoreNotFound, headers: customHeaders, ...fetchOptions } = options;
++    const response = await fetch(`${configServerState.endpoint}${path}`, {
++      cache: 'no-store',
++      headers: {
++        'Content-Type': 'application/json',
++        ...(customHeaders || {})
++      },
++      ...fetchOptions
++    });
++    if (!response.ok) {
++      if (response.status === 404 && ignoreNotFound) {
++        return null;
++      }
++      const error = new Error(`Server responded with ${response.status}`);
++      if (response.status === 404 || response.status >= 500) {
++        disableConfigServer(error);
++      } else {
++        console.warn('Configuration server request failed', error);
++      }
++      return null;
++    }
++    if (response.status === 204) {
++      return null;
++    }
++    const contentType = response.headers.get('content-type');
++    if (contentType && contentType.includes('application/json')) {
++      return await response.json();
++    }
++    return null;
++  } catch (err) {
++    disableConfigServer(err);
++    return null;
++  }
++}
++
++async function refreshConfigsFromServer() {
++  if (!configServerAvailable()) {
++    return getConfigs();
++  }
++  const data = await requestConfigServer('', { method: 'GET' });
++  if (!data || typeof data !== 'object' || typeof data.configs !== 'object') {
++    return getConfigs();
++  }
++  const local = getConfigs();
++  const merged = { ...local, ...data.configs };
++  saveConfigs(merged);
++  return merged;
++}
++
++async function syncConfigToServer(name, config) {
++  if (!configServerAvailable()) return;
++  await requestConfigServer(`/${encodeURIComponent(name)}`, {
++    method: 'PUT',
++    body: JSON.stringify(config || {})
++  });
++}
++
++async function deleteConfigFromServer(name) {
++  if (!configServerAvailable()) return;
++  await requestConfigServer(`/${encodeURIComponent(name)}`, {
++    method: 'DELETE',
++    ignoreNotFound: true
++  });
++}
++
+ function calculateWinchPerformance(inputs, wraps) {
+   try {
+     if (typeof math === 'undefined' || !math.unit) {
+       throw new Error('math.js library is required for calculateWinchPerformance');
+     }
+     const u = math.unit;
  
-   if (!data.length) {
-     const msg = svgEl('text', {
-       x: (svg.viewBox.baseVal.width || svg.clientWidth || 1000) / 2,
-       y: (svg.viewBox.baseVal.height || svg.clientHeight || 540) / 2,
-       'text-anchor': 'middle',
-       'font-size': '16',
-       fill: '#666'
-     });
-     msg.textContent = 'No hydraulic data available';
-     svg.appendChild(msg);
+     const toMeters = x => u(x, 'inch').toNumber('m');
+     const totalGearRatio = (inputs.sel_pinion_ratio || 1) * (inputs.sel_gearbox_ratio || 1);
+ 
+     const cableWeight = inputs.sel_umb_weight; // kgf per m
+     const payload = inputs.sel_payload_weight; // kgf
+     const cableLength = inputs.sel_cable_length || 0; // total length of cable
+ 
+     const g = 9.80665; // N per kgf
+ 
+     const perf = [];
+ 
+     if (inputs.winch_type === 'electric') {
+       const torque = inputs.sel_motor_torque * inputs.sel_motor_count * totalGearRatio; // N*m
+       const power = inputs.sel_motor_power * inputs.sel_motor_count * (inputs.sel_motor_eff || 1); // W
+       const rpm = inputs.sel_motor_rpm; // 1/min
+ 
+       wraps.forEach(l => {
+         const radius = toMeters(l.diameter_in) / 2;
+@@ -930,140 +1020,150 @@ function tryCalculateAndDisplay() {
+     const drum = calculateDrumLayers(inputs);
+     const perf = calculateWinchPerformance(inputs, drum.wraps);
+     const combined = combineResults(inputs, drum.wraps, perf);
+     displayResults({ ...drum, combined }, inputs);
+   } else {
+     clearResults();
+   }
+ }
+ 
+ function loadConfig(name) {
+   clearInputs();
+   const configs = getConfigs();
+   if (configs[name]) {
+     fillInputs(configs[name]);
+         updateFieldVisibility();
+     console.log('loadConfig', name, configs[name]);
+     tryCalculateAndDisplay();
+   }
+ }
+ 
+ function saveCurrentConfig() {
+   const name = document.getElementById('configSelect').value;
+   const configs = getConfigs();
+   configs[name] = readInputs();
+   saveConfigs(configs);
++  syncConfigToServer(name, configs[name]);
+ }
+ 
+ function addNewConfig() {
+   const name = prompt('New configuration name:');
+   if (!name) return;
+   const configs = getConfigs();
+   if (configs[name]) {
+     alert('Configuration already exists');
      return;
    }
- 
-   data.sort((a, b) => a.torque - b.torque);
- 
-   const accent = getAccentColor();
-   const W = svg.viewBox.baseVal.width || svg.clientWidth || 1000;
-   const H = svg.viewBox.baseVal.height || svg.clientHeight || 540;
-   const ML = 70, MR = 20, MT = 20, MB = 60;
-   const innerW = W - ML - MR;
-   const innerH = H - MT - MB;
- 
-   const torqueMin = 0;
-   const torqueMaxData = Math.max(...data.map(d => d.torque));
-   const torqueExtent = Math.max(torqueMin + 1, torqueMaxData);
-   const { step: torqueStep } = niceTicks(torqueMin, torqueExtent, 6);
-   const torqueMax = torqueMin + Math.max(1, Math.ceil((torqueExtent - torqueMin) / Math.max(torqueStep, 1e-9))) * Math.max(torqueStep, 1e-9);
--  const rpmMaxCandidate = Math.max(
--    Math.max(...data.map(d => d.rpmAvail)),
--    Math.max(...data.map(d => Number.isFinite(d.rpmFlow) ? d.rpmFlow : 0)),
--    Math.max(...data.map(d => Number.isFinite(d.rpmPower) ? d.rpmPower : 0))
--  );
-+  const rpmMaxCandidate = Math.max(...data.map(d => d.rpmAvail));
-   const rpmMin = 0;
-   const rpmMax = Math.max(rpmMin + 1, rpmMaxCandidate * 1.1);
- 
-   const sx = torque => ML + (Math.min(Math.max(torque, torqueMin), torqueMax) - torqueMin) / (torqueMax - torqueMin) * innerW;
-   const sy = rpm => MT + (1 - (Math.min(Math.max(rpm, rpmMin), rpmMax) - rpmMin) / (rpmMax - rpmMin)) * innerH;
- 
-   svg.appendChild(svgEl('rect', { x: ML, y: MT, width: innerW, height: innerH, fill: '#fff', stroke: '#ccc' }));
- 
-   const torqueTicks = niceTicks(torqueMin, torqueMax, 6).ticks;
-   torqueTicks.forEach(t => {
-     if (t < torqueMin - 1e-9 || t > torqueMax + 1e-9) return;
-     const X = sx(t);
-     svg.appendChild(svgEl('line', { x1: X, y1: MT, x2: X, y2: H - MB, stroke: '#eee' }));
-     const label = svgEl('text', { x: X, y: H - 30, 'text-anchor': 'middle', 'font-size': '12', fill: '#444' });
-     label.textContent = formatNumber(t, 0);
-     svg.appendChild(label);
-   });
- 
-   const rpmTicks = niceTicks(rpmMin, rpmMax, 6).ticks;
-   rpmTicks.forEach(r => {
-     if (r < rpmMin - 1e-9 || r > rpmMax + 1e-9) return;
-     const Y = sy(r);
-     svg.appendChild(svgEl('line', { x1: ML, y1: Y, x2: W - MR, y2: Y, stroke: '#eee' }));
-     const label = svgEl('text', { x: ML - 8, y: Y + 4, 'text-anchor': 'end', 'font-size': '12', fill: '#444' });
-     label.textContent = formatNumber(r, 0);
-@@ -108,72 +99,50 @@ export function drawHydraulicRpmTorque(svg, { wraps = [] } = {}) {
-     'text-anchor': 'middle',
-     'font-size': '13',
-     fill: '#333',
-     transform: `rotate(-90 16 ${MT + innerH / 2})`
-   });
-   ylabel.textContent = 'Drum RPM';
-   svg.appendChild(ylabel);
- 
-   const pathFor = (field, { dropAtMaxTorque = false } = {}) => {
-     const points = data
-       .map(d => [d.torque, d[field]])
-       .filter(([torque, rpm]) => Number.isFinite(torque) && Number.isFinite(rpm));
- 
-     if (!points.length) return '';
- 
-     if (dropAtMaxTorque) {
-       const lastPoint = points[points.length - 1];
-       if (lastPoint && lastPoint[1] > rpmMin + 1e-9) {
-         points.push([lastPoint[0], rpmMin]);
-       }
-     }
- 
-     return svgPathFromPoints(points.map(([torque, rpm]) => [sx(torque), sy(rpm)]));
-   };
- 
--  const flowPath = pathFor('rpmFlow');
--  if (flowPath) {
--    svg.appendChild(svgEl('path', {
--      d: flowPath,
--      fill: 'none',
--      stroke: FLOW_COLOR,
--      'stroke-width': 2,
--      'stroke-dasharray': '6 4'
--    }));
--  }
--
--  const powerPath = pathFor('rpmPower');
--  if (powerPath) {
--    svg.appendChild(svgEl('path', {
--      d: powerPath,
--      fill: 'none',
--      stroke: POWER_COLOR,
--      'stroke-width': 2,
--      'stroke-dasharray': '2 6'
--    }));
--  }
--
-   const availPath = pathFor('rpmAvail', { dropAtMaxTorque: true });
-   if (availPath) {
-     svg.appendChild(svgEl('path', {
-       d: availPath,
-       fill: 'none',
-       stroke: accent,
-       'stroke-width': 3
-     }));
-   }
- 
-   data.forEach(d => {
-     svg.appendChild(svgEl('circle', {
-       cx: sx(d.torque),
-       cy: sy(d.rpmAvail),
-       r: 3,
-       fill: '#fff',
-       stroke: accent,
-       'stroke-width': 1.5
-     }));
-   });
+   configs[name] = readInputs();
+   saveConfigs(configs);
++  syncConfigToServer(name, configs[name]);
+   populateConfigSelect();
+   document.getElementById('configSelect').value = name;
  }
  
- function toNumber(val) {
-   if (val === null || val === undefined) return NaN;
-   if (typeof val === 'string') {
+ function deleteConfig() {
+   const select = document.getElementById('configSelect');
+   const name = select.value;
+   if (!confirm(`Delete configuration "${name}"?`)) return;
+   const configs = getConfigs();
+   delete configs[name];
+   saveConfigs(configs);
++  deleteConfigFromServer(name);
+   populateConfigSelect();
+   if (select.options.length) {
+     select.value = select.options[0].value;
+     loadConfig(select.value);
+   } else {
+     clearResults();
+   }
+ }
+ 
+ function renameConfig() {
+   const select = document.getElementById('configSelect');
+   const oldName = select.value;
+   const newName = prompt('New name:', oldName);
+   if (!newName || newName === oldName) return;
+   const configs = getConfigs();
+   if (configs[newName]) {
+     alert('A configuration with that name already exists');
+     return;
+   }
+   configs[newName] = configs[oldName];
+   delete configs[oldName];
+   saveConfigs(configs);
++  syncConfigToServer(newName, configs[newName]);
++  deleteConfigFromServer(oldName);
+   populateConfigSelect();
+   select.value = newName;
+ }
+ 
+ function exportConfigs() {
+   const data = JSON.stringify(getConfigs());
+   const blob = new Blob([data], {type: 'application/json'});
+   const url = URL.createObjectURL(blob);
+   const a = document.createElement('a');
+   a.href = url;
+   a.download = 'configs.json';
+   a.click();
+   URL.revokeObjectURL(url);
+ }
+ 
+ function importConfigs(file) {
+   const reader = new FileReader();
+   reader.onload = e => {
+     try {
+       const obj = JSON.parse(e.target.result);
+       const configs = getConfigs();
+       Object.assign(configs, obj);
+       saveConfigs(configs);
++      Object.entries(obj).forEach(([name, cfg]) => {
++        syncConfigToServer(name, cfg);
++      });
+       populateConfigSelect();
+     } catch (err) {
+       alert('Invalid configuration file');
+     }
+   };
+   reader.readAsText(file);
+ }
+ 
+ // Form submission
+ document.getElementById('inputForm').addEventListener('submit', function (event) {
+   event.preventDefault();
+   updateFieldVisibility();
+   tryCalculateAndDisplay();
+ });
+ 
+ // Configuration button handlers
+-window.addEventListener('DOMContentLoaded', () => {
++window.addEventListener('DOMContentLoaded', async () => {
++  await refreshConfigsFromServer();
+   populateConfigSelect();
+   const select = document.getElementById('configSelect');
+   if (getConfigs()['CTW513']) {
+     select.value = 'CTW513';
+-  }  if (select.value) loadConfig(select.value);
++  }
++  if (select.value) loadConfig(select.value);
+   updateFieldVisibility();
+ 
+   document.getElementById('winch_type').addEventListener('change', updateFieldVisibility);
+   document.getElementById('configAdd').addEventListener('click', addNewConfig);
+   document.getElementById('configSave').addEventListener('click', () => {
+     saveCurrentConfig();
+   });
+   document.getElementById('configDelete').addEventListener('click', deleteConfig);
+   document.getElementById('configRename').addEventListener('click', renameConfig);
+   document.getElementById('configExport').addEventListener('click', exportConfigs);
+   document.getElementById('configImport').addEventListener('click', () => {
+     document.getElementById('configImportInput').click();
+   });
+   document.getElementById('configImportInput').addEventListener('change', e => {
+     if (e.target.files[0]) {
+       importConfigs(e.target.files[0]);
+     }
+     e.target.value = '';
+   });
+   document.querySelectorAll('#inputForm input, #inputForm select').forEach(el => {
+     el.addEventListener('input', () => {
+       updateFieldVisibility();
+       tryCalculateAndDisplay();
+     });
+   });
