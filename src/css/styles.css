@@ -860,6 +860,16 @@ th[title] {
   border-top-color: #c65353;
 }
 
+.swatch.flow {
+  border-top-color: #eed500;
+  border-top-style: dashed;
+}
+
+.swatch.power {
+  border-top-color: #9249c6;
+  border-top-style: dotted;
+}
+
 .output-field {
   display: inline-block;
   min-width: 4ch;

@@ -886,6 +886,27 @@
           </div>
         </div>
       </section>
+
+      <section class="card" data-drive-scope="hydraulic">
+        <div class="card-header">
+          <h2 class="section-title">Section 2: Hydraulic RPM vs Torque</h2>
+        </div>
+        <div class="plot-panel">
+          <div class="plot-panel__heading">
+            <div class="plot-title">Available RPM vs Torque</div>
+            <button type="button" class="plot-panel__refresh" data-plot-refresh>Refresh</button>
+          </div>
+          <p class="dim">Motor RPM per motor, evaluated at the start of each wrap. Available RPM is the lower of the flow-limited and power-limited RPM.</p>
+          <div class="plotwrap">
+            <svg id="hyd_rpm_torque_svg" viewBox="0 0 1000 540"></svg>
+          </div>
+          <div class="legend legend--compact">
+            <div class="legitem"><span class="swatch accent"></span><span>Available RPM</span></div>
+            <div class="legitem"><span class="swatch flow"></span><span>Flow-limited RPM</span></div>
+            <div class="legitem"><span class="swatch power"></span><span>Power-limited RPM</span></div>
+          </div>
+        </div>
+      </section>
     </div>
 
     <div
