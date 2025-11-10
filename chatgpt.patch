@@ -1,97 +1,197 @@
-diff --git a/server/index.js b/server/index.js
-index f111262629c0b0c77a9de2444e0423d1d5825a20..ffb62796f1d0150944f76e29301709fc09afd53d 100644
---- a/server/index.js
-+++ b/server/index.js
-@@ -139,76 +139,84 @@ app.get('/api/presets', async (req, res, next) => {
- app.get('/api/presets/:id', async (req, res, next) => {
-   try {
-     const presets = await readPresets();
-     const preset = presets.find((item) => item.id === req.params.id);
-     if (!preset) {
-       return sendError(res, 404, 'Preset not found.');
-     }
-     res.json({ preset });
-   } catch (err) {
-     next(err);
-   }
- });
+diff --git a/src/index.html b/src/index.html
+index 9e44f494ca3a7849c7b1e317b1c6f982e0640410..a658a533a9d9fb5bb39bd58a97bee04c928026c1 100644
+--- a/src/index.html
++++ b/src/index.html
+@@ -1319,148 +1319,172 @@
+                 <td><span class="math" data-latex="\eta_{mm}"></span></td>
+                 <td>mechanical efficiency of motor</td>
+                 <td>–</td>
+               </tr>
+               <tr>
+                 <td><span class="math" data-latex="r_{\ell}(z)"></span></td>
+                 <td>effective layer radius</td>
+                 <td>m</td>
+               </tr>
+               <tr>
+                 <td><span class="math" data-latex="r_{core}"></span></td>
+                 <td>core radius</td>
+                 <td>m</td>
+               </tr>
+               <tr>
+                 <td><span class="math" data-latex="p_{c}"></span></td>
+                 <td>cable effective pitch (≈ cable dia × packing factor)</td>
+                 <td>m</td>
+               </tr>
+             </tbody>
+           </table>
+         </div>
  
- app.post('/api/presets', async (req, res, next) => {
-   const payload = req.body;
-   const { valid, errors } = validatePresetPayload(payload);
-   if (!valid) {
-     return sendError(res, 400, 'Invalid preset payload.', errors);
-   }
+         <h3>A) Available Line Speed — Unitless Relations</h3>
+         <ol>
+-          <li><span class="math" data-latex="Q_{p,i} / (n_e D_p) = \eta_{vp}"></span></li>
+-          <li><span class="math" data-latex="Q_{tot} / (N_p Q_{p,i}) = 1"></span></li>
+-          <li><span class="math" data-latex="Q_{m} / (Q_{tot} / N_{m}) = 1"></span></li>
+-          <li><span class="math" data-latex="n_{m} D_{m} / (\eta_{vm} Q_{m}) = 1"></span></li>
++          <li><p>$$Q_{p,i} = \eta_{vp}\, n_e\, D_p$$</p></li>
++          <li><p>$$Q_{tot} = N_p\, Q_{p,i}$$</p></li>
++          <li><p>$$Q_{m} = \dfrac{Q_{tot}}{N_{m}}$$</p></li>
++          <li><p>$$n_{m} = \dfrac{\eta_{vm}\, Q_{m}}{D_{m}}$$</p></li>
+           <li>
+-            <span class="math" data-latex="n_{d} / (n_{m} / G_{tot}) = 1"></span>, where
+-            <span class="math" data-latex="G_{tot} = G_{gb} G_{pr}"></span>
++            <p>$$n_{d} = \dfrac{n_{m}}{G_{tot}}$$</p>
++            <p>$$G_{tot} = G_{gb} \, G_{pr}$$</p>
+           </li>
+           <li>
+-            <span class="math" data-latex="v_{flow}(z) / ((\pi D_{\ell}(z) / 60) \times n_{d}) = 1"></span>
++            <p>
++              $$v_{flow}(z) = \left( \frac{\pi \, D_{\ell}(z)}{60} \right) n_{d}$$
++            </p>
++          </li>
++          <li><p>$$P_{avail} = \eta_{em}\, P_{nom}$$</p></li>
++          <li><p>$$v_{pwr}(z) = \dfrac{P_{avail}}{T(z)}$$</p></li>
++          <li>
++            <p>
++              $$v_{avail}(z) = \min\!\big(v_{flow}(z),\, v_{pwr}(z)\big)$$
++            </p>
+           </li>
+-          <li><span class="math" data-latex="P_{avail} / (\eta_{em} P_{nom}) = 1"></span></li>
+-          <li><span class="math" data-latex="v_{pwr}(z) T(z) / P_{avail} = 1"></span></li>
+-          <li><span class="math" data-latex="v_{avail}(z) = \min\big(v_{flow}(z), v_{pwr}(z)\big)"></span></li>
+         </ol>
  
-   const description =
-     typeof payload.description === 'string' && payload.description.trim().length > 0
-       ? payload.description.trim()
-       : undefined;
+         <!-- Equations -->
+         <div class="equations">
+           <p>
+             $$v_{flow}(z) =
+             \frac{\pi \, D_\ell(z)}{60}
+             \left(
+               \frac{
+                 \eta_{vm}
+                 \left(
+                   \dfrac{N_p \, \eta_{vp} \, n_e \, D_p}{N_m}
+                 \right)
+               }{
+                 D_m \, G_{gb} \, G_{pr}
+               }
+             \right)$$
+           </p>
  
-+  const timestamp = new Date().toISOString();
-   const presetToSave = {
-     id: payload.id && typeof payload.id === 'string' ? payload.id : generateId(),
-     name: payload.name.trim(),
-     ...(description ? { description } : {}),
-     data: payload.data,
-     ...(payload.metadata !== undefined ? { metadata: payload.metadata } : {}),
--    updatedAt: new Date().toISOString(),
-+    updatedAt: timestamp,
-   };
+           <p>
+             $$v_{pwr}(z) =
+             \frac{\eta_{em} \, P_{nom}}{T(z)}$$
+           </p>
  
-   try {
-     const result = await withFileLock(async () => {
-       const presets = await readPresets();
-       const existingIndex = presets.findIndex((item) => item.id === presetToSave.id);
-       if (existingIndex >= 0) {
--        presetToSave.createdAt = presets[existingIndex].createdAt ?? new Date().toISOString();
--        presets[existingIndex] = { ...presets[existingIndex], ...presetToSave };
--      } else {
--        presetToSave.createdAt = new Date().toISOString();
--        presets.push(presetToSave);
-+        const existingPreset = presets[existingIndex];
-+        const mergedPreset = {
-+          ...existingPreset,
-+          ...presetToSave,
-+          createdAt: existingPreset.createdAt ?? timestamp,
-+        };
-+        presets[existingIndex] = mergedPreset;
-+        await writePresets(presets);
-+        return { preset: mergedPreset, isNew: false };
-       }
-+
-+      const presetToInsert = { ...presetToSave, createdAt: timestamp };
-+      presets.push(presetToInsert);
-       await writePresets(presets);
--      return { presets, isNew: existingIndex === -1 };
-+      return { preset: presetToInsert, isNew: true };
-     });
+           <p>
+             $$v_{avail}(z) =
+             \min\!\big(v_{flow}(z),\, v_{pwr}(z)\big)$$
+           </p>
+         </div>
  
-     const status = result.isNew ? 201 : 200;
--    res.status(status).json({ preset: presetToSave });
-+    res.status(status).json({ preset: result.preset });
-   } catch (err) {
-     next(err);
-   }
- });
+         <h3>B) Tension vs Depth — Unitless Relations</h3>
+         <ol start="10">
+           <li>
+-            <span class="math" data-latex="\frac{T_{\mathrm{static}}(z) - W_{\mathrm{pay,sub}}}{w_{c,\mathrm{sub}} z} = 1"></span>
++            <p>
++              $$T_{\mathrm{static}}(z) = W_{\mathrm{pay,sub}} + w_{c,\mathrm{sub}}\, z$$
++            </p>
+             <span class="note">
+               for
+               <span class="math" data-latex="0 \le z \le L"></span>
+             </span>
+           </li>
+           <li>
+-            <span class="math" data-latex="\frac{T_{\mathrm{static}}(z) - W_{\mathrm{pay,sub}}}{w_{c,\mathrm{sub}} L} = 1"></span>
++            <p>
++              $$T_{\mathrm{static}}(z) = W_{\mathrm{pay,sub}} + w_{c,\mathrm{sub}}\, L$$
++            </p>
+             <span class="note">
+               for
+               <span class="math" data-latex="z > L"></span>
+             </span>
+           </li>
+           <li>
+-            <span class="math" data-latex="\frac{T(z) - T_{\mathrm{static}}(z)}{\Delta T_a + \Delta T_d + \Delta T_h} = 1"></span>
++            <p>
++              $$T(z) = T_{\mathrm{static}}(z) + \Delta T_a + \Delta T_d + \Delta T_h$$
++            </p>
+           </li>
+           <li>
+-            <span class="math" data-latex="\frac{T(z)}{T_{\mathrm{static}}(z) + \Delta T_a + \Delta T_d + \Delta T_h} = 1"></span>
++            <p>
++              $$T(z) = T_{\mathrm{static}}(z) + \Delta T_a + \Delta T_d + \Delta T_h$$
++            </p>
+           </li>
+         </ol>
  
- app.delete('/api/presets/:id', async (req, res, next) => {
-   const presetId = req.params.id;
-   try {
-     const removed = await withFileLock(async () => {
-       const presets = await readPresets();
-       const index = presets.findIndex((item) => item.id === presetId);
-       if (index === -1) {
-         return false;
-       }
-       presets.splice(index, 1);
-       await writePresets(presets);
-       return true;
-     });
+         <h3>C) Cross-Checks (Optional)</h3>
+         <ol start="14">
+           <li>
+-            <span class="math" data-latex="\frac{T_{\mathrm{cap}}(z)\, r_{\ell}(z)\, G_{tot}}{\tau_m N_m \, \eta_{\mathrm{train}}} = 1"></span>
++            <p>
++              $$T_{\mathrm{cap}}(z) = \dfrac{\tau_m N_m\, \eta_{\mathrm{train}}}{r_{\ell}(z)\, G_{tot}}$$
++            </p>
+           </li>
+           <li>
+-            <span class="math" data-latex="\frac{\tau_m}{(\Delta p \, D_m \, \eta_{mm}) / (2\pi)} = 1"></span>
++            <p>
++              $$\tau_m = \dfrac{\Delta p\, D_m\, \eta_{mm}}{2\pi}$$
++            </p>
+           </li>
+           <li>
+-            <span class="math" data-latex="\frac{D_{\ell}(i)}{2 r_{\mathrm{core}} + 2 (i - 0.5) p_c} = 1"></span>
++            <p>
++              $$D_{\ell}(i) = 2 r_{\mathrm{core}} + 2 (i - 0.5) p_c$$
++            </p>
+           </li>
+         </ol>
  
-     if (!removed) {
-       return sendError(res, 404, 'Preset not found.');
-     }
+         <h3>D) Deployment Checks</h3>
+         <p>
+           Use these quick checks when validating simulation output against the normalized relations above.
+         </p>
+         <ul>
+           <li>
+-            <span class="math" data-latex="T_{\mathrm{hoist}}(z) = T_{\mathrm{static}}(z) + \Delta T_a + \Delta T_d + \Delta T_h"></span>
++            <p>
++              $$T_{\mathrm{hoist}}(z) = T_{\mathrm{static}}(z) + \Delta T_a + \Delta T_d + \Delta T_h$$
++            </p>
+             consolidates the static and dynamic contributors into a single hoisting load profile.
+           </li>
+           <li>
+-            <span class="math" data-latex="P_{\mathrm{req}}(z) = T(z) \\cdot v_{\mathrm{avail}}(z)"></span>
++            <p>
++              $$P_{\mathrm{req}}(z) = T(z) \, v_{\mathrm{avail}}(z)$$
++            </p>
+             offers a spot-check on power demand at any depth when comparing to drive sizing limits.
+           </li>
+         </ul>
  
-     res.status(204).send();
-   } catch (err) {
+         <p>
+-          Each equation expresses the physical dependency as a pure ratio, enabling unit-consistent implementation regardless of the measurement system. All efficiencies, ratios, and reductions are dimensionless. Power-, flow-, and tension-limited speeds follow directly from these relationships.
++          Each equation isolates the dependent quantity on the left-hand side for quick substitution while preserving unit-consistent implementation across measurement systems. All efficiencies, ratios, and reductions are dimensionless. Power-, flow-, and tension-limited speeds follow directly from these relationships.
+         </p>
+       </section>
+       <section class="card info-card" id="component-catalog-card" aria-labelledby="component-catalog-instructions">
+         <h2 class="section-title" id="component-catalog-instructions">How to update component presets</h2>
+         <p>
+           The component dropdowns now read from dedicated catalogs in
+           <code>src/js/component-selectors.mjs</code>. Add or edit part numbers directly in the matching
+           array to make them available across the app.
+         </p>
+         <ol>
+           <li>
+             Open <code>src/js/component-selectors.mjs</code> and locate the array that matches the component
+             type you want to change (for example <code>GEARBOX_OPTIONS</code> or
+             <code>ELECTRIC_MOTOR_OPTIONS</code>).
+           </li>
+           <li>
+             Add a new object with the part number, description, and any field values that should autofill
+             when the part is selected. Follow the existing entries as a template.
+           </li>
+           <li>
+             Save the file and refresh the page. The new entry will appear under the corresponding dropdown
+             and auto-populate the linked form inputs.
+           </li>
+         </ol>
+         <p class="dim">

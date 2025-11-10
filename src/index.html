@@ -1341,20 +1341,26 @@
 
         <h3>A) Available Line Speed — Unitless Relations</h3>
         <ol>
-          <li><span class="math" data-latex="Q_{p,i} / (n_e D_p) = \eta_{vp}"></span></li>
-          <li><span class="math" data-latex="Q_{tot} / (N_p Q_{p,i}) = 1"></span></li>
-          <li><span class="math" data-latex="Q_{m} / (Q_{tot} / N_{m}) = 1"></span></li>
-          <li><span class="math" data-latex="n_{m} D_{m} / (\eta_{vm} Q_{m}) = 1"></span></li>
+          <li><p>$$Q_{p,i} = \eta_{vp}\, n_e\, D_p$$</p></li>
+          <li><p>$$Q_{tot} = N_p\, Q_{p,i}$$</p></li>
+          <li><p>$$Q_{m} = \dfrac{Q_{tot}}{N_{m}}$$</p></li>
+          <li><p>$$n_{m} = \dfrac{\eta_{vm}\, Q_{m}}{D_{m}}$$</p></li>
           <li>
-            <span class="math" data-latex="n_{d} / (n_{m} / G_{tot}) = 1"></span>, where
-            <span class="math" data-latex="G_{tot} = G_{gb} G_{pr}"></span>
+            <p>$$n_{d} = \dfrac{n_{m}}{G_{tot}}$$</p>
+            <p>$$G_{tot} = G_{gb} \, G_{pr}$$</p>
           </li>
           <li>
-            <span class="math" data-latex="v_{flow}(z) / ((\pi D_{\ell}(z) / 60) \times n_{d}) = 1"></span>
+            <p>
+              $$v_{flow}(z) = \left( \frac{\pi \, D_{\ell}(z)}{60} \right) n_{d}$$
+            </p>
           </li>
-          <li><span class="math" data-latex="P_{avail} / (\eta_{em} P_{nom}) = 1"></span></li>
-          <li><span class="math" data-latex="v_{pwr}(z) T(z) / P_{avail} = 1"></span></li>
-          <li><span class="math" data-latex="v_{avail}(z) = \min\big(v_{flow}(z), v_{pwr}(z)\big)"></span></li>
+          <li><p>$$P_{avail} = \eta_{em}\, P_{nom}$$</p></li>
+          <li><p>$$v_{pwr}(z) = \dfrac{P_{avail}}{T(z)}$$</p></li>
+          <li>
+            <p>
+              $$v_{avail}(z) = \min\!\big(v_{flow}(z),\, v_{pwr}(z)\big)$$
+            </p>
+          </li>
         </ol>
 
         <!-- Equations -->
@@ -1388,37 +1394,51 @@
         <h3>B) Tension vs Depth — Unitless Relations</h3>
         <ol start="10">
           <li>
-            <span class="math" data-latex="\frac{T_{\mathrm{static}}(z) - W_{\mathrm{pay,sub}}}{w_{c,\mathrm{sub}} z} = 1"></span>
+            <p>
+              $$T_{\mathrm{static}}(z) = W_{\mathrm{pay,sub}} + w_{c,\mathrm{sub}}\, z$$
+            </p>
             <span class="note">
               for
               <span class="math" data-latex="0 \le z \le L"></span>
             </span>
           </li>
           <li>
-            <span class="math" data-latex="\frac{T_{\mathrm{static}}(z) - W_{\mathrm{pay,sub}}}{w_{c,\mathrm{sub}} L} = 1"></span>
+            <p>
+              $$T_{\mathrm{static}}(z) = W_{\mathrm{pay,sub}} + w_{c,\mathrm{sub}}\, L$$
+            </p>
             <span class="note">
               for
               <span class="math" data-latex="z > L"></span>
             </span>
           </li>
           <li>
-            <span class="math" data-latex="\frac{T(z) - T_{\mathrm{static}}(z)}{\Delta T_a + \Delta T_d + \Delta T_h} = 1"></span>
+            <p>
+              $$T(z) = T_{\mathrm{static}}(z) + \Delta T_a + \Delta T_d + \Delta T_h$$
+            </p>
           </li>
           <li>
-            <span class="math" data-latex="\frac{T(z)}{T_{\mathrm{static}}(z) + \Delta T_a + \Delta T_d + \Delta T_h} = 1"></span>
+            <p>
+              $$T(z) = T_{\mathrm{static}}(z) + \Delta T_a + \Delta T_d + \Delta T_h$$
+            </p>
           </li>
         </ol>
 
         <h3>C) Cross-Checks (Optional)</h3>
         <ol start="14">
           <li>
-            <span class="math" data-latex="\frac{T_{\mathrm{cap}}(z)\, r_{\ell}(z)\, G_{tot}}{\tau_m N_m \, \eta_{\mathrm{train}}} = 1"></span>
+            <p>
+              $$T_{\mathrm{cap}}(z) = \dfrac{\tau_m N_m\, \eta_{\mathrm{train}}}{r_{\ell}(z)\, G_{tot}}$$
+            </p>
           </li>
           <li>
-            <span class="math" data-latex="\frac{\tau_m}{(\Delta p \, D_m \, \eta_{mm}) / (2\pi)} = 1"></span>
+            <p>
+              $$\tau_m = \dfrac{\Delta p\, D_m\, \eta_{mm}}{2\pi}$$
+            </p>
           </li>
           <li>
-            <span class="math" data-latex="\frac{D_{\ell}(i)}{2 r_{\mathrm{core}} + 2 (i - 0.5) p_c} = 1"></span>
+            <p>
+              $$D_{\ell}(i) = 2 r_{\mathrm{core}} + 2 (i - 0.5) p_c$$
+            </p>
           </li>
         </ol>
 
@@ -1428,17 +1448,21 @@
         </p>
         <ul>
           <li>
-            <span class="math" data-latex="T_{\mathrm{hoist}}(z) = T_{\mathrm{static}}(z) + \Delta T_a + \Delta T_d + \Delta T_h"></span>
+            <p>
+              $$T_{\mathrm{hoist}}(z) = T_{\mathrm{static}}(z) + \Delta T_a + \Delta T_d + \Delta T_h$$
+            </p>
             consolidates the static and dynamic contributors into a single hoisting load profile.
           </li>
           <li>
-            <span class="math" data-latex="P_{\mathrm{req}}(z) = T(z) \\cdot v_{\mathrm{avail}}(z)"></span>
+            <p>
+              $$P_{\mathrm{req}}(z) = T(z) \, v_{\mathrm{avail}}(z)$$
+            </p>
             offers a spot-check on power demand at any depth when comparing to drive sizing limits.
           </li>
         </ul>
 
         <p>
-          Each equation expresses the physical dependency as a pure ratio, enabling unit-consistent implementation regardless of the measurement system. All efficiencies, ratios, and reductions are dimensionless. Power-, flow-, and tension-limited speeds follow directly from these relationships.
+          Each equation isolates the dependent quantity on the left-hand side for quick substitution while preserving unit-consistent implementation across measurement systems. All efficiencies, ratios, and reductions are dimensionless. Power-, flow-, and tension-limited speeds follow directly from these relationships.
         </p>
       </section>
       <section class="card info-card" id="component-catalog-card" aria-labelledby="component-catalog-instructions">
