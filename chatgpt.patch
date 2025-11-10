@@ -1,196 +1,399 @@
-diff --git a/src/js/main.mjs b/src/js/main.mjs
-index 5ca4a2b665787064c590cc7b842c688674436f82..f53bbcb884343dde6d9c6a118133777cf759c71c 100644
---- a/src/js/main.mjs
-+++ b/src/js/main.mjs
-@@ -4,50 +4,51 @@ import {
-   q, read,
-   G, W_PER_HP, PSI_TO_PA, CC_PER_GAL, M_PER_IN,
-   tension_kgf, elec_available_tension_kgf,
-   gpm_from_cc_rev_and_rpm, rpm_from_gpm_and_disp,
-   psi_from_torque_and_disp_Nm_cc, torque_per_motor_from_pressure_Pa,
-   line_speed_mpm_from_motor_rpm, hp_from_psi_and_gpm,
-   TENSION_SAFETY_FACTOR
- } from './utils.mjs';
+diff --git a/src/index.html b/src/index.html
+index b4ed9b8ebc11c2010e9153dbc68b1dfcbccfea8e..f5bb2d4b73ee5ab2c2eca8743038ffb462074666 100644
+--- a/src/index.html
++++ b/src/index.html
+@@ -1120,335 +1120,320 @@
  
- import { setupInputPersistence } from './persist-inputs.mjs';
+     <div
+       id="panel-instructions"
+       class="panel"
+       role="tabpanel"
+       aria-labelledby="tab-instructions"
+       tabindex="0"
+       hidden
+       aria-hidden="true"
+     >
+       <section class="card info-card" id="hydraulic-core-equations" aria-labelledby="hydraulic-core-equations-title">
+         <h2 class="section-title" id="hydraulic-core-equations-title">Hydraulic Winch System — Core Equations (Unitless Form)</h2>
  
- import { calcLayers } from './layer-engine.mjs';
+         <h3>Symbols (reference units only)</h3>
+         <div class="scrollable-table">
+           <table>
+             <thead>
+               <tr>
+                 <th scope="col">Symbol</th>
+                 <th scope="col">Description</th>
+                 <th scope="col">Units</th>
+               </tr>
+             </thead>
+             <tbody>
+               <tr>
+-                <td data-latex="n_{e}"><var>n</var><sub>e</sub></td>
++                <td><span class="math" data-latex="n_{e}"></span></td>
+                 <td>electric motor speed</td>
+                 <td>rpm</td>
+               </tr>
+               <tr>
+-                <td data-latex="D_{p}"><var>D</var><sub>p</sub></td>
++                <td><span class="math" data-latex="D_{p}"></span></td>
+                 <td>pump displacement</td>
+                 <td>cc/rev</td>
+               </tr>
+               <tr>
+-                <td data-latex="N_{p}"><var>N</var><sub>p</sub></td>
++                <td><span class="math" data-latex="N_{p}"></span></td>
+                 <td>number of pumps</td>
+                 <td>–</td>
+               </tr>
+               <tr>
+-                <td data-latex="\eta_{vp}">&eta;<sub>vp</sub></td>
++                <td><span class="math" data-latex="\eta_{vp}"></span></td>
+                 <td>pump volumetric efficiency</td>
+                 <td>–</td>
+               </tr>
+               <tr>
+-                <td data-latex="Q_{p,i}"><var>Q</var><sub>p,i</sub></td>
++                <td><span class="math" data-latex="Q_{p,i}"></span></td>
+                 <td>actual per-pump flow</td>
+                 <td>cc/min</td>
+               </tr>
+               <tr>
+-                <td data-latex="Q_{tot}"><var>Q</var><sub>tot</sub></td>
++                <td><span class="math" data-latex="Q_{tot}"></span></td>
+                 <td>total manifold flow</td>
+                 <td>cc/min</td>
+               </tr>
+               <tr>
+-                <td data-latex="N_{m}"><var>N</var><sub>m</sub></td>
++                <td><span class="math" data-latex="N_{m}"></span></td>
+                 <td>number of motors in parallel</td>
+                 <td>–</td>
+               </tr>
+               <tr>
+-                <td data-latex="D_{m}"><var>D</var><sub>m</sub></td>
++                <td><span class="math" data-latex="D_{m}"></span></td>
+                 <td>motor displacement</td>
+                 <td>cc/rev</td>
+               </tr>
+               <tr>
+-                <td data-latex="\eta_{vm}">&eta;<sub>vm</sub></td>
++                <td><span class="math" data-latex="\eta_{vm}"></span></td>
+                 <td>motor volumetric efficiency</td>
+                 <td>–</td>
+               </tr>
+               <tr>
+-                <td data-latex="n_{m}"><var>n</var><sub>m</sub></td>
++                <td><span class="math" data-latex="n_{m}"></span></td>
+                 <td>motor speed</td>
+                 <td>rpm</td>
+               </tr>
+               <tr>
+-                <td data-latex="n_{d}"><var>n</var><sub>d</sub></td>
++                <td><span class="math" data-latex="n_{d}"></span></td>
+                 <td>drum (ring) speed</td>
+                 <td>rpm</td>
+               </tr>
+               <tr>
+-                <td data-latex="G_{gb}"><var>G</var><sub>gb</sub></td>
++                <td><span class="math" data-latex="G_{gb}"></span></td>
+                 <td>gearbox reduction</td>
+                 <td>–</td>
+               </tr>
+               <tr>
+-                <td data-latex="G_{pr}"><var>G</var><sub>pr</sub></td>
++                <td><span class="math" data-latex="G_{pr}"></span></td>
+                 <td>pinion&rarr;ring reduction</td>
+                 <td>–</td>
+               </tr>
+               <tr>
+-                <td data-latex="G_{tot}"><var>G</var><sub>tot</sub></td>
++                <td><span class="math" data-latex="G_{tot}"></span></td>
+                 <td>
+                   total reduction =
+-                  <span data-latex="G_{gb} G_{pr}"><var>G</var><sub>gb</sub><var>G</var><sub>pr</sub></span>
++                  <span class="math" data-latex="G_{gb} G_{pr}"></span>
+                 </td>
+                 <td>–</td>
+               </tr>
+               <tr>
+-                <td data-latex="D_{\ell}(z)"><var>D</var><sub>&ell;</sub>(<var>z</var>)</td>
++                <td><span class="math" data-latex="D_{\ell}(z)"></span></td>
+                 <td>
+                   effective layer diameter at depth
+-                  <span data-latex="z"><var>z</var></span>
++                  <span class="math" data-latex="z"></span>
+                 </td>
+                 <td>m</td>
+               </tr>
+               <tr>
+-                <td data-latex="v_{flow}(z)"><var>v</var><sub>flow</sub>(<var>z</var>)</td>
++                <td><span class="math" data-latex="v_{flow}(z)"></span></td>
+                 <td>flow-limited line speed</td>
+                 <td>m/s</td>
+               </tr>
+               <tr>
+-                <td data-latex="P_{nom}"><var>P</var><sub>nom</sub></td>
++                <td><span class="math" data-latex="P_{nom}"></span></td>
+                 <td>total nominal electric motor power</td>
+                 <td>kW</td>
+               </tr>
+               <tr>
+-                <td data-latex="\eta_{em}">&eta;<sub>em</sub></td>
++                <td><span class="math" data-latex="\eta_{em}"></span></td>
+                 <td>electromechanical efficiency</td>
+                 <td>–</td>
+               </tr>
+               <tr>
+-                <td data-latex="P_{avail}"><var>P</var><sub>avail</sub></td>
+-                <td>available shaft power</td>
++                <td><span class="math" data-latex="P_{avail}"></span></td>
++                <td>available electric motor power</td>
+                 <td>kW</td>
+               </tr>
+               <tr>
+-                <td data-latex="T(z)"><var>T</var>(<var>z</var>)</td>
++                <td><span class="math" data-latex="T(z)"></span></td>
+                 <td>operating line tension</td>
+                 <td>N</td>
+               </tr>
+               <tr>
+-                <td data-latex="v_{pwr}(z)"><var>v</var><sub>pwr</sub>(<var>z</var>)</td>
++                <td><span class="math" data-latex="v_{pwr}(z)"></span></td>
+                 <td>power-limited line speed</td>
+                 <td>m/s</td>
+               </tr>
+               <tr>
+-                <td data-latex="v_{avail}(z)"><var>v</var><sub>avail</sub>(<var>z</var>)</td>
++                <td><span class="math" data-latex="v_{avail}(z)"></span></td>
+                 <td>available line speed</td>
+                 <td>m/s</td>
+               </tr>
+               <tr>
+-                <td data-latex="W_{pay,sub}"><var>W</var><sub>pay,sub</sub></td>
++                <td><span class="math" data-latex="W_{\mathrm{pay,sub}}"></span></td>
+                 <td>payload weight in water</td>
+                 <td>N</td>
+               </tr>
+               <tr>
+-                <td data-latex="w_{c,sub}"><var>w</var><sub>c,sub</sub></td>
++                <td><span class="math" data-latex="w_{c,\mathrm{sub}}"></span></td>
+                 <td>cable weight in water per unit length</td>
+                 <td>N/m</td>
+               </tr>
+               <tr>
+-                <td data-latex="L"><var>L</var></td>
++                <td><span class="math" data-latex="L"></span></td>
+                 <td>max usable cable length</td>
+                 <td>m</td>
+               </tr>
+               <tr>
+-                <td data-latex="T_{static}(z)"><var>T</var><sub>static</sub>(<var>z</var>)</td>
++                <td><span class="math" data-latex="T_{\mathrm{static}}(z)"></span></td>
+                 <td>static line tension</td>
+                 <td>N</td>
+               </tr>
+               <tr>
+-                <td data-latex="\Delta T_{a}, \Delta T_{d}, \Delta T_{h}">&Delta;<var>T</var><sub>a</sub>, &Delta;<var>T</var><sub>d</sub>, &Delta;<var>T</var><sub>h</sub></td>
++                <td>
++                  <span class="math" data-latex="\Delta T_a\!,\; \Delta T_d\!,\; \Delta T_h"></span>
++                </td>
+                 <td>dynamic tension adders (accel, drag, heave)</td>
+                 <td>N</td>
+               </tr>
+               <tr>
+-                <td data-latex="\tau_{m}">&tau;<sub>m</sub></td>
++                <td><span class="math" data-latex="\tau_{m}"></span></td>
+                 <td>motor torque</td>
+                 <td>N·m</td>
+               </tr>
+               <tr>
+-                <td data-latex="\eta_{train}">&eta;<sub>train</sub></td>
++                <td><span class="math" data-latex="\eta_{train}"></span></td>
+                 <td>drivetrain efficiency</td>
+                 <td>–</td>
+               </tr>
+               <tr>
+-                <td data-latex="\eta_{mm}">&eta;<sub>mm</sub></td>
++                <td><span class="math" data-latex="\eta_{mm}"></span></td>
+                 <td>mechanical efficiency of motor</td>
+                 <td>–</td>
+               </tr>
+               <tr>
+-                <td data-latex="r_{\ell}(z)"><var>r</var><sub>&ell;</sub>(<var>z</var>)</td>
++                <td><span class="math" data-latex="r_{\ell}(z)"></span></td>
+                 <td>effective layer radius</td>
+                 <td>m</td>
+               </tr>
+               <tr>
+-                <td data-latex="r_{core}"><var>r</var><sub>core</sub></td>
++                <td><span class="math" data-latex="r_{core}"></span></td>
+                 <td>core radius</td>
+                 <td>m</td>
+               </tr>
+               <tr>
+-                <td data-latex="p_{c}"><var>p</var><sub>c</sub></td>
++                <td><span class="math" data-latex="p_{c}"></span></td>
+                 <td>cable effective pitch (≈ cable dia × packing factor)</td>
+                 <td>m</td>
+               </tr>
+             </tbody>
+           </table>
+         </div>
  
- import {
-   rowsToElectricLayer, projectElectricWraps, renderElectricTables
- } from './electric.mjs';
+         <h3>A) Available Line Speed — Unitless Relations</h3>
+         <ol>
+-          <li><span class="math" data-latex="Q_{p,i} / (n_e D_p) = \eta_{vp}"><var>Q</var><sub>p,i</sub> / (<var>n</var><sub>e</sub> <var>D</var><sub>p</sub>) = &eta;<sub>vp</sub></span></li>
+-          <li><span class="math" data-latex="Q_{tot} / (N_p Q_{p,i}) = 1"><var>Q</var><sub>tot</sub> / (<var>N</var><sub>p</sub> <var>Q</var><sub>p,i</sub>) = 1</span></li>
+-          <li><span class="math" data-latex="Q_{m} / (Q_{tot} / N_{m}) = 1"><var>Q</var><sub>m</sub> / (<var>Q</var><sub>tot</sub> / <var>N</var><sub>m</sub>) = 1</span></li>
+-          <li><span class="math" data-latex="n_{m} D_{m} / (\eta_{vm} Q_{m}) = 1"><var>n</var><sub>m</sub> <var>D</var><sub>m</sub> / (&eta;<sub>vm</sub> <var>Q</var><sub>m</sub>) = 1</span></li>
++          <li><span class="math" data-latex="Q_{p,i} / (n_e D_p) = \eta_{vp}"></span></li>
++          <li><span class="math" data-latex="Q_{tot} / (N_p Q_{p,i}) = 1"></span></li>
++          <li><span class="math" data-latex="Q_{m} / (Q_{tot} / N_{m}) = 1"></span></li>
++          <li><span class="math" data-latex="n_{m} D_{m} / (\eta_{vm} Q_{m}) = 1"></span></li>
+           <li>
+-            <span class="math" data-latex="n_{d} / (n_{m} / G_{tot}) = 1"><var>n</var><sub>d</sub> / (<var>n</var><sub>m</sub> / <var>G</var><sub>tot</sub>) = 1</span>, where <var>G</var><sub>tot</sub> = <var>G</var><sub>gb</sub><var>G</var><sub>pr</sub>
++            <span class="math" data-latex="n_{d} / (n_{m} / G_{tot}) = 1"></span>, where
++            <span class="math" data-latex="G_{tot} = G_{gb} G_{pr}"></span>
+           </li>
+           <li>
+-            <span class="math" data-latex="v_{flow}(z) / ((\pi D_{\ell}(z) / 60) \times n_{d}) = 1"><var>v</var><sub>flow</sub>(<var>z</var>) / ((&pi; <var>D</var><sub>&ell;</sub>(<var>z</var>) / 60) &times; <var>n</var><sub>d</sub>) = 1</span>
++            <span class="math" data-latex="v_{flow}(z) / ((\pi D_{\ell}(z) / 60) \times n_{d}) = 1"></span>
+           </li>
+-          <li><span class="math" data-latex="P_{avail} / (\eta_{em} P_{nom}) = 1"><var>P</var><sub>avail</sub> / (&eta;<sub>em</sub> <var>P</var><sub>nom</sub>) = 1</span></li>
+-          <li><span class="math" data-latex="v_{pwr}(z) T(z) / P_{avail} = 1"><var>v</var><sub>pwr</sub>(<var>z</var>) <var>T</var>(<var>z</var>) / <var>P</var><sub>avail</sub> = 1</span></li>
+-          <li><span class="math" data-latex="v_{avail}(z) = \min\big(v_{flow}(z), v_{pwr}(z)\big)"><var>v</var><sub>avail</sub>(<var>z</var>) = min(<var>v</var><sub>flow</sub>(<var>z</var>), <var>v</var><sub>pwr</sub>(<var>z</var>))</span></li>
++          <li><span class="math" data-latex="P_{avail} / (\eta_{em} P_{nom}) = 1"></span></li>
++          <li><span class="math" data-latex="v_{pwr}(z) T(z) / P_{avail} = 1"></span></li>
++          <li><span class="math" data-latex="v_{avail}(z) = \min\big(v_{flow}(z), v_{pwr}(z)\big)"></span></li>
+         </ol>
  
- import {
-   rowsToHydraulicLayer, projectHydraulicWraps, renderHydraulicTables
- } from './hydraulic.mjs';
+         <!-- Equations -->
+         <div class="equations">
+           <p>
+             $$v_{flow}(z) =
+             \frac{\pi \, D_\ell(z)}{60}
+             \left(
+               \frac{
+                 \eta_{vm}
+                 \left(
+                   \dfrac{N_p \, \eta_{vp} \, n_e \, D_p}{N_m}
+                 \right)
+               }{
+                 D_m \, G_{gb} \, G_{pr}
+               }
+             \right)$$
+           </p>
  
- import { drawWaveContours, drawWaveHeightContours } from './plots/wave-contours.mjs';
- import { drawDepthProfiles } from './plots/depth-profiles.mjs';
- import { setupComponentSelectors } from './component-selectors.mjs';
- import { renderDrumVisualization, clearDrumVisualization } from './drum-visual.mjs';
-+import { renderLatexFragments } from './katex-renderer.mjs';
+           <p>
+             $$v_{pwr}(z) =
+             \frac{\eta_{em} \, P_{nom}}{T(z)}$$
+           </p>
  
- // ---- App state for plots/tables ----
- let lastElLayer = [], lastElWraps = [];
- let lastHyLayer = [], lastHyWraps = [];
- /** @type {{ rows: any, summary: any, cfg: any, meta: any } | null} */
- let lastDrumState = null;
+           <p>
+             $$v_{avail}(z) =
+             \min\!\big(v_{flow}(z),\, v_{pwr}(z)\big)$$
+           </p>
+         </div>
  
- const CSV_BUTTON_SPECS = {
-   csv_el_layer: {
-     filename: () => 'electric-layer.csv',
-     columns: [
-       'layer_no', 'layer_dia_in', 'pre_on_drum_m', 'pre_deployed_m',
-       'post_on_drum_m', 'post_deployed_m', 'max_tension_theoretical_kgf',
-       'max_tension_required_kgf', 'max_torque_Nm', 'max_motor_torque_Nm',
-       'motor_rpm_at_start', 'line_speed_at_start_mpm', 'avail_tension_kgf_at_start'
-     ],
-     header: [
-       'layer_no', 'layer_dia_in', 'pre_on_drum_m', 'pre_deployed_m',
-       'post_on_drum_m', 'post_deployed_m', 'max_tension_theoretical_kgf',
-       'max_tension_required_kgf', 'max_torque_Nm', 'max_motor_torque_Nm',
-       'motor_rpm_at_start', 'line_speed_at_start_mpm', 'avail_tension_kgf_at_start'
-     ],
-     getRows: () => lastElLayer
-   },
-   csv_el_wraps: {
-@@ -107,70 +108,86 @@ const CSV_BUTTON_SPECS = {
- const SYSTEM_TYPE_SELECT_ID = 'system_type_select';
- const DEFAULT_SYSTEM_TYPE = 'electric';
+         <h3>B) Tension vs Depth — Unitless Relations</h3>
+         <ol start="10">
+           <li>
+-            <span class="math" data-latex="\\frac{T_{\\mathrm{static}}(z) - W_{\\mathrm{pay,sub}}}{w_{c,\\mathrm{sub}} z} = 1">
+-              (T<sub>static</sub>(z) - W<sub>pay,sub</sub>) / (w<sub>c,sub</sub> z) = 1
+-            </span>
++            <span class="math" data-latex="\frac{T_{\mathrm{static}}(z) - W_{\mathrm{pay,sub}}}{w_{c,\mathrm{sub}} z} = 1"></span>
+             <span class="note">
+               for
+-              <span data-latex="0 \le z \le L">0 &le; <var>z</var> &le; <var>L</var></span>
++              <span class="math" data-latex="0 \le z \le L"></span>
+             </span>
+           </li>
+           <li>
+-            <span class="math" data-latex="\\frac{T_{\\mathrm{static}}(z) - W_{\\mathrm{pay,sub}}}{w_{c,\\mathrm{sub}} L} = 1">
+-              (T<sub>static</sub>(z) - W<sub>pay,sub</sub>) / (w<sub>c,sub</sub> L) = 1
+-            </span>
++            <span class="math" data-latex="\frac{T_{\mathrm{static}}(z) - W_{\mathrm{pay,sub}}}{w_{c,\mathrm{sub}} L} = 1"></span>
+             <span class="note">
+               for
+-              <span data-latex="z > L"><var>z</var> &gt; <var>L</var></span>
++              <span class="math" data-latex="z > L"></span>
+             </span>
+           </li>
+           <li>
+-            <span class="math" data-latex="\\frac{T(z) - T_{\\mathrm{static}}(z)}{\\Delta T_a + \\Delta T_d + \\Delta T_h} = 1">
+-              (T(z) - T<sub>static</sub>(z)) / (ΔT<sub>a</sub> + ΔT<sub>d</sub> + ΔT<sub>h</sub>) = 1
+-            </span>
++            <span class="math" data-latex="\frac{T(z) - T_{\mathrm{static}}(z)}{\Delta T_a + \Delta T_d + \Delta T_h} = 1"></span>
+           </li>
+           <li>
+-            <span class="math" data-latex="\\frac{T(z)}{T_{\\mathrm{static}}(z) + \\Delta T_a + \\Delta T_d + \\Delta T_h} = 1">
+-              T(z) / (T<sub>static</sub>(z) + ΔT<sub>a</sub> + ΔT<sub>d</sub> + ΔT<sub>h</sub>) = 1
+-            </span>
++            <span class="math" data-latex="\frac{T(z)}{T_{\mathrm{static}}(z) + \Delta T_a + \Delta T_d + \Delta T_h} = 1"></span>
+           </li>
+         </ol>
  
- // ---- Wire up events once DOM is ready ----
- document.addEventListener('DOMContentLoaded', () => {
-   setupInputPersistence();
+         <h3>C) Cross-Checks (Optional)</h3>
+         <ol start="14">
+           <li>
+-            <span class="math" data-latex="\\frac{T_{\\mathrm{cap}}(z)\\, r_{\\ell}(z)\\, G_{tot}}{\\tau_m N_m \\eta_{\\mathrm{train}}} = 1">
+-              T<sub>cap</sub>(z) r<sub>ℓ</sub>(z) G<sub>tot</sub> / (τ<sub>m</sub> N<sub>m</sub> η<sub>train</sub>) = 1
+-            </span>
++            <span class="math" data-latex="\frac{T_{\mathrm{cap}}(z)\, r_{\ell}(z)\, G_{tot}}{\tau_m N_m \, \eta_{\mathrm{train}}} = 1"></span>
+           </li>
+           <li>
+-            <span class="math" data-latex="\\frac{\\tau_m}{(\\Delta p \\; D_m \\eta_{mm}) / (2\\pi)} = 1">
+-              τ<sub>m</sub> / ((Δp D<sub>m</sub> η<sub>mm</sub>) / (2π)) = 1
+-            </span>
++            <span class="math" data-latex="\frac{\tau_m}{(\Delta p \, D_m \, \eta_{mm}) / (2\pi)} = 1"></span>
+           </li>
+           <li>
+-            <span class="math" data-latex="\\frac{D_{\\ell}(i)}{2 r_{\\mathrm{core}} + 2 (i - 0.5) p_c} = 1">
+-              D<sub>ℓ</sub>(i) / (2 r<sub>core</sub> + 2 (i - 0.5) p<sub>c</sub>) = 1
+-            </span>
++            <span class="math" data-latex="\frac{D_{\ell}(i)}{2 r_{\mathrm{core}} + 2 (i - 0.5) p_c} = 1"></span>
+           </li>
+         </ol>
  
-   setupComponentSelectors();
+         <h3>D) Deployment Checks</h3>
+         <p>
+           Use these quick checks when validating simulation output against the normalized relations above.
+         </p>
+         <ul>
+           <li>
+-            <span class="math" data-latex="T_{\\mathrm{hoist}}(z) = T_{\\mathrm{static}}(z) + \\Delta T_a + \\Delta T_d + \\Delta T_h">
+-              T<sub>hoist</sub>(z) = T<sub>static</sub>(z) + ΔT<sub>a</sub> + ΔT<sub>d</sub> + ΔT<sub>h</sub>
+-            </span>
++            <span class="math" data-latex="T_{\mathrm{hoist}}(z) = T_{\mathrm{static}}(z) + \Delta T_a + \Delta T_d + \Delta T_h"></span>
+             consolidates the static and dynamic contributors into a single hoisting load profile.
+           </li>
+           <li>
+-            <span class="math" data-latex="P_{\\mathrm{req}}(z) = T(z) \\cdot v_{\\mathrm{avail}}(z)">
+-              P<sub>req</sub>(z) = T(z) · v<sub>avail</sub>(z)
+-            </span>
++            <span class="math" data-latex="P_{\mathrm{req}}(z) = T(z) \\cdot v_{\mathrm{avail}}(z)"></span>
+             offers a spot-check on power demand at any depth when comparing to drive sizing limits.
+           </li>
+         </ul>
  
-   setupCollapsibleToggles();
- 
-   setupDriveModeControls();
- 
-   setupCsvDownloads();
- 
-   setupPlotResizeToggles();
- 
-   setupManualRefreshControls();
- 
-   setupAutoRecompute();
- 
-   updateBuildIndicator();
- 
-   setupTabs();
- 
-+  renderDocumentMath();
-+
-   document.querySelectorAll('.param-label').forEach(label => {
-     const code = label.dataset.code;
-     if (code) {
-       label.setAttribute('title', code);
-     }
-   });
- 
-   // Wave plot controls
-   q('wave_scenario').addEventListener('change', () => redrawPlots());
-   ['wave_tmin', 'wave_tmax', 'wave_vmin', 'wave_vmax', 'wave_hmin', 'wave_hmax']
-     .forEach(id => q(id).addEventListener('change', () => redrawPlots()));
- 
-   // Depth plot controls
-   ['depth_xmin', 'depth_xmax', 'depth_speed_ymin', 'depth_speed_ymax', 'depth_tension_ymin', 'depth_tension_ymax']
-     .forEach(id => q(id).addEventListener('change', () => redrawPlots()));
- 
-   // Initial compute
-   computeAll();
- });
- 
-+function renderDocumentMath() {
-+  if (typeof window.renderMathInElement === 'function') {
-+    window.renderMathInElement(document.body, {
-+      delimiters: [
-+        { left: '$$', right: '$$', display: true },
-+        { left: '\\[', right: '\\]', display: true },
-+        { left: '\\(', right: '\\)', display: false }
-+      ],
-+      throwOnError: false
-+    });
-+  }
-+  renderLatexFragments(document.body);
-+}
-+
- function updateBuildIndicator() {
-   const indicator = /** @type {HTMLElement|null} */ (document.getElementById('build-info'));
-   if (!indicator) return;
- 
-   const lastModified = new Date(document.lastModified);
-   if (Number.isNaN(lastModified.getTime())) {
-     indicator.textContent = `Updated ${document.lastModified}`;
-     return;
-   }
- 
-   const formatter = new Intl.DateTimeFormat('en-US', {
-     year: 'numeric',
-     month: 'short',
-     day: '2-digit',
-     hour: '2-digit',
-     minute: '2-digit',
-     second: '2-digit',
-     hour12: false,
-     timeZone: 'UTC'
-   });
- 
-   indicator.textContent = `Updated ${formatter.format(lastModified)} UTC`;
- }
- 
- function setupTabs() {
-@@ -759,50 +776,52 @@ function computeAll() {
-         r.hyd_drum_torque_maxP_Nm = 0;
-         r.hyd_avail_tension_kgf = 0;
-         r.hyd_P_required_psi = 0;
-         r.hyd_speed_power_mpm = 0;
-         r.hyd_speed_flow_mpm = 0;
-         r.hyd_speed_available_mpm = 0;
-         r.hyd_hp_used_at_available = 0;
-         r.hyd_elec_input_hp_used = 0;
-       }
-     }
- 
-     // ---- Drum visualization ----
-     lastDrumState = { rows, summary, cfg, meta };
-     renderDrumVisualization(rows, summary, cfg, meta);
- 
-     // ---- Aggregate into per-layer tables ----
-     lastElLayer = electricEnabled ? rowsToElectricLayer(rows, payload_kg, cable_w_kgpm, gr1, gr2, motors) : [];
-     lastHyLayer = hydraulicEnabled ? rowsToHydraulicLayer(rows) : [];
-     lastElWraps = electricEnabled ? projectElectricWraps(rows) : [];
-     lastHyWraps = hydraulicEnabled ? projectHydraulicWraps(rows) : [];
- 
-     // ---- Render tables ----
-     renderElectricTables(lastElLayer, lastElWraps, q('tbody_el_layer'), q('tbody_el_wraps'));
-     renderHydraulicTables(lastHyLayer, lastHyWraps, q('tbody_hy_layer'), q('tbody_hy_wraps'));
- 
-+    renderLatexFragments(document.body);
-+
-     updateCsvButtonStates();
- 
-     // ---- Update status ----
-     if (status) status.textContent = 'results updated';
- 
-     // ---- Draw plots ----
-     redrawPlots();
-   } catch (e) {
-     console.error(e);
-     if (errBox) errBox.textContent = 'ERROR: ' + (e && e.message ? e.message : e);
-     if (status) status.textContent = 'error';
-     clearMinimumSystemHp();
-     lastElLayer = lastElWraps = lastHyLayer = lastHyWraps = [];
-     lastDrumState = null;
-     clearDrumVisualization();
-     clearPlots();
-     updateCsvButtonStates();
-   }
- }
- 
- // ---- Plot redraw helper (uses decoupled plotting modules) ----
- function redrawPlots() {
-   // Wave contours (optional - skip if controls/SVGs absent)
-   const waveScenarioEl = /** @type {HTMLSelectElement|null} */ (document.getElementById('wave_scenario'));
-   const waveTminEl = /** @type {HTMLInputElement|null} */ (document.getElementById('wave_tmin'));
+         <p>
+           Each equation expresses the physical dependency as a pure ratio, enabling unit-consistent implementation regardless of the measurement system. All efficiencies, ratios, and reductions are dimensionless. Power-, flow-, and tension-limited speeds follow directly from these relationships.
+         </p>
+       </section>
+       <section class="card info-card" id="component-catalog-card" aria-labelledby="component-catalog-instructions">
+         <h2 class="section-title" id="component-catalog-instructions">How to update component presets</h2>
+         <p>
+           The component dropdowns now read from dedicated catalogs in
+           <code>src/js/component-selectors.mjs</code>. Add or edit part numbers directly in the matching
+           array to make them available across the app.
+         </p>
+         <ol>
+           <li>
+             Open <code>src/js/component-selectors.mjs</code> and locate the array that matches the component
+             type you want to change (for example <code>GEARBOX_OPTIONS</code> or
+             <code>ELECTRIC_MOTOR_OPTIONS</code>).
+           </li>
+           <li>
+             Add a new object with the part number, description, and any field values that should autofill
+             when the part is selected. Follow the existing entries as a template.
+           </li>
