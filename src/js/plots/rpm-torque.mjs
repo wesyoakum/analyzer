@@ -13,7 +13,7 @@ function getAccentColor() {
 }
 
 /**
- * Draw available hydraulic RPM (per motor) as a function of torque demand.
+ * Draw available hydraulic drum RPM as a function of torque demand.
  * The available RPM is the lower of the flow-limited and power-limited RPM.
  * @param {SVGSVGElement} svg
  * @param {Object} opts
@@ -28,9 +28,9 @@ export function drawHydraulicRpmTorque(svg, { wraps = [] } = {}) {
       wrap: w.wrap_no,
       layer: w.layer_no,
       torque: toNumber(w.torque_Nm),
-      rpmAvail: toNumber(w.hyd_rpm_available_per_motor),
-      rpmFlow: toNumber(w.hyd_rpm_flow_per_motor),
-      rpmPower: toNumber(w.hyd_rpm_power_per_motor)
+      rpmAvail: toNumber(w.hyd_drum_rpm_available),
+      rpmFlow: toNumber(w.hyd_drum_rpm_flow),
+      rpmPower: toNumber(w.hyd_drum_rpm_power)
     }))
     .filter(d => Number.isFinite(d.torque) && d.torque > 0 && Number.isFinite(d.rpmAvail) && d.rpmAvail >= 0);
 
@@ -110,7 +110,7 @@ export function drawHydraulicRpmTorque(svg, { wraps = [] } = {}) {
     fill: '#333',
     transform: `rotate(-90 16 ${MT + innerH / 2})`
   });
-  ylabel.textContent = 'Motor RPM (per motor)';
+  ylabel.textContent = 'Drum RPM';
   svg.appendChild(ylabel);
 
   const pathFor = (field, { dropAtMaxTorque = false } = {}) => {

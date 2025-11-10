@@ -85,9 +85,9 @@ export function projectHydraulicWraps(rows) {
     hyd_elec_input_hp_used: r.hyd_elec_input_hp_used,
     hyd_drum_torque_maxP_Nm: r.hyd_drum_torque_maxP_Nm,
     hyd_avail_tension_kgf: r.hyd_avail_tension_kgf,
-    hyd_rpm_flow_per_motor: r.hyd_rpm_flow_per_motor,
-    hyd_rpm_power_per_motor: r.hyd_rpm_power_per_motor,
-    hyd_rpm_available_per_motor: r.hyd_rpm_available_per_motor,
+    hyd_drum_rpm_flow: r.hyd_drum_rpm_flow,
+    hyd_drum_rpm_power: r.hyd_drum_rpm_power,
+    hyd_drum_rpm_available: r.hyd_drum_rpm_available,
     torque_Nm: r.torque_Nm
   }));
 }

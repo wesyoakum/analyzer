@@ -1,8 +1,46 @@
 diff --git a/src/js/plots/rpm-torque.mjs b/src/js/plots/rpm-torque.mjs
-index ca4b315261c49d31c1d7e8af319fe33c785f4100..f2fbd9922c455df774801551d4d8003bf8495521 100644
+index f2fbd9922c455df774801551d4d8003bf8495521..86fa72cce528914886cc9755cef480d8da580a25 100644
 --- a/src/js/plots/rpm-torque.mjs
 +++ b/src/js/plots/rpm-torque.mjs
-@@ -35,51 +35,54 @@ export function drawHydraulicRpmTorque(svg, { wraps = [] } = {}) {
+@@ -1,58 +1,58 @@
+ // ===== plots/rpm-torque.mjs — Hydraulic available RPM vs torque =====
+ import { niceTicks, svgEl, svgPathFromPoints } from '../utils.mjs';
+ 
+ const FLOW_COLOR = '#eed500';
+ const POWER_COLOR = '#9249c6';
+ 
+ function getAccentColor() {
+   if (typeof window !== 'undefined' && typeof document !== 'undefined' && window.getComputedStyle) {
+     const val = window.getComputedStyle(document.documentElement).getPropertyValue('--accent');
+     if (val) return val.trim();
+   }
+   return '#2c56a3';
+ }
+ 
+ /**
+- * Draw available hydraulic RPM (per motor) as a function of torque demand.
++ * Draw available hydraulic drum RPM as a function of torque demand.
+  * The available RPM is the lower of the flow-limited and power-limited RPM.
+  * @param {SVGSVGElement} svg
+  * @param {Object} opts
+  * @param {Array<Object>} [opts.wraps]
+  */
+ export function drawHydraulicRpmTorque(svg, { wraps = [] } = {}) {
+   if (!svg) return;
+   while (svg.firstChild) svg.removeChild(svg.firstChild);
+ 
+   const data = (Array.isArray(wraps) ? wraps : [])
+     .map(w => ({
+       wrap: w.wrap_no,
+       layer: w.layer_no,
+       torque: toNumber(w.torque_Nm),
+-      rpmAvail: toNumber(w.hyd_rpm_available_per_motor),
+-      rpmFlow: toNumber(w.hyd_rpm_flow_per_motor),
+-      rpmPower: toNumber(w.hyd_rpm_power_per_motor)
++      rpmAvail: toNumber(w.hyd_drum_rpm_available),
++      rpmFlow: toNumber(w.hyd_drum_rpm_flow),
++      rpmPower: toNumber(w.hyd_drum_rpm_power)
+     }))
      .filter(d => Number.isFinite(d.torque) && d.torque > 0 && Number.isFinite(d.rpmAvail) && d.rpmAvail >= 0);
  
    if (!data.length) {
@@ -27,34 +65,56 @@ index ca4b315261c49d31c1d7e8af319fe33c785f4100..f2fbd9922c455df774801551d4d8003b
    const innerW = W - ML - MR;
    const innerH = H - MT - MB;
  
-   const torqueMin = 0;
--  const torqueMax = Math.max(torqueMin + 1, Math.max(...data.map(d => d.torque)) * 1.05);
-+  const torqueMaxData = Math.max(...data.map(d => d.torque));
-+  const torqueExtent = Math.max(torqueMin + 1, torqueMaxData);
-+  const { step: torqueStep } = niceTicks(torqueMin, torqueExtent, 6);
-+  const torqueMax = torqueMin + Math.max(1, Math.ceil((torqueExtent - torqueMin) / Math.max(torqueStep, 1e-9))) * Math.max(torqueStep, 1e-9);
-   const rpmMaxCandidate = Math.max(
-     Math.max(...data.map(d => d.rpmAvail)),
-     Math.max(...data.map(d => Number.isFinite(d.rpmFlow) ? d.rpmFlow : 0)),
-     Math.max(...data.map(d => Number.isFinite(d.rpmPower) ? d.rpmPower : 0))
-   );
-   const rpmMin = 0;
-   const rpmMax = Math.max(rpmMin + 1, rpmMaxCandidate * 1.1);
- 
-   const sx = torque => ML + (Math.min(Math.max(torque, torqueMin), torqueMax) - torqueMin) / (torqueMax - torqueMin) * innerW;
-   const sy = rpm => MT + (1 - (Math.min(Math.max(rpm, rpmMin), rpmMax) - rpmMin) / (rpmMax - rpmMin)) * innerH;
- 
-   svg.appendChild(svgEl('rect', { x: ML, y: MT, width: innerW, height: innerH, fill: '#fff', stroke: '#ccc' }));
- 
-   const torqueTicks = niceTicks(torqueMin, torqueMax, 6).ticks;
-   torqueTicks.forEach(t => {
-     if (t < torqueMin - 1e-9 || t > torqueMax + 1e-9) return;
-     const X = sx(t);
-     svg.appendChild(svgEl('line', { x1: X, y1: MT, x2: X, y2: H - MB, stroke: '#eee' }));
-     const label = svgEl('text', { x: X, y: H - 30, 'text-anchor': 'middle', 'font-size': '12', fill: '#444' });
-     label.textContent = formatNumber(t, 0);
+@@ -88,51 +88,51 @@ export function drawHydraulicRpmTorque(svg, { wraps = [] } = {}) {
+   rpmTicks.forEach(r => {
+     if (r < rpmMin - 1e-9 || r > rpmMax + 1e-9) return;
+     const Y = sy(r);
+     svg.appendChild(svgEl('line', { x1: ML, y1: Y, x2: W - MR, y2: Y, stroke: '#eee' }));
+     const label = svgEl('text', { x: ML - 8, y: Y + 4, 'text-anchor': 'end', 'font-size': '12', fill: '#444' });
+     label.textContent = formatNumber(r, 0);
      svg.appendChild(label);
    });
  
-   const rpmTicks = niceTicks(rpmMin, rpmMax, 6).ticks;
-   rpmTicks.forEach(r => {
+   svg.appendChild(svgEl('text', {
+     x: ML + innerW / 2,
+     y: H - 6,
+     'text-anchor': 'middle',
+     'font-size': '13',
+     fill: '#333'
+   })).textContent = 'Torque at drum (N·m)';
+ 
+   const ylabel = svgEl('text', {
+     x: 16,
+     y: MT + innerH / 2,
+     'text-anchor': 'middle',
+     'font-size': '13',
+     fill: '#333',
+     transform: `rotate(-90 16 ${MT + innerH / 2})`
+   });
+-  ylabel.textContent = 'Motor RPM (per motor)';
++  ylabel.textContent = 'Drum RPM';
+   svg.appendChild(ylabel);
+ 
+   const pathFor = (field, { dropAtMaxTorque = false } = {}) => {
+     const points = data
+       .map(d => [d.torque, d[field]])
+       .filter(([torque, rpm]) => Number.isFinite(torque) && Number.isFinite(rpm));
+ 
+     if (!points.length) return '';
+ 
+     if (dropAtMaxTorque) {
+       const lastPoint = points[points.length - 1];
+       if (lastPoint && lastPoint[1] > rpmMin + 1e-9) {
+         points.push([lastPoint[0], rpmMin]);
+       }
+     }
+ 
+     return svgPathFromPoints(points.map(([torque, rpm]) => [sx(torque), sy(rpm)]));
+   };
+ 
+   const flowPath = pathFor('rpmFlow');
+   if (flowPath) {
+     svg.appendChild(svgEl('path', {
+       d: flowPath,
+       fill: 'none',
+       stroke: FLOW_COLOR,

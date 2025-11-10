@@ -684,7 +684,12 @@ function computeAll() {
       r.tension_kgf = required_tension;
       const tension_N = required_tension * G;
       const radius_m = (r.layer_dia_in * M_PER_IN) / 2;
-      r.torque_Nm = +(tension_N * radius_m).toFixed(1);
+      const drum_T = tension_N * radius_m;
+      const motors_safe = Math.max(motors, 1);
+      const gear_product_safe = Math.max(gear_product, 1e-9);
+      const torque_per_hmotor_required = drum_T / (gear_product_safe * motors_safe);
+      const drum_torque_required = torque_per_hmotor_required * gear_product_safe * motors_safe;
+      r.torque_Nm = +drum_torque_required.toFixed(1);
 
       // ----- ELECTRIC per wrap -----
       if (electricEnabled) {
@@ -726,16 +731,8 @@ function computeAll() {
         const D_m = r.layer_dia_in * M_PER_IN;
         const safe_drum_circumference = Math.max(Math.PI * Math.max(D_m, 1e-9), 1e-9);
 
-        const toMotorRpm = (line_speed_mpm) => {
-          if (!Number.isFinite(line_speed_mpm)) return NaN;
-          if (line_speed_mpm <= 0) return 0;
-          const drum_rpm = line_speed_mpm / safe_drum_circumference;
-          return drum_rpm * gear_product;
-        };
-
         // Pressure required for current torque (per motor)
-        const drum_T = tension_N * radius_m;
-        const torque_per_hmotor = drum_T / (gear_product * Math.max(motors, 1));
+        const torque_per_hmotor = torque_per_hmotor_required;
         let P_req_psi = psi_from_torque_and_disp_Nm_cc(torque_per_hmotor, h_hmot_cc);
         if (!Number.isFinite(P_req_psi) || P_req_psi < 0) P_req_psi = 0;
 
@@ -746,6 +743,7 @@ function computeAll() {
         );
         const speed_flow_mpm = line_speed_mpm_from_motor_rpm(rpm_flow_per_motor, gr1, gr2, r.layer_dia_in);
         const rpm_flow_clean = Number.isFinite(rpm_flow_per_motor) && rpm_flow_per_motor > 0 ? rpm_flow_per_motor : 0;
+        const rpm_flow_drum = rpm_flow_clean / gear_product_safe;
 
         // Power-limited speed (cap pressure at max if P_req exceeds max)
         const P_power_psi = (P_req_psi > 0) ? Math.min(P_req_psi, h_max_psi) : 0;
@@ -762,20 +760,17 @@ function computeAll() {
           }
         }
         if (!Number.isFinite(speed_power_mpm) || speed_power_mpm < 0) speed_power_mpm = 0;
-        const rpm_power_per_motor = toMotorRpm(speed_power_mpm);
+        const rpm_power_drum = Number.isFinite(speed_power_mpm) && speed_power_mpm > 0
+          ? speed_power_mpm / safe_drum_circumference
+          : Number.isFinite(speed_power_mpm) && speed_power_mpm === 0
+            ? 0
+            : NaN;
 
         let speed_avail_mpm = Math.min(speed_power_mpm, speed_flow_mpm);
         if (!Number.isFinite(speed_avail_mpm) || speed_avail_mpm < 0) speed_avail_mpm = 0;
-        const rpm_avail_candidate = toMotorRpm(speed_avail_mpm);
-        const rpm_available_per_motor = Number.isFinite(rpm_avail_candidate)
-          ? Math.min(rpm_flow_clean, rpm_avail_candidate)
-          : rpm_flow_clean;
-        const rpm_power_output = Number.isFinite(rpm_power_per_motor)
-          ? +Math.max(0, rpm_power_per_motor).toFixed(1)
-          : null;
-        const rpm_available_output = Number.isFinite(rpm_available_per_motor)
-          ? +Math.max(0, rpm_available_per_motor).toFixed(1)
-          : 0;
+        const rpm_available_drum = Number.isFinite(speed_avail_mpm)
+          ? speed_avail_mpm / safe_drum_circumference
+          : NaN;
 
         let hp_used_at_available = 0;
         if (speed_avail_mpm > 0 && P_power_psi > 0) {
@@ -795,9 +790,15 @@ function computeAll() {
         r.hyd_speed_available_mpm = +speed_avail_mpm.toFixed(2);
         r.hyd_hp_used_at_available = +hp_used_at_available.toFixed(2);
         r.hyd_elec_input_hp_used = +((h_emotor_eff > 0 ? r.hyd_hp_used_at_available / h_emotor_eff : 0)).toFixed(2);
-        r.hyd_rpm_flow_per_motor = +rpm_flow_clean.toFixed(1);
-        r.hyd_rpm_power_per_motor = rpm_power_output;
-        r.hyd_rpm_available_per_motor = rpm_available_output;
+        r.hyd_drum_rpm_flow = Number.isFinite(rpm_flow_drum)
+          ? +Math.max(0, rpm_flow_drum).toFixed(1)
+          : 0;
+        r.hyd_drum_rpm_power = Number.isFinite(rpm_power_drum)
+          ? +Math.max(0, rpm_power_drum).toFixed(1)
+          : null;
+        r.hyd_drum_rpm_available = Number.isFinite(rpm_available_drum)
+          ? +Math.max(0, rpm_available_drum).toFixed(1)
+          : 0;
       } else {
         r.hyd_drum_torque_maxP_Nm = 0;
         r.hyd_avail_tension_kgf = 0;
@@ -807,9 +808,9 @@ function computeAll() {
         r.hyd_speed_available_mpm = 0;
         r.hyd_hp_used_at_available = 0;
         r.hyd_elec_input_hp_used = 0;
-        r.hyd_rpm_flow_per_motor = 0;
-        r.hyd_rpm_power_per_motor = 0;
-        r.hyd_rpm_available_per_motor = 0;
+        r.hyd_drum_rpm_flow = 0;
+        r.hyd_drum_rpm_power = 0;
+        r.hyd_drum_rpm_available = 0;
       }
     }
 
