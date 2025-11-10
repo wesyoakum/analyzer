@@ -47,6 +47,7 @@
  * @property {number|string|boolean} [h_emotor_hp]
  * @property {number|string|boolean} [h_emotor_rpm]
  * @property {Record<string, unknown>} [metadata]
+ * @property {Record<string, unknown>} [data]
  */
 
 /**
@@ -892,6 +893,104 @@ const COMPONENT_STORAGE_PREFIX = 'analyzer.components.';
 const memoryCustomOptions = new Map();
 let cachedComponentStorage;
 
+function isPlainObject(value) {
+  return typeof value === 'object' && value !== null && !Array.isArray(value);
+}
+
+function cloneOption(option) {
+  const clone = { ...option };
+  if (isPlainObject(option.metadata)) {
+    clone.metadata = { ...option.metadata };
+  }
+  if (isPlainObject(option.data)) {
+    clone.data = { ...option.data };
+  }
+  return clone;
+}
+
+function rememberCustomOptions(type, options) {
+  if (!type) return;
+  const list = Array.isArray(options) ? options.map(cloneOption) : [];
+  memoryCustomOptions.set(type, list);
+}
+
+function getRememberedCustomOptions(type) {
+  if (!type) return [];
+  const existing = memoryCustomOptions.get(type);
+  return existing ? existing.map(cloneOption) : [];
+}
+
+function persistCustomOptions(type) {
+  if (!type) return;
+  const storage = getComponentStorage();
+  if (!storage) return;
+  try {
+    const snapshot = memoryCustomOptions.get(type) ?? [];
+    storage.setItem(`${COMPONENT_STORAGE_PREFIX}${type}`, JSON.stringify(snapshot));
+  } catch (err) {
+    console.warn(`Unable to persist custom ${type} options:`, err);
+  }
+}
+
+function refreshSelectsForType(type) {
+  if (!type) return;
+  const snapshot = getRememberedCustomOptions(type);
+  SELECT_CONFIGS.forEach(config => {
+    if (config.type !== type) return;
+    config.customOptions = snapshot.map(cloneOption);
+    const selectEl = /** @type {HTMLSelectElement|null} */ (document.getElementById(config.selectId));
+    if (!selectEl) return;
+    const prior = selectEl.value;
+    populateSelectOptions(selectEl, config, { selectedValue: prior });
+  });
+}
+
+function replaceCustomOptions(type, options, { persist = true } = {}) {
+  if (!type) return;
+  rememberCustomOptions(type, options);
+  refreshSelectsForType(type);
+  if (persist) {
+    persistCustomOptions(type);
+  }
+}
+
+function optionIdentity(option) {
+  if (!option) return null;
+  if (typeof option.id === 'string' && option.id.length) {
+    return `id:${option.id}`;
+  }
+  if (typeof option.pn === 'string' && option.pn.length) {
+    return `pn:${option.pn.toLowerCase()}`;
+  }
+  return null;
+}
+
+function mergeCustomOptionLists(existing, incoming) {
+  const result = Array.isArray(existing) ? existing.map(cloneOption) : [];
+  if (!Array.isArray(incoming)) {
+    return result;
+  }
+  incoming.forEach(option => {
+    const key = optionIdentity(option);
+    if (!key) return;
+    const clone = cloneOption(option);
+    const index = result.findIndex(item => optionIdentity(item) === key);
+    if (index >= 0) {
+      result[index] = clone;
+    } else {
+      result.push(clone);
+    }
+  });
+  return result;
+}
+
+function upsertCustomOption(type, option, { persist = true } = {}) {
+  if (!type) return;
+  const existing = memoryCustomOptions.get(type) ?? [];
+  const merged = mergeCustomOptionLists(existing, [option]);
+  replaceCustomOptions(type, merged, { persist });
+}
+
 function normalizePresetDataForOption(data, fieldMap) {
   if (!data || typeof data !== 'object' || Array.isArray(data)) {
     return {};
@@ -976,7 +1075,11 @@ function normalizeStoredOption(raw, expectedType) {
   }
 
   if (metadata) {
-    option.metadata = metadata;
+    option.metadata = { ...metadata };
+  }
+
+  if (raw.data && typeof raw.data === 'object' && !Array.isArray(raw.data)) {
+    option.data = { ...raw.data };
   }
 
   return option;
@@ -1019,25 +1122,10 @@ function loadCustomOptions(type) {
       console.warn(`Unable to read custom ${type} options:`, err);
     }
   }
-  const fallback = memoryCustomOptions.get(type);
-  return fallback
-    ? fallback
-        .map(opt => normalizeStoredOption(opt, type))
-        .filter((opt) => opt && typeof opt.pn === 'string')
-        .map(opt => ({ ...opt, name: opt.name ?? opt.pn }))
-    : [];
-}
-
-function saveCustomOptions(type, options) {
-  const clean = options.map(opt => ({ ...opt }));
-  memoryCustomOptions.set(type, clean);
-  const storage = getComponentStorage();
-  if (!storage) return;
-  try {
-    storage.setItem(`${COMPONENT_STORAGE_PREFIX}${type}`, JSON.stringify(clean));
-  } catch (err) {
-    console.warn(`Unable to persist custom ${type} options:`, err);
-  }
+  return getRememberedCustomOptions(type)
+    .map(opt => normalizeStoredOption(opt, type))
+    .filter((opt) => opt && typeof opt.pn === 'string')
+    .map(opt => ({ ...opt, name: opt.name ?? opt.pn }));
 }
 
 function allOptions(config) {
@@ -1203,22 +1291,40 @@ async function handleCreateNew(config, selectEl) {
         ? preset.data
         : values;
 
+    const serverMetadata =
+      preset.metadata && typeof preset.metadata === 'object' && !Array.isArray(preset.metadata)
+        ? preset.metadata
+        : undefined;
+    const mergedMetadata = {
+      ...metadata,
+      ...(serverMetadata ?? {})
+    };
+    if (!mergedMetadata.pn) {
+      mergedMetadata.pn = pn;
+    }
+    if (config.type && !mergedMetadata.type) {
+      mergedMetadata.type = config.type;
+    }
+    if (config.label && !mergedMetadata.label) {
+      mergedMetadata.label = config.label;
+    }
+
+    const normalizedOptionData = normalizePresetDataForOption(presetData, mergedMetadata?.fieldMap);
+
     /** @type {ComponentOption} */
     const option = {
       pn,
       name: preset.name ?? pn,
       ...(preset.description ? { description: preset.description } : {}),
-      ...presetData,
+      ...normalizedOptionData,
       id: preset.id,
-      metadata
+      metadata: { ...mergedMetadata },
+      data: { ...presetData }
     };
 
-    if (!Array.isArray(config.customOptions)) {
-      config.customOptions = [];
+    if (config.type) {
+      upsertCustomOption(config.type, option);
     }
-    config.customOptions.push(option);
-    saveCustomOptions(config.type, config.customOptions);
-    populateSelectOptions(selectEl, config, { selectedValue: pn });
     return pn;
   } catch (err) {
     const message = err instanceof Error ? err.message : String(err);
@@ -1321,10 +1427,21 @@ function applySelection(config, pn, { skipEvents = false } = {}) {
 }
 
 export function setupComponentSelectors() {
+  const initializedTypes = new Set();
+  SELECT_CONFIGS.forEach(config => {
+    const type = config.type;
+    if (!type || initializedTypes.has(type)) return;
+    const loaded = loadCustomOptions(type);
+    rememberCustomOptions(type, loaded);
+    initializedTypes.add(type);
+  });
+
   SELECT_CONFIGS.forEach(config => {
     const selectEl = /** @type {HTMLSelectElement|null} */ (document.getElementById(config.selectId));
     if (!selectEl) return;
-    config.customOptions = loadCustomOptions(config.type);
+
+    const customOptions = getRememberedCustomOptions(config.type);
+    config.customOptions = customOptions;
 
     const initialValue = selectEl.value;
     const { initialSkipEvents = true } = config;
@@ -1372,5 +1489,87 @@ export function setupComponentSelectors() {
     if (selectEl.value) {
       ensureOptionApplied(selectEl.value, { skipEvents: initialSkipEvents });
     }
+  });
+
+  void fetchAndApplyServerPresets();
+}
+
+async function fetchAndApplyServerPresets() {
+  if (typeof window === 'undefined' || typeof window.fetch !== 'function') {
+    return;
+  }
+
+  let response;
+  try {
+    response = await fetch('/api/presets');
+  } catch (err) {
+    console.warn('Unable to fetch presets from server:', err);
+    return;
+  }
+
+  if (!response.ok) {
+    console.warn('Failed to load presets from server.');
+    return;
+  }
+
+  let body;
+  try {
+    body = await response.json();
+  } catch (err) {
+    console.warn('Unable to parse presets response from server:', err);
+    return;
+  }
+
+  const presets = Array.isArray(body?.presets) ? body.presets : [];
+  if (!presets.length) {
+    return;
+  }
+
+  /** @type {Map<string, ComponentOption[]>} */
+  const grouped = new Map();
+
+  presets.forEach(preset => {
+    if (!preset || typeof preset !== 'object' || Array.isArray(preset)) {
+      return;
+    }
+    const metadata =
+      preset.metadata && typeof preset.metadata === 'object' && !Array.isArray(preset.metadata)
+        ? preset.metadata
+        : undefined;
+    const type = metadata && typeof metadata.type === 'string' ? metadata.type : undefined;
+    if (!type) {
+      return;
+    }
+    const option = normalizeStoredOption(preset, type);
+    if (!option) {
+      return;
+    }
+    if (metadata) {
+      option.metadata = { ...metadata, ...(option.metadata ?? {}) };
+    }
+    if (!option.metadata) {
+      option.metadata = {};
+    }
+    if (typeof option.metadata.pn !== 'string') {
+      option.metadata.pn = option.pn;
+    }
+    if (type && option.metadata.type !== type) {
+      option.metadata.type = type;
+    }
+    if (preset.data && typeof preset.data === 'object' && !Array.isArray(preset.data)) {
+      option.data = { ...preset.data };
+    }
+    const list = grouped.get(type) ?? [];
+    list.push(option);
+    grouped.set(type, list);
+  });
+
+  grouped.forEach((options, type) => {
+    if (!options.length) {
+      return;
+    }
+    const existing = getRememberedCustomOptions(type);
+    const merged = mergeCustomOptionLists(existing, options);
+    replaceCustomOptions(type, merged, { persist: true });
   });
 }
