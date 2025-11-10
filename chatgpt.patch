@@ -1,38 +1,247 @@
 diff --git a/src/js/component-selectors.mjs b/src/js/component-selectors.mjs
-index 26fed08f9a55ebef7534ee7d2bc6cccf87e937c7..2c204b8dd28af4bbe7f6e8c1b92d71c3f7b090dd 100644
+index 2c204b8dd28af4bbe7f6e8c1b92d71c3f7b090dd..8eccf31467284ad8f4cfcb2ab9766c3f9f72307f 100644
 --- a/src/js/component-selectors.mjs
 +++ b/src/js/component-selectors.mjs
-@@ -994,89 +994,157 @@ function populateSelectOptions(selectEl, config, { selectedValue } = {}) {
-   manualOpt.value = '';
-   manualOpt.textContent = 'Custom (manual input)';
-   selectEl.appendChild(manualOpt);
+@@ -24,50 +24,51 @@
+  * @property {number|string|boolean} [hyd_motor_max_rpm]
+   * @property {number|string|boolean} [motor_eff]
+   * @property {number|string|boolean} [c_mm]
+   * @property {number|string|boolean} [depth_m]
+   * @property {number|string|boolean} [dead_m]
+  * @property {number|string|boolean} [c_w_kgpm]
+  * @property {number|string|boolean} [core_in]
+  * @property {number|string|boolean} [flange_dia_in]
+  * @property {number|string|boolean} [ftf_in]
+  * @property {number|string|boolean} [lebus_in]
+  * @property {number|string|boolean} [pack]
+  * @property {number|string|boolean} [wraps_override]
+  * @property {number|string|boolean} [motors]
+  * @property {number|string|boolean} [gearbox_select]
+  * @property {number|string|boolean} [electric_motor_select]
+  * @property {number|string|boolean} [hydraulic_motor_select]
+  * @property {number|string|boolean} [hydraulic_pump_select]
+  * @property {number|string|boolean} [payload_select]
+  * @property {number|string|boolean} [cable_select]
+  * @property {number|string|boolean} [drum_select]
+  * @property {number|string|boolean} [h_pump_strings]
+  * @property {string} [hpu_select]
+  * @property {string} [hpu_motor_select]
+  * @property {number|string|boolean} [h_emotor_hp]
+  * @property {number|string|boolean} [h_emotor_rpm]
++ * @property {Record<string, unknown>} [metadata]
+  */
  
-   allOptions(config).forEach(option => {
-     const opt = document.createElement('option');
-     opt.value = option.pn;
-     opt.textContent = describeOption(config, option);
-     selectEl.appendChild(opt);
-   });
+ /**
+  * @typedef {Object} SelectConfig
+  * @property {string} selectId
+  * @property {ComponentOption[]} options
+  * @property {string} type
+  * @property {string} label
+  * @property {Record<string, keyof ComponentOption>} fieldMap
+  * @property {boolean} [initialSkipEvents]
+  * @property {ComponentOption[]} [customOptions]
+  */
  
-   const createOpt = document.createElement('option');
-   createOpt.value = CREATE_NEW_VALUE;
-   createOpt.textContent = 'Create New';
-   selectEl.appendChild(createOpt);
+ /** @type {ComponentOption[]} */
+ export const CABLE_OPTIONS = [
+   {
+     pn: '.681 Umbilical',
+     description: '0.681 in diameter umbilical',
+     c_mm: 17.3
+   },
+   {
+     pn: '.322 Umbilical',
+     description: '0.322 in diameter umbilical',
+     c_mm: 8.18
+   },
+@@ -869,88 +870,184 @@ const SELECT_CONFIGS = [
+   },
+   {
+     selectId: 'hydraulic_motor_select',
+     options: HYDRAULIC_MOTOR_OPTIONS,
+     type: 'hydraulic-motor',
+     label: 'Hydraulic Motor',
+     fieldMap: FIELD_MAPS.hydraulicMotor
+   },
+   {
+     selectId: 'system_select',
+     options: SYSTEM_OPTIONS,
+     type: 'system',
+     label: 'System',
+     fieldMap: FIELD_MAPS.system,
+     initialSkipEvents: false
+   }
+ ];
  
-   if (prior && prior !== CREATE_NEW_VALUE && findOption(config, prior)) {
-     selectEl.value = prior;
-   } else if (prior === '') {
-     selectEl.value = '';
-   } else {
-     selectEl.value = '';
+ const watchedInputs = new Set();
+ const CREATE_NEW_VALUE = '__component_create_new__';
+ const COMPONENT_STORAGE_PREFIX = 'analyzer.components.';
+ /** @type {Map<string, ComponentOption[]>} */
+ const memoryCustomOptions = new Map();
+ let cachedComponentStorage;
+ 
++function normalizePresetDataForOption(data, fieldMap) {
++  if (!data || typeof data !== 'object' || Array.isArray(data)) {
++    return {};
++  }
++
++  const normalized = {};
++  const entries = Object.entries(data);
++  const fieldMapEntries =
++    fieldMap && typeof fieldMap === 'object' && !Array.isArray(fieldMap)
++      ? Object.entries(fieldMap)
++      : [];
++  const inputIds = new Set(fieldMapEntries.map(([inputId]) => inputId));
++
++  entries.forEach(([key, value]) => {
++    if (!inputIds.has(key)) {
++      normalized[key] = value;
++    }
++  });
++
++  fieldMapEntries.forEach(([inputId, optionKey]) => {
++    if (typeof optionKey !== 'string' || optionKey.length === 0) return;
++    if (Object.prototype.hasOwnProperty.call(data, optionKey)) {
++      normalized[optionKey] = data[optionKey];
++      return;
++    }
++    if (Object.prototype.hasOwnProperty.call(data, inputId)) {
++      normalized[optionKey] = data[inputId];
++    }
++  });
++
++  return normalized;
++}
++
++function extractOptionData(raw) {
++  const result = {};
++  if (!raw || typeof raw !== 'object') return result;
++  Object.entries(raw).forEach(([key, value]) => {
++    if (key === 'pn' || key === 'name' || key === 'description' || key === 'id' || key === 'metadata' || key === 'data') {
++      return;
++    }
++    result[key] = value;
++  });
++  return result;
++}
++
++function normalizeStoredOption(raw, expectedType) {
++  if (!raw || typeof raw !== 'object') return null;
++
++  const metadata =
++    raw.metadata && typeof raw.metadata === 'object' && !Array.isArray(raw.metadata) ? raw.metadata : null;
++  const type = metadata && typeof metadata.type === 'string' ? metadata.type : undefined;
++  if (type && expectedType && type !== expectedType) {
++    return null;
++  }
++
++  const pnFromMetadata = metadata && typeof metadata.pn === 'string' ? metadata.pn : undefined;
++  const pnFromRaw = typeof raw.pn === 'string' ? raw.pn : undefined;
++  const optionPn = pnFromRaw ?? pnFromMetadata;
++  const optionName =
++    typeof raw.name === 'string' && raw.name.trim().length ? raw.name : optionPn ?? (pnFromMetadata ?? undefined);
++  const description = typeof raw.description === 'string' && raw.description.length ? raw.description : undefined;
++  const id = typeof raw.id === 'string' ? raw.id : undefined;
++
++  const data = raw.data && typeof raw.data === 'object' && !Array.isArray(raw.data)
++    ? normalizePresetDataForOption(raw.data, metadata?.fieldMap)
++    : extractOptionData(raw);
++
++  const pn = optionPn ?? optionName;
++  if (!pn || typeof pn !== 'string') {
++    return null;
++  }
++
++  const option = {
++    pn,
++    name: optionName ?? pn,
++    ...(description ? { description } : {}),
++    ...data
++  };
++
++  if (id) {
++    option.id = id;
++  }
++
++  if (metadata) {
++    option.metadata = metadata;
++  }
++
++  return option;
++}
++
+ function getComponentStorage() {
+   if (cachedComponentStorage !== undefined) return cachedComponentStorage;
+   if (typeof window === 'undefined' || !window.localStorage) {
+     cachedComponentStorage = null;
+     return cachedComponentStorage;
+   }
+   try {
+     const { localStorage } = window;
+     const probe = `${COMPONENT_STORAGE_PREFIX}__probe__`;
+     localStorage.setItem(probe, '1');
+     localStorage.removeItem(probe);
+     cachedComponentStorage = localStorage;
+   } catch (err) {
+     console.warn('Component preset storage disabled:', err);
+     cachedComponentStorage = null;
+   }
+   return cachedComponentStorage;
+ }
+ 
+ function loadCustomOptions(type) {
+   const storage = getComponentStorage();
+   if (storage) {
+     try {
+       const raw = storage.getItem(`${COMPONENT_STORAGE_PREFIX}${type}`);
+       if (raw) {
+         const parsed = JSON.parse(raw);
+         if (Array.isArray(parsed)) {
+           return parsed
+-            .filter(opt => opt && typeof opt.pn === 'string')
++            .map(opt => normalizeStoredOption(opt, type))
++            .filter((opt) => opt && typeof opt.pn === 'string')
+             .map(opt => ({ ...opt, name: opt.name ?? opt.pn }));
+         }
+       }
+     } catch (err) {
+       console.warn(`Unable to read custom ${type} options:`, err);
+     }
+   }
+   const fallback = memoryCustomOptions.get(type);
+-  return fallback ? fallback.map(opt => ({ ...opt })) : [];
++  return fallback
++    ? fallback
++        .map(opt => normalizeStoredOption(opt, type))
++        .filter((opt) => opt && typeof opt.pn === 'string')
++        .map(opt => ({ ...opt, name: opt.name ?? opt.pn }))
++    : [];
+ }
+ 
+ function saveCustomOptions(type, options) {
+   const clean = options.map(opt => ({ ...opt }));
+   memoryCustomOptions.set(type, clean);
+   const storage = getComponentStorage();
+   if (!storage) return;
+   try {
+     storage.setItem(`${COMPONENT_STORAGE_PREFIX}${type}`, JSON.stringify(clean));
+   } catch (err) {
+     console.warn(`Unable to persist custom ${type} options:`, err);
    }
  }
  
--function handleCreateNew(config, selectEl) {
-+async function handleCreateNew(config, selectEl) {
-   const label = config.label || 'component';
-   const pnInput = window.prompt(`Enter a part number for the new ${label} preset:`);
-   if (pnInput == null) {
+ function allOptions(config) {
+   const base = Array.isArray(config.options) ? config.options : [];
+   const custom = Array.isArray(config.customOptions) ? config.customOptions : [];
+   return base.concat(custom);
+ }
+ 
+ function findOption(config, pn) {
+   return allOptions(config).find(opt => opt.pn === pn);
+ }
+ 
+ function readFieldValue(inputId) {
+@@ -1023,50 +1120,56 @@ async function handleCreateNew(config, selectEl) {
      return null;
    }
    const pn = pnInput.trim();
@@ -51,104 +260,89 @@ index 26fed08f9a55ebef7534ee7d2bc6cccf87e937c7..2c204b8dd28af4bbe7f6e8c1b92d71c3
    const description = descriptionInput == null ? '' : descriptionInput.trim();
  
    const values = collectValuesForConfig(config);
--  /** @type {ComponentOption} */
--  const option = {
--    pn,
-+  const metadata = { pn };
-+  if (config.type) {
-+    metadata.type = config.type;
-+  }
-+  if (config.label) {
-+    metadata.label = config.label;
-+  }
-+
-+  const payload = {
-     name: pn,
--    ...values
-+    ...(description ? { description } : {}),
-+    data: values,
-+    metadata
-   };
--  if (description) {
--    option.description = description;
--  }
- 
--  if (!Array.isArray(config.customOptions)) {
--    config.customOptions = [];
-+  const wasDisabled = selectEl.disabled;
-+  selectEl.disabled = true;
-+  try {
-+    const response = await fetch('/api/presets', {
-+      method: 'POST',
-+      headers: {
-+        'Content-Type': 'application/json'
-+      },
-+      body: JSON.stringify(payload)
-+    });
-+
-+    if (!response.ok) {
-+      let message = `Failed to create ${label} preset.`;
-+      try {
-+        const errorBody = await response.json();
-+        if (errorBody?.error?.message) {
-+          message = errorBody.error.message;
-+          if (Array.isArray(errorBody.error.details) && errorBody.error.details.length) {
-+            message = `${message}\n- ${errorBody.error.details.join('\n- ')}`;
-+          }
-+        }
-+      } catch (err) {
-+        // Ignore JSON parsing errors; fall back to generic message.
-+      }
-+      window.alert(message);
-+      return null;
-+    }
-+
-+    let body;
-+    try {
-+      body = await response.json();
-+    } catch (err) {
-+      window.alert('Failed to parse server response when creating preset.');
-+      return null;
-+    }
-+
-+    const preset = body?.preset;
-+    if (!preset || typeof preset.id !== 'string') {
-+      window.alert('Server response did not include the created preset.');
-+      return null;
-+    }
-+
-+    const presetData =
-+      preset && typeof preset.data === 'object' && preset.data !== null && !Array.isArray(preset.data)
-+        ? preset.data
-+        : values;
-+
-+    /** @type {ComponentOption} */
-+    const option = {
-+      pn,
-+      name: preset.name ?? pn,
-+      ...(preset.description ? { description: preset.description } : {}),
-+      ...presetData,
-+      id: preset.id
-+    };
-+
-+    if (!Array.isArray(config.customOptions)) {
-+      config.customOptions = [];
-+    }
-+    config.customOptions.push(option);
-+    saveCustomOptions(config.type, config.customOptions);
-+    populateSelectOptions(selectEl, config, { selectedValue: pn });
-+    return pn;
-+  } catch (err) {
-+    const message = err instanceof Error ? err.message : String(err);
-+    window.alert(`Unable to create ${label} preset: ${message}`);
-+    return null;
-+  } finally {
-+    selectEl.disabled = wasDisabled;
+   const metadata = { pn };
+   if (config.type) {
+     metadata.type = config.type;
    }
--  config.customOptions.push(option);
--  saveCustomOptions(config.type, config.customOptions);
--  populateSelectOptions(selectEl, config, { selectedValue: pn });
--  return pn;
+   if (config.label) {
+     metadata.label = config.label;
+   }
++  if (config.fieldMap && typeof config.fieldMap === 'object') {
++    const entries = Object.entries(config.fieldMap).filter(([, optionKey]) => typeof optionKey === 'string' && optionKey);
++    if (entries.length) {
++      metadata.fieldMap = Object.fromEntries(entries);
++    }
++  }
+ 
+   const payload = {
+     name: pn,
+     ...(description ? { description } : {}),
+     data: values,
+     metadata
+   };
+ 
+   const wasDisabled = selectEl.disabled;
+   selectEl.disabled = true;
+   try {
+     const response = await fetch('/api/presets', {
+       method: 'POST',
+       headers: {
+         'Content-Type': 'application/json'
+       },
+       body: JSON.stringify(payload)
+     });
+ 
+     if (!response.ok) {
+       let message = `Failed to create ${label} preset.`;
+       try {
+         const errorBody = await response.json();
+         if (errorBody?.error?.message) {
+           message = errorBody.error.message;
+@@ -1084,51 +1187,52 @@ async function handleCreateNew(config, selectEl) {
+     let body;
+     try {
+       body = await response.json();
+     } catch (err) {
+       window.alert('Failed to parse server response when creating preset.');
+       return null;
+     }
+ 
+     const preset = body?.preset;
+     if (!preset || typeof preset.id !== 'string') {
+       window.alert('Server response did not include the created preset.');
+       return null;
+     }
+ 
+     const presetData =
+       preset && typeof preset.data === 'object' && preset.data !== null && !Array.isArray(preset.data)
+         ? preset.data
+         : values;
+ 
+     /** @type {ComponentOption} */
+     const option = {
+       pn,
+       name: preset.name ?? pn,
+       ...(preset.description ? { description: preset.description } : {}),
+       ...presetData,
+-      id: preset.id
++      id: preset.id,
++      metadata
+     };
+ 
+     if (!Array.isArray(config.customOptions)) {
+       config.customOptions = [];
+     }
+     config.customOptions.push(option);
+     saveCustomOptions(config.type, config.customOptions);
+     populateSelectOptions(selectEl, config, { selectedValue: pn });
+     return pn;
+   } catch (err) {
+     const message = err instanceof Error ? err.message : String(err);
+     window.alert(`Unable to create ${label} preset: ${message}`);
+     return null;
+   } finally {
+     selectEl.disabled = wasDisabled;
+   }
  }
  
  function describeOption(config, option) {
@@ -158,81 +352,3 @@ index 26fed08f9a55ebef7534ee7d2bc6cccf87e937c7..2c204b8dd28af4bbe7f6e8c1b92d71c3
  }
  
  function attachWatcher(inputId) {
-   if (watchedInputs.has(inputId)) return;
-   const el = /** @type {HTMLElement|null} */ (document.getElementById(inputId));
-   if (!el) return;
-   const handler = () => {
-     if (el.dataset.componentSuppress === '1') return;
-     const selectId = el.dataset.componentSelect;
-     if (!selectId) return;
-     delete el.dataset.componentSelect;
-     delete el.dataset.componentPn;
-     const selectEl = /** @type {HTMLSelectElement|null} */ (document.getElementById(selectId));
-     if (selectEl && selectEl.value) {
-       selectEl.value = '';
-       selectEl.dispatchEvent(new Event('change', { bubbles: true }));
-     }
-   };
-   if (el instanceof HTMLInputElement) {
-@@ -1146,59 +1214,59 @@ function applySelection(config, pn, { skipEvents = false } = {}) {
-     }
-     delete inputEl.dataset.componentSuppress;
-   });
- }
- 
- export function setupComponentSelectors() {
-   SELECT_CONFIGS.forEach(config => {
-     const selectEl = /** @type {HTMLSelectElement|null} */ (document.getElementById(config.selectId));
-     if (!selectEl) return;
-     config.customOptions = loadCustomOptions(config.type);
- 
-     const initialValue = selectEl.value;
-     const { initialSkipEvents = true } = config;
- 
-     populateSelectOptions(selectEl, config, { selectedValue: initialValue });
- 
-     Object.keys(config.fieldMap).forEach(inputId => attachWatcher(inputId));
- 
-     let previousValue = selectEl.value && selectEl.value !== CREATE_NEW_VALUE ? selectEl.value : '';
-     let suppressNext = false;
- 
-     const ensureOptionApplied = (value, { skipEvents = false } = {}) => {
-       applySelection(config, value, { skipEvents });
-     };
- 
--    selectEl.addEventListener('change', () => {
-+    selectEl.addEventListener('change', async () => {
-       if (suppressNext) {
-         suppressNext = false;
-         previousValue = selectEl.value;
-         ensureOptionApplied(selectEl.value);
-         return;
-       }
- 
-       const value = selectEl.value;
-       if (value === CREATE_NEW_VALUE) {
-         selectEl.value = previousValue;
--        const createdPn = handleCreateNew(config, selectEl);
-+        const createdPn = await handleCreateNew(config, selectEl);
-         if (createdPn) {
-           previousValue = createdPn;
-           suppressNext = true;
-           selectEl.value = createdPn;
-           ensureOptionApplied(createdPn);
-           selectEl.dispatchEvent(new Event('change', { bubbles: true }));
-         } else {
-           ensureOptionApplied(previousValue);
-         }
-         return;
-       }
- 
-       previousValue = value;
-       ensureOptionApplied(value);
-     });
- 
-     // Apply persisted selection if present
-     if (selectEl.value) {
-       ensureOptionApplied(selectEl.value, { skipEvents: initialSkipEvents });
-     }
-   });
- }

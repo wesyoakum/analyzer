@@ -46,6 +46,7 @@
  * @property {string} [hpu_motor_select]
  * @property {number|string|boolean} [h_emotor_hp]
  * @property {number|string|boolean} [h_emotor_rpm]
+ * @property {Record<string, unknown>} [metadata]
  */
 
 /**
@@ -891,6 +892,96 @@ const COMPONENT_STORAGE_PREFIX = 'analyzer.components.';
 const memoryCustomOptions = new Map();
 let cachedComponentStorage;
 
+function normalizePresetDataForOption(data, fieldMap) {
+  if (!data || typeof data !== 'object' || Array.isArray(data)) {
+    return {};
+  }
+
+  const normalized = {};
+  const entries = Object.entries(data);
+  const fieldMapEntries =
+    fieldMap && typeof fieldMap === 'object' && !Array.isArray(fieldMap)
+      ? Object.entries(fieldMap)
+      : [];
+  const inputIds = new Set(fieldMapEntries.map(([inputId]) => inputId));
+
+  entries.forEach(([key, value]) => {
+    if (!inputIds.has(key)) {
+      normalized[key] = value;
+    }
+  });
+
+  fieldMapEntries.forEach(([inputId, optionKey]) => {
+    if (typeof optionKey !== 'string' || optionKey.length === 0) return;
+    if (Object.prototype.hasOwnProperty.call(data, optionKey)) {
+      normalized[optionKey] = data[optionKey];
+      return;
+    }
+    if (Object.prototype.hasOwnProperty.call(data, inputId)) {
+      normalized[optionKey] = data[inputId];
+    }
+  });
+
+  return normalized;
+}
+
+function extractOptionData(raw) {
+  const result = {};
+  if (!raw || typeof raw !== 'object') return result;
+  Object.entries(raw).forEach(([key, value]) => {
+    if (key === 'pn' || key === 'name' || key === 'description' || key === 'id' || key === 'metadata' || key === 'data') {
+      return;
+    }
+    result[key] = value;
+  });
+  return result;
+}
+
+function normalizeStoredOption(raw, expectedType) {
+  if (!raw || typeof raw !== 'object') return null;
+
+  const metadata =
+    raw.metadata && typeof raw.metadata === 'object' && !Array.isArray(raw.metadata) ? raw.metadata : null;
+  const type = metadata && typeof metadata.type === 'string' ? metadata.type : undefined;
+  if (type && expectedType && type !== expectedType) {
+    return null;
+  }
+
+  const pnFromMetadata = metadata && typeof metadata.pn === 'string' ? metadata.pn : undefined;
+  const pnFromRaw = typeof raw.pn === 'string' ? raw.pn : undefined;
+  const optionPn = pnFromRaw ?? pnFromMetadata;
+  const optionName =
+    typeof raw.name === 'string' && raw.name.trim().length ? raw.name : optionPn ?? (pnFromMetadata ?? undefined);
+  const description = typeof raw.description === 'string' && raw.description.length ? raw.description : undefined;
+  const id = typeof raw.id === 'string' ? raw.id : undefined;
+
+  const data = raw.data && typeof raw.data === 'object' && !Array.isArray(raw.data)
+    ? normalizePresetDataForOption(raw.data, metadata?.fieldMap)
+    : extractOptionData(raw);
+
+  const pn = optionPn ?? optionName;
+  if (!pn || typeof pn !== 'string') {
+    return null;
+  }
+
+  const option = {
+    pn,
+    name: optionName ?? pn,
+    ...(description ? { description } : {}),
+    ...data
+  };
+
+  if (id) {
+    option.id = id;
+  }
+
+  if (metadata) {
+    option.metadata = metadata;
+  }
+
+  return option;
+}
+
 function getComponentStorage() {
   if (cachedComponentStorage !== undefined) return cachedComponentStorage;
   if (typeof window === 'undefined' || !window.localStorage) {
@@ -919,7 +1010,8 @@ function loadCustomOptions(type) {
         const parsed = JSON.parse(raw);
         if (Array.isArray(parsed)) {
           return parsed
-            .filter(opt => opt && typeof opt.pn === 'string')
+            .map(opt => normalizeStoredOption(opt, type))
+            .filter((opt) => opt && typeof opt.pn === 'string')
             .map(opt => ({ ...opt, name: opt.name ?? opt.pn }));
         }
       }
@@ -928,7 +1020,12 @@ function loadCustomOptions(type) {
     }
   }
   const fallback = memoryCustomOptions.get(type);
-  return fallback ? fallback.map(opt => ({ ...opt })) : [];
+  return fallback
+    ? fallback
+        .map(opt => normalizeStoredOption(opt, type))
+        .filter((opt) => opt && typeof opt.pn === 'string')
+        .map(opt => ({ ...opt, name: opt.name ?? opt.pn }))
+    : [];
 }
 
 function saveCustomOptions(type, options) {
@@ -1045,6 +1142,12 @@ async function handleCreateNew(config, selectEl) {
   if (config.label) {
     metadata.label = config.label;
   }
+  if (config.fieldMap && typeof config.fieldMap === 'object') {
+    const entries = Object.entries(config.fieldMap).filter(([, optionKey]) => typeof optionKey === 'string' && optionKey);
+    if (entries.length) {
+      metadata.fieldMap = Object.fromEntries(entries);
+    }
+  }
 
   const payload = {
     name: pn,
@@ -1106,7 +1209,8 @@ async function handleCreateNew(config, selectEl) {
       name: preset.name ?? pn,
       ...(preset.description ? { description: preset.description } : {}),
       ...presetData,
-      id: preset.id
+      id: preset.id,
+      metadata
     };
 
     if (!Array.isArray(config.customOptions)) {
