@@ -1,60 +1,13 @@
 diff --git a/src/js/component-selectors.mjs b/src/js/component-selectors.mjs
-index 8eccf31467284ad8f4cfcb2ab9766c3f9f72307f..b9ec472e3b97c020fc53a842d31b4ee369a939f9 100644
+index b9ec472e3b97c020fc53a842d31b4ee369a939f9..b7e84dc6d0fcbe9d9427b80315497117ee631504 100644
 --- a/src/js/component-selectors.mjs
 +++ b/src/js/component-selectors.mjs
-@@ -25,50 +25,51 @@
-   * @property {number|string|boolean} [motor_eff]
-   * @property {number|string|boolean} [c_mm]
-   * @property {number|string|boolean} [depth_m]
-   * @property {number|string|boolean} [dead_m]
-  * @property {number|string|boolean} [c_w_kgpm]
-  * @property {number|string|boolean} [core_in]
-  * @property {number|string|boolean} [flange_dia_in]
-  * @property {number|string|boolean} [ftf_in]
-  * @property {number|string|boolean} [lebus_in]
-  * @property {number|string|boolean} [pack]
-  * @property {number|string|boolean} [wraps_override]
-  * @property {number|string|boolean} [motors]
-  * @property {number|string|boolean} [gearbox_select]
-  * @property {number|string|boolean} [electric_motor_select]
-  * @property {number|string|boolean} [hydraulic_motor_select]
-  * @property {number|string|boolean} [hydraulic_pump_select]
-  * @property {number|string|boolean} [payload_select]
-  * @property {number|string|boolean} [cable_select]
-  * @property {number|string|boolean} [drum_select]
-  * @property {number|string|boolean} [h_pump_strings]
-  * @property {string} [hpu_select]
-  * @property {string} [hpu_motor_select]
-  * @property {number|string|boolean} [h_emotor_hp]
-  * @property {number|string|boolean} [h_emotor_rpm]
-  * @property {Record<string, unknown>} [metadata]
-+ * @property {Record<string, unknown>} [data]
-  */
- 
- /**
-  * @typedef {Object} SelectConfig
-  * @property {string} selectId
-  * @property {ComponentOption[]} options
-  * @property {string} type
-  * @property {string} label
-  * @property {Record<string, keyof ComponentOption>} fieldMap
-  * @property {boolean} [initialSkipEvents]
-  * @property {ComponentOption[]} [customOptions]
-  */
- 
- /** @type {ComponentOption[]} */
- export const CABLE_OPTIONS = [
-   {
-     pn: '.681 Umbilical',
-     description: '0.681 in diameter umbilical',
-     c_mm: 17.3
-   },
-   {
-     pn: '.322 Umbilical',
-     description: '0.322 in diameter umbilical',
-     c_mm: 8.18
-   },
-@@ -870,50 +871,148 @@ const SELECT_CONFIGS = [
+@@ -866,104 +866,154 @@ const SELECT_CONFIGS = [
+     selectId: 'hydraulic_pump_select',
+     options: HYDRAULIC_PUMP_OPTIONS,
+     type: 'hydraulic-pump',
+     label: 'Hydraulic Pump',
+     fieldMap: FIELD_MAPS.hydraulicPump
    },
    {
      selectId: 'hydraulic_motor_select',
@@ -75,396 +28,272 @@ index 8eccf31467284ad8f4cfcb2ab9766c3f9f72307f..b9ec472e3b97c020fc53a842d31b4ee3
  
  const watchedInputs = new Set();
  const CREATE_NEW_VALUE = '__component_create_new__';
++const SAVE_CURRENT_VALUE = '__component_save_current__';
++const SAVE_CURRENT_LABEL = 'Save Current Preset';
  const COMPONENT_STORAGE_PREFIX = 'analyzer.components.';
  /** @type {Map<string, ComponentOption[]>} */
  const memoryCustomOptions = new Map();
  let cachedComponentStorage;
  
-+function isPlainObject(value) {
-+  return typeof value === 'object' && value !== null && !Array.isArray(value);
-+}
-+
-+function cloneOption(option) {
-+  const clone = { ...option };
-+  if (isPlainObject(option.metadata)) {
-+    clone.metadata = { ...option.metadata };
-+  }
-+  if (isPlainObject(option.data)) {
-+    clone.data = { ...option.data };
-+  }
-+  return clone;
-+}
-+
-+function rememberCustomOptions(type, options) {
-+  if (!type) return;
-+  const list = Array.isArray(options) ? options.map(cloneOption) : [];
-+  memoryCustomOptions.set(type, list);
-+}
-+
-+function getRememberedCustomOptions(type) {
-+  if (!type) return [];
-+  const existing = memoryCustomOptions.get(type);
-+  return existing ? existing.map(cloneOption) : [];
-+}
-+
-+function persistCustomOptions(type) {
-+  if (!type) return;
-+  const storage = getComponentStorage();
-+  if (!storage) return;
-+  try {
-+    const snapshot = memoryCustomOptions.get(type) ?? [];
-+    storage.setItem(`${COMPONENT_STORAGE_PREFIX}${type}`, JSON.stringify(snapshot));
-+  } catch (err) {
-+    console.warn(`Unable to persist custom ${type} options:`, err);
-+  }
-+}
-+
-+function refreshSelectsForType(type) {
-+  if (!type) return;
-+  const snapshot = getRememberedCustomOptions(type);
-+  SELECT_CONFIGS.forEach(config => {
-+    if (config.type !== type) return;
-+    config.customOptions = snapshot.map(cloneOption);
-+    const selectEl = /** @type {HTMLSelectElement|null} */ (document.getElementById(config.selectId));
-+    if (!selectEl) return;
-+    const prior = selectEl.value;
-+    populateSelectOptions(selectEl, config, { selectedValue: prior });
-+  });
-+}
-+
-+function replaceCustomOptions(type, options, { persist = true } = {}) {
-+  if (!type) return;
-+  rememberCustomOptions(type, options);
-+  refreshSelectsForType(type);
-+  if (persist) {
-+    persistCustomOptions(type);
-+  }
-+}
-+
-+function optionIdentity(option) {
-+  if (!option) return null;
-+  if (typeof option.id === 'string' && option.id.length) {
-+    return `id:${option.id}`;
-+  }
-+  if (typeof option.pn === 'string' && option.pn.length) {
-+    return `pn:${option.pn.toLowerCase()}`;
-+  }
-+  return null;
-+}
-+
-+function mergeCustomOptionLists(existing, incoming) {
-+  const result = Array.isArray(existing) ? existing.map(cloneOption) : [];
-+  if (!Array.isArray(incoming)) {
-+    return result;
-+  }
-+  incoming.forEach(option => {
-+    const key = optionIdentity(option);
-+    if (!key) return;
-+    const clone = cloneOption(option);
-+    const index = result.findIndex(item => optionIdentity(item) === key);
-+    if (index >= 0) {
-+      result[index] = clone;
-+    } else {
-+      result.push(clone);
+ function isPlainObject(value) {
+   return typeof value === 'object' && value !== null && !Array.isArray(value);
+ }
+ 
++function mergePresetMetadata(...sources) {
++  /** @type {Record<string, unknown>} */
++  const result = {};
++  sources.forEach(source => {
++    if (!isPlainObject(source)) {
++      return;
 +    }
++    Object.entries(source).forEach(([key, value]) => {
++      if (key === 'fieldMap' && isPlainObject(value)) {
++        const existingFieldMap =
++          isPlainObject(result.fieldMap) ? { .../** @type {Record<string, unknown>} */ (result.fieldMap) } : {};
++        result.fieldMap = { ...existingFieldMap, .../** @type {Record<string, unknown>} */ (value) };
++        return;
++      }
++      result[key] = value;
++    });
 +  });
 +  return result;
 +}
 +
-+function upsertCustomOption(type, option, { persist = true } = {}) {
-+  if (!type) return;
-+  const existing = memoryCustomOptions.get(type) ?? [];
-+  const merged = mergeCustomOptionLists(existing, [option]);
-+  replaceCustomOptions(type, merged, { persist });
++function buildMetadataForConfig(option, config) {
++  const metadata = mergePresetMetadata(option && isPlainObject(option.metadata) ? option.metadata : {});
++  if (option && typeof option.pn === 'string' && option.pn) {
++    if (typeof metadata.pn !== 'string' || !metadata.pn) {
++      metadata.pn = option.pn;
++    }
++  }
++  if (config && typeof config.type === 'string' && config.type) {
++    metadata.type = config.type;
++  }
++  if (config && typeof config.label === 'string' && config.label) {
++    metadata.label = config.label;
++  }
++  if (config && isPlainObject(config.fieldMap)) {
++    const entries = Object.entries(config.fieldMap).filter(([, optionKey]) => typeof optionKey === 'string' && optionKey);
++    if (entries.length) {
++      const fieldMap =
++        isPlainObject(metadata.fieldMap) ? { .../** @type {Record<string, string>} */ (metadata.fieldMap) } : {};
++      entries.forEach(([inputId, optionKey]) => {
++        fieldMap[inputId] = /** @type {string} */ (optionKey);
++      });
++      metadata.fieldMap = fieldMap;
++    }
++  }
++  return metadata;
 +}
 +
- function normalizePresetDataForOption(data, fieldMap) {
-   if (!data || typeof data !== 'object' || Array.isArray(data)) {
-     return {};
+ function cloneOption(option) {
+   const clone = { ...option };
+   if (isPlainObject(option.metadata)) {
+     clone.metadata = { ...option.metadata };
    }
+   if (isPlainObject(option.data)) {
+     clone.data = { ...option.data };
+   }
+   return clone;
+ }
  
-   const normalized = {};
-   const entries = Object.entries(data);
-   const fieldMapEntries =
-     fieldMap && typeof fieldMap === 'object' && !Array.isArray(fieldMap)
-       ? Object.entries(fieldMap)
-       : [];
-   const inputIds = new Set(fieldMapEntries.map(([inputId]) => inputId));
+ function rememberCustomOptions(type, options) {
+   if (!type) return;
+   const list = Array.isArray(options) ? options.map(cloneOption) : [];
+   memoryCustomOptions.set(type, list);
+ }
  
-   entries.forEach(([key, value]) => {
-     if (!inputIds.has(key)) {
-       normalized[key] = value;
+ function getRememberedCustomOptions(type) {
+   if (!type) return [];
+   const existing = memoryCustomOptions.get(type);
+   return existing ? existing.map(cloneOption) : [];
+ }
+ 
+ function persistCustomOptions(type) {
+   if (!type) return;
+   const storage = getComponentStorage();
+   if (!storage) return;
+   try {
+     const snapshot = memoryCustomOptions.get(type) ?? [];
+     storage.setItem(`${COMPONENT_STORAGE_PREFIX}${type}`, JSON.stringify(snapshot));
+   } catch (err) {
+     console.warn(`Unable to persist custom ${type} options:`, err);
+   }
+ }
+ 
+ function refreshSelectsForType(type) {
+   if (!type) return;
+   const snapshot = getRememberedCustomOptions(type);
+   SELECT_CONFIGS.forEach(config => {
+     if (config.type !== type) return;
+     config.customOptions = snapshot.map(cloneOption);
+     const selectEl = /** @type {HTMLSelectElement|null} */ (document.getElementById(config.selectId));
+     if (!selectEl) return;
+     const prior = selectEl.value;
+     populateSelectOptions(selectEl, config, { selectedValue: prior });
++    selectEl.dispatchEvent(new Event('component:options-refreshed'));
+   });
+ }
+ 
+ function replaceCustomOptions(type, options, { persist = true } = {}) {
+   if (!type) return;
+   rememberCustomOptions(type, options);
+   refreshSelectsForType(type);
+   if (persist) {
+     persistCustomOptions(type);
+   }
+ }
+ 
+ function optionIdentity(option) {
+   if (!option) return null;
+   if (typeof option.id === 'string' && option.id.length) {
+     return `id:${option.id}`;
+   }
+   if (typeof option.pn === 'string' && option.pn.length) {
+     return `pn:${option.pn.toLowerCase()}`;
+   }
+   return null;
+ }
+ 
+ function mergeCustomOptionLists(existing, incoming) {
+   const result = Array.isArray(existing) ? existing.map(cloneOption) : [];
+@@ -1170,59 +1220,80 @@ function collectValuesForConfig(config) {
      }
    });
+   return result;
+ }
  
-   fieldMapEntries.forEach(([inputId, optionKey]) => {
-     if (typeof optionKey !== 'string' || optionKey.length === 0) return;
-     if (Object.prototype.hasOwnProperty.call(data, optionKey)) {
-       normalized[optionKey] = data[optionKey];
-       return;
-     }
-@@ -954,112 +1053,101 @@ function normalizeStoredOption(raw, expectedType) {
-     typeof raw.name === 'string' && raw.name.trim().length ? raw.name : optionPn ?? (pnFromMetadata ?? undefined);
-   const description = typeof raw.description === 'string' && raw.description.length ? raw.description : undefined;
-   const id = typeof raw.id === 'string' ? raw.id : undefined;
+ function populateSelectOptions(selectEl, config, { selectedValue } = {}) {
+   const prior = selectedValue !== undefined ? selectedValue : selectEl.value;
+   selectEl.innerHTML = '';
+   const manualOpt = document.createElement('option');
+   manualOpt.value = '';
+   manualOpt.textContent = 'Custom (manual input)';
+   selectEl.appendChild(manualOpt);
  
-   const data = raw.data && typeof raw.data === 'object' && !Array.isArray(raw.data)
-     ? normalizePresetDataForOption(raw.data, metadata?.fieldMap)
-     : extractOptionData(raw);
+   allOptions(config).forEach(option => {
+     const opt = document.createElement('option');
+     opt.value = option.pn;
+     opt.textContent = describeOption(config, option);
+     selectEl.appendChild(opt);
+   });
  
-   const pn = optionPn ?? optionName;
-   if (!pn || typeof pn !== 'string') {
-     return null;
+   const createOpt = document.createElement('option');
+   createOpt.value = CREATE_NEW_VALUE;
+   createOpt.textContent = 'Create New';
+   selectEl.appendChild(createOpt);
+ 
+-  if (prior && prior !== CREATE_NEW_VALUE && findOption(config, prior)) {
++  const saveOpt = document.createElement('option');
++  saveOpt.value = SAVE_CURRENT_VALUE;
++  saveOpt.textContent = SAVE_CURRENT_LABEL;
++  saveOpt.dataset.componentPresetSave = '1';
++  saveOpt.disabled = true;
++  selectEl.appendChild(saveOpt);
++
++  if (prior && prior !== CREATE_NEW_VALUE && prior !== SAVE_CURRENT_VALUE && findOption(config, prior)) {
+     selectEl.value = prior;
+   } else if (prior === '') {
+     selectEl.value = '';
+   } else {
+     selectEl.value = '';
    }
+ }
  
-   const option = {
-     pn,
-     name: optionName ?? pn,
-     ...(description ? { description } : {}),
-     ...data
-   };
- 
-   if (id) {
-     option.id = id;
-   }
- 
-   if (metadata) {
--    option.metadata = metadata;
-+    option.metadata = { ...metadata };
++function ensureSavePresetOption(selectEl) {
++  /** @type {HTMLOptionElement|null} */
++  let option = selectEl.querySelector(`option[value="${SAVE_CURRENT_VALUE}"]`);
++  if (!option) {
++    option = document.createElement('option');
++    option.value = SAVE_CURRENT_VALUE;
++    option.textContent = SAVE_CURRENT_LABEL;
++    option.dataset.componentPresetSave = '1';
++    option.disabled = true;
++    selectEl.appendChild(option);
 +  }
++  return option;
++}
 +
-+  if (raw.data && typeof raw.data === 'object' && !Array.isArray(raw.data)) {
-+    option.data = { ...raw.data };
-   }
- 
-   return option;
- }
- 
- function getComponentStorage() {
-   if (cachedComponentStorage !== undefined) return cachedComponentStorage;
-   if (typeof window === 'undefined' || !window.localStorage) {
-     cachedComponentStorage = null;
-     return cachedComponentStorage;
-   }
-   try {
-     const { localStorage } = window;
-     const probe = `${COMPONENT_STORAGE_PREFIX}__probe__`;
-     localStorage.setItem(probe, '1');
-     localStorage.removeItem(probe);
-     cachedComponentStorage = localStorage;
-   } catch (err) {
-     console.warn('Component preset storage disabled:', err);
-     cachedComponentStorage = null;
-   }
-   return cachedComponentStorage;
- }
- 
- function loadCustomOptions(type) {
-   const storage = getComponentStorage();
-   if (storage) {
-     try {
-       const raw = storage.getItem(`${COMPONENT_STORAGE_PREFIX}${type}`);
-       if (raw) {
-         const parsed = JSON.parse(raw);
-         if (Array.isArray(parsed)) {
-           return parsed
-             .map(opt => normalizeStoredOption(opt, type))
-             .filter((opt) => opt && typeof opt.pn === 'string')
-             .map(opt => ({ ...opt, name: opt.name ?? opt.pn }));
-         }
-       }
-     } catch (err) {
-       console.warn(`Unable to read custom ${type} options:`, err);
-     }
-   }
--  const fallback = memoryCustomOptions.get(type);
--  return fallback
--    ? fallback
--        .map(opt => normalizeStoredOption(opt, type))
--        .filter((opt) => opt && typeof opt.pn === 'string')
--        .map(opt => ({ ...opt, name: opt.name ?? opt.pn }))
--    : [];
--}
--
--function saveCustomOptions(type, options) {
--  const clean = options.map(opt => ({ ...opt }));
--  memoryCustomOptions.set(type, clean);
--  const storage = getComponentStorage();
--  if (!storage) return;
--  try {
--    storage.setItem(`${COMPONENT_STORAGE_PREFIX}${type}`, JSON.stringify(clean));
--  } catch (err) {
--    console.warn(`Unable to persist custom ${type} options:`, err);
--  }
-+  return getRememberedCustomOptions(type)
-+    .map(opt => normalizeStoredOption(opt, type))
-+    .filter((opt) => opt && typeof opt.pn === 'string')
-+    .map(opt => ({ ...opt, name: opt.name ?? opt.pn }));
- }
- 
- function allOptions(config) {
-   const base = Array.isArray(config.options) ? config.options : [];
-   const custom = Array.isArray(config.customOptions) ? config.customOptions : [];
-   return base.concat(custom);
- }
- 
- function findOption(config, pn) {
-   return allOptions(config).find(opt => opt.pn === pn);
- }
- 
- function readFieldValue(inputId) {
-   const el = /** @type {HTMLElement|null} */ (document.getElementById(inputId));
-   if (!el) return undefined;
-   if (el instanceof HTMLInputElement) {
-     if (el.type === 'checkbox') {
-       return el.checked;
-     }
-     if (el.type === 'number') {
-       if (el.value === '') return undefined;
-       const num = Number(el.value);
-       return Number.isNaN(num) ? undefined : num;
-     }
-     return el.value;
-@@ -1181,66 +1269,84 @@ async function handleCreateNew(config, selectEl) {
-         // Ignore JSON parsing errors; fall back to generic message.
-       }
-       window.alert(message);
-       return null;
-     }
- 
-     let body;
-     try {
-       body = await response.json();
-     } catch (err) {
-       window.alert('Failed to parse server response when creating preset.');
-       return null;
-     }
- 
-     const preset = body?.preset;
-     if (!preset || typeof preset.id !== 'string') {
-       window.alert('Server response did not include the created preset.');
-       return null;
-     }
- 
-     const presetData =
-       preset && typeof preset.data === 'object' && preset.data !== null && !Array.isArray(preset.data)
-         ? preset.data
-         : values;
- 
-+    const serverMetadata =
-+      preset.metadata && typeof preset.metadata === 'object' && !Array.isArray(preset.metadata)
-+        ? preset.metadata
-+        : undefined;
-+    const mergedMetadata = {
-+      ...metadata,
-+      ...(serverMetadata ?? {})
-+    };
-+    if (!mergedMetadata.pn) {
-+      mergedMetadata.pn = pn;
-+    }
-+    if (config.type && !mergedMetadata.type) {
-+      mergedMetadata.type = config.type;
-+    }
-+    if (config.label && !mergedMetadata.label) {
-+      mergedMetadata.label = config.label;
-+    }
-+
-+    const normalizedOptionData = normalizePresetDataForOption(presetData, mergedMetadata?.fieldMap);
-+
-     /** @type {ComponentOption} */
-     const option = {
-       pn,
-       name: preset.name ?? pn,
-       ...(preset.description ? { description: preset.description } : {}),
--      ...presetData,
-+      ...normalizedOptionData,
-       id: preset.id,
--      metadata
-+      metadata: { ...mergedMetadata },
-+      data: { ...presetData }
-     };
- 
--    if (!Array.isArray(config.customOptions)) {
--      config.customOptions = [];
-+    if (config.type) {
-+      upsertCustomOption(config.type, option);
-     }
--    config.customOptions.push(option);
--    saveCustomOptions(config.type, config.customOptions);
--    populateSelectOptions(selectEl, config, { selectedValue: pn });
-     return pn;
-   } catch (err) {
-     const message = err instanceof Error ? err.message : String(err);
-     window.alert(`Unable to create ${label} preset: ${message}`);
+ async function handleCreateNew(config, selectEl) {
+   const label = config.label || 'component';
+   const pnInput = window.prompt(`Enter a part number for the new ${label} preset:`);
+   if (pnInput == null) {
      return null;
-   } finally {
-     selectEl.disabled = wasDisabled;
    }
- }
+   const pn = pnInput.trim();
+   if (!pn) {
+     window.alert('A part number is required to create a preset.');
+     return null;
+   }
  
- function describeOption(config, option) {
-   const parts = [option.name ?? option.pn];
-   if (option.description) parts.push(option.description);
-   return parts.join(' — ');
- }
+   const existing = allOptions(config).find(opt => opt.pn.toLowerCase() === pn.toLowerCase());
+   if (existing) {
+     window.alert(`A preset with part number "${pn}" already exists.`);
+     return null;
+   }
  
- function attachWatcher(inputId) {
-   if (watchedInputs.has(inputId)) return;
-   const el = /** @type {HTMLElement|null} */ (document.getElementById(inputId));
-   if (!el) return;
-   const handler = () => {
-     if (el.dataset.componentSuppress === '1') return;
-     const selectId = el.dataset.componentSelect;
-     if (!selectId) return;
-     delete el.dataset.componentSelect;
-@@ -1299,78 +1405,171 @@ function applySelection(config, pn, { skipEvents = false } = {}) {
-       if (inputEl.type === 'checkbox') {
-         inputEl.checked = Boolean(value);
-       } else {
-         inputEl.value = String(value);
-       }
-     } else if (inputEl instanceof HTMLSelectElement || inputEl instanceof HTMLTextAreaElement) {
-       inputEl.value = String(value);
-     } else {
-       inputEl.textContent = String(value);
-     }
-     if (!skipEvents) {
-       if (inputEl instanceof HTMLInputElement) {
-         if (inputEl.type !== 'checkbox' && inputEl.type !== 'radio' && inputEl.type !== 'range' && inputEl.type !== 'color') {
-           inputEl.dispatchEvent(new Event('input', { bubbles: true }));
-         }
-         inputEl.dispatchEvent(new Event('change', { bubbles: true }));
-       } else {
-         inputEl.dispatchEvent(new Event('change', { bubbles: true }));
-       }
-     }
-     delete inputEl.dataset.componentSuppress;
+   const descriptionInput = window.prompt(`Enter a description for ${pn}:`);
+   const description = descriptionInput == null ? '' : descriptionInput.trim();
+ 
+   const values = collectValuesForConfig(config);
+   const metadata = { pn };
+   if (config.type) {
+     metadata.type = config.type;
+@@ -1426,91 +1497,267 @@ function applySelection(config, pn, { skipEvents = false } = {}) {
    });
  }
  
  export function setupComponentSelectors() {
-+  const initializedTypes = new Set();
-+  SELECT_CONFIGS.forEach(config => {
-+    const type = config.type;
-+    if (!type || initializedTypes.has(type)) return;
-+    const loaded = loadCustomOptions(type);
-+    rememberCustomOptions(type, loaded);
-+    initializedTypes.add(type);
-+  });
-+
+   const initializedTypes = new Set();
+   SELECT_CONFIGS.forEach(config => {
+     const type = config.type;
+     if (!type || initializedTypes.has(type)) return;
+     const loaded = loadCustomOptions(type);
+     rememberCustomOptions(type, loaded);
+     initializedTypes.add(type);
+   });
+ 
    SELECT_CONFIGS.forEach(config => {
      const selectEl = /** @type {HTMLSelectElement|null} */ (document.getElementById(config.selectId));
      if (!selectEl) return;
--    config.customOptions = loadCustomOptions(config.type);
-+
-+    const customOptions = getRememberedCustomOptions(config.type);
-+    config.customOptions = customOptions;
+ 
+     const customOptions = getRememberedCustomOptions(config.type);
+     config.customOptions = customOptions;
  
      const initialValue = selectEl.value;
      const { initialSkipEvents = true } = config;
  
      populateSelectOptions(selectEl, config, { selectedValue: initialValue });
  
++    let isSavingPreset = false;
++    let saveOption = ensureSavePresetOption(selectEl);
++    const updateSaveOptionState = () => {
++      saveOption = ensureSavePresetOption(selectEl);
++      if (!saveOption) {
++        return;
++      }
++      if (isSavingPreset) {
++        saveOption.disabled = true;
++        saveOption.textContent = 'Saving…';
++        return;
++      }
++      saveOption.textContent = SAVE_CURRENT_LABEL;
++      const option = findOption(config, selectEl.value);
++      const isServerPreset = Boolean(option && typeof option.id === 'string' && option.id);
++      const shouldEnable = isServerPreset && !selectEl.disabled;
++      saveOption.disabled = !shouldEnable;
++      if (isServerPreset && option && typeof option.id === 'string') {
++        saveOption.dataset.presetId = option.id;
++      } else {
++        delete saveOption.dataset.presetId;
++      }
++    };
++
++    selectEl.addEventListener('component:options-refreshed', () => {
++      saveOption = ensureSavePresetOption(selectEl);
++      updateSaveOptionState();
++    });
++
      Object.keys(config.fieldMap).forEach(inputId => attachWatcher(inputId));
  
      let previousValue = selectEl.value && selectEl.value !== CREATE_NEW_VALUE ? selectEl.value : '';
@@ -474,15 +303,158 @@ index 8eccf31467284ad8f4cfcb2ab9766c3f9f72307f..b9ec472e3b97c020fc53a842d31b4ee3
        applySelection(config, value, { skipEvents });
      };
  
++    const performSaveCurrentPreset = async () => {
++      if (isSavingPreset) {
++        return;
++      }
++      const option = findOption(config, selectEl.value);
++      if (!option || typeof option.id !== 'string' || !option.id) {
++        return;
++      }
++
++      const descriptor = option.name && option.name !== option.pn ? `${option.name} (${option.pn})` : option.pn;
++      const label = config.label || 'component';
++      const confirmMessage = [
++        `Save the current ${label} settings to preset "${descriptor}"?`,
++        'This will overwrite the version stored on the server.'
++      ].join('\n\n');
++      const confirmed = window.confirm(confirmMessage);
++      if (!confirmed) {
++        return;
++      }
++
++      isSavingPreset = true;
++      const wasSelectDisabled = selectEl.disabled;
++      selectEl.disabled = true;
++      updateSaveOptionState();
++
++      try {
++        const values = collectValuesForConfig(config);
++        const payloadMetadata = buildMetadataForConfig(option, config);
++        const payload = {
++          id: option.id,
++          name: option.name ?? option.pn,
++          ...(option.description ? { description: option.description } : {}),
++          data: values,
++          metadata: payloadMetadata
++        };
++
++        let response;
++        try {
++          response = await fetch('/api/presets', {
++            method: 'POST',
++            headers: {
++              'Content-Type': 'application/json'
++            },
++            body: JSON.stringify(payload)
++          });
++        } catch (err) {
++          const message = err instanceof Error ? err.message : String(err);
++          window.alert(`Unable to save preset: ${message}`);
++          return;
++        }
++
++        if (!response.ok) {
++          let message = 'Failed to save preset.';
++          try {
++            const errorBody = await response.json();
++            if (errorBody?.error?.message) {
++              message = errorBody.error.message;
++              if (Array.isArray(errorBody.error.details) && errorBody.error.details.length) {
++                message = `${message}\n- ${errorBody.error.details.join('\n- ')}`;
++              }
++            }
++          } catch (err) {
++            // Ignore JSON parsing errors; fall back to generic message.
++          }
++          window.alert(message);
++          return;
++        }
++
++        let body;
++        try {
++          body = await response.json();
++        } catch (err) {
++          window.alert('Failed to parse server response when saving preset.');
++          return;
++        }
++
++        const preset = body?.preset;
++        if (!preset || typeof preset.id !== 'string') {
++          window.alert('Server response did not include the updated preset.');
++          return;
++        }
++
++        const presetData =
++          preset && typeof preset.data === 'object' && preset.data !== null && !Array.isArray(preset.data)
++            ? preset.data
++            : values;
++        const serverMetadata =
++          preset.metadata && typeof preset.metadata === 'object' && !Array.isArray(preset.metadata)
++            ? preset.metadata
++            : undefined;
++        const mergedMetadata = mergePresetMetadata(option.metadata, payloadMetadata, serverMetadata);
++        if (option.pn && (typeof mergedMetadata.pn !== 'string' || !mergedMetadata.pn)) {
++          mergedMetadata.pn = option.pn;
++        }
++        if (config.type && (!mergedMetadata.type || typeof mergedMetadata.type !== 'string')) {
++          mergedMetadata.type = config.type;
++        }
++        if (config.label && (!mergedMetadata.label || typeof mergedMetadata.label !== 'string')) {
++          mergedMetadata.label = config.label;
++        }
++
++        const normalizedOptionData = normalizePresetDataForOption(presetData, mergedMetadata?.fieldMap);
++        /** @type {ComponentOption} */
++        const updatedOption = {
++          pn: mergedMetadata.pn && typeof mergedMetadata.pn === 'string' ? mergedMetadata.pn : option.pn,
++          name: preset.name ?? option.name ?? option.pn,
++          ...(preset.description ? { description: preset.description } : option.description ? { description: option.description } : {}),
++          ...normalizedOptionData,
++          id: option.id,
++          metadata: isPlainObject(mergedMetadata) ? { ...mergedMetadata } : undefined,
++          data: isPlainObject(presetData) ? { ...presetData } : undefined
++        };
++        if (typeof preset.updatedAt === 'string') {
++          updatedOption.updatedAt = preset.updatedAt;
++        } else if (option.updatedAt) {
++          updatedOption.updatedAt = option.updatedAt;
++        }
++
++        if (config.type) {
++          upsertCustomOption(config.type, updatedOption);
++        }
++
++        const updatedPn = updatedOption.pn ?? option.pn;
++        if (updatedPn) {
++          previousValue = updatedPn;
++          selectEl.value = updatedPn;
++        }
++      } finally {
++        isSavingPreset = false;
++        selectEl.disabled = wasSelectDisabled;
++        updateSaveOptionState();
++      }
++    };
++
      selectEl.addEventListener('change', async () => {
        if (suppressNext) {
          suppressNext = false;
          previousValue = selectEl.value;
          ensureOptionApplied(selectEl.value);
++        updateSaveOptionState();
          return;
        }
  
        const value = selectEl.value;
++      if (value === SAVE_CURRENT_VALUE) {
++        const revertValue = previousValue || '';
++        selectEl.value = revertValue;
++        await performSaveCurrentPreset();
++        updateSaveOptionState();
++        return;
++      }
++
        if (value === CREATE_NEW_VALUE) {
          selectEl.value = previousValue;
          const createdPn = await handleCreateNew(config, selectEl);
@@ -495,98 +467,43 @@ index 8eccf31467284ad8f4cfcb2ab9766c3f9f72307f..b9ec472e3b97c020fc53a842d31b4ee3
          } else {
            ensureOptionApplied(previousValue);
          }
++        updateSaveOptionState();
          return;
        }
  
        previousValue = value;
        ensureOptionApplied(value);
++      updateSaveOptionState();
      });
  
      // Apply persisted selection if present
      if (selectEl.value) {
        ensureOptionApplied(selectEl.value, { skipEvents: initialSkipEvents });
      }
++
++    updateSaveOptionState();
    });
-+
-+  void fetchAndApplyServerPresets();
-+}
-+
-+async function fetchAndApplyServerPresets() {
-+  if (typeof window === 'undefined' || typeof window.fetch !== 'function') {
-+    return;
-+  }
-+
-+  let response;
-+  try {
-+    response = await fetch('/api/presets');
-+  } catch (err) {
-+    console.warn('Unable to fetch presets from server:', err);
-+    return;
-+  }
-+
-+  if (!response.ok) {
-+    console.warn('Failed to load presets from server.');
-+    return;
-+  }
-+
-+  let body;
-+  try {
-+    body = await response.json();
-+  } catch (err) {
-+    console.warn('Unable to parse presets response from server:', err);
-+    return;
-+  }
-+
-+  const presets = Array.isArray(body?.presets) ? body.presets : [];
-+  if (!presets.length) {
-+    return;
-+  }
-+
-+  /** @type {Map<string, ComponentOption[]>} */
-+  const grouped = new Map();
-+
-+  presets.forEach(preset => {
-+    if (!preset || typeof preset !== 'object' || Array.isArray(preset)) {
-+      return;
-+    }
-+    const metadata =
-+      preset.metadata && typeof preset.metadata === 'object' && !Array.isArray(preset.metadata)
-+        ? preset.metadata
-+        : undefined;
-+    const type = metadata && typeof metadata.type === 'string' ? metadata.type : undefined;
-+    if (!type) {
-+      return;
-+    }
-+    const option = normalizeStoredOption(preset, type);
-+    if (!option) {
-+      return;
-+    }
-+    if (metadata) {
-+      option.metadata = { ...metadata, ...(option.metadata ?? {}) };
-+    }
-+    if (!option.metadata) {
-+      option.metadata = {};
-+    }
-+    if (typeof option.metadata.pn !== 'string') {
-+      option.metadata.pn = option.pn;
-+    }
-+    if (type && option.metadata.type !== type) {
-+      option.metadata.type = type;
-+    }
-+    if (preset.data && typeof preset.data === 'object' && !Array.isArray(preset.data)) {
-+      option.data = { ...preset.data };
-+    }
-+    const list = grouped.get(type) ?? [];
-+    list.push(option);
-+    grouped.set(type, list);
-+  });
-+
-+  grouped.forEach((options, type) => {
-+    if (!options.length) {
-+      return;
-+    }
-+    const existing = getRememberedCustomOptions(type);
-+    const merged = mergeCustomOptionLists(existing, options);
-+    replaceCustomOptions(type, merged, { persist: true });
-+  });
+ 
+   void fetchAndApplyServerPresets();
  }
+ 
+ async function fetchAndApplyServerPresets() {
+   if (typeof window === 'undefined' || typeof window.fetch !== 'function') {
+     return;
+   }
+ 
+   let response;
+   try {
+     response = await fetch('/api/presets');
+   } catch (err) {
+     console.warn('Unable to fetch presets from server:', err);
+     return;
+   }
+ 
+   if (!response.ok) {
+     console.warn('Failed to load presets from server.');
+     return;
+   }
+ 
+   let body;
+   try {

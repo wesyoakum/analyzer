@@ -888,6 +888,8 @@ const SELECT_CONFIGS = [
 
 const watchedInputs = new Set();
 const CREATE_NEW_VALUE = '__component_create_new__';
+const SAVE_CURRENT_VALUE = '__component_save_current__';
+const SAVE_CURRENT_LABEL = 'Save Current Preset';
 const COMPONENT_STORAGE_PREFIX = 'analyzer.components.';
 /** @type {Map<string, ComponentOption[]>} */
 const memoryCustomOptions = new Map();
@@ -895,6 +897,53 @@ let cachedComponentStorage;
 
 function isPlainObject(value) {
   return typeof value === 'object' && value !== null && !Array.isArray(value);
+}
+
+function mergePresetMetadata(...sources) {
+  /** @type {Record<string, unknown>} */
+  const result = {};
+  sources.forEach(source => {
+    if (!isPlainObject(source)) {
+      return;
+    }
+    Object.entries(source).forEach(([key, value]) => {
+      if (key === 'fieldMap' && isPlainObject(value)) {
+        const existingFieldMap =
+          isPlainObject(result.fieldMap) ? { .../** @type {Record<string, unknown>} */ (result.fieldMap) } : {};
+        result.fieldMap = { ...existingFieldMap, .../** @type {Record<string, unknown>} */ (value) };
+        return;
+      }
+      result[key] = value;
+    });
+  });
+  return result;
+}
+
+function buildMetadataForConfig(option, config) {
+  const metadata = mergePresetMetadata(option && isPlainObject(option.metadata) ? option.metadata : {});
+  if (option && typeof option.pn === 'string' && option.pn) {
+    if (typeof metadata.pn !== 'string' || !metadata.pn) {
+      metadata.pn = option.pn;
+    }
+  }
+  if (config && typeof config.type === 'string' && config.type) {
+    metadata.type = config.type;
+  }
+  if (config && typeof config.label === 'string' && config.label) {
+    metadata.label = config.label;
+  }
+  if (config && isPlainObject(config.fieldMap)) {
+    const entries = Object.entries(config.fieldMap).filter(([, optionKey]) => typeof optionKey === 'string' && optionKey);
+    if (entries.length) {
+      const fieldMap =
+        isPlainObject(metadata.fieldMap) ? { .../** @type {Record<string, string>} */ (metadata.fieldMap) } : {};
+      entries.forEach(([inputId, optionKey]) => {
+        fieldMap[inputId] = /** @type {string} */ (optionKey);
+      });
+      metadata.fieldMap = fieldMap;
+    }
+  }
+  return metadata;
 }
 
 function cloneOption(option) {
@@ -942,6 +991,7 @@ function refreshSelectsForType(type) {
     if (!selectEl) return;
     const prior = selectEl.value;
     populateSelectOptions(selectEl, config, { selectedValue: prior });
+    selectEl.dispatchEvent(new Event('component:options-refreshed'));
   });
 }
 
@@ -1192,13 +1242,34 @@ function populateSelectOptions(selectEl, config, { selectedValue } = {}) {
   createOpt.textContent = 'Create New';
   selectEl.appendChild(createOpt);
 
-  if (prior && prior !== CREATE_NEW_VALUE && findOption(config, prior)) {
+  const saveOpt = document.createElement('option');
+  saveOpt.value = SAVE_CURRENT_VALUE;
+  saveOpt.textContent = SAVE_CURRENT_LABEL;
+  saveOpt.dataset.componentPresetSave = '1';
+  saveOpt.disabled = true;
+  selectEl.appendChild(saveOpt);
+
+  if (prior && prior !== CREATE_NEW_VALUE && prior !== SAVE_CURRENT_VALUE && findOption(config, prior)) {
     selectEl.value = prior;
   } else if (prior === '') {
     selectEl.value = '';
   } else {
     selectEl.value = '';
   }
+}
+
+function ensureSavePresetOption(selectEl) {
+  /** @type {HTMLOptionElement|null} */
+  let option = selectEl.querySelector(`option[value="${SAVE_CURRENT_VALUE}"]`);
+  if (!option) {
+    option = document.createElement('option');
+    option.value = SAVE_CURRENT_VALUE;
+    option.textContent = SAVE_CURRENT_LABEL;
+    option.dataset.componentPresetSave = '1';
+    option.disabled = true;
+    selectEl.appendChild(option);
+  }
+  return option;
 }
 
 async function handleCreateNew(config, selectEl) {
@@ -1448,6 +1519,35 @@ export function setupComponentSelectors() {
 
     populateSelectOptions(selectEl, config, { selectedValue: initialValue });
 
+    let isSavingPreset = false;
+    let saveOption = ensureSavePresetOption(selectEl);
+    const updateSaveOptionState = () => {
+      saveOption = ensureSavePresetOption(selectEl);
+      if (!saveOption) {
+        return;
+      }
+      if (isSavingPreset) {
+        saveOption.disabled = true;
+        saveOption.textContent = 'Saving…';
+        return;
+      }
+      saveOption.textContent = SAVE_CURRENT_LABEL;
+      const option = findOption(config, selectEl.value);
+      const isServerPreset = Boolean(option && typeof option.id === 'string' && option.id);
+      const shouldEnable = isServerPreset && !selectEl.disabled;
+      saveOption.disabled = !shouldEnable;
+      if (isServerPreset && option && typeof option.id === 'string') {
+        saveOption.dataset.presetId = option.id;
+      } else {
+        delete saveOption.dataset.presetId;
+      }
+    };
+
+    selectEl.addEventListener('component:options-refreshed', () => {
+      saveOption = ensureSavePresetOption(selectEl);
+      updateSaveOptionState();
+    });
+
     Object.keys(config.fieldMap).forEach(inputId => attachWatcher(inputId));
 
     let previousValue = selectEl.value && selectEl.value !== CREATE_NEW_VALUE ? selectEl.value : '';
@@ -1457,15 +1557,158 @@ export function setupComponentSelectors() {
       applySelection(config, value, { skipEvents });
     };
 
+    const performSaveCurrentPreset = async () => {
+      if (isSavingPreset) {
+        return;
+      }
+      const option = findOption(config, selectEl.value);
+      if (!option || typeof option.id !== 'string' || !option.id) {
+        return;
+      }
+
+      const descriptor = option.name && option.name !== option.pn ? `${option.name} (${option.pn})` : option.pn;
+      const label = config.label || 'component';
+      const confirmMessage = [
+        `Save the current ${label} settings to preset "${descriptor}"?`,
+        'This will overwrite the version stored on the server.'
+      ].join('\n\n');
+      const confirmed = window.confirm(confirmMessage);
+      if (!confirmed) {
+        return;
+      }
+
+      isSavingPreset = true;
+      const wasSelectDisabled = selectEl.disabled;
+      selectEl.disabled = true;
+      updateSaveOptionState();
+
+      try {
+        const values = collectValuesForConfig(config);
+        const payloadMetadata = buildMetadataForConfig(option, config);
+        const payload = {
+          id: option.id,
+          name: option.name ?? option.pn,
+          ...(option.description ? { description: option.description } : {}),
+          data: values,
+          metadata: payloadMetadata
+        };
+
+        let response;
+        try {
+          response = await fetch('/api/presets', {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json'
+            },
+            body: JSON.stringify(payload)
+          });
+        } catch (err) {
+          const message = err instanceof Error ? err.message : String(err);
+          window.alert(`Unable to save preset: ${message}`);
+          return;
+        }
+
+        if (!response.ok) {
+          let message = 'Failed to save preset.';
+          try {
+            const errorBody = await response.json();
+            if (errorBody?.error?.message) {
+              message = errorBody.error.message;
+              if (Array.isArray(errorBody.error.details) && errorBody.error.details.length) {
+                message = `${message}\n- ${errorBody.error.details.join('\n- ')}`;
+              }
+            }
+          } catch (err) {
+            // Ignore JSON parsing errors; fall back to generic message.
+          }
+          window.alert(message);
+          return;
+        }
+
+        let body;
+        try {
+          body = await response.json();
+        } catch (err) {
+          window.alert('Failed to parse server response when saving preset.');
+          return;
+        }
+
+        const preset = body?.preset;
+        if (!preset || typeof preset.id !== 'string') {
+          window.alert('Server response did not include the updated preset.');
+          return;
+        }
+
+        const presetData =
+          preset && typeof preset.data === 'object' && preset.data !== null && !Array.isArray(preset.data)
+            ? preset.data
+            : values;
+        const serverMetadata =
+          preset.metadata && typeof preset.metadata === 'object' && !Array.isArray(preset.metadata)
+            ? preset.metadata
+            : undefined;
+        const mergedMetadata = mergePresetMetadata(option.metadata, payloadMetadata, serverMetadata);
+        if (option.pn && (typeof mergedMetadata.pn !== 'string' || !mergedMetadata.pn)) {
+          mergedMetadata.pn = option.pn;
+        }
+        if (config.type && (!mergedMetadata.type || typeof mergedMetadata.type !== 'string')) {
+          mergedMetadata.type = config.type;
+        }
+        if (config.label && (!mergedMetadata.label || typeof mergedMetadata.label !== 'string')) {
+          mergedMetadata.label = config.label;
+        }
+
+        const normalizedOptionData = normalizePresetDataForOption(presetData, mergedMetadata?.fieldMap);
+        /** @type {ComponentOption} */
+        const updatedOption = {
+          pn: mergedMetadata.pn && typeof mergedMetadata.pn === 'string' ? mergedMetadata.pn : option.pn,
+          name: preset.name ?? option.name ?? option.pn,
+          ...(preset.description ? { description: preset.description } : option.description ? { description: option.description } : {}),
+          ...normalizedOptionData,
+          id: option.id,
+          metadata: isPlainObject(mergedMetadata) ? { ...mergedMetadata } : undefined,
+          data: isPlainObject(presetData) ? { ...presetData } : undefined
+        };
+        if (typeof preset.updatedAt === 'string') {
+          updatedOption.updatedAt = preset.updatedAt;
+        } else if (option.updatedAt) {
+          updatedOption.updatedAt = option.updatedAt;
+        }
+
+        if (config.type) {
+          upsertCustomOption(config.type, updatedOption);
+        }
+
+        const updatedPn = updatedOption.pn ?? option.pn;
+        if (updatedPn) {
+          previousValue = updatedPn;
+          selectEl.value = updatedPn;
+        }
+      } finally {
+        isSavingPreset = false;
+        selectEl.disabled = wasSelectDisabled;
+        updateSaveOptionState();
+      }
+    };
+
     selectEl.addEventListener('change', async () => {
       if (suppressNext) {
         suppressNext = false;
         previousValue = selectEl.value;
         ensureOptionApplied(selectEl.value);
+        updateSaveOptionState();
         return;
       }
 
       const value = selectEl.value;
+      if (value === SAVE_CURRENT_VALUE) {
+        const revertValue = previousValue || '';
+        selectEl.value = revertValue;
+        await performSaveCurrentPreset();
+        updateSaveOptionState();
+        return;
+      }
+
       if (value === CREATE_NEW_VALUE) {
         selectEl.value = previousValue;
         const createdPn = await handleCreateNew(config, selectEl);
@@ -1478,17 +1721,21 @@ export function setupComponentSelectors() {
         } else {
           ensureOptionApplied(previousValue);
         }
+        updateSaveOptionState();
         return;
       }
 
       previousValue = value;
       ensureOptionApplied(value);
+      updateSaveOptionState();
     });
 
     // Apply persisted selection if present
     if (selectEl.value) {
       ensureOptionApplied(selectEl.value, { skipEvents: initialSkipEvents });
     }
+
+    updateSaveOptionState();
   });
 
   void fetchAndApplyServerPresets();
