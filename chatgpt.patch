@@ -1,8 +1,8 @@
 diff --git a/src/js/plots/rpm-torque.mjs b/src/js/plots/rpm-torque.mjs
-index e37a47abffb6ba3d68ea5dd512b97820f907b2ab..794087270b0237cfcc9472c541ec89aa1df6a175 100644
+index 794087270b0237cfcc9472c541ec89aa1df6a175..d885012a037d7e7c4bd5fd4e658756fde34dfeb6 100644
 --- a/src/js/plots/rpm-torque.mjs
 +++ b/src/js/plots/rpm-torque.mjs
-@@ -109,53 +109,43 @@ export function drawHydraulicRpmTorque(svg, { wraps = [] } = {}) {
+@@ -109,43 +109,56 @@ export function drawHydraulicRpmTorque(svg, { wraps = [] } = {}) {
        .map(d => [d.torque, d[field]])
        .filter(([torque, rpm]) => Number.isFinite(torque) && Number.isFinite(rpm));
  
@@ -28,16 +28,19 @@ index e37a47abffb6ba3d68ea5dd512b97820f907b2ab..794087270b0237cfcc9472c541ec89aa
      }));
    }
  
--  data.forEach(d => {
--    svg.appendChild(svgEl('circle', {
--      cx: sx(d.torque),
--      cy: sy(d.rpmAvail),
--      r: 3,
--      fill: '#fff',
--      stroke: accent,
--      'stroke-width': 1.5
--    }));
--  });
++  const minPoint = data.find(d => Number.isFinite(d.rpmAvail));
++  if (minPoint) {
++    const y = sy(minPoint.rpmAvail);
++    svg.appendChild(svgEl('line', {
++      x1: ML,
++      y1: y,
++      x2: sx(minPoint.torque),
++      y2: y,
++      stroke: accent,
++      'stroke-width': 2
++    }));
++  }
++
  }
  
  function toNumber(val) {

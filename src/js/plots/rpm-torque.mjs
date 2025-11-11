@@ -131,6 +131,19 @@ export function drawHydraulicRpmTorque(svg, { wraps = [] } = {}) {
     }));
   }
 
+  const minPoint = data.find(d => Number.isFinite(d.rpmAvail));
+  if (minPoint) {
+    const y = sy(minPoint.rpmAvail);
+    svg.appendChild(svgEl('line', {
+      x1: ML,
+      y1: y,
+      x2: sx(minPoint.torque),
+      y2: y,
+      stroke: accent,
+      'stroke-width': 2
+    }));
+  }
+
 }
 
 function toNumber(val) {
