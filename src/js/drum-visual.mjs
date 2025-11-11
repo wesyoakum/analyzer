@@ -220,6 +220,30 @@ export function renderDrumVisualization(rows, summary, cfg, meta) {
       'stroke-width': strokeWidthAttr,
       'vector-effect': 'non-scaling-stroke'
     }));
+
+    const capHeightPx = scale * 1;
+    if (capHeightPx > 0) {
+      const capFill = rgbToCss(ink900Rgb, 0.45);
+      const capHeightAttr = capHeightPx.toFixed(2);
+      const capWidthAttr = coreWidthPx.toFixed(2);
+      const capXAttr = spoolLeft.toFixed(2);
+
+      svg.appendChild(svgEl('rect', {
+        x: capXAttr,
+        y: (centerY - coreHeightPx / 2 - capHeightPx).toFixed(2),
+        width: capWidthAttr,
+        height: capHeightAttr,
+        fill: capFill
+      }));
+
+      svg.appendChild(svgEl('rect', {
+        x: capXAttr,
+        y: (centerY + coreHeightPx / 2).toFixed(2),
+        width: capWidthAttr,
+        height: capHeightAttr,
+        fill: capFill
+      }));
+    }
   }
 
   if (flangeHeightPx > 0 && flangeWidthPx > 0) {
