@@ -152,6 +152,14 @@ function renderWavePlot(svg, {
   let hoverLayer = null;
 
   if (mode === 'speed') {
+    let contourId = 0;
+    const contourLabelLayer = svgEl('g', {
+      'font-family': 'monospace',
+      'font-size': '11',
+      fill: '#5c6478',
+      'pointer-events': 'none'
+    });
+
     // contour lines for H from 0.5 to Hmax in 0.5 m step
     for (let Hm = Hstep; Hm <= Hmax + 1e-9; Hm += Hstep) {
       const pts = [];
@@ -161,13 +169,32 @@ function renderWavePlot(svg, {
         const v = Math.PI * Hm / Math.max(T, 1e-9);
         pts.push([sx(T), sy(v)]);
       }
-      svg.appendChild(svgEl('path', {
+      const isIntegerContour = Math.abs(Hm - Math.round(Hm)) < 1e-9;
+      const pathAttrs = {
         d: svgPathFromPoints(pts),
         fill: 'none',
         stroke: '#999',
         'stroke-width': 1.5,
-        'stroke-dasharray': (Math.abs(Hm - Math.round(Hm)) < 1e-9) ? '0' : '6 6'
-      }));
+        'stroke-dasharray': isIntegerContour ? '0' : '6 6'
+      };
+      if (isIntegerContour) {
+        pathAttrs.id = `wave-contour-${contourId++}`;
+      }
+      const contourPath = svgEl('path', pathAttrs);
+      svg.appendChild(contourPath);
+
+      if (isIntegerContour && pts.length > 1) {
+        const labelText = `---------- ${Math.round(Hm)} m ----------`;
+        const text = svgEl('text', { 'text-anchor': 'middle' });
+        const textPath = svgEl('textPath', {
+          href: `#${pathAttrs.id}`,
+          'startOffset': '50%'
+        });
+        textPath.setAttributeNS('http://www.w3.org/1999/xlink', 'href', `#${pathAttrs.id}`);
+        textPath.textContent = labelText;
+        text.appendChild(textPath);
+        contourLabelLayer.appendChild(text);
+      }
     }
 
     // horizontal lines for each layer speed
@@ -185,6 +212,10 @@ function renderWavePlot(svg, {
       lbl.textContent = `L${L.layer_no} (${L.v_ms.toFixed(2)} m/s)`;
       svg.appendChild(lbl);
     });
+
+    if (contourLabelLayer.childNodes.length) {
+      svg.appendChild(contourLabelLayer);
+    }
 
     hoverLayer = svgEl('g', { 'pointer-events': 'none' });
     const hoverLine = svgEl('line', {
