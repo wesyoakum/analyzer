@@ -890,6 +890,8 @@ const watchedInputs = new Set();
 const CREATE_NEW_VALUE = '__component_create_new__';
 const SAVE_CURRENT_VALUE = '__component_save_current__';
 const SAVE_CURRENT_LABEL = 'Save Current Preset';
+const DELETE_PRESET_VALUE = '__component_delete_preset__';
+const DELETE_PRESET_LABEL = 'Delete Preset';
 const COMPONENT_STORAGE_PREFIX = 'analyzer.components.';
 /** @type {Map<string, ComponentOption[]>} */
 const memoryCustomOptions = new Map();
@@ -1039,6 +1041,17 @@ function upsertCustomOption(type, option, { persist = true } = {}) {
   const existing = memoryCustomOptions.get(type) ?? [];
   const merged = mergeCustomOptionLists(existing, [option]);
   replaceCustomOptions(type, merged, { persist });
+}
+
+function removeCustomOptionById(type, id, { persist = true } = {}) {
+  if (!type || typeof id !== 'string' || !id) return false;
+  const existing = memoryCustomOptions.get(type) ?? [];
+  const filtered = existing.filter(item => item.id !== id);
+  if (filtered.length === existing.length) {
+    return false;
+  }
+  replaceCustomOptions(type, filtered, { persist });
+  return true;
 }
 
 function normalizePresetDataForOption(data, fieldMap) {
@@ -1249,6 +1262,13 @@ function populateSelectOptions(selectEl, config, { selectedValue } = {}) {
   saveOpt.disabled = true;
   selectEl.appendChild(saveOpt);
 
+  const deleteOpt = document.createElement('option');
+  deleteOpt.value = DELETE_PRESET_VALUE;
+  deleteOpt.textContent = DELETE_PRESET_LABEL;
+  deleteOpt.dataset.componentPresetDelete = '1';
+  deleteOpt.disabled = true;
+  selectEl.appendChild(deleteOpt);
+
   if (prior && prior !== CREATE_NEW_VALUE && prior !== SAVE_CURRENT_VALUE && findOption(config, prior)) {
     selectEl.value = prior;
   } else if (prior === '') {
@@ -1266,6 +1286,20 @@ function ensureSavePresetOption(selectEl) {
     option.value = SAVE_CURRENT_VALUE;
     option.textContent = SAVE_CURRENT_LABEL;
     option.dataset.componentPresetSave = '1';
+    option.disabled = true;
+    selectEl.appendChild(option);
+  }
+  return option;
+}
+
+function ensureDeletePresetOption(selectEl) {
+  /** @type {HTMLOptionElement|null} */
+  let option = selectEl.querySelector(`option[value="${DELETE_PRESET_VALUE}"]`);
+  if (!option) {
+    option = document.createElement('option');
+    option.value = DELETE_PRESET_VALUE;
+    option.textContent = DELETE_PRESET_LABEL;
+    option.dataset.componentPresetDelete = '1';
     option.disabled = true;
     selectEl.appendChild(option);
   }
@@ -1520,32 +1554,51 @@ export function setupComponentSelectors() {
     populateSelectOptions(selectEl, config, { selectedValue: initialValue });
 
     let isSavingPreset = false;
+    let isDeletingPreset = false;
     let saveOption = ensureSavePresetOption(selectEl);
-    const updateSaveOptionState = () => {
+    let deleteOption = ensureDeletePresetOption(selectEl);
+    const updatePresetActionState = () => {
       saveOption = ensureSavePresetOption(selectEl);
-      if (!saveOption) {
-        return;
-      }
-      if (isSavingPreset) {
-        saveOption.disabled = true;
-        saveOption.textContent = 'Saving…';
-        return;
-      }
-      saveOption.textContent = SAVE_CURRENT_LABEL;
+      deleteOption = ensureDeletePresetOption(selectEl);
       const option = findOption(config, selectEl.value);
       const isServerPreset = Boolean(option && typeof option.id === 'string' && option.id);
-      const shouldEnable = isServerPreset && !selectEl.disabled;
-      saveOption.disabled = !shouldEnable;
-      if (isServerPreset && option && typeof option.id === 'string') {
-        saveOption.dataset.presetId = option.id;
-      } else {
-        delete saveOption.dataset.presetId;
+      const canMutate = isServerPreset && !selectEl.disabled;
+
+      if (saveOption) {
+        if (isSavingPreset) {
+          saveOption.disabled = true;
+          saveOption.textContent = 'Saving…';
+        } else {
+          saveOption.textContent = SAVE_CURRENT_LABEL;
+          saveOption.disabled = !(canMutate && !isDeletingPreset);
+        }
+        if (isServerPreset && option && typeof option.id === 'string') {
+          saveOption.dataset.presetId = option.id;
+        } else {
+          delete saveOption.dataset.presetId;
+        }
+      }
+
+      if (deleteOption) {
+        if (isDeletingPreset) {
+          deleteOption.disabled = true;
+          deleteOption.textContent = 'Deleting…';
+        } else {
+          deleteOption.textContent = DELETE_PRESET_LABEL;
+          deleteOption.disabled = !(canMutate && !isSavingPreset);
+        }
+        if (isServerPreset && option && typeof option.id === 'string') {
+          deleteOption.dataset.presetId = option.id;
+        } else {
+          delete deleteOption.dataset.presetId;
+        }
       }
     };
 
     selectEl.addEventListener('component:options-refreshed', () => {
       saveOption = ensureSavePresetOption(selectEl);
-      updateSaveOptionState();
+      deleteOption = ensureDeletePresetOption(selectEl);
+      updatePresetActionState();
     });
 
     Object.keys(config.fieldMap).forEach(inputId => attachWatcher(inputId));
@@ -1580,7 +1633,7 @@ export function setupComponentSelectors() {
       isSavingPreset = true;
       const wasSelectDisabled = selectEl.disabled;
       selectEl.disabled = true;
-      updateSaveOptionState();
+      updatePresetActionState();
 
       try {
         const values = collectValuesForConfig(config);
@@ -1687,7 +1740,7 @@ export function setupComponentSelectors() {
       } finally {
         isSavingPreset = false;
         selectEl.disabled = wasSelectDisabled;
-        updateSaveOptionState();
+        updatePresetActionState();
       }
     };
 
@@ -1696,7 +1749,7 @@ export function setupComponentSelectors() {
         suppressNext = false;
         previousValue = selectEl.value;
         ensureOptionApplied(selectEl.value);
-        updateSaveOptionState();
+        updatePresetActionState();
         return;
       }
 
@@ -1705,7 +1758,72 @@ export function setupComponentSelectors() {
         const revertValue = previousValue || '';
         selectEl.value = revertValue;
         await performSaveCurrentPreset();
-        updateSaveOptionState();
+        updatePresetActionState();
+        return;
+      }
+
+      if (value === DELETE_PRESET_VALUE) {
+        const revertValue = previousValue || '';
+        selectEl.value = revertValue;
+        const option = findOption(config, revertValue);
+        if (!option || typeof option.id !== 'string' || !option.id) {
+          ensureOptionApplied(revertValue);
+          updatePresetActionState();
+          return;
+        }
+
+        const descriptor = option.name && option.name !== option.pn ? `${option.name} (${option.pn})` : option.pn;
+        const confirmMessage = `Delete preset "${descriptor}"? This action cannot be undone.`;
+        const confirmed = window.confirm(confirmMessage);
+        if (!confirmed) {
+          ensureOptionApplied(revertValue);
+          updatePresetActionState();
+          return;
+        }
+
+        const wasSelectDisabled = selectEl.disabled;
+        selectEl.disabled = true;
+        isDeletingPreset = true;
+        updatePresetActionState();
+
+        try {
+          let response;
+          try {
+            response = await fetch(`/api/presets/${encodeURIComponent(option.id)}`, {
+              method: 'DELETE'
+            });
+          } catch (err) {
+            const message = err instanceof Error ? err.message : String(err);
+            window.alert(`Unable to delete preset: ${message}`);
+            return;
+          }
+
+          if (!response.ok) {
+            let message = 'Failed to delete preset.';
+            try {
+              const errorBody = await response.json();
+              if (errorBody?.error?.message) {
+                message = errorBody.error.message;
+              }
+            } catch (err) {
+              // Ignore JSON parsing errors; fall back to generic message.
+            }
+            window.alert(message);
+            return;
+          }
+
+          if (config.type) {
+            removeCustomOptionById(config.type, option.id);
+          }
+          previousValue = '';
+          selectEl.value = '';
+          ensureOptionApplied('');
+        } finally {
+          isDeletingPreset = false;
+          selectEl.disabled = wasSelectDisabled;
+          updatePresetActionState();
+        }
+
         return;
       }
 
@@ -1721,13 +1839,13 @@ export function setupComponentSelectors() {
         } else {
           ensureOptionApplied(previousValue);
         }
-        updateSaveOptionState();
+        updatePresetActionState();
         return;
       }
 
       previousValue = value;
       ensureOptionApplied(value);
-      updateSaveOptionState();
+      updatePresetActionState();
     });
 
     // Apply persisted selection if present
@@ -1735,7 +1853,7 @@ export function setupComponentSelectors() {
       ensureOptionApplied(selectEl.value, { skipEvents: initialSkipEvents });
     }
 
-    updateSaveOptionState();
+    updatePresetActionState();
   });
 
   void fetchAndApplyServerPresets();
