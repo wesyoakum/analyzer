@@ -1,57 +1,56 @@
-diff --git a/src/js/main.mjs b/src/js/main.mjs
-index 0bd22b62b993efd1b69a41463ea8820855781acf..d768577c3948706a6a762a6347145583a0881ad2 100644
---- a/src/js/main.mjs
-+++ b/src/js/main.mjs
-@@ -421,51 +421,51 @@ function setupCollapsibleToggles() {
- }
+diff --git a/src/index.html b/src/index.html
+index 8387008203ca5d5dd54c6f68333c65e79dea9c28..a1e5dbc5502f5a207aeb38fe71a9cd73bf91c204 100644
+--- a/src/index.html
++++ b/src/index.html
+@@ -908,50 +908,51 @@
+     <div
+       id="panel-results"
+       class="panel"
+       role="tabpanel"
+       aria-labelledby="tab-results"
+       tabindex="0"
+       hidden
+       aria-hidden="true"
+       aria-live="polite"
+     >
+       <div class="card" id="drum_card">
+         <div class="card-header">
+           <h2 class="section-title">Section 3: Drum Visualization</h2>
+           <button type="button" class="card-header__refresh" data-drum-refresh>Refresh</button>
+         </div>
+         <div class="drum-visual">
+           <svg
+             id="drum_visual_svg"
+             class="drum-visual__svg"
+             viewBox="0 0 320 320"
+             role="img"
+             aria-labelledby="drum_visual_title"
+           >
+             <title id="drum_visual_title">Winch drum cross-section</title>
+           </svg>
++          <div id="drum_legend" class="legend legend--drum" hidden></div>
+         </div>
+         <p class="drum-summary" id="drum_summary"></p>
+       </div>
  
- function setupPlotResizeToggles() {
-   const toggles = document.querySelectorAll('[data-plot-pair-toggle]');
-   toggles.forEach(btn => {
-     const pair = btn.closest('[data-plot-pair]');
-     if (!pair) return;
- 
-     const setState = (expanded) => {
-       pair.classList.toggle('is-expanded', expanded);
-       btn.textContent = expanded ? '[-]' : '[+]';
-       btn.setAttribute('aria-expanded', expanded ? 'true' : 'false');
-       btn.setAttribute('aria-label', expanded ? 'Collapse plots to two columns' : 'Expand plots to full width');
-     };
- 
-     setState(pair.classList.contains('is-expanded'));
- 
-     btn.addEventListener('click', () => {
-       const next = !pair.classList.contains('is-expanded');
-       setState(next);
-     });
-   });
- }
- 
- function setupManualRefreshControls() {
--  const plotButtons = document.querySelectorAll('[data-plot-refresh]');
-+  const plotButtons = document.querySelectorAll('[data-refresh-plots]');
-   plotButtons.forEach(btn => {
-     btn.addEventListener('click', () => {
-       redrawPlots();
-     });
-   });
- 
-   const drumButton = /** @type {HTMLButtonElement|null} */ (document.querySelector('[data-drum-refresh]'));
-   if (drumButton) {
-     drumButton.addEventListener('click', () => {
-       if (lastDrumState) {
-         const { rows, summary, cfg, meta } = lastDrumState;
-         renderDrumVisualization(rows, summary, cfg, meta);
-       } else {
-         computeAll();
-       }
-     });
-   }
- }
- 
- function setupAutoRecompute() {
-   const inputs = Array.from(document.querySelectorAll('input, select, textarea'));
-   if (!inputs.length) return;
- 
-   const handler = () => computeAll();
- 
+       <div class="card" data-drive-scope="electric">
+         <div class="section-title">Section 3: Electric Layer Table</div>
+         <div class="btnbar">
+           <button id="csv_el_layer" type="button" disabled>Download CSV — Electric Layer</button>
+         </div>
+         <table>
+           <thead>
+             <tr>
+               <th title="layer_no">L#<br>(–)</th>
+               <th title="layer_dia_in">
+                 <span data-latex="D_{layer}">D<sub>layer</sub></span><br>(in)
+               </th>
+               <th title="pre_on_drum_m">pre_on<br>(m)</th>
+               <th title="pre_deployed_m">pre_dep<br>(m)</th>
+               <th title="post_on_drum_m">post_on<br>(m)</th>
+               <th title="post_deployed_m">post_dep<br>(m)</th>
+               <th title="max_tension_theoretical_kgf">
+                 <span data-latex="T_{theo,\max}">T<sub>theo,max</sub></span><br>(kgf)
+               </th>
+               <th title="max_tension_required_kgf">
+                 <span data-latex="T_{req,\max}">T<sub>req,max</sub></span><br>(kgf)

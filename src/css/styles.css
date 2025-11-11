@@ -8,6 +8,8 @@
   --ink-500: #55637d;
   --accent: #2c56a3;
   --accent-light: #edf2ff;
+  --tension-low: #6c2bd9;
+  --tension-high: #f97316;
 }
 
 * {
@@ -813,6 +815,20 @@ th[title] {
   color: var(--ink-700);
 }
 
+.legend--drum {
+  margin-top: 16px;
+  align-items: stretch;
+}
+
+.legend--drum[hidden] {
+  display: none;
+}
+
+.legitem--gradient {
+  gap: 16px;
+  align-items: stretch;
+}
+
 .legitem {
   display: flex;
   align-items: center;
@@ -820,11 +836,54 @@ th[title] {
   font-size: 13px;
 }
 
-.swatch { 
+.swatch {
   width: 22px;
   height: 0;
   border-top: 2px solid #244f9e;
   display: inline-block;
+}
+
+.swatch--gradient {
+  width: clamp(160px, 28vw, 240px);
+  height: 14px;
+  border-top: none;
+  border-radius: 999px;
+  background-image: linear-gradient(90deg, var(--tension-low), var(--tension-high));
+  box-shadow: inset 0 0 0 1px rgba(20, 34, 56, 0.12);
+  flex-shrink: 0;
+}
+
+.legend__scale {
+  display: flex;
+  justify-content: space-between;
+  gap: 20px;
+  flex: 1 1 160px;
+  align-items: flex-start;
+}
+
+.legend__endpoint {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.legend__endpoint--high {
+  text-align: right;
+  align-items: flex-end;
+}
+
+.legend__label {
+  font-size: 12px;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+  color: rgba(47, 59, 84, 0.75);
+}
+
+.legend__value {
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--ink-700);
+  font-variant-numeric: tabular-nums;
 }
 
 .swatch.dashed {
