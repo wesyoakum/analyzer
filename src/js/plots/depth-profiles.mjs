@@ -4,7 +4,7 @@ import { niceTicks, svgEl, TENSION_SAFETY_FACTOR } from '../utils.mjs';
 const CANDIDATE_POWER_COLOR = '#9249c6'; // purple
 const CANDIDATE_FLOW_COLOR = '#eed500'; // yellow
 const EXCEED_COLOR = '#c65353'; // red
-const TENSION_THEORETICAL_COLOR = '#7c8fc5'; // matches legend swatch
+const TENSION_REQUIRED_COLOR = '#7f8c99'; // matches legend swatch
 const RATED_SPEED_COLOR = '#888888'; // gray
 const PITA_PINK = 'e056e8'; // pink
 const CLARS_BLUE = '#2163a5'; // blue
@@ -407,25 +407,68 @@ function drawTensionProfile(svg, segments, depthMin, depthMax, tensionMin, tensi
     };
   }).filter(Boolean);
 
-  segments.forEach(S => {
-    if (!Number.isFinite(S.avail_tension_kgf)) return;
-    if (S.avail_tension_kgf < tensionMin - 1e-9 || S.avail_tension_kgf > tensionMax + 1e-9) return;
-    const depthEnd = Math.min(S.depth_start, S.depth_end);
-    const depthStart = Math.max(S.depth_start, S.depth_end);
-    if (Math.max(depthStart, depthEnd) < depthMin - 1e-9) return;
-    if (Math.min(depthStart, depthEnd) > depthMax + 1e-9) return;
-    const x0 = sx(depthEnd);
-    const x1 = sx(depthStart);
+  const safePayload = Number.isFinite(payload_kg) ? payload_kg : 0;
+  const safeCableWeight = Number.isFinite(cable_w_kgpm) ? cable_w_kgpm : 0;
+  const requirementIntercept = TENSION_SAFETY_FACTOR * safePayload;
+  const requirementSlope = TENSION_SAFETY_FACTOR * safeCableWeight;
+  const requiredAt = depth => requirementIntercept + requirementSlope * depth;
+
+  const availablePieces = [];
+  normalizedSegments.forEach(seg => {
+    const avail = seg.avail_tension_kgf;
+    if (!Number.isFinite(avail)) return;
+    if (avail < tensionMin - 1e-9 || avail > tensionMax + 1e-9) return;
+    const dShallow = Math.min(seg.depth_start, seg.depth_end);
+    const dDeep = Math.max(seg.depth_start, seg.depth_end);
+    if (dDeep - dShallow < 1e-9) return;
+
+    const requiredShallow = requiredAt(dShallow);
+    const requiredDeep = requiredAt(dDeep);
+    const meetsShallow = avail >= requiredShallow - 1e-6;
+    const meetsDeep = avail >= requiredDeep - 1e-6;
+
+    if (Math.abs(requirementSlope) < 1e-9 || meetsShallow === meetsDeep) {
+      availablePieces.push({
+        d0: dShallow,
+        d1: dDeep,
+        tension: avail,
+        color: meetsShallow ? accentColor : EXCEED_COLOR
+      });
+      return;
+    }
+
+    const crossingDepth = (avail - requirementIntercept) / requirementSlope;
+    const clampedCross = Math.min(Math.max(crossingDepth, dShallow), dDeep);
+    if (clampedCross - dShallow > 1e-9) {
+      availablePieces.push({
+        d0: dShallow,
+        d1: clampedCross,
+        tension: avail,
+        color: meetsShallow ? accentColor : EXCEED_COLOR
+      });
+    }
+    if (dDeep - clampedCross > 1e-9) {
+      availablePieces.push({
+        d0: clampedCross,
+        d1: dDeep,
+        tension: avail,
+        color: meetsShallow ? EXCEED_COLOR : accentColor
+      });
+    }
+  });
+
+  availablePieces.forEach(seg => {
+    const x0 = sx(seg.d0);
+    const x1 = sx(seg.d1);
     if (Math.abs(x1 - x0) < 1e-6) return;
-    const y = sy(S.avail_tension_kgf);
+    const y = sy(seg.tension);
     svg.appendChild(svgEl('line', {
       x1: x0,
       y1: y,
       x2: x1,
       y2: y,
-      stroke: accentColor,
-      'stroke-width': 2,
-      'stroke-dasharray': '6 4'
+      stroke: seg.color,
+      'stroke-width': 2.4
     }));
   });
 
@@ -449,15 +492,8 @@ function drawTensionProfile(svg, segments, depthMin, depthMax, tensionMin, tensi
     });
   };
 
-  const theoreticalPieces = buildTheoreticalCurve(depthMin, depthMax, payload_kg, cable_w_kgpm);
-  drawPieces(theoreticalPieces, { strokeWidth: 2, dash: '6 4' });
-
-  const requiredPieces = buildTensionSegments(normalizedSegments, payload_kg, cable_w_kgpm, depthMin, depthMax, {
-    factor: TENSION_SAFETY_FACTOR,
-    colorBelow: accentColor,
-    colorAbove: EXCEED_COLOR
-  });
-  drawPieces(requiredPieces, { strokeWidth: 2.4 });
+  const requirementPieces = buildRequirementCurve(depthMin, depthMax, payload_kg, cable_w_kgpm);
+  drawPieces(requirementPieces, { strokeWidth: 2, dash: '6 4' });
 
   if (tensionMin <= 0 && tensionMax >= 0) {
     svg.appendChild(svgEl('line', { x1: ML, y1: sy(0), x2: W - MR, y2: sy(0), stroke: '#bbb', 'stroke-dasharray': '4 4' }));
@@ -471,7 +507,7 @@ function drawTensionProfile(svg, segments, depthMin, depthMax, tensionMin, tensi
   }
 }
 
-function buildTheoreticalCurve(depthMin, depthMax, payload_kg, cable_w_kgpm) {
+function buildRequirementCurve(depthMin, depthMax, payload_kg, cable_w_kgpm) {
   if (!Number.isFinite(depthMin) || !Number.isFinite(depthMax)) return [];
   if (!Number.isFinite(payload_kg) || !Number.isFinite(cable_w_kgpm)) return [];
 
@@ -479,86 +515,15 @@ function buildTheoreticalCurve(depthMin, depthMax, payload_kg, cable_w_kgpm) {
   const clampedMax = Math.max(depthMin, depthMax);
   if (Math.abs(clampedMax - clampedMin) < 1e-9) return [];
 
+  const factor = TENSION_SAFETY_FACTOR;
+
   return [{
     d0: clampedMin,
     d1: clampedMax,
-    color: TENSION_THEORETICAL_COLOR,
-    T0: payload_kg + cable_w_kgpm * clampedMin,
-    T1: payload_kg + cable_w_kgpm * clampedMax
+    color: TENSION_REQUIRED_COLOR,
+    T0: (payload_kg + cable_w_kgpm * clampedMin) * factor,
+    T1: (payload_kg + cable_w_kgpm * clampedMax) * factor
   }];
-}
-
-function buildTensionSegments(segments, payload_kg, cable_w_kgpm, depthMin, depthMax, {
-  factor = 1,
-  colorBelow,
-  colorAbove
-} = {}) {
-  const clampDepth = d => Math.min(Math.max(d, depthMin), depthMax);
-  const boundaries = new Set([depthMin, depthMax]);
-  segments.forEach(S => {
-    boundaries.add(clampDepth(S.depth_end));
-    boundaries.add(clampDepth(S.depth_start));
-  });
-  const sorted = [...boundaries].sort((a, b) => a - b);
-
-  const pieces = [];
-  for (let i = 0; i < sorted.length - 1; i++) {
-    const d0 = sorted[i];
-    const d1 = sorted[i + 1];
-    if (d1 - d0 < 1e-9) continue;
-    const mid = (d0 + d1) / 2;
-    const seg = segments.find(S => mid >= Math.min(S.depth_end, S.depth_start) - 1e-9 && mid <= Math.max(S.depth_end, S.depth_start) + 1e-9);
-    const avail = seg ? seg.avail_tension_kgf : null;
-    const baseT0 = payload_kg + cable_w_kgpm * d0;
-    const baseT1 = payload_kg + cable_w_kgpm * d1;
-    const T0 = baseT0 * factor;
-    const T1 = baseT1 * factor;
-
-    if (!Number.isFinite(avail) || !Number.isFinite(factor) || factor <= 0) {
-      pieces.push({ d0, d1, color: colorBelow, T0, T1 });
-      continue;
-    }
-
-    const above0 = T0 > avail + 1e-6;
-    const above1 = T1 > avail + 1e-6;
-
-    if (above0 === above1) {
-      pieces.push({ d0, d1, color: above0 ? colorAbove : colorBelow, T0, T1 });
-      continue;
-    }
-
-    const deltaT = T1 - T0;
-    if (Math.abs(deltaT) < 1e-9) {
-      pieces.push({ d0, d1, color: above0 ? colorAbove : colorBelow, T0, T1 });
-      continue;
-    }
-
-    const frac = Math.min(Math.max((avail - T0) / deltaT, 0), 1);
-    const dCross = d0 + frac * (d1 - d0);
-    const Tcross = T0 + frac * deltaT;
-    const firstColor = above0 ? colorAbove : colorBelow;
-    const secondColor = above0 ? colorBelow : colorAbove;
-
-    pieces.push({ d0, d1: dCross, color: firstColor, T0, T1: Tcross });
-    pieces.push({ d0: dCross, d1, color: secondColor, T0: Tcross, T1 });
-  }
-
-  // Merge adjacent pieces of same color
-  const merged = [];
-  for (const piece of pieces) {
-    if (!merged.length) {
-      merged.push({ ...piece });
-      continue;
-    }
-    const last = merged[merged.length - 1];
-    if (piece.color === last.color && Math.abs(piece.d0 - last.d1) < 1e-6) {
-      last.d1 = piece.d1;
-      last.T1 = piece.T1;
-    } else {
-      merged.push({ ...piece });
-    }
-  }
-  return merged;
 }
 
 function coerceNumeric(wrap, field) {
