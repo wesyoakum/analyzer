@@ -1,38 +1,14 @@
 diff --git a/src/index.html b/src/index.html
-index 7c94cffbfa5c6b843345845600347408eb07b13a..0b1868a17d1e94e0437420971e69fb6a47b42bb4 100644
+index 0b1868a17d1e94e0437420971e69fb6a47b42bb4..fd834ab9ae2661437a8403f611ce0045bf68f2be 100644
 --- a/src/index.html
 +++ b/src/index.html
-@@ -830,51 +830,54 @@
-           </details>
-         </div>
-         <div class="plot-pair" data-plot-pair>
-           <div class="plot-pair__actions">
-             <button
-               type="button"
-               class="plot-pair__toggle"
-               data-plot-pair-toggle
-               aria-expanded="false"
-               aria-label="Expand depth plots"
-             >[+]</button>
-           </div>
-           <div class="twocol depth-plots">
-             <div class="col plot-column">
-               <div class="plot-panel">
-                 <div class="plot-panel__heading">
-                   <div class="plot-title">Available Speed vs Depth</div>
-                 </div>
-                 <div class="plotwrap">
-                   <svg id="depth_speed_svg" viewBox="0 0 1000 540"></svg>
-                 </div>
-                 <div class="legend legend--compact">
-                   <div class="legitem"><span class="swatch accent"></span><span>Available speed</span></div>
+@@ -853,54 +853,58 @@
                    <div class="legitem"><span class="swatch rated"></span><span>Rated speed</span></div>
                    <div class="legitem">
--                    <span class="swatch light dashed"></span>
-+                    <span class="swatch-group" aria-hidden="true">
-+                      <span class="swatch flow"></span>
-+                      <span class="swatch power"></span>
-+                    </span>
+                     <span class="swatch-group" aria-hidden="true">
+                       <span class="swatch flow"></span>
+                       <span class="swatch power"></span>
+                     </span>
                      <span>
                        Candidate speeds (
                        <span data-latex="V_{p}">V<sub>p</sub></span>,
@@ -52,9 +28,40 @@ index 7c94cffbfa5c6b843345845600347408eb07b13a..0b1868a17d1e94e0437420971e69fb6a
                    <svg id="depth_tension_svg" viewBox="0 0 1000 540"></svg>
                  </div>
                  <div class="legend legend--compact">
-                   <div class="legitem"><span class="swatch theoretical"></span><span>Theoretical tension</span></div>
-                   <div class="legitem"><span class="swatch accent"></span><span>Required tension (with safety factor)</span></div>
-                   <div class="legitem"><span class="swatch accent dashed"></span><span>Available tension</span></div>
-                   <div class="legitem"><span class="swatch red"></span><span>Required above available</span></div>
+-                  <div class="legitem"><span class="swatch theoretical"></span><span>Theoretical tension</span></div>
+-                  <div class="legitem"><span class="swatch accent"></span><span>Required tension (with safety factor)</span></div>
+-                  <div class="legitem"><span class="swatch accent dashed"></span><span>Available tension</span></div>
+-                  <div class="legitem"><span class="swatch red"></span><span>Required above available</span></div>
++                  <div class="legitem"><span class="swatch theoretical"></span><span>Required tension</span></div>
++                  <div class="legitem">
++                    <span class="swatch-group" aria-hidden="true">
++                      <span class="swatch accent dashed"></span>
++                      <span class="swatch red"></span>
++                    </span>
++                    <span>Available tension (normal / exceeded)</span>
++                  </div>
                  </div>
                </div>
+             </div>
+           </div>
+         </div>
+       </section>
+ 
+       <section class="card" data-drive-scope="hydraulic">
+         <div class="card-header">
+           <h2 class="section-title">Section 2: Hydraulic RPM vs Torque</h2>
+           <div class="card-header-actions">
+             <button type="button" class="refresh-link" data-refresh-plots="hydraulic">refresh plots</button>
+           </div>
+         </div>
+         <div class="plot-panel">
+           <div class="plot-panel__heading">
+             <div class="plot-title">Available RPM vs Torque</div>
+           </div>
+           <p class="dim">Motor RPM per motor, evaluated at the start of each wrap. Available RPM is the lower of the flow-limited and power-limited RPM.</p>
+           <div class="plotwrap">
+             <svg id="hyd_rpm_torque_svg" viewBox="0 0 1000 540"></svg>
+           </div>
+           <div class="legend legend--compact">
+             <div class="legitem"><span class="swatch accent"></span><span>Available RPM</span></div>
+             <div class="legitem"><span class="swatch flow"></span><span>Flow-limited RPM</span></div>
