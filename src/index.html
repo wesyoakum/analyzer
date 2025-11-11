@@ -616,53 +616,6 @@
             <button type="button" class="refresh-link" data-refresh-plots="wave">refresh plots</button>
           </div>
         </div>
-        
-        </div>
-        <div class="plot-pair" data-plot-pair>
-          <div class="plot-pair__actions">
-            <button
-              type="button"
-              class="plot-pair__toggle"
-              data-plot-pair-toggle
-              aria-expanded="false"
-              aria-label="Expand wave plots"
-            >[+]</button>
-          </div>
-          <div class="twocol waveplots">
-            <div class="col plot-column">
-              <div class="plot-panel">
-                <div class="plot-panel__heading">
-                  <div>
-                    <div class="plot-title">Speed vs Period with Height Lines</div>
-                    <div class="dim">“How to evaluate AHC performance envelope.  The x-axis indicates wave period, the y-axis indicates peak vertical speed, and the contour set traces peak-to-trough wave heights for sinusoidal motion. The colored horizontal layer lines mark each winch layer’s available speed. Therefore, x-value of the intersection of a layer line with a contour indicates the shortest wave period for which the vertical motion can be fully compensated.”</div>                  </div>
-                </div>
-                <div class="plotwrap">
-                  <svg id="wave_svg" width="1000" height="540" viewBox="0 0 1000 540"></svg>
-                </div>
-                <div class="legend">
-                  <div class="legitem"><span class="swatch accent"></span><span>Layer speed</span></div>
-                </div>
-              </div>
-            </div>
-            <div class="col plot-column">
-              <div class="plot-panel">
-                <div class="plot-panel__heading">
-                  <div>
-                    <div class="plot-title">Wave Height vs Period with Speed Lines</div>
-                    <div class="dim">“Evaluates the AHC operating envelope with wave period on the x-axis and wave height on the y-axis. Iso-lines track the available winch speed for each layer. Therefore, the area below and to the right of a line represents wave conditions for which, on the indicated layer, the winch can fully compensate for wave motion.”</div>                  </div>
-                </div>
-                <div class="plotwrap">
-                  <svg id="wave_svg_height" width="1000" height="540" viewBox="0 0 1000 540"></svg>
-                </div>
-                <div class="legend">
-                  <div class="legitem"><span class="swatch gray"></span><span>Layer speed iso-line</span></div>
-                  <div class="legitem"><span class="swatch"></span><span>H = integer m</span></div>
-                  <div class="legitem"><span class="swatch dashed"></span><span>H = 0.5 m offsets</span></div>
-                </div>
-              </div>
-            </div>
-          </div>
-        </div>
         <div class="plot-controls">
           <div class="plot-controls__group">
             <div class="plot-controls__group-title">Scenario</div>
@@ -751,6 +704,52 @@
               </div>
             </div>
           </details>
+        </div>
+        <div class="plot-pair" data-plot-pair>
+          <div class="plot-pair__actions">
+            <button
+              type="button"
+              class="plot-pair__toggle"
+              data-plot-pair-toggle
+              aria-expanded="false"
+              aria-label="Expand wave plots"
+            >[+]</button>
+          </div>
+          <div class="twocol waveplots">
+            <div class="col plot-column">
+              <div class="plot-panel">
+                <div class="plot-panel__heading">
+                  <div>
+                    <div class="plot-title">Speed vs Period with Height Lines</div>
+                    <div class="dim">“How to evaluate AHC performance envelope.  The x-axis indicates wave period, the y-axis indicates peak vertical speed, and the contour set traces peak-to-trough wave heights for sinusoidal motion. The colored horizontal layer lines mark each winch layer’s available speed. Therefore, x-value of the intersection of a layer line with a contour indicates the shortest wave period for which the vertical motion can be fully compensated.”</div>                  </div>
+                </div>
+                <div class="plotwrap">
+                  <svg id="wave_svg" width="1000" height="540" viewBox="0 0 1000 540"></svg>
+                </div>
+                <div class="legend">
+                  <div class="legitem"><span class="swatch accent"></span><span>Layer speed</span></div>
+                </div>
+              </div>
+            </div>
+            <div class="col plot-column">
+              <div class="plot-panel">
+                <div class="plot-panel__heading">
+                  <div>
+                    <div class="plot-title">Wave Height vs Period with Speed Lines</div>
+                    <div class="dim">“Evaluates the AHC operating envelope with wave period on the x-axis and wave height on the y-axis. Iso-lines track the available winch speed for each layer. Therefore, the area below and to the right of a line represents wave conditions for which, on the indicated layer, the winch can fully compensate for wave motion.”</div>                  </div>
+                </div>
+                <div class="plotwrap">
+                  <svg id="wave_svg_height" width="1000" height="540" viewBox="0 0 1000 540"></svg>
+                </div>
+                <div class="legend">
+                  <div class="legitem"><span class="swatch gray"></span><span>Layer speed iso-line</span></div>
+                  <div class="legitem"><span class="swatch"></span><span>H = integer m</span></div>
+                  <div class="legitem"><span class="swatch dashed"></span><span>H = 0.5 m offsets</span></div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
       </section>
 
       <section class="card">
