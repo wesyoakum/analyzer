@@ -436,17 +436,10 @@ function setupPlotResizeToggles() {
 }
 
 function setupManualRefreshControls() {
-  const statusEl = /** @type {HTMLElement|null} */ (document.getElementById('status'));
-
-  const updateStatus = (message) => {
-    if (statusEl) statusEl.textContent = message;
-  };
-
   const plotButtons = document.querySelectorAll('[data-plot-refresh]');
   plotButtons.forEach(btn => {
     btn.addEventListener('click', () => {
       redrawPlots();
-      updateStatus('plots refreshed');
     });
   });
 
@@ -456,7 +449,6 @@ function setupManualRefreshControls() {
       if (lastDrumState) {
         const { rows, summary, cfg, meta } = lastDrumState;
         renderDrumVisualization(rows, summary, cfg, meta);
-        updateStatus('drum diagram refreshed');
       } else {
         computeAll();
       }
@@ -594,9 +586,7 @@ function updateScenarioOptions(selectId, electricEnabled, hydraulicEnabled) {
 // ---- Core compute + render ----
 function computeAll() {
   const errBox = /** @type {HTMLElement|null} */ (document.getElementById('err'));
-  const status = /** @type {HTMLElement|null} */ (document.getElementById('status'));
   if (errBox) errBox.textContent = '';
-  if (status) status.textContent = 'computing…';
 
   try {
     // Geometry & load inputs
@@ -832,15 +822,11 @@ function computeAll() {
 
     updateCsvButtonStates();
 
-    // ---- Update status ----
-    if (status) status.textContent = 'results updated';
-
     // ---- Draw plots ----
     redrawPlots();
   } catch (e) {
     console.error(e);
     if (errBox) errBox.textContent = 'ERROR: ' + (e && e.message ? e.message : e);
-    if (status) status.textContent = 'error';
     clearMinimumSystemHp();
     lastElLayer = lastElWraps = lastHyLayer = lastHyWraps = [];
     lastDrumState = null;
