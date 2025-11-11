@@ -612,6 +612,9 @@
       <section class="card wave-card">
         <div class="card-header">
           <h2 class="section-title">Section 2: Wave Contours</h2>
+          <div class="card-header-actions">
+            <button type="button" class="refresh-link" data-refresh-plots="wave">refresh plots</button>
+          </div>
         </div>
         <div class="plot-controls">
           <div class="plot-controls__group">
@@ -720,7 +723,6 @@
                     <div class="plot-title">Speed vs Period with Height Lines</div>
                     <div class="dim">Contours: v(T) = π·H / T. Black solid = whole meters; black dashed = half meters. Accent horizontals mark layer speeds.</div>
                   </div>
-                  <button type="button" class="plot-panel__refresh" data-plot-refresh>Refresh</button>
                 </div>
                 <div class="plotwrap">
                   <svg id="wave_svg" width="1000" height="540" viewBox="0 0 1000 540"></svg>
@@ -737,7 +739,6 @@
                     <div class="plot-title">Wave Height vs Period with Speed Lines</div>
                     <div class="dim">Contours: H(T) = v·T / π for each layer speed. Solid/dashed horizontals = reference wave heights.</div>
                   </div>
-                  <button type="button" class="plot-panel__refresh" data-plot-refresh>Refresh</button>
                 </div>
                 <div class="plotwrap">
                   <svg id="wave_svg_height" width="1000" height="540" viewBox="0 0 1000 540"></svg>
@@ -756,6 +757,9 @@
       <section class="card">
         <div class="card-header">
           <h2 class="section-title">Section 2: Depth Profiles</h2>
+          <div class="card-header-actions">
+            <button type="button" class="refresh-link" data-refresh-plots="depth">refresh plots</button>
+          </div>
         </div>
         <div class="plot-controls">
           <details class="plot-controls__custom" data-plot-custom>
@@ -842,7 +846,6 @@
               <div class="plot-panel">
                 <div class="plot-panel__heading">
                   <div class="plot-title">Available Speed vs Depth</div>
-                  <button type="button" class="plot-panel__refresh" data-plot-refresh>Refresh</button>
                 </div>
                 <div class="plotwrap">
                   <svg id="depth_speed_svg" viewBox="0 0 1000 540"></svg>
@@ -866,7 +869,6 @@
               <div class="plot-panel">
                 <div class="plot-panel__heading">
                   <div class="plot-title">Tension vs Depth</div>
-                  <button type="button" class="plot-panel__refresh" data-plot-refresh>Refresh</button>
                 </div>
                 <div class="plotwrap">
                   <svg id="depth_tension_svg" viewBox="0 0 1000 540"></svg>
@@ -886,11 +888,13 @@
       <section class="card" data-drive-scope="hydraulic">
         <div class="card-header">
           <h2 class="section-title">Section 2: Hydraulic RPM vs Torque</h2>
+          <div class="card-header-actions">
+            <button type="button" class="refresh-link" data-refresh-plots="hydraulic">refresh plots</button>
+          </div>
         </div>
         <div class="plot-panel">
           <div class="plot-panel__heading">
             <div class="plot-title">Available RPM vs Torque</div>
-            <button type="button" class="plot-panel__refresh" data-plot-refresh>Refresh</button>
           </div>
           <p class="dim">Motor RPM per motor, evaluated at the start of each wrap. Available RPM is the lower of the flow-limited and power-limited RPM.</p>
           <div class="plotwrap">
@@ -918,7 +922,9 @@
       <div class="card" id="drum_card">
         <div class="card-header">
           <h2 class="section-title">Section 3: Drum Visualization</h2>
-          <button type="button" class="card-header__refresh" data-drum-refresh>Refresh</button>
+          <div class="card-header-actions">
+            <button type="button" class="refresh-link" data-drum-refresh>refresh plots</button>
+          </div>
         </div>
         <div class="drum-visual">
           <svg

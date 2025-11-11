@@ -1,123 +1,57 @@
-diff --git a/src/js/plots/wave-contours.mjs b/src/js/plots/wave-contours.mjs
-index 545a0a97a232d3819c87eda6d667d02691679169..7cfc6e4d33adba9ea0e8f95040d7e9da45e72acc 100644
---- a/src/js/plots/wave-contours.mjs
-+++ b/src/js/plots/wave-contours.mjs
-@@ -130,84 +130,115 @@ function renderWavePlot(svg, {
-     svg.appendChild(t);
+diff --git a/src/js/main.mjs b/src/js/main.mjs
+index 0bd22b62b993efd1b69a41463ea8820855781acf..d768577c3948706a6a762a6347145583a0881ad2 100644
+--- a/src/js/main.mjs
++++ b/src/js/main.mjs
+@@ -421,51 +421,51 @@ function setupCollapsibleToggles() {
+ }
+ 
+ function setupPlotResizeToggles() {
+   const toggles = document.querySelectorAll('[data-plot-pair-toggle]');
+   toggles.forEach(btn => {
+     const pair = btn.closest('[data-plot-pair]');
+     if (!pair) return;
+ 
+     const setState = (expanded) => {
+       pair.classList.toggle('is-expanded', expanded);
+       btn.textContent = expanded ? '[-]' : '[+]';
+       btn.setAttribute('aria-expanded', expanded ? 'true' : 'false');
+       btn.setAttribute('aria-label', expanded ? 'Collapse plots to two columns' : 'Expand plots to full width');
+     };
+ 
+     setState(pair.classList.contains('is-expanded'));
+ 
+     btn.addEventListener('click', () => {
+       const next = !pair.classList.contains('is-expanded');
+       setState(next);
+     });
+   });
+ }
+ 
+ function setupManualRefreshControls() {
+-  const plotButtons = document.querySelectorAll('[data-plot-refresh]');
++  const plotButtons = document.querySelectorAll('[data-refresh-plots]');
+   plotButtons.forEach(btn => {
+     btn.addEventListener('click', () => {
+       redrawPlots();
+     });
    });
  
-   // axis labels
-   svg.appendChild(svgEl('text', { x: ML + innerW / 2, y: H - 4, 'text-anchor': 'middle', 'font-size': '12', fill: '#444' }))
-      .textContent = 'Period T (s)';
-   const yLabel = mode === 'speed' ? 'Speed (m/s)' : 'Wave Height (m)';
-   svg.appendChild(svgEl('text', {
-     x: 18, y: MT + innerH / 2, transform: `rotate(-90,18,${MT + innerH / 2})`,
-     'text-anchor': 'middle', 'font-size': '12', fill: '#444'
-   })).textContent = yLabel;
- 
-   const Hstep = 0.5;
- 
-   const accentColor = (() => {
-     if (typeof window !== 'undefined' && typeof document !== 'undefined' && window.getComputedStyle) {
-       const val = window.getComputedStyle(document.documentElement).getPropertyValue('--accent');
-       if (val) return val.trim();
-     }
-     return '#2c56a3';
-   })();
- 
-   let hoverLayer = null;
- 
-   if (mode === 'speed') {
-+    let contourId = 0;
-+    const contourLabelLayer = svgEl('g', {
-+      'font-family': 'monospace',
-+      'font-size': '11',
-+      fill: '#5c6478',
-+      'pointer-events': 'none'
-+    });
-+
-     // contour lines for H from 0.5 to Hmax in 0.5 m step
-     for (let Hm = Hstep; Hm <= Hmax + 1e-9; Hm += Hstep) {
-       const pts = [];
-       const samples = 200;
-       for (let i = 0; i <= samples; i++) {
-         const T = Tmin + (Tmax - Tmin) * i / samples;
-         const v = Math.PI * Hm / Math.max(T, 1e-9);
-         pts.push([sx(T), sy(v)]);
+   const drumButton = /** @type {HTMLButtonElement|null} */ (document.querySelector('[data-drum-refresh]'));
+   if (drumButton) {
+     drumButton.addEventListener('click', () => {
+       if (lastDrumState) {
+         const { rows, summary, cfg, meta } = lastDrumState;
+         renderDrumVisualization(rows, summary, cfg, meta);
+       } else {
+         computeAll();
        }
--      svg.appendChild(svgEl('path', {
-+      const isIntegerContour = Math.abs(Hm - Math.round(Hm)) < 1e-9;
-+      const pathAttrs = {
-         d: svgPathFromPoints(pts),
-         fill: 'none',
-         stroke: '#999',
-         'stroke-width': 1.5,
--        'stroke-dasharray': (Math.abs(Hm - Math.round(Hm)) < 1e-9) ? '0' : '6 6'
--      }));
-+        'stroke-dasharray': isIntegerContour ? '0' : '6 6'
-+      };
-+      if (isIntegerContour) {
-+        pathAttrs.id = `wave-contour-${contourId++}`;
-+      }
-+      const contourPath = svgEl('path', pathAttrs);
-+      svg.appendChild(contourPath);
-+
-+      if (isIntegerContour && pts.length > 1) {
-+        const labelText = `---------- ${Math.round(Hm)} m ----------`;
-+        const text = svgEl('text', { 'text-anchor': 'middle' });
-+        const textPath = svgEl('textPath', {
-+          href: `#${pathAttrs.id}`,
-+          'startOffset': '50%'
-+        });
-+        textPath.setAttributeNS('http://www.w3.org/1999/xlink', 'href', `#${pathAttrs.id}`);
-+        textPath.textContent = labelText;
-+        text.appendChild(textPath);
-+        contourLabelLayer.appendChild(text);
-+      }
-     }
- 
-     // horizontal lines for each layer speed
-     layerSpeeds.forEach(L => {
-       if (L.v_ms < Vmin - 1e-9 || L.v_ms > Vmax + 1e-9) return;
-       const Y = sy(L.v_ms);
-       svg.appendChild(svgEl('line', { x1: ML, y1: Y, x2: W - MR, y2: Y, stroke: accentColor, 'stroke-width': 1.5 }));
-       const lbl = svgEl('text', {
-         x: W - MR - 2,
-         y: Y - 3,
-         'text-anchor': 'end',
-         'font-size': '11',
-         fill: accentColor
-       });
-       lbl.textContent = `L${L.layer_no} (${L.v_ms.toFixed(2)} m/s)`;
-       svg.appendChild(lbl);
      });
+   }
+ }
  
-+    if (contourLabelLayer.childNodes.length) {
-+      svg.appendChild(contourLabelLayer);
-+    }
-+
-     hoverLayer = svgEl('g', { 'pointer-events': 'none' });
-     const hoverLine = svgEl('line', {
-       x1: ML,
-       x2: ML,
-       y1: MT,
-       y2: H - MB,
-       stroke: accentColor,
-       'stroke-width': 1.5,
-       'stroke-dasharray': '6 4',
-       opacity: 0
-     });
-     const hoverLabel = svgEl('text', {
-       x: ML,
-       y: H - MB + 20,
-       'text-anchor': 'middle',
-       'font-size': '12',
-       fill: accentColor,
-       opacity: 0
-     });
-     hoverLayer.appendChild(hoverLine);
-     hoverLayer.appendChild(hoverLabel);
-     svg.appendChild(hoverLayer);
+ function setupAutoRecompute() {
+   const inputs = Array.from(document.querySelectorAll('input, select, textarea'));
+   if (!inputs.length) return;
  
-     const clamp = (val, min, max) => Math.min(Math.max(val, min), max);
-     const updateHover = evt => {
+   const handler = () => computeAll();
+ 

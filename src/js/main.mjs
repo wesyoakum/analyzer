@@ -443,7 +443,7 @@ function setupPlotResizeToggles() {
 }
 
 function setupManualRefreshControls() {
-  const plotButtons = document.querySelectorAll('[data-plot-refresh]');
+  const plotButtons = document.querySelectorAll('[data-refresh-plots]');
   plotButtons.forEach(btn => {
     btn.addEventListener('click', () => {
       redrawPlots();
