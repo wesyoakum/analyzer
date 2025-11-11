@@ -900,7 +900,7 @@ th[title] {
 }
 
 .swatch.rated {
-  border-top-color: #2d9c77;
+  border-top-color: #888888;
 }
 
 .swatch.gray {
@@ -922,7 +922,13 @@ th[title] {
 
 .swatch.power {
   border-top-color: #9249c6;
-  border-top-style: dotted;
+  border-top-style: dashed;
+}
+
+.swatch-group {
+  display: inline-flex;
+  gap: 4px;
+  align-items: center;
 }
 
 .output-field {
