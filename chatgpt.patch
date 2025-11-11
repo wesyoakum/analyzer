@@ -1,56 +1,241 @@
-diff --git a/src/index.html b/src/index.html
-index 8387008203ca5d5dd54c6f68333c65e79dea9c28..a1e5dbc5502f5a207aeb38fe71a9cd73bf91c204 100644
---- a/src/index.html
-+++ b/src/index.html
-@@ -908,50 +908,51 @@
-     <div
-       id="panel-results"
-       class="panel"
-       role="tabpanel"
-       aria-labelledby="tab-results"
-       tabindex="0"
-       hidden
-       aria-hidden="true"
-       aria-live="polite"
-     >
-       <div class="card" id="drum_card">
-         <div class="card-header">
-           <h2 class="section-title">Section 3: Drum Visualization</h2>
-           <button type="button" class="card-header__refresh" data-drum-refresh>Refresh</button>
-         </div>
-         <div class="drum-visual">
-           <svg
-             id="drum_visual_svg"
-             class="drum-visual__svg"
-             viewBox="0 0 320 320"
-             role="img"
-             aria-labelledby="drum_visual_title"
-           >
-             <title id="drum_visual_title">Winch drum cross-section</title>
-           </svg>
-+          <div id="drum_legend" class="legend legend--drum" hidden></div>
-         </div>
-         <p class="drum-summary" id="drum_summary"></p>
-       </div>
+diff --git a/src/js/drum-visual.mjs b/src/js/drum-visual.mjs
+index 618d9680012db6e536b665795791aab866c38998..3f58641b5f1d0474880c59cbea04d1c4ec6a6fe7 100644
+--- a/src/js/drum-visual.mjs
++++ b/src/js/drum-visual.mjs
+@@ -77,68 +77,81 @@ function cssVar(styles, name, fallbackHex) {
+   return value && value.trim() ? value.trim() : fallbackHex;
+ }
  
-       <div class="card" data-drive-scope="electric">
-         <div class="section-title">Section 3: Electric Layer Table</div>
-         <div class="btnbar">
-           <button id="csv_el_layer" type="button" disabled>Download CSV — Electric Layer</button>
-         </div>
-         <table>
-           <thead>
-             <tr>
-               <th title="layer_no">L#<br>(–)</th>
-               <th title="layer_dia_in">
-                 <span data-latex="D_{layer}">D<sub>layer</sub></span><br>(in)
-               </th>
-               <th title="pre_on_drum_m">pre_on<br>(m)</th>
-               <th title="pre_deployed_m">pre_dep<br>(m)</th>
-               <th title="post_on_drum_m">post_on<br>(m)</th>
-               <th title="post_deployed_m">post_dep<br>(m)</th>
-               <th title="max_tension_theoretical_kgf">
-                 <span data-latex="T_{theo,\max}">T<sub>theo,max</sub></span><br>(kgf)
-               </th>
-               <th title="max_tension_required_kgf">
-                 <span data-latex="T_{req,\max}">T<sub>req,max</sub></span><br>(kgf)
+ function mixRgb(a, b, t) {
+   const k = Math.max(0, Math.min(1, t));
+   return {
+     r: clamp255(a.r + (b.r - a.r) * k),
+     g: clamp255(a.g + (b.g - a.g) * k),
+     b: clamp255(a.b + (b.b - a.b) * k)
+   };
+ }
+ 
+ function rgbToCss(rgb, alpha = 1) {
+   const a = typeof alpha === 'number' ? Math.max(0, Math.min(1, alpha)) : 1;
+   if (a < 1) {
+     return `rgba(${rgb.r}, ${rgb.g}, ${rgb.b}, ${a.toFixed(3)})`;
+   }
+   return `rgb(${rgb.r}, ${rgb.g}, ${rgb.b})`;
+ }
+ 
+ function fmt(value, digits = 0) {
+   if (!Number.isFinite(value)) return '–';
+   return value.toLocaleString('en-US', { maximumFractionDigits: digits });
+ }
+ 
+-function emptyState(summaryEl, titleEl, svg) {
++function emptyState(summaryEl, titleEl, svg, legendEl) {
+   if (titleEl) titleEl.textContent = 'Winch drum cross-section (awaiting inputs)';
+   if (svg) svg.setAttribute('aria-label', 'Winch drum cross-section awaiting inputs');
+   if (summaryEl) summaryEl.textContent = 'Enter drum and cable inputs to view the drum visualization.';
+   if (svg) {
+     while (svg.firstChild) svg.removeChild(svg.firstChild);
+   }
++  if (legendEl) {
++    legendEl.innerHTML = '';
++    legendEl.hidden = true;
++    legendEl.setAttribute('aria-hidden', 'true');
++  }
+ }
+ 
+ export function renderDrumVisualization(rows, summary, cfg, meta) {
+   const svg = /** @type {SVGSVGElement|null} */ (document.getElementById('drum_visual_svg'));
+   const summaryEl = /** @type {HTMLParagraphElement|null} */ (document.getElementById('drum_summary'));
+   const titleEl = /** @type {SVGTitleElement|null} */ (document.getElementById('drum_visual_title'));
++  const legendEl = /** @type {HTMLDivElement|null} */ (document.getElementById('drum_legend'));
+ 
+-  if (!svg || !summaryEl || !titleEl) return;
++  if (!svg || !summaryEl || !titleEl) {
++    if (legendEl) {
++      legendEl.innerHTML = '';
++      legendEl.hidden = true;
++      legendEl.setAttribute('aria-hidden', 'true');
++    }
++    return;
++  }
+ 
+   if (!rows || !rows.length || !summary || !cfg) {
+-    emptyState(summaryEl, titleEl, svg);
++    emptyState(summaryEl, titleEl, svg, legendEl);
+     return;
+   }
+ 
+   const { total_layers, total_wraps, cable_len_m, full_drum_dia_in } = summary;
+   const {
+     cable_dia_mm,
+     core_dia_in,
+     flange_dia_in,
+     flange_to_flange_in,
+     lebus_thk_in,
+     packing_factor
+   } = cfg;
+ 
+   const cable_dia_in = Math.max(0, (cable_dia_mm || 0) * IN_PER_MM);
+   const packingFactor = Number.isFinite(packing_factor) ? Math.max(packing_factor, 0) : 0.877;
+ 
+   while (svg.firstChild) svg.removeChild(svg.firstChild);
+ 
+   const styles = getComputedStyle(document.documentElement);
+   const accentRgb = parseCssColor(cssVar(styles, '--accent', FALLBACK_HEX.accent), FALLBACK_COLORS.accent);
+   const ink700Rgb = parseCssColor(cssVar(styles, '--ink-700', FALLBACK_HEX.ink700), FALLBACK_COLORS.ink700);
+   const ink900Rgb = parseCssColor(cssVar(styles, '--ink-900', FALLBACK_HEX.ink900), FALLBACK_COLORS.ink900);
+   const paperRgb = parseCssColor(cssVar(styles, '--paper', FALLBACK_HEX.paper), FALLBACK_COLORS.paper);
+   const tensionLowRgb = parseCssColor(cssVar(styles, '--tension-low', FALLBACK_HEX.tensionLow), FALLBACK_COLORS.tensionLow);
+   const tensionHighRgb = parseCssColor(cssVar(styles, '--tension-high', FALLBACK_HEX.tensionHigh), FALLBACK_COLORS.tensionHigh);
+@@ -263,50 +276,113 @@ export function renderDrumVisualization(rows, summary, cfg, meta) {
+     : (cable_dia_in > 0 ? (Math.max(flange_to_flange_in || 0, 0) / Math.max(cable_dia_in, 1e-9)) : 0);
+ 
+   const rowsByLayer = new Map();
+   for (const row of rows) {
+     if (!rowsByLayer.has(row.layer_no)) rowsByLayer.set(row.layer_no, []);
+     rowsByLayer.get(row.layer_no).push(row);
+   }
+ 
+   const getWrapTension = (wrapRow) => {
+     if (!wrapRow) return null;
+     const candidates = [wrapRow.tension_kgf, wrapRow.tension_required_kgf, wrapRow.tension_theoretical_kgf];
+     for (const value of candidates) {
+       if (Number.isFinite(value)) return value;
+     }
+     return null;
+   };
+ 
+   const tensionValues = rows
+     .map(getWrapTension)
+     .filter(value => Number.isFinite(value));
+   const hasTensionRange = tensionValues.length > 0;
+   const tensionMin = hasTensionRange ? Math.min(...tensionValues) : 0;
+   const tensionMax = hasTensionRange ? Math.max(...tensionValues) : 0;
+   const tensionSpan = Math.max(0, tensionMax - tensionMin);
+ 
++  if (legendEl) {
++    const showLegend = hasTensionRange;
++    legendEl.hidden = !showLegend;
++    legendEl.setAttribute('aria-hidden', showLegend ? 'false' : 'true');
++    legendEl.innerHTML = '';
++
++    if (showLegend) {
++      const formatTension = (value) => {
++        if (!Number.isFinite(value)) return '–';
++        const magnitude = Math.abs(value);
++        let digits = 0;
++        if (magnitude < 10) {
++          digits = 2;
++        } else if (magnitude < 100) {
++          digits = 1;
++        }
++        return fmt(value, digits);
++      };
++
++      const legItem = document.createElement('div');
++      legItem.className = 'legitem legitem--gradient';
++
++      const swatch = document.createElement('span');
++      swatch.className = 'swatch swatch--gradient';
++      swatch.style.backgroundImage = `linear-gradient(90deg, ${rgbToCss(tensionLowRgb)}, ${rgbToCss(tensionHighRgb)})`;
++      swatch.style.backgroundColor = rgbToCss(tensionLowRgb);
++      swatch.setAttribute('aria-hidden', 'true');
++
++      const scale = document.createElement('div');
++      scale.className = 'legend__scale';
++
++      const lowEndpoint = document.createElement('div');
++      lowEndpoint.className = 'legend__endpoint legend__endpoint--low';
++      const lowLabel = document.createElement('span');
++      lowLabel.className = 'legend__label';
++      lowLabel.textContent = 'Low tension';
++      const lowValue = document.createElement('span');
++      lowValue.className = 'legend__value';
++      lowValue.textContent = `${formatTension(tensionMin)} kgf`;
++
++      const highEndpoint = document.createElement('div');
++      highEndpoint.className = 'legend__endpoint legend__endpoint--high';
++      const highLabel = document.createElement('span');
++      highLabel.className = 'legend__label';
++      highLabel.textContent = 'High tension';
++      const highValue = document.createElement('span');
++      highValue.className = 'legend__value';
++      highValue.textContent = `${formatTension(tensionMax)} kgf`;
++
++      lowEndpoint.appendChild(lowLabel);
++      lowEndpoint.appendChild(lowValue);
++      highEndpoint.appendChild(highLabel);
++      highEndpoint.appendChild(highValue);
++
++      scale.appendChild(lowEndpoint);
++      scale.appendChild(highEndpoint);
++
++      legItem.appendChild(swatch);
++      legItem.appendChild(scale);
++      legendEl.appendChild(legItem);
++    }
++  }
++
+   const wrapFillColor = (wrapRow, fallbackCss) => {
+     if (!hasTensionRange) return fallbackCss;
+     const tension = getWrapTension(wrapRow);
+     if (!Number.isFinite(tension)) return fallbackCss;
+     const normalized = tensionSpan > 1e-9
+       ? (tension - tensionMin) / tensionSpan
+       : 0.5;
+     const clamped = Math.max(0, Math.min(1, normalized));
+     return rgbToCss(mixRgb(tensionLowRgb, tensionHighRgb, clamped), 0.9);
+   };
+ 
+   if (cableRadiusPx > 0 && coreWidthPx > 0) {
+     layersForViz.forEach(layer => {
+       const rowsInLayer = rowsByLayer.get(layer.layer_no) || [];
+       const actualWraps = rowsInLayer.length;
+       if (actualWraps <= 0) return;
+       const centerOffsetPx = layer.center_radius_in * scale;
+       const topY = centerY - centerOffsetPx;
+       const bottomY = centerY + centerOffsetPx;
+ 
+       const wrapSlots = Number.isFinite(theoreticalWrapsPerLayer) && theoreticalWrapsPerLayer > 0
+         ? theoreticalWrapsPerLayer
+         : actualWraps;
+       const spacingDivisor = wrapSlots > 1 ? wrapSlots - 1 : 0;
+       const spacingIn = spacingDivisor > 0
+@@ -369,29 +445,34 @@ export function renderDrumVisualization(rows, summary, cfg, meta) {
+   const layerWord = total_layers === 1 ? 'layer' : 'layers';
+   const wrapWord = total_wraps === 1 ? 'wrap' : 'wraps';
+   const summaryLine = `${fmt(cable_len_m, cableLenDigits)} m of ${fmt(cable_dia_mm, cableDiaDigits)} mm cable on ${fmt(total_layers, 0)} ${layerWord} with ${fmt(total_wraps, 0)} total ${wrapWord}`;
+   const wrapsPerLayer = meta && Number.isFinite(meta.wraps_per_layer_used)
+     ? ` (≈${fmt(meta.wraps_per_layer_used, 1)} wraps per layer)`
+     : '';
+   const geometryParts = [
+     `core Ø ${fmt(core_dia_in, 2)} in`,
+     `flange-to-flange ${fmt(flange_to_flange_in, 2)} in`,
+     `flange Ø ${fmt(flange_dia_in, 2)} in`,
+     `Lebus liner ${fmt(lebus_thk_in, 3)} in`,
+     `full drum Ø ${fmt(full_drum_dia_in, 2)} in`
+   ];
+   const geometryLine = `Drum geometry: ${geometryParts.join(', ')}.`;
+   const summaryPlain = `${summaryLine}${wrapsPerLayer}. ${geometryLine}`;
+ 
+   summaryEl.innerHTML = `<strong>${summaryLine}${wrapsPerLayer}.</strong> ${geometryLine}`;
+   titleEl.textContent = `Winch drum cross-section with ${fmt(total_layers, 0)} ${layerWord}`;
+   svg.setAttribute('aria-label', summaryPlain);
+ }
+ 
+ export function clearDrumVisualization() {
+   const svg = /** @type {SVGSVGElement|null} */ (document.getElementById('drum_visual_svg'));
+   const summaryEl = /** @type {HTMLParagraphElement|null} */ (document.getElementById('drum_summary'));
+   const titleEl = /** @type {SVGTitleElement|null} */ (document.getElementById('drum_visual_title'));
++  const legendEl = /** @type {HTMLDivElement|null} */ (document.getElementById('drum_legend'));
+   if (svg && summaryEl && titleEl) {
+-    emptyState(summaryEl, titleEl, svg);
++    emptyState(summaryEl, titleEl, svg, legendEl);
++  } else if (legendEl) {
++    legendEl.innerHTML = '';
++    legendEl.hidden = true;
++    legendEl.setAttribute('aria-hidden', 'true');
+   }
+-}
+\ No newline at end of file
++}
