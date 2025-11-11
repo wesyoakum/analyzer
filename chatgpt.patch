@@ -1,190 +1,89 @@
 diff --git a/src/js/main.mjs b/src/js/main.mjs
-index 73a6f63e96c5f7b328cd44d3ed95c38a75bcc19b..9137dfedefd99802eaf5c30c80e6b4dc11f712a8 100644
+index 9137dfedefd99802eaf5c30c80e6b4dc11f712a8..0bd22b62b993efd1b69a41463ea8820855781acf 100644
 --- a/src/js/main.mjs
 +++ b/src/js/main.mjs
-@@ -414,71 +414,63 @@ function setupCollapsibleToggles() {
- }
+@@ -172,77 +172,84 @@ function updateBuildIndicator() {
+   if (!indicator) return;
  
- function setupPlotResizeToggles() {
-   const toggles = document.querySelectorAll('[data-plot-pair-toggle]');
-   toggles.forEach(btn => {
-     const pair = btn.closest('[data-plot-pair]');
-     if (!pair) return;
+   const lastModified = new Date(document.lastModified);
+   if (Number.isNaN(lastModified.getTime())) {
+     indicator.textContent = `Updated ${document.lastModified}`;
+     return;
+   }
  
-     const setState = (expanded) => {
-       pair.classList.toggle('is-expanded', expanded);
-       btn.textContent = expanded ? '[-]' : '[+]';
-       btn.setAttribute('aria-expanded', expanded ? 'true' : 'false');
-       btn.setAttribute('aria-label', expanded ? 'Collapse plots to two columns' : 'Expand plots to full width');
-     };
- 
-     setState(pair.classList.contains('is-expanded'));
- 
-     btn.addEventListener('click', () => {
-       const next = !pair.classList.contains('is-expanded');
-       setState(next);
-     });
-   });
- }
- 
- function setupManualRefreshControls() {
--  const statusEl = /** @type {HTMLElement|null} */ (document.getElementById('status'));
--
--  const updateStatus = (message) => {
--    if (statusEl) statusEl.textContent = message;
--  };
--
-   const plotButtons = document.querySelectorAll('[data-plot-refresh]');
-   plotButtons.forEach(btn => {
-     btn.addEventListener('click', () => {
-       redrawPlots();
--      updateStatus('plots refreshed');
-     });
+   const formatter = new Intl.DateTimeFormat('en-US', {
+     year: 'numeric',
+     month: 'short',
+     day: '2-digit',
+     hour: '2-digit',
+     minute: '2-digit',
+     second: '2-digit',
+     hour12: false,
+     timeZone: 'UTC'
    });
  
-   const drumButton = /** @type {HTMLButtonElement|null} */ (document.querySelector('[data-drum-refresh]'));
-   if (drumButton) {
-     drumButton.addEventListener('click', () => {
-       if (lastDrumState) {
-         const { rows, summary, cfg, meta } = lastDrumState;
-         renderDrumVisualization(rows, summary, cfg, meta);
--        updateStatus('drum diagram refreshed');
-       } else {
-         computeAll();
-       }
-     });
-   }
+   indicator.textContent = `Updated ${formatter.format(lastModified)} UTC`;
  }
  
- function setupAutoRecompute() {
-   const inputs = Array.from(document.querySelectorAll('input, select, textarea'));
-   if (!inputs.length) return;
- 
-   const handler = () => computeAll();
- 
-   inputs.forEach(el => {
-     if (el.tagName === 'SELECT') {
-       el.addEventListener('change', handler);
-       return;
-     }
- 
-     if (el.tagName === 'INPUT') {
-       const type = el.type;
-       if (type === 'checkbox' || type === 'radio' || type === 'range' || type === 'color') {
-         el.addEventListener('change', handler);
-         return;
-       }
-@@ -572,53 +564,51 @@ function updateScenarioOptions(selectId, electricEnabled, hydraulicEnabled) {
-       if (disabled && opt.selected) needsChange = true;
-     } else if (opt.value === 'hydraulic') {
-       const disabled = !hydraulicEnabled;
-       if (opt.disabled !== disabled) opt.disabled = disabled;
-       if (opt.hidden !== disabled) opt.hidden = disabled;
-       if (disabled && opt.selected) needsChange = true;
-     }
+ function setupTabs() {
+   /** @type {Array<{tab: HTMLElement, panel: HTMLElement}>} */
+   const tabEntries = [];
++  const clearButton = /** @type {HTMLButtonElement|null} */ (document.getElementById('clear_inputs'));
+   document.querySelectorAll('[role="tab"]').forEach(tabEl => {
+     const controls = tabEl.getAttribute('aria-controls');
+     const panel = controls ? /** @type {HTMLElement|null} */ (document.getElementById(controls)) : null;
+     if (!panel) return;
+     tabEntries.push({ tab: /** @type {HTMLElement} */ (tabEl), panel });
    });
  
-   if (needsChange) {
-     if (electricEnabled) {
-       selectEl.value = 'electric';
-     } else if (hydraulicEnabled) {
-       selectEl.value = 'hydraulic';
-     } else {
-       const first = Array.from(selectEl.options).find(opt => !opt.disabled);
-       if (first) selectEl.value = first.value;
+   if (!tabEntries.length) return;
+ 
+   /** @param {HTMLElement} el */
+   const isDisabled = el => el.hasAttribute('disabled');
+ 
+   const enabledTabs = () => tabEntries.map(entry => entry.tab).filter(tab => !isDisabled(tab));
+ 
+   const activate = (nextTab, { setFocus = false } = {}) => {
+     tabEntries.forEach(({ tab, panel }) => {
+       const isActive = tab === nextTab;
+       tab.classList.toggle('active', isActive);
+       tab.setAttribute('aria-selected', isActive ? 'true' : 'false');
+       tab.tabIndex = isActive ? 0 : -1;
+ 
+       panel.classList.toggle('active', isActive);
+       panel.toggleAttribute('hidden', !isActive);
+       panel.setAttribute('aria-hidden', isActive ? 'false' : 'true');
+       panel.tabIndex = isActive ? 0 : -1;
+     });
+ 
++    if (clearButton) {
++      const isInputsTab =
++        nextTab.id === 'tab-inputs' || nextTab.getAttribute('aria-controls') === 'panel-inputs';
++      clearButton.toggleAttribute('hidden', !isInputsTab);
++    }
++
+     if (setFocus) {
+       nextTab.focus();
      }
-     selectEl.dispatchEvent(new Event('change', { bubbles: true }));
-   }
- }
+   };
  
- // ---- Core compute + render ----
- function computeAll() {
-   const errBox = /** @type {HTMLElement|null} */ (document.getElementById('err'));
--  const status = /** @type {HTMLElement|null} */ (document.getElementById('status'));
-   if (errBox) errBox.textContent = '';
--  if (status) status.textContent = 'computing…';
+   const focusRelative = (currentTab, delta) => {
+     const tabs = enabledTabs();
+     if (!tabs.length) return;
+     const currentIndex = tabs.indexOf(currentTab);
+     if (currentIndex === -1) return;
+     const nextIndex = (currentIndex + delta + tabs.length) % tabs.length;
+     activate(tabs[nextIndex], { setFocus: true });
+   };
  
-   try {
-     // Geometry & load inputs
-     const wraps_override_input = read('wraps_override');
-     const wraps_per_layer_override = (
-       Number.isFinite(wraps_override_input) && wraps_override_input > 0
-     ) ? wraps_override_input : undefined;
+   const focusEdge = (first = true) => {
+     const tabs = enabledTabs();
+     if (!tabs.length) return;
+     activate(first ? tabs[0] : tabs[tabs.length - 1], { setFocus: true });
+   };
  
-     const cfg = {
-       cable_dia_mm: read('c_mm'),
-       operating_depth_m: read('depth_m'),
-       dead_end_m: read('dead_m'),
-       core_dia_in: read('core_in'),
-       flange_dia_in: read('flange_dia_in'),
-       flange_to_flange_in: read('ftf_in'),
-       lebus_thk_in: read('lebus_in'),
-       packing_factor: read('pack'),
-       wraps_per_layer_override
-     };
-     const payload_kg = read('payload_kg');
-     const cable_w_kgpm = read('c_w_kgpm');
- 
-     const rated_speed_mpm = read('rated_speed_mpm');
-     const rated_swl_kgf = read('rated_swl_kgf');
-     const system_efficiency = read('system_efficiency');
-@@ -810,59 +800,55 @@ function computeAll() {
-         r.hyd_elec_input_hp_used = 0;
-         r.hyd_drum_rpm_flow = 0;
-         r.hyd_drum_rpm_power = 0;
-         r.hyd_drum_rpm_available = 0;
-       }
-     }
- 
-     // ---- Drum visualization ----
-     lastDrumState = { rows, summary, cfg, meta };
-     renderDrumVisualization(rows, summary, cfg, meta);
- 
-     // ---- Aggregate into per-layer tables ----
-     lastElLayer = electricEnabled ? rowsToElectricLayer(rows, payload_kg, cable_w_kgpm, gr1, gr2, motors) : [];
-     lastHyLayer = hydraulicEnabled ? rowsToHydraulicLayer(rows) : [];
-     lastElWraps = electricEnabled ? projectElectricWraps(rows) : [];
-     lastHyWraps = hydraulicEnabled ? projectHydraulicWraps(rows) : [];
- 
-     // ---- Render tables ----
-     renderElectricTables(lastElLayer, lastElWraps, q('tbody_el_layer'), q('tbody_el_wraps'));
-     renderHydraulicTables(lastHyLayer, lastHyWraps, q('tbody_hy_layer'), q('tbody_hy_wraps'));
- 
-     renderLatexFragments(document.body);
- 
-     updateCsvButtonStates();
- 
--    // ---- Update status ----
--    if (status) status.textContent = 'results updated';
--
-     // ---- Draw plots ----
-     redrawPlots();
-   } catch (e) {
-     console.error(e);
-     if (errBox) errBox.textContent = 'ERROR: ' + (e && e.message ? e.message : e);
--    if (status) status.textContent = 'error';
-     clearMinimumSystemHp();
-     lastElLayer = lastElWraps = lastHyLayer = lastHyWraps = [];
-     lastDrumState = null;
-     clearDrumVisualization();
-     clearPlots();
-     updateCsvButtonStates();
-   }
- }
- 
- // ---- Plot redraw helper (uses decoupled plotting modules) ----
- function redrawPlots() {
-   // Wave contours (optional - skip if controls/SVGs absent)
-   const waveScenarioEl = /** @type {HTMLSelectElement|null} */ (document.getElementById('wave_scenario'));
-   const waveTminEl = /** @type {HTMLInputElement|null} */ (document.getElementById('wave_tmin'));
-   const waveTmaxEl = /** @type {HTMLInputElement|null} */ (document.getElementById('wave_tmax'));
-   const waveVminEl = /** @type {HTMLInputElement|null} */ (document.getElementById('wave_vmin'));
-   const waveVmaxEl = /** @type {HTMLInputElement|null} */ (document.getElementById('wave_vmax'));
-   const waveHminEl = /** @type {HTMLInputElement|null} */ (document.getElementById('wave_hmin'));
-   const waveHmaxEl = /** @type {HTMLInputElement|null} */ (document.getElementById('wave_hmax'));
-   const waveSvg = /** @type {SVGSVGElement|null} */ (document.getElementById('wave_svg'));
-   const waveSvgHeight = /** @type {SVGSVGElement|null} */ (document.getElementById('wave_svg_height'));
- 
-   const parseInput = (el) => {
-     if (!el) return NaN;
-     return parseFloat((el.value || '').replace(',', '.'));
+   tabEntries.forEach(({ tab }) => {
+     tab.addEventListener('click', () => activate(tab));
+     tab.addEventListener('keydown', evt => {
+       switch (evt.key) {
+         case 'ArrowLeft':

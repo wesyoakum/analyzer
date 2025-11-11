@@ -549,6 +549,20 @@ button:focus {
   flex: 1 1 auto;
 }
 
+.tab-bar__action {
+  margin-left: auto;
+  align-self: center;
+  padding: 0;
+  border: none;
+  background: none;
+  font: inherit;
+  font-size: 14px;
+  text-transform: lowercase;
+  text-decoration: none;
+  color: rgba(20, 34, 56, 0.55);
+  cursor: pointer;
+}
+
 .tab-bar__actions {
   display: flex;
   flex-direction: column;
@@ -608,13 +622,6 @@ nav.tabs {
 
 .panel .card:first-of-type {
   margin-top: 0;
-}
-
-.panel-toolbar {
-  display: flex;
-  justify-content: flex-end;
-  gap: 12px;
-  margin-bottom: 12px;
 }
 
 .drum-visual {

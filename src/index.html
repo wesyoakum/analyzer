@@ -27,40 +27,43 @@
       <h1 class="page-title">Winch Analyzer</h1>
     </header>
     <div id="err"></div>
-    <nav class="tabs" aria-label="App sections" role="tablist">
-      <button
-        class="tab-btn active"
-        id="tab-inputs"
-        type="button"
-        role="tab"
-        aria-selected="true"
-        aria-controls="panel-inputs"
-      >Section 1: Inputs</button>
-      <button
-        class="tab-btn"
-        id="tab-performance"
-        type="button"
-        role="tab"
-        aria-selected="false"
-        aria-controls="panel-performance"
-      >Section 2: Performance Plots</button>
-      <button
-        class="tab-btn"
-        id="tab-results"
-        type="button"
-        role="tab"
-        aria-selected="false"
-        aria-controls="panel-results"
-      >Section 3: Layer &amp; Wrap Tables</button>
-      <button
-        class="tab-btn"
-        id="tab-instructions"
-        type="button"
-        role="tab"
-        aria-selected="false"
-        aria-controls="panel-instructions"
-      >Section 4: Instructions</button>
-    </nav>
+    <div class="tab-bar">
+      <nav class="tabs" aria-label="App sections" role="tablist">
+        <button
+          class="tab-btn active"
+          id="tab-inputs"
+          type="button"
+          role="tab"
+          aria-selected="true"
+          aria-controls="panel-inputs"
+        >Section 1: Inputs</button>
+        <button
+          class="tab-btn"
+          id="tab-performance"
+          type="button"
+          role="tab"
+          aria-selected="false"
+          aria-controls="panel-performance"
+        >Section 2: Performance Plots</button>
+        <button
+          class="tab-btn"
+          id="tab-results"
+          type="button"
+          role="tab"
+          aria-selected="false"
+          aria-controls="panel-results"
+        >Section 3: Layer &amp; Wrap Tables</button>
+        <button
+          class="tab-btn"
+          id="tab-instructions"
+          type="button"
+          role="tab"
+          aria-selected="false"
+          aria-controls="panel-instructions"
+        >Section 4: Instructions</button>
+      </nav>
+      <button id="clear_inputs" class="tab-bar__action" type="button">clear all inputs</button>
+    </div>
 
     <div
       id="panel-inputs"
@@ -69,9 +72,6 @@
       tabindex="0"
       aria-labelledby="tab-inputs"
     >
-      <div class="panel-toolbar">
-        <button id="clear_inputs" type="button">Clear all inputs</button>
-      </div>
       <details class="card collapsible" open>
         <summary class="collapsible-summary">
           <h2 class="section-title">Section 1: Drum and Cable Inputs</h2>

@@ -194,6 +194,7 @@ function updateBuildIndicator() {
 function setupTabs() {
   /** @type {Array<{tab: HTMLElement, panel: HTMLElement}>} */
   const tabEntries = [];
+  const clearButton = /** @type {HTMLButtonElement|null} */ (document.getElementById('clear_inputs'));
   document.querySelectorAll('[role="tab"]').forEach(tabEl => {
     const controls = tabEl.getAttribute('aria-controls');
     const panel = controls ? /** @type {HTMLElement|null} */ (document.getElementById(controls)) : null;
@@ -220,6 +221,12 @@ function setupTabs() {
       panel.setAttribute('aria-hidden', isActive ? 'false' : 'true');
       panel.tabIndex = isActive ? 0 : -1;
     });
+
+    if (clearButton) {
+      const isInputsTab =
+        nextTab.id === 'tab-inputs' || nextTab.getAttribute('aria-controls') === 'panel-inputs';
+      clearButton.toggleAttribute('hidden', !isInputsTab);
+    }
 
     if (setFocus) {
       nextTab.focus();
