@@ -961,8 +961,8 @@
               <th title="max_tension_required_kgf">
                 <span data-latex="T_{req,\max}">T<sub>req,max</sub></span><br>(kgf)
               </th>
-              <th title="max_torque_Nm">
-                <span data-latex="\tau_{\max}">τ<sub>max</sub></span><br>(N·m)
+              <th title="tau_avail_kNm">
+                <span data-latex="\tau_{avail}">τ<sub>avail</sub></span><br>(kN·m)
               </th>
               <th title="max_motor_torque_Nm">
                 <span data-latex="\tau_{m,\max}">τ<sub>m,max</sub></span><br>(N·m)
@@ -973,8 +973,14 @@
               <th title="line_speed_at_start_mpm">
                 <span data-latex="v_{\mathrm{start}}">v<sub>start</sub></span><br>(m/min)
               </th>
-              <th title="avail_tension_kgf_at_start">
-                <span data-latex="T_{avail,\mathrm{start}}">T<sub>avail,start</sub></span><br>(kgf)
+              <th title="tension_theoretical_start_kgf">
+                <span data-latex="T_{theo}">T<sub>theo</sub></span><br>(kgf)
+              </th>
+              <th title="tension_required_start_kgf">
+                <span data-latex="T_{req}">T<sub>req</sub></span><br>(kgf)
+              </th>
+              <th title="avail_tension_kgf">
+                <span data-latex="T_{avail}">T<sub>avail</sub></span><br>(kgf)
               </th>
             </tr>
           </thead>
@@ -1011,8 +1017,8 @@
                 <th title="tension_required_kgf">
                   <span data-latex="T_{req}">T<sub>req</sub></span><br>(kgf)
                 </th>
-                <th title="torque_Nm">
-                  <span data-latex="\tau">τ</span><br>(N·m)
+                <th title="tau_avail_kNm">
+                  <span data-latex="\tau_{avail}">τ<sub>avail</sub></span><br>(kN·m)
                 </th>
                 <th title="motor_torque_Nm">
                   <span data-latex="\tau_{m}">τ<sub>m</sub></span><br>(N·m)
@@ -1061,17 +1067,23 @@
               <th title="hyd_speed_available_mpm">
                 <span data-latex="v_{avail}">v<sub>avail</sub></span><br>(m/min)
               </th>
-              <th title="hyd_hp_used_at_available">
-                <span data-latex="HP_{\text{hyd\_used}}">HP<sub>hyd_used</sub></span><br>(hp)
+              <th title="hyd_hp_req">
+                <span data-latex="hp_{req}">hp<sub>req</sub></span><br>(hp)
               </th>
-              <th title="hyd_elec_input_hp_used">
-                <span data-latex="HP_{\text{elec\_in}}">HP<sub>elec_in</sub></span><br>(hp)
+              <th title="hyd_hp_sys">
+                <span data-latex="hp_{sys}">hp<sub>sys</sub></span><br>(hp)
               </th>
-              <th title="hyd_drum_torque_at_maxP_Nm">
-                <span data-latex="\tau_{\text{drum@}P_{\max}}">τ<sub>drum@Pmax</sub></span><br>(N·m)
+              <th title="hyd_tau_avail_kNm">
+                <span data-latex="\tau_{avail}">τ<sub>avail</sub></span><br>(kN·m)
               </th>
-              <th title="hyd_avail_tension_kgf_at_start">
-                <span data-latex="T_{avail,\mathrm{start}}">T<sub>avail,start</sub></span><br>(kgf)
+              <th title="hyd_tension_theoretical_start_kgf">
+                <span data-latex="T_{theo}">T<sub>theo</sub></span><br>(kgf)
+              </th>
+              <th title="hyd_tension_required_start_kgf">
+                <span data-latex="T_{req}">T<sub>req</sub></span><br>(kgf)
+              </th>
+              <th title="hyd_avail_tension_kgf">
+                <span data-latex="T_{avail}">T<sub>avail</sub></span><br>(kgf)
               </th>
             </tr>
           </thead>
@@ -1120,14 +1132,14 @@
                 <th title="hyd_speed_available_mpm">
                   <span data-latex="v_{avail}">v<sub>avail</sub></span><br>(m/min)
                 </th>
-                <th title="hyd_hp_used_at_available">
-                  <span data-latex="HP_{\text{hyd\_used}}">HP<sub>hyd_used</sub></span><br>(hp)
+                <th title="hyd_hp_req">
+                  <span data-latex="hp_{req}">hp<sub>req</sub></span><br>(hp)
                 </th>
-                <th title="hyd_elec_input_hp_used">
-                  <span data-latex="HP_{\text{elec\_in}}">HP<sub>elec_in</sub></span><br>(hp)
+                <th title="hyd_hp_sys">
+                  <span data-latex="hp_{sys}">hp<sub>sys</sub></span><br>(hp)
                 </th>
-                <th title="hyd_drum_torque_maxP_Nm">
-                  <span data-latex="\tau_{\text{drum@}P_{\max}}">τ<sub>drum@Pmax</sub></span><br>(N·m)
+                <th title="hyd_tau_avail_kNm">
+                  <span data-latex="\tau_{avail}">τ<sub>avail</sub></span><br>(kN·m)
                 </th>
                 <th title="hyd_avail_tension_kgf">
                   <span data-latex="T_{avail}">T<sub>avail</sub></span><br>(kgf)

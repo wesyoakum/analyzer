@@ -1,5 +1,16 @@
 // ===== hydraulic.mjs — hydraulic-side layer aggregation + table rendering =====
 
+import {
+  formatDecimal,
+  formatHp,
+  formatInches,
+  formatInteger,
+  formatKgf,
+  formatMeters,
+  formatPsi,
+  formatSpeed
+} from './table-formatters.mjs';
+
 /**
  * Convert per-wrap rows into per-layer rows for the Hydraulic table.
  * Values are taken from the FIRST wrap in each layer (start-of-layer).
@@ -30,10 +41,13 @@ export function rowsToHydraulicLayer(rows) {
         hyd_speed_power_mpm: null,
         hyd_speed_flow_mpm: null,
         hyd_speed_available_mpm: null,
-        hyd_hp_used_at_available: null,
-        hyd_elec_input_hp_used: null,
-        hyd_drum_torque_at_maxP_Nm: null,
-        hyd_avail_tension_kgf_at_start: null
+        hyd_hp_req: null,
+        hyd_hp_sys: null,
+        hyd_tau_avail_Nm: null,
+        hyd_tau_avail_kNm: null,
+        hyd_tension_theoretical_start_kgf: null,
+        hyd_tension_required_start_kgf: null,
+        hyd_avail_tension_kgf: null
       });
     } else {
       const L = byLayer.get(r.layer_no);
@@ -50,10 +64,15 @@ export function rowsToHydraulicLayer(rows) {
       L.hyd_speed_power_mpm = r.hyd_speed_power_mpm;
       L.hyd_speed_flow_mpm = r.hyd_speed_flow_mpm;
       L.hyd_speed_available_mpm = r.hyd_speed_available_mpm;
-      L.hyd_hp_used_at_available = r.hyd_hp_used_at_available;
-      L.hyd_elec_input_hp_used = r.hyd_elec_input_hp_used;
-      L.hyd_drum_torque_at_maxP_Nm = r.hyd_drum_torque_maxP_Nm ?? null;
-      L.hyd_avail_tension_kgf_at_start = r.hyd_avail_tension_kgf ?? null;
+      L.hyd_hp_req = r.hyd_hp_used_at_available;
+      L.hyd_hp_sys = r.hyd_elec_input_hp_used;
+      L.hyd_tau_avail_Nm = r.hyd_drum_torque_maxP_Nm ?? null;
+      L.hyd_tau_avail_kNm = Number.isFinite(L.hyd_tau_avail_Nm)
+        ? +(L.hyd_tau_avail_Nm / 1000).toFixed(1)
+        : null;
+      L.hyd_tension_theoretical_start_kgf = r.tension_theoretical_kgf ?? null;
+      L.hyd_tension_required_start_kgf = r.tension_kgf ?? null;
+      L.hyd_avail_tension_kgf = r.hyd_avail_tension_kgf ?? null;
     }
   }
 
@@ -81,9 +100,9 @@ export function projectHydraulicWraps(rows) {
     hyd_speed_power_mpm: r.hyd_speed_power_mpm,
     hyd_speed_flow_mpm: r.hyd_speed_flow_mpm,
     hyd_speed_available_mpm: r.hyd_speed_available_mpm,
-    hyd_hp_used_at_available: r.hyd_hp_used_at_available,
-    hyd_elec_input_hp_used: r.hyd_elec_input_hp_used,
-    hyd_drum_torque_maxP_Nm: r.hyd_drum_torque_maxP_Nm,
+    hyd_hp_req: r.hyd_hp_used_at_available,
+    hyd_hp_sys: r.hyd_elec_input_hp_used,
+    hyd_tau_avail_kNm: +(r.hyd_drum_torque_maxP_Nm / 1000).toFixed(1),
     hyd_avail_tension_kgf: r.hyd_avail_tension_kgf,
     hyd_drum_rpm_flow: r.hyd_drum_rpm_flow,
     hyd_drum_rpm_power: r.hyd_drum_rpm_power,
@@ -104,14 +123,25 @@ export function renderHydraulicTables(hyLayers, hyWraps, tbodyLayer, tbodyWraps)
   tbodyLayer.innerHTML = '';
   for (const r of hyLayers) {
     const tr = document.createElement('tr');
-    tr.innerHTML = `
-      <td>${r.layer_no}</td><td>${r.layer_dia_in}</td>
-      <td>${r.pre_on_drum_m}</td><td>${r.pre_deployed_m}</td>
-      <td>${r.post_on_drum_m}</td><td>${r.post_deployed_m}</td>
-      <td>${r.hyd_P_required_psi ?? ''}</td><td>${r.hyd_speed_power_mpm ?? ''}</td>
-      <td>${r.hyd_speed_flow_mpm ?? ''}</td><td>${r.hyd_speed_available_mpm ?? ''}</td>
-      <td>${r.hyd_hp_used_at_available ?? ''}</td><td>${r.hyd_elec_input_hp_used ?? ''}</td>
-      <td>${r.hyd_drum_torque_at_maxP_Nm ?? ''}</td><td>${r.hyd_avail_tension_kgf_at_start ?? ''}</td>`;
+    const cells = [
+      formatInteger(r.layer_no),
+      formatInches(r.layer_dia_in),
+      formatMeters(r.pre_on_drum_m),
+      formatMeters(r.pre_deployed_m),
+      formatMeters(r.post_on_drum_m),
+      formatMeters(r.post_deployed_m),
+      formatPsi(r.hyd_P_required_psi ?? ''),
+      formatSpeed(r.hyd_speed_power_mpm ?? ''),
+      formatSpeed(r.hyd_speed_flow_mpm ?? ''),
+      formatSpeed(r.hyd_speed_available_mpm ?? ''),
+      formatHp(r.hyd_hp_req ?? ''),
+      formatHp(r.hyd_hp_sys ?? ''),
+      formatDecimal(r.hyd_tau_avail_kNm, 1),
+      formatKgf(r.hyd_tension_theoretical_start_kgf),
+      formatKgf(r.hyd_tension_required_start_kgf),
+      formatKgf(r.hyd_avail_tension_kgf)
+    ];
+    tr.innerHTML = cells.map(v => `<td>${v}</td>`).join('');
     tbodyLayer.appendChild(tr);
   }
 
@@ -119,14 +149,26 @@ export function renderHydraulicTables(hyLayers, hyWraps, tbodyLayer, tbodyWraps)
   tbodyWraps.innerHTML = '';
   for (const r of hyWraps) {
     const tr = document.createElement('tr');
-    tr.innerHTML = `
-      <td>${r.wrap_no}</td><td>${r.layer_no}</td><td>${r.layer_dia_in}</td>
-      <td>${r.wrap_len_in}</td><td>${r.pre_spooled_len_m}</td><td>${r.spooled_len_m}</td><td>${r.deployed_len_m}</td>
-      <td>${r.tension_theoretical_kgf ?? ''}</td><td>${r.tension_required_kgf ?? ''}</td>
-      <td>${r.hyd_P_required_psi}</td><td>${r.hyd_speed_power_mpm}</td>
-      <td>${r.hyd_speed_flow_mpm}</td><td>${r.hyd_speed_available_mpm}</td>
-      <td>${r.hyd_hp_used_at_available}</td><td>${r.hyd_elec_input_hp_used}</td>
-      <td>${r.hyd_drum_torque_maxP_Nm}</td><td>${r.hyd_avail_tension_kgf}</td>`;
+    const cells = [
+      formatInteger(r.wrap_no),
+      formatInteger(r.layer_no),
+      formatInches(r.layer_dia_in),
+      formatInches(r.wrap_len_in),
+      formatMeters(r.pre_spooled_len_m),
+      formatMeters(r.spooled_len_m),
+      formatMeters(r.deployed_len_m),
+      formatKgf(r.tension_theoretical_kgf ?? ''),
+      formatKgf(r.tension_required_kgf ?? ''),
+      formatPsi(r.hyd_P_required_psi),
+      formatSpeed(r.hyd_speed_power_mpm),
+      formatSpeed(r.hyd_speed_flow_mpm),
+      formatSpeed(r.hyd_speed_available_mpm),
+      formatHp(r.hyd_hp_req),
+      formatHp(r.hyd_hp_sys),
+      formatDecimal(r.hyd_tau_avail_kNm, 1),
+      formatKgf(r.hyd_avail_tension_kgf)
+    ];
+    tr.innerHTML = cells.map(v => `<td>${v}</td>`).join('');
     tbodyWraps.appendChild(tr);
   }
 }

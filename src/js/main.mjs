@@ -41,14 +41,16 @@ const CSV_BUTTON_SPECS = {
     columns: [
       'layer_no', 'layer_dia_in', 'pre_on_drum_m', 'pre_deployed_m',
       'post_on_drum_m', 'post_deployed_m', 'max_tension_theoretical_kgf',
-      'max_tension_required_kgf', 'max_torque_Nm', 'max_motor_torque_Nm',
-      'motor_rpm_at_start', 'line_speed_at_start_mpm', 'avail_tension_kgf_at_start'
+      'max_tension_required_kgf', 'tau_avail_kNm', 'max_motor_torque_Nm',
+      'motor_rpm_at_start', 'line_speed_at_start_mpm',
+      'tension_theoretical_start_kgf', 'tension_required_start_kgf', 'avail_tension_kgf'
     ],
     header: [
       'layer_no', 'layer_dia_in', 'pre_on_drum_m', 'pre_deployed_m',
       'post_on_drum_m', 'post_deployed_m', 'max_tension_theoretical_kgf',
-      'max_tension_required_kgf', 'max_torque_Nm', 'max_motor_torque_Nm',
-      'motor_rpm_at_start', 'line_speed_at_start_mpm', 'avail_tension_kgf_at_start'
+      'max_tension_required_kgf', 'tau_avail_kNm', 'max_motor_torque_Nm',
+      'motor_rpm_at_start', 'line_speed_at_start_mpm',
+      'tension_theoretical_start_kgf', 'tension_required_start_kgf', 'avail_tension_kgf'
     ],
     getRows: () => lastElLayer
   },
@@ -57,13 +59,13 @@ const CSV_BUTTON_SPECS = {
     columns: [
       'wrap_no', 'layer_no', 'layer_dia_in', 'wrap_len_in', 'pre_spooled_len_m',
       'spooled_len_m', 'deployed_len_m', 'tension_theoretical_kgf',
-      'tension_required_kgf', 'torque_Nm', 'motor_torque_Nm', 'motor_rpm',
+      'tension_required_kgf', 'tau_avail_kNm', 'motor_torque_Nm', 'motor_rpm',
       'line_speed_mpm', 'avail_tension_kgf'
     ],
     header: [
       'wrap_no', 'layer_no', 'layer_dia_in', 'wrap_len_in', 'pre_spooled_len_m',
       'spooled_len_m', 'deployed_len_m', 'tension_theoretical_kgf',
-      'tension_required_kgf', 'torque_Nm', 'motor_torque_Nm', 'motor_rpm',
+      'tension_required_kgf', 'tau_avail_kNm', 'motor_torque_Nm', 'motor_rpm',
       'line_speed_mpm', 'avail_tension_kgf'
     ],
     getRows: () => lastElWraps
@@ -74,15 +76,17 @@ const CSV_BUTTON_SPECS = {
       'layer_no', 'layer_dia_in', 'pre_on_drum_m', 'pre_deployed_m',
       'post_on_drum_m', 'post_deployed_m', 'hyd_P_required_psi',
       'hyd_speed_power_mpm', 'hyd_speed_flow_mpm', 'hyd_speed_available_mpm',
-      'hyd_hp_used_at_available', 'hyd_elec_input_hp_used',
-      'hyd_drum_torque_at_maxP_Nm', 'hyd_avail_tension_kgf_at_start'
+      'hyd_hp_req', 'hyd_hp_sys', 'hyd_tau_avail_kNm',
+      'hyd_tension_theoretical_start_kgf', 'hyd_tension_required_start_kgf',
+      'hyd_avail_tension_kgf'
     ],
     header: [
       'layer_no', 'layer_dia_in', 'pre_on_drum_m', 'pre_deployed_m',
       'post_on_drum_m', 'post_deployed_m', 'hyd_P_required_psi',
       'hyd_speed_power_mpm', 'hyd_speed_flow_mpm', 'hyd_speed_available_mpm',
-      'hyd_hp_used_at_available', 'hyd_elec_input_hp_used',
-      'hyd_drum_torque_at_maxP_Nm', 'hyd_avail_tension_kgf_at_start'
+      'hyd_hp_req', 'hyd_hp_sys', 'hyd_tau_avail_kNm',
+      'hyd_tension_theoretical_start_kgf', 'hyd_tension_required_start_kgf',
+      'hyd_avail_tension_kgf'
     ],
     getRows: () => lastHyLayer
   },
@@ -92,15 +96,15 @@ const CSV_BUTTON_SPECS = {
       'wrap_no', 'layer_no', 'layer_dia_in', 'wrap_len_in', 'pre_spooled_len_m',
       'spooled_len_m', 'deployed_len_m', 'tension_theoretical_kgf',
       'tension_required_kgf', 'hyd_P_required_psi', 'hyd_speed_power_mpm',
-      'hyd_speed_flow_mpm', 'hyd_speed_available_mpm', 'hyd_hp_used_at_available',
-      'hyd_elec_input_hp_used', 'hyd_drum_torque_maxP_Nm', 'hyd_avail_tension_kgf'
+      'hyd_speed_flow_mpm', 'hyd_speed_available_mpm', 'hyd_hp_req',
+      'hyd_hp_sys', 'hyd_tau_avail_kNm', 'hyd_avail_tension_kgf'
     ],
     header: [
       'wrap_no', 'layer_no', 'layer_dia_in', 'wrap_len_in', 'pre_spooled_len_m',
       'spooled_len_m', 'deployed_len_m', 'tension_theoretical_kgf',
       'tension_required_kgf', 'hyd_P_required_psi', 'hyd_speed_power_mpm',
-      'hyd_speed_flow_mpm', 'hyd_speed_available_mpm', 'hyd_hp_used_at_available',
-      'hyd_elec_input_hp_used', 'hyd_drum_torque_maxP_Nm', 'hyd_avail_tension_kgf'
+      'hyd_speed_flow_mpm', 'hyd_speed_available_mpm', 'hyd_hp_req',
+      'hyd_hp_sys', 'hyd_tau_avail_kNm', 'hyd_avail_tension_kgf'
     ],
     getRows: () => lastHyWraps
   }

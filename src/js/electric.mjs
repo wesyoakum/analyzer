@@ -4,6 +4,16 @@ import {
   tension_kgf, elec_available_tension_kgf,
   TENSION_SAFETY_FACTOR
 } from './utils.mjs';
+import {
+  formatDecimal,
+  formatInches,
+  formatInteger,
+  formatKgf,
+  formatMeters,
+  formatMotorTorque,
+  formatRpm,
+  formatSpeed
+} from './table-formatters.mjs';
 
 /**
  * Convert per-wrap rows into per-layer rows for the Electric table.
@@ -40,7 +50,9 @@ export function rowsToElectricLayer(rows, payload_kg, cable_w_kgpm, gr1, gr2, mo
         post_deployed_m: post_dep,
         motor_rpm_at_start: null,
         line_speed_at_start_mpm: null,
-        avail_tension_kgf_at_start: null
+        tension_theoretical_start_kgf: null,
+        tension_required_start_kgf: null,
+        avail_tension_kgf: null
       });
     } else {
       const L = byLayer.get(r.layer_no);
@@ -55,7 +67,9 @@ export function rowsToElectricLayer(rows, payload_kg, cable_w_kgpm, gr1, gr2, mo
     if (L && L.motor_rpm_at_start === null) {
       L.motor_rpm_at_start = r.motor_rpm ?? '';
       L.line_speed_at_start_mpm = r.line_speed_mpm ?? '';
-      L.avail_tension_kgf_at_start = r.avail_tension_kgf ?? '';
+      L.tension_theoretical_start_kgf = r.tension_theoretical_kgf ?? null;
+      L.tension_required_start_kgf = r.tension_kgf ?? null;
+      L.avail_tension_kgf = r.avail_tension_kgf ?? null;
     }
   }
 
@@ -75,6 +89,7 @@ export function rowsToElectricLayer(rows, payload_kg, cable_w_kgpm, gr1, gr2, mo
       max_tension_theoretical_kgf: maxTheo_kgf,
       max_tension_required_kgf: maxReq_kgf,
       max_torque_Nm: maxT_Nm,
+      tau_avail_kNm: +(maxT_Nm / 1000).toFixed(1),
       max_motor_torque_Nm: maxMotorNm
     });
   }
@@ -98,7 +113,7 @@ export function projectElectricWraps(rows) {
     total_cable_len_m: r.total_cable_len_m,
     tension_required_kgf: r.tension_kgf,
     tension_theoretical_kgf: r.tension_theoretical_kgf,
-    torque_Nm: r.torque_Nm,
+    tau_avail_kNm: +(r.torque_Nm / 1000).toFixed(1),
     motor_torque_Nm: r.motor_torque_Nm,
     motor_rpm: r.motor_rpm,
     line_speed_mpm: r.line_speed_mpm,
@@ -118,13 +133,24 @@ export function renderElectricTables(elLayers, elWraps, tbodyLayer, tbodyWraps) 
   tbodyLayer.innerHTML = '';
   for (const r of elLayers) {
     const tr = document.createElement('tr');
-    tr.innerHTML = `
-      <td>${r.layer_no}</td><td>${r.layer_dia_in}</td>
-      <td>${r.pre_on_drum_m}</td><td>${r.pre_deployed_m}</td>
-      <td>${r.post_on_drum_m}</td><td>${r.post_deployed_m}</td>
-      <td>${r.max_tension_theoretical_kgf}</td><td>${r.max_tension_required_kgf}</td>
-      <td>${r.max_torque_Nm}</td><td>${r.max_motor_torque_Nm}</td>
-      <td>${r.motor_rpm_at_start ?? ''}</td><td>${r.line_speed_at_start_mpm ?? ''}</td><td>${r.avail_tension_kgf_at_start ?? ''}</td>`;
+    const cells = [
+      formatInteger(r.layer_no),
+      formatInches(r.layer_dia_in),
+      formatMeters(r.pre_on_drum_m),
+      formatMeters(r.pre_deployed_m),
+      formatMeters(r.post_on_drum_m),
+      formatMeters(r.post_deployed_m),
+      formatKgf(r.max_tension_theoretical_kgf),
+      formatKgf(r.max_tension_required_kgf),
+      formatDecimal(r.tau_avail_kNm, 1),
+      formatMotorTorque(r.max_motor_torque_Nm),
+      formatRpm(r.motor_rpm_at_start ?? ''),
+      formatSpeed(r.line_speed_at_start_mpm ?? ''),
+      formatKgf(r.tension_theoretical_start_kgf),
+      formatKgf(r.tension_required_start_kgf),
+      formatKgf(r.avail_tension_kgf)
+    ];
+    tr.innerHTML = cells.map(v => `<td>${v}</td>`).join('');
     tbodyLayer.appendChild(tr);
   }
 
@@ -132,12 +158,23 @@ export function renderElectricTables(elLayers, elWraps, tbodyLayer, tbodyWraps) 
   tbodyWraps.innerHTML = '';
   for (const r of elWraps) {
     const tr = document.createElement('tr');
-    tr.innerHTML = `
-      <td>${r.wrap_no}</td><td>${r.layer_no}</td><td>${r.layer_dia_in}</td>
-      <td>${r.wrap_len_in}</td><td>${r.pre_spooled_len_m}</td><td>${r.spooled_len_m}</td><td>${r.deployed_len_m}</td>
-      <td>${r.tension_theoretical_kgf ?? ''}</td><td>${r.tension_required_kgf ?? ''}</td>
-      <td>${r.torque_Nm}</td><td>${r.motor_torque_Nm}</td>
-      <td>${r.motor_rpm}</td><td>${r.line_speed_mpm}</td><td>${r.avail_tension_kgf}</td>`;
+    const cells = [
+      formatInteger(r.wrap_no),
+      formatInteger(r.layer_no),
+      formatInches(r.layer_dia_in),
+      formatInches(r.wrap_len_in),
+      formatMeters(r.pre_spooled_len_m),
+      formatMeters(r.spooled_len_m),
+      formatMeters(r.deployed_len_m),
+      formatKgf(r.tension_theoretical_kgf ?? ''),
+      formatKgf(r.tension_required_kgf ?? ''),
+      formatDecimal(r.tau_avail_kNm, 1),
+      formatMotorTorque(r.motor_torque_Nm),
+      formatRpm(r.motor_rpm),
+      formatSpeed(r.line_speed_mpm),
+      formatKgf(r.avail_tension_kgf)
+    ];
+    tr.innerHTML = cells.map(v => `<td>${v}</td>`).join('');
     tbodyWraps.appendChild(tr);
   }
 }
