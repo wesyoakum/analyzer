@@ -131,16 +131,6 @@ export function drawHydraulicRpmTorque(svg, { wraps = [] } = {}) {
     }));
   }
 
-  data.forEach(d => {
-    svg.appendChild(svgEl('circle', {
-      cx: sx(d.torque),
-      cy: sy(d.rpmAvail),
-      r: 3,
-      fill: '#fff',
-      stroke: accent,
-      'stroke-width': 1.5
-    }));
-  });
 }
 
 function toNumber(val) {
