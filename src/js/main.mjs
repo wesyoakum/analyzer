@@ -198,7 +198,6 @@ function updateBuildIndicator() {
 function setupTabs() {
   /** @type {Array<{tab: HTMLElement, panel: HTMLElement}>} */
   const tabEntries = [];
-  const clearButton = /** @type {HTMLButtonElement|null} */ (document.getElementById('clear_inputs'));
   document.querySelectorAll('[role="tab"]').forEach(tabEl => {
     const controls = tabEl.getAttribute('aria-controls');
     const panel = controls ? /** @type {HTMLElement|null} */ (document.getElementById(controls)) : null;
@@ -225,12 +224,6 @@ function setupTabs() {
       panel.setAttribute('aria-hidden', isActive ? 'false' : 'true');
       panel.tabIndex = isActive ? 0 : -1;
     });
-
-    if (clearButton) {
-      const isInputsTab =
-        nextTab.id === 'tab-inputs' || nextTab.getAttribute('aria-controls') === 'panel-inputs';
-      clearButton.toggleAttribute('hidden', !isInputsTab);
-    }
 
     if (setFocus) {
       nextTab.focus();
@@ -342,9 +335,9 @@ function setupCollapsibleToggles() {
   let collapseIdCounter = 0;
   const configs = [
     { selector: '#component-catalog-card', headerSelector: '.section-title', defaultExpanded: false },
-    { selector: '#panel-inputs .card[data-drive-scope]', headerSelector: '.section-title', defaultExpanded: true },
-    { selector: '#panel-inputs .input-section', headerSelector: '.input-section__title', defaultExpanded: true },
-    { selector: '#panel-inputs .input-subsection', headerSelector: '.input-subsection__title', defaultExpanded: true },
+    { selector: '#sidebar-inputs .card[data-drive-scope]', headerSelector: '.section-title', defaultExpanded: true },
+    { selector: '#sidebar-inputs .input-section', headerSelector: '.input-section__title', defaultExpanded: true },
+    { selector: '#sidebar-inputs .input-subsection', headerSelector: '.input-subsection__title', defaultExpanded: true },
     { selector: '.plot-controls__group', headerSelector: '.plot-controls__group-title', defaultExpanded: false }
   ];
 
@@ -465,6 +458,270 @@ function setupManualRefreshControls() {
       }
     });
   }
+}
+
+function renderInputSummary() {
+  const summaryRoot = /** @type {HTMLElement|null} */ (document.getElementById('input-summary'));
+  const sourceRoot = /** @type {HTMLElement|null} */ (document.getElementById('sidebar-inputs'));
+  if (!summaryRoot || !sourceRoot) return;
+
+  const cards = Array.from(sourceRoot.querySelectorAll('[data-summary-card]'))
+    .map(el => /** @type {HTMLElement} */ (el))
+    .filter(card => !card.classList.contains('is-hidden'));
+
+  const frag = document.createDocumentFragment();
+
+  cards.forEach(card => {
+    const summaryCard = document.createElement('section');
+    summaryCard.classList.add('card', 'summary-card');
+
+    const cardTitle = getNodeText(card.querySelector('.section-title'));
+    if (cardTitle) {
+      const heading = document.createElement('h2');
+      heading.classList.add('section-title', 'summary-card__title');
+      heading.textContent = cardTitle;
+      summaryCard.appendChild(heading);
+    }
+
+    const sectionsContainer = document.createElement('div');
+    sectionsContainer.classList.add('input-summary__sections');
+
+    const inputSections = Array.from(card.querySelectorAll('.input-section'))
+      .map(el => /** @type {HTMLElement} */ (el))
+      .filter(section => section.closest('[data-summary-card]') === card && !section.classList.contains('is-hidden'));
+
+    if (inputSections.length) {
+      inputSections.forEach(section => {
+        const sectionSummary = buildInputSectionSummary(section);
+        if (sectionSummary) sectionsContainer.appendChild(sectionSummary);
+      });
+    } else {
+      const plotGroups = Array.from(card.querySelectorAll('.plot-controls__group'))
+        .map(el => /** @type {HTMLElement} */ (el))
+        .filter(group => group.closest('[data-summary-card]') === card && !group.classList.contains('is-hidden'));
+
+      if (plotGroups.length) {
+        plotGroups.forEach(group => {
+          const groupSummary = buildPlotGroupSummary(group);
+          if (groupSummary) sectionsContainer.appendChild(groupSummary);
+        });
+      }
+    }
+
+    if (!sectionsContainer.children.length) {
+      const tables = collectTables(card, table => table.closest('[data-summary-card]') === card);
+      if (tables.length) {
+        const fallbackSection = document.createElement('section');
+        fallbackSection.classList.add('input-summary__section');
+        tables.forEach(table => fallbackSection.appendChild(buildSummaryTable(table)));
+        sectionsContainer.appendChild(fallbackSection);
+      }
+    }
+
+    if (!sectionsContainer.children.length) return;
+
+    summaryCard.appendChild(sectionsContainer);
+    frag.appendChild(summaryCard);
+  });
+
+  summaryRoot.replaceChildren(frag);
+}
+
+/**
+ * @param {HTMLElement} sectionEl
+ */
+function buildInputSectionSummary(sectionEl) {
+  const summarySection = document.createElement('section');
+  summarySection.classList.add('input-summary__section');
+
+  const title = getNodeText(sectionEl.querySelector('.input-section__title'));
+  if (title) {
+    const heading = document.createElement('h3');
+    heading.classList.add('input-summary__section-title');
+    heading.textContent = title;
+    summarySection.appendChild(heading);
+  }
+
+  collectTables(sectionEl, table => table.closest('.input-section') === sectionEl && !table.closest('.input-subsection'))
+    .forEach(table => summarySection.appendChild(buildSummaryTable(table)));
+
+  const subsections = Array.from(sectionEl.querySelectorAll('.input-subsection'))
+    .map(el => /** @type {HTMLElement} */ (el))
+    .filter(sub => sub.closest('.input-section') === sectionEl && !sub.classList.contains('is-hidden'));
+
+  subsections.forEach(subsection => {
+    const subsectionSummary = buildInputSubsectionSummary(subsection);
+    if (subsectionSummary) summarySection.appendChild(subsectionSummary);
+  });
+
+  if (!summarySection.children.length) return null;
+  return summarySection;
+}
+
+/**
+ * @param {HTMLElement} subsectionEl
+ */
+function buildInputSubsectionSummary(subsectionEl) {
+  const summarySubsection = document.createElement('section');
+  summarySubsection.classList.add('input-summary__subsection');
+
+  const title = getNodeText(subsectionEl.querySelector('.input-subsection__title'));
+  if (title) {
+    const heading = document.createElement('h4');
+    heading.classList.add('input-summary__subsection-title');
+    heading.textContent = title;
+    summarySubsection.appendChild(heading);
+  }
+
+  collectTables(subsectionEl, table => table.closest('.input-subsection') === subsectionEl)
+    .forEach(table => summarySubsection.appendChild(buildSummaryTable(table)));
+
+  if (!summarySubsection.children.length) return null;
+  return summarySubsection;
+}
+
+/**
+ * @param {HTMLElement} groupEl
+ */
+function buildPlotGroupSummary(groupEl) {
+  const summarySection = document.createElement('section');
+  summarySection.classList.add('input-summary__section');
+
+  const title = getNodeText(groupEl.querySelector('.plot-controls__group-title'));
+  if (title) {
+    const heading = document.createElement('h3');
+    heading.classList.add('input-summary__section-title');
+    heading.textContent = title;
+    summarySection.appendChild(heading);
+  }
+
+  collectTables(groupEl, table => table.closest('.plot-controls__group') === groupEl)
+    .forEach(table => summarySection.appendChild(buildSummaryTable(table)));
+
+  if (!summarySection.children.length) return null;
+  return summarySection;
+}
+
+/**
+ * @param {HTMLElement} tableEl
+ */
+function buildSummaryTable(tableEl) {
+  const summaryTable = document.createElement('table');
+  summaryTable.classList.add('worksheet', 'worksheet--summary');
+
+  const header = tableEl.tHead ? tableEl.tHead.cloneNode(true) : null;
+  if (header instanceof HTMLTableSectionElement) {
+    const headers = header.querySelectorAll('th');
+    if (headers.length > 1) headers[1].textContent = 'Value';
+    summaryTable.appendChild(header);
+  }
+
+  const body = document.createElement('tbody');
+
+  Array.from(tableEl.tBodies).forEach(srcBody => {
+    Array.from(srcBody.rows).forEach(row => {
+      const summaryRow = document.createElement('tr');
+      summaryRow.className = row.className;
+
+      if (row.classList.contains('note') || row.cells.length === 1) {
+        const srcCell = row.cells[0];
+        const cell = document.createElement('td');
+        cell.colSpan = srcCell.colSpan || row.cells.length || 1;
+        cell.className = srcCell.className;
+        cell.textContent = normalizeText(srcCell.textContent);
+        summaryRow.appendChild(cell);
+        body.appendChild(summaryRow);
+        return;
+      }
+
+      const headerCell = row.querySelector('th');
+      if (headerCell) {
+        const clonedHeader = headerCell.cloneNode(true);
+        summaryRow.appendChild(clonedHeader);
+      }
+
+      const valueCell = document.createElement('td');
+      valueCell.classList.add('value');
+      valueCell.textContent = extractSummaryValue(row.querySelector('td.value'));
+      summaryRow.appendChild(valueCell);
+
+      const unitsCell = row.querySelector('td.units');
+      if (unitsCell) {
+        const clonedUnits = unitsCell.cloneNode(true);
+        clonedUnits.textContent = normalizeText(unitsCell.textContent);
+        summaryRow.appendChild(clonedUnits);
+      }
+
+      body.appendChild(summaryRow);
+    });
+  });
+
+  summaryTable.appendChild(body);
+  return summaryTable;
+}
+
+/**
+ * @param {HTMLElement} tableCell
+ */
+function extractSummaryValue(tableCell) {
+  if (!tableCell) return '–';
+
+  const formControl = tableCell.querySelector('input, select, textarea');
+  if (formControl instanceof HTMLInputElement) {
+    if (formControl.type === 'checkbox') {
+      return formControl.checked ? 'Yes' : 'No';
+    }
+    if (formControl.type === 'radio') {
+      return formControl.checked ? normalizeText(formControl.value) : '–';
+    }
+    return normalizeText(formControl.value);
+  }
+
+  if (formControl instanceof HTMLSelectElement) {
+    if (formControl.multiple) {
+      const selections = Array.from(formControl.selectedOptions).map(opt => normalizeText(opt.textContent));
+      return selections.length ? selections.join(', ') : '–';
+    }
+    const option = formControl.selectedOptions[0];
+    return option ? normalizeText(option.textContent) : '–';
+  }
+
+  if (formControl instanceof HTMLTextAreaElement) {
+    return normalizeText(formControl.value);
+  }
+
+  const outputField = tableCell.querySelector('.output-field');
+  if (outputField) {
+    return normalizeText(outputField.textContent);
+  }
+
+  return normalizeText(tableCell.textContent);
+}
+
+/**
+ * @param {Element|null} node
+ */
+function getNodeText(node) {
+  if (!node) return '';
+  return normalizeText(node.textContent);
+}
+
+/**
+ * @param {Element} root
+ * @param {(table: HTMLTableElement) => boolean} predicate
+ */
+function collectTables(root, predicate) {
+  return Array.from(root.querySelectorAll('table.worksheet'))
+    .map(el => /** @type {HTMLTableElement} */ (el))
+    .filter(table => predicate(table));
+}
+
+/**
+ * @param {string|null} text
+ */
+function normalizeText(text) {
+  const trimmed = (text || '').replace(/\s+/g, ' ').trim();
+  return trimmed || '–';
 }
 
 function setupAutoRecompute() {
@@ -829,6 +1086,7 @@ function computeAll() {
     renderElectricTables(lastElLayer, lastElWraps, q('tbody_el_layer'), q('tbody_el_wraps'));
     renderHydraulicTables(lastHyLayer, lastHyWraps, q('tbody_hy_layer'), q('tbody_hy_wraps'));
 
+    renderInputSummary();
     renderLatexFragments(document.body);
 
     updateCsvButtonStates();
@@ -844,6 +1102,8 @@ function computeAll() {
     clearDrumVisualization();
     clearPlots();
     updateCsvButtonStates();
+    renderInputSummary();
+    renderLatexFragments(document.body);
   }
 }
 
