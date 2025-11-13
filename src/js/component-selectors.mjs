@@ -888,10 +888,8 @@ const SELECT_CONFIGS = [
 
 const watchedInputs = new Set();
 const CREATE_NEW_VALUE = '__component_create_new__';
-const SAVE_CURRENT_VALUE = '__component_save_current__';
-const SAVE_CURRENT_LABEL = 'Save Current Preset';
-const DELETE_PRESET_VALUE = '__component_delete_preset__';
-const DELETE_PRESET_LABEL = 'Delete Preset';
+const EXPORT_PRESET_VALUE = '__component_export_preset__';
+const EXPORT_PRESET_LABEL = 'Export Preset';
 const COMPONENT_STORAGE_PREFIX = 'analyzer.components.';
 /** @type {Map<string, ComponentOption[]>} */
 const memoryCustomOptions = new Map();
@@ -899,6 +897,25 @@ let cachedComponentStorage;
 
 function isPlainObject(value) {
   return typeof value === 'object' && value !== null && !Array.isArray(value);
+}
+
+function generatePresetId() {
+  if (typeof crypto !== 'undefined' && typeof crypto.randomUUID === 'function') {
+    return crypto.randomUUID();
+  }
+  const randomPart = Math.random().toString(16).slice(2, 10);
+  return `preset-${Date.now()}-${randomPart}`;
+}
+
+function formatPresetFilename(baseName, type) {
+  const safeBase = String(baseName || type || 'preset')
+    .trim()
+    .toLowerCase()
+    .replace(/[^a-z0-9-_]+/g, '-');
+  const normalized = safeBase.replace(/-+/g, '-').replace(/^-|-$/g, '');
+  const timestamp = new Date().toISOString().replace(/[:.]/g, '-');
+  const stem = normalized.length ? normalized : 'preset';
+  return `${stem}-${timestamp}.json`;
 }
 
 function mergePresetMetadata(...sources) {
@@ -1041,17 +1058,6 @@ function upsertCustomOption(type, option, { persist = true } = {}) {
   const existing = memoryCustomOptions.get(type) ?? [];
   const merged = mergeCustomOptionLists(existing, [option]);
   replaceCustomOptions(type, merged, { persist });
-}
-
-function removeCustomOptionById(type, id, { persist = true } = {}) {
-  if (!type || typeof id !== 'string' || !id) return false;
-  const existing = memoryCustomOptions.get(type) ?? [];
-  const filtered = existing.filter(item => item.id !== id);
-  if (filtered.length === existing.length) {
-    return false;
-  }
-  replaceCustomOptions(type, filtered, { persist });
-  return true;
 }
 
 function normalizePresetDataForOption(data, fieldMap) {
@@ -1255,21 +1261,14 @@ function populateSelectOptions(selectEl, config, { selectedValue } = {}) {
   createOpt.textContent = 'Create New';
   selectEl.appendChild(createOpt);
 
-  const saveOpt = document.createElement('option');
-  saveOpt.value = SAVE_CURRENT_VALUE;
-  saveOpt.textContent = SAVE_CURRENT_LABEL;
-  saveOpt.dataset.componentPresetSave = '1';
-  saveOpt.disabled = true;
-  selectEl.appendChild(saveOpt);
+  const exportOpt = document.createElement('option');
+  exportOpt.value = EXPORT_PRESET_VALUE;
+  exportOpt.textContent = EXPORT_PRESET_LABEL;
+  exportOpt.dataset.componentPresetExport = '1';
+  exportOpt.disabled = true;
+  selectEl.appendChild(exportOpt);
 
-  const deleteOpt = document.createElement('option');
-  deleteOpt.value = DELETE_PRESET_VALUE;
-  deleteOpt.textContent = DELETE_PRESET_LABEL;
-  deleteOpt.dataset.componentPresetDelete = '1';
-  deleteOpt.disabled = true;
-  selectEl.appendChild(deleteOpt);
-
-  if (prior && prior !== CREATE_NEW_VALUE && prior !== SAVE_CURRENT_VALUE && findOption(config, prior)) {
+  if (prior && prior !== CREATE_NEW_VALUE && prior !== EXPORT_PRESET_VALUE && findOption(config, prior)) {
     selectEl.value = prior;
   } else if (prior === '') {
     selectEl.value = '';
@@ -1278,28 +1277,14 @@ function populateSelectOptions(selectEl, config, { selectedValue } = {}) {
   }
 }
 
-function ensureSavePresetOption(selectEl) {
+function ensureExportPresetOption(selectEl) {
   /** @type {HTMLOptionElement|null} */
-  let option = selectEl.querySelector(`option[value="${SAVE_CURRENT_VALUE}"]`);
+  let option = selectEl.querySelector(`option[value="${EXPORT_PRESET_VALUE}"]`);
   if (!option) {
     option = document.createElement('option');
-    option.value = SAVE_CURRENT_VALUE;
-    option.textContent = SAVE_CURRENT_LABEL;
-    option.dataset.componentPresetSave = '1';
-    option.disabled = true;
-    selectEl.appendChild(option);
-  }
-  return option;
-}
-
-function ensureDeletePresetOption(selectEl) {
-  /** @type {HTMLOptionElement|null} */
-  let option = selectEl.querySelector(`option[value="${DELETE_PRESET_VALUE}"]`);
-  if (!option) {
-    option = document.createElement('option');
-    option.value = DELETE_PRESET_VALUE;
-    option.textContent = DELETE_PRESET_LABEL;
-    option.dataset.componentPresetDelete = '1';
+    option.value = EXPORT_PRESET_VALUE;
+    option.textContent = EXPORT_PRESET_LABEL;
+    option.dataset.componentPresetExport = '1';
     option.disabled = true;
     selectEl.appendChild(option);
   }
@@ -1553,51 +1538,24 @@ export function setupComponentSelectors() {
 
     populateSelectOptions(selectEl, config, { selectedValue: initialValue });
 
-    let isSavingPreset = false;
-    let isDeletingPreset = false;
-    let saveOption = ensureSavePresetOption(selectEl);
-    let deleteOption = ensureDeletePresetOption(selectEl);
+    let isExportingPreset = false;
+    let exportOption = ensureExportPresetOption(selectEl);
     const updatePresetActionState = () => {
-      saveOption = ensureSavePresetOption(selectEl);
-      deleteOption = ensureDeletePresetOption(selectEl);
-      const option = findOption(config, selectEl.value);
-      const isServerPreset = Boolean(option && typeof option.id === 'string' && option.id);
-      const canMutate = isServerPreset && !selectEl.disabled;
-
-      if (saveOption) {
-        if (isSavingPreset) {
-          saveOption.disabled = true;
-          saveOption.textContent = 'Saving…';
-        } else {
-          saveOption.textContent = SAVE_CURRENT_LABEL;
-          saveOption.disabled = !(canMutate && !isDeletingPreset);
-        }
-        if (isServerPreset && option && typeof option.id === 'string') {
-          saveOption.dataset.presetId = option.id;
-        } else {
-          delete saveOption.dataset.presetId;
-        }
+      exportOption = ensureExportPresetOption(selectEl);
+      if (!exportOption) {
+        return;
       }
-
-      if (deleteOption) {
-        if (isDeletingPreset) {
-          deleteOption.disabled = true;
-          deleteOption.textContent = 'Deleting…';
-        } else {
-          deleteOption.textContent = DELETE_PRESET_LABEL;
-          deleteOption.disabled = !(canMutate && !isSavingPreset);
-        }
-        if (isServerPreset && option && typeof option.id === 'string') {
-          deleteOption.dataset.presetId = option.id;
-        } else {
-          delete deleteOption.dataset.presetId;
-        }
+      if (isExportingPreset) {
+        exportOption.disabled = true;
+        exportOption.textContent = 'Preparing Export…';
+        return;
       }
+      exportOption.textContent = EXPORT_PRESET_LABEL;
+      exportOption.disabled = selectEl.disabled;
     };
 
     selectEl.addEventListener('component:options-refreshed', () => {
-      saveOption = ensureSavePresetOption(selectEl);
-      deleteOption = ensureDeletePresetOption(selectEl);
+      exportOption = ensureExportPresetOption(selectEl);
       updatePresetActionState();
     });
 
@@ -1610,135 +1568,92 @@ export function setupComponentSelectors() {
       applySelection(config, value, { skipEvents });
     };
 
-    const performSaveCurrentPreset = async () => {
-      if (isSavingPreset) {
-        return;
-      }
-      const option = findOption(config, selectEl.value);
-      if (!option || typeof option.id !== 'string' || !option.id) {
+    const performExportPreset = async () => {
+      if (isExportingPreset) {
         return;
       }
 
-      const descriptor = option.name && option.name !== option.pn ? `${option.name} (${option.pn})` : option.pn;
+      const activeValue = previousValue && previousValue !== CREATE_NEW_VALUE ? previousValue : '';
+      const option = activeValue ? findOption(config, activeValue) : undefined;
       const label = config.label || 'component';
-      const confirmMessage = [
-        `Save the current ${label} settings to preset "${descriptor}"?`,
-        'This will overwrite the version stored on the server.'
-      ].join('\n\n');
-      const confirmed = window.confirm(confirmMessage);
-      if (!confirmed) {
-        return;
+
+      let pn = option && typeof option.pn === 'string' ? option.pn.trim() : '';
+      if (!pn) {
+        const pnInput = window.prompt(`Enter a part number for this ${label} preset:`);
+        if (pnInput == null) {
+          return;
+        }
+        pn = pnInput.trim();
+        if (!pn) {
+          window.alert('A part number is required to export a preset.');
+          return;
+        }
       }
 
-      isSavingPreset = true;
+      let name = option && typeof option.name === 'string' ? option.name.trim() : '';
+      if (!name) {
+        const nameInput = window.prompt(`Enter a name for the exported ${label} preset:`, pn);
+        if (nameInput == null) {
+          return;
+        }
+        name = nameInput.trim();
+        if (!name) {
+          window.alert('A name is required to export a preset.');
+          return;
+        }
+      }
+
+      const description = option && typeof option.description === 'string' ? option.description.trim() : '';
+      const metadataSource = option ? { ...option } : { pn };
+      const metadata = buildMetadataForConfig(metadataSource, config);
+      if (typeof metadata.pn !== 'string' || !metadata.pn) {
+        metadata.pn = pn;
+      }
+      if (config.type) {
+        metadata.type = config.type;
+      }
+      if (config.label) {
+        metadata.label = config.label;
+      }
+
+      const presetData = collectValuesForConfig(config);
+      const timestamp = new Date().toISOString();
+      const presetId = option && typeof option.id === 'string' && option.id ? option.id : generatePresetId();
+      const preset = {
+        id: presetId,
+        pn,
+        name,
+        ...(description ? { description } : {}),
+        data: presetData,
+        metadata,
+        createdAt: timestamp,
+        updatedAt: timestamp
+      };
+
+      const exportPayload = JSON.stringify(preset, null, 2);
+      const filename = formatPresetFilename(pn || name, config.type);
+
+      isExportingPreset = true;
       const wasSelectDisabled = selectEl.disabled;
       selectEl.disabled = true;
       updatePresetActionState();
 
       try {
-        const values = collectValuesForConfig(config);
-        const payloadMetadata = buildMetadataForConfig(option, config);
-        const payload = {
-          id: option.id,
-          name: option.name ?? option.pn,
-          ...(option.description ? { description: option.description } : {}),
-          data: values,
-          metadata: payloadMetadata
-        };
-
-        let response;
+        const blob = new Blob([exportPayload], { type: 'application/json' });
+        const url = URL.createObjectURL(blob);
         try {
-          response = await fetch('/api/presets', {
-            method: 'POST',
-            headers: {
-              'Content-Type': 'application/json'
-            },
-            body: JSON.stringify(payload)
-          });
-        } catch (err) {
-          const message = err instanceof Error ? err.message : String(err);
-          window.alert(`Unable to save preset: ${message}`);
-          return;
-        }
-
-        if (!response.ok) {
-          let message = 'Failed to save preset.';
-          try {
-            const errorBody = await response.json();
-            if (errorBody?.error?.message) {
-              message = errorBody.error.message;
-              if (Array.isArray(errorBody.error.details) && errorBody.error.details.length) {
-                message = `${message}\n- ${errorBody.error.details.join('\n- ')}`;
-              }
-            }
-          } catch (err) {
-            // Ignore JSON parsing errors; fall back to generic message.
-          }
-          window.alert(message);
-          return;
-        }
-
-        let body;
-        try {
-          body = await response.json();
-        } catch (err) {
-          window.alert('Failed to parse server response when saving preset.');
-          return;
-        }
-
-        const preset = body?.preset;
-        if (!preset || typeof preset.id !== 'string') {
-          window.alert('Server response did not include the updated preset.');
-          return;
-        }
-
-        const presetData =
-          preset && typeof preset.data === 'object' && preset.data !== null && !Array.isArray(preset.data)
-            ? preset.data
-            : values;
-        const serverMetadata =
-          preset.metadata && typeof preset.metadata === 'object' && !Array.isArray(preset.metadata)
-            ? preset.metadata
-            : undefined;
-        const mergedMetadata = mergePresetMetadata(option.metadata, payloadMetadata, serverMetadata);
-        if (option.pn && (typeof mergedMetadata.pn !== 'string' || !mergedMetadata.pn)) {
-          mergedMetadata.pn = option.pn;
-        }
-        if (config.type && (!mergedMetadata.type || typeof mergedMetadata.type !== 'string')) {
-          mergedMetadata.type = config.type;
-        }
-        if (config.label && (!mergedMetadata.label || typeof mergedMetadata.label !== 'string')) {
-          mergedMetadata.label = config.label;
-        }
-
-        const normalizedOptionData = normalizePresetDataForOption(presetData, mergedMetadata?.fieldMap);
-        /** @type {ComponentOption} */
-        const updatedOption = {
-          pn: mergedMetadata.pn && typeof mergedMetadata.pn === 'string' ? mergedMetadata.pn : option.pn,
-          name: preset.name ?? option.name ?? option.pn,
-          ...(preset.description ? { description: preset.description } : option.description ? { description: option.description } : {}),
-          ...normalizedOptionData,
-          id: option.id,
-          metadata: isPlainObject(mergedMetadata) ? { ...mergedMetadata } : undefined,
-          data: isPlainObject(presetData) ? { ...presetData } : undefined
-        };
-        if (typeof preset.updatedAt === 'string') {
-          updatedOption.updatedAt = preset.updatedAt;
-        } else if (option.updatedAt) {
-          updatedOption.updatedAt = option.updatedAt;
-        }
-
-        if (config.type) {
-          upsertCustomOption(config.type, updatedOption);
-        }
-
-        const updatedPn = updatedOption.pn ?? option.pn;
-        if (updatedPn) {
-          previousValue = updatedPn;
-          selectEl.value = updatedPn;
+          const link = document.createElement('a');
+          link.href = url;
+          link.download = filename;
+          link.rel = 'noopener';
+          document.body.appendChild(link);
+          link.click();
+          document.body.removeChild(link);
+        } finally {
+          setTimeout(() => URL.revokeObjectURL(url), 0);
         }
       } finally {
-        isSavingPreset = false;
+        isExportingPreset = false;
         selectEl.disabled = wasSelectDisabled;
         updatePresetActionState();
       }
@@ -1754,76 +1669,12 @@ export function setupComponentSelectors() {
       }
 
       const value = selectEl.value;
-      if (value === SAVE_CURRENT_VALUE) {
+      if (value === EXPORT_PRESET_VALUE) {
         const revertValue = previousValue || '';
         selectEl.value = revertValue;
-        await performSaveCurrentPreset();
+        ensureOptionApplied(revertValue);
         updatePresetActionState();
-        return;
-      }
-
-      if (value === DELETE_PRESET_VALUE) {
-        const revertValue = previousValue || '';
-        selectEl.value = revertValue;
-        const option = findOption(config, revertValue);
-        if (!option || typeof option.id !== 'string' || !option.id) {
-          ensureOptionApplied(revertValue);
-          updatePresetActionState();
-          return;
-        }
-
-        const descriptor = option.name && option.name !== option.pn ? `${option.name} (${option.pn})` : option.pn;
-        const confirmMessage = `Delete preset "${descriptor}"? This action cannot be undone.`;
-        const confirmed = window.confirm(confirmMessage);
-        if (!confirmed) {
-          ensureOptionApplied(revertValue);
-          updatePresetActionState();
-          return;
-        }
-
-        const wasSelectDisabled = selectEl.disabled;
-        selectEl.disabled = true;
-        isDeletingPreset = true;
-        updatePresetActionState();
-
-        try {
-          let response;
-          try {
-            response = await fetch(`/api/presets/${encodeURIComponent(option.id)}`, {
-              method: 'DELETE'
-            });
-          } catch (err) {
-            const message = err instanceof Error ? err.message : String(err);
-            window.alert(`Unable to delete preset: ${message}`);
-            return;
-          }
-
-          if (!response.ok) {
-            let message = 'Failed to delete preset.';
-            try {
-              const errorBody = await response.json();
-              if (errorBody?.error?.message) {
-                message = errorBody.error.message;
-              }
-            } catch (err) {
-              // Ignore JSON parsing errors; fall back to generic message.
-            }
-            window.alert(message);
-            return;
-          }
-
-          if (config.type) {
-            removeCustomOptionById(config.type, option.id);
-          }
-          previousValue = '';
-          selectEl.value = '';
-          ensureOptionApplied('');
-        } finally {
-          isDeletingPreset = false;
-          selectEl.disabled = wasSelectDisabled;
-          updatePresetActionState();
-        }
-
+        await performExportPreset();
         return;
       }
 

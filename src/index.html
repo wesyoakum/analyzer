@@ -1168,6 +1168,61 @@
       hidden
       aria-hidden="true"
     >
+      <section class="card info-card" id="preset-export-guide" aria-labelledby="preset-export-guide-title">
+        <h2 class="section-title" id="preset-export-guide-title">Exporting component presets</h2>
+        <p>
+          Use the <strong>Export Preset</strong> option that now appears in every component selector to download the current
+          field values as a JSON file. The downloaded file can be appended to <code>data/presets.json</code> so the preset is
+          available to all users.
+        </p>
+        <ol>
+          <li>Select the component you want to export and adjust any inputs until they match the desired configuration.</li>
+          <li>Choose <strong>Export Preset</strong> from the same dropdown. If no preset name or part number is available, you will be prompted to provide them.</li>
+          <li>Save the downloaded file and paste its contents into the array in <code>data/presets.json</code>. Keep entries comma-separated and formatted as valid JSON.</li>
+          <li>Restart the analyzer server (or reload the page) so the new preset is picked up the next time selectors load.</li>
+        </ol>
+        <p>Each export shares a common shape:</p>
+        <pre><code>{
+  "id": "uuid",
+  "pn": "Human-friendly part number",
+  "name": "Display name",
+  "description": "Optional notes",
+  "data": { /* component-specific values */ },
+  "metadata": {
+    "pn": "Matching part number",
+    "type": "component type slug",
+    "label": "UI label",
+    "fieldMap": { "inputId": "dataKey" }
+  },
+  "createdAt": "2024-01-01T00:00:00.000Z",
+  "updatedAt": "2024-01-01T00:00:00.000Z"
+}</code></pre>
+        <p>Component-specific <code>data</code> keys and <code>fieldMap</code> entries include:</p>
+        <ul>
+          <li><strong>Cable</strong> — <code>data</code>: <code>c_mm</code>, <code>depth_m</code>, <code>dead_m</code>, <code>c_w_kgpm</code>; <code>fieldMap</code> mirrors those keys.</li>
+          <li><strong>Drum</strong> — <code>data</code>: <code>core_in</code>, <code>flange_dia_in</code>, <code>ftf_in</code>, <code>lebus_in</code>, <code>pack</code>, <code>wraps_override</code>.</li>
+          <li><strong>Payload</strong> — <code>data</code>: <code>payload_kg</code>.</li>
+          <li><strong>Gearbox</strong> — <code>data</code>: <code>gear_ratio_stage1</code>, <code>gear_ratio_stage2</code>, <code>gearbox_max_torque_Nm</code>.</li>
+          <li><strong>Electric Motor</strong> — <code>data</code>: <code>motor_eff</code>, <code>motor_max_rpm</code>, <code>motor_hp</code>, <code>motor_tmax_Nm</code>.</li>
+          <li><strong>HPU Motor</strong> — <code>data</code>: <code>h_emotor_hp</code>, <code>h_emotor_rpm</code>.</li>
+          <li><strong>HPU</strong> — <code>data</code>: <code>h_pump_strings</code>, <code>h_emotor_hp</code>, <code>h_emotor_rpm</code>, <code>pump_disp_cc</code>, <code>hpu_motor_select</code>, <code>hydraulic_pump_select</code>.</li>
+          <li><strong>Hydraulic Pump</strong> — <code>data</code>: <code>pump_disp_cc</code>, <code>pump_max_psi</code>.</li>
+          <li><strong>Hydraulic Motor</strong> — <code>data</code>: <code>hyd_motor_disp_cc</code>, <code>hyd_motor_max_rpm</code>.</li>
+          <li>
+            <strong>System</strong> — <code>data</code> captures the joined configuration: <code>system_type_select</code>,
+            <code>winch_type_select</code>, <code>cable_select</code>, <code>drum_select</code>, <code>payload_select</code>,
+            <code>rated_swl_kgf</code>, <code>rated_speed_mpm</code>, <code>dead_m</code>, <code>depth_m</code>, <code>core_in</code>,
+            <code>ftf_in</code>, <code>lebus_in</code>, <code>pack</code>, <code>wraps_override</code>, <code>motors</code>,
+            <code>h_pump_strings</code>, <code>hpu_select</code>, <code>hpu_motor_select</code>, <code>gearbox_select</code>,
+            <code>gear_ratio_stage1</code>, <code>gear_ratio_stage2</code>, <code>gearbox_max_torque_Nm</code>,
+            <code>electric_motor_select</code>, <code>hydraulic_pump_select</code>, and <code>hydraulic_motor_select</code>.
+          </li>
+        </ul>
+        <p>
+          The timestamps are generated at export time and can be left as-is. If you maintain presets in source control, treat each exported file as a ready-made object to paste into the master list.
+        </p>
+      </section>
+
       <section class="card info-card" id="hydraulic-core-equations" aria-labelledby="hydraulic-core-equations-title">
         <h2 class="section-title" id="hydraulic-core-equations-title">Hydraulic Winch System — Core Equations (Unitless Form)</h2>
 
