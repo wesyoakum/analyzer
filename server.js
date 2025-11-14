@@ -6,7 +6,7 @@ const { URL } = require('url');
 const PORT = process.env.PORT || 3000;
 const DATA_DIR = path.join(__dirname, 'data');
 const CONFIG_FILE = path.join(DATA_DIR, 'configs.json');
-const STATIC_DIR = __dirname;
+const STATIC_DIR = path.join(__dirname, 'src');
 
 const MIME_TYPES = {
   '.html': 'text/html; charset=utf-8',
@@ -15,7 +15,8 @@ const MIME_TYPES = {
   '.json': 'application/json; charset=utf-8',
   '.png': 'image/png',
   '.ico': 'image/x-icon',
-  '.webmanifest': 'application/manifest+json'
+  '.webmanifest': 'application/manifest+json',
+  '.mjs': 'text/javascript; charset=utf-8'
 };
 
 async function ensureDataDir() {
