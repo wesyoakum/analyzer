@@ -97,11 +97,6 @@ body {
   gap: 16px;
 }
 
-.app-content {
-  display: flex;
-  flex-direction: column;
-  gap: 24px;
-}
 
 .build-indicator {
   position: absolute;
@@ -267,7 +262,6 @@ body {
 .worksheet--summary .note td {
   color: var(--ink-500);
 }
-
 @media (max-width: 1100px) {
   .app-shell {
     grid-template-columns: minmax(0, 1fr);
