@@ -99,21 +99,21 @@
                   <th scope="row">
                     <label class="param-label" for="rated_swl_kgf" data-code="rated_swl_kgf">Safe Working Load <span class="symbol" aria-hidden="true" data-latex="T_{\mathrm{SWL}}">T<sub>SWL</sub></span></label>
                   </th>
-                  <td class="value"><input id="rated_swl_kgf" type="number" step="1" value="8000"></td>
+                  <td class="value"><input id="rated_swl_kgf" type="number" step="500" value="8000"></td>
                   <td class="units">kgf</td>
                 </tr>
                 <tr>
                   <th scope="row">
                     <label class="param-label" for="rated_speed_mpm" data-code="rated_speed_mpm">Rated Line Speed <span class="symbol" aria-hidden="true" data-latex="v_{\mathrm{rated}}">v<sub>rated</sub></span></label>
                   </th>
-                  <td class="value"><input id="rated_speed_mpm" type="number" step="0.1" value="30"></td>
+                  <td class="value"><input id="rated_speed_mpm" type="number" step="1" value="30"></td>
                   <td class="units">m/min</td>
                 </tr>
                 <tr>
                   <th scope="row">
                     <label class="param-label" for="system_efficiency" data-code="system_efficiency">System Efficiency <span class="symbol" aria-hidden="true" data-latex="\eta_{sys}">η<sub>sys</sub></span></label>
                   </th>
-                  <td class="value"><input id="system_efficiency" type="number" step="0.01" value="0.9"></td>
+                  <td class="value"><input id="system_efficiency" type="number" step="0.1" value="0.9"></td>
                   <td class="units">–</td>
                 </tr>
                 <tr>
@@ -153,28 +153,28 @@
                     <th scope="row">
                       <label class="param-label" for="c_mm" data-code="c_mm">Cable Diameter <span class="symbol" aria-hidden="true" data-latex="d_{c}">d<sub>c</sub></span></label>
                     </th>
-                    <td class="value"><input id="c_mm" type="number" step="0.1" value="30"></td>
+                    <td class="value"><input id="c_mm" type="number" step="1" value="30"></td>
                     <td class="units">mm</td>
                   </tr>
                   <tr>
                     <th scope="row">
                       <label class="param-label" for="depth_m" data-code="depth_m">Operating Depth <span class="symbol" aria-hidden="true" data-latex="L_{op}">L<sub>op</sub></span></label>
                     </th>
-                    <td class="value"><input id="depth_m" type="number" step="1" value="3000"></td>
+                    <td class="value"><input id="depth_m" type="number" step="100" value="3000"></td>
                     <td class="units">m</td>
                   </tr>
                   <tr>
                     <th scope="row">
                       <label class="param-label" for="dead_m" data-code="dead_m">Dead End Length <span class="symbol" aria-hidden="true" data-latex="L_{dead}">L<sub>dead</sub></span></label>
                     </th>
-                    <td class="value"><input id="dead_m" type="number" step="0.1" value="100"></td>
+                    <td class="value"><input id="dead_m" type="number" step="100" value="100"></td>
                     <td class="units">m</td>
                   </tr>
                   <tr>
                     <th scope="row">
                       <label class="param-label" for="c_w_kgpm" data-code="c_w_kgpm">Cable Weight in Water <span class="symbol" aria-hidden="true" data-latex="w_{c}">w<sub>c</sub></span></label>
                     </th>
-                    <td class="value"><input id="c_w_kgpm" type="number" step="0.01" value="3.8"></td>
+                    <td class="value"><input id="c_w_kgpm" type="number" step="0.1" value="3.8"></td>
                     <td class="units">kg/m</td>
                   </tr>
                 </tbody>
@@ -207,35 +207,35 @@
                     <th scope="row">
                       <label class="param-label" for="core_in" data-code="core_in">Core Diameter <span class="symbol" aria-hidden="true" data-latex="d_{\mathrm{core}}">d<sub>core</sub></span></label>
                     </th>
-                    <td class="value"><input id="core_in" type="number" step="0.001" value="64"></td>
+                    <td class="value"><input id="core_in" type="number" step="0.5" value="64"></td>
                     <td class="units">in</td>
                   </tr>
                   <tr>
                     <th scope="row">
                       <label class="param-label" for="flange_dia_in" data-code="flange_dia_in">Flange Diameter <span class="symbol" aria-hidden="true" data-latex="d_{\mathrm{flange}}">d<sub>flange</sub></span></label>
                     </th>
-                    <td class="value"><input id="flange_dia_in" type="number" step="0.001" value="110"></td>
+                    <td class="value"><input id="flange_dia_in" type="number" step="0.5" value="110"></td>
                     <td class="units">in</td>
                   </tr>
                   <tr>
                     <th scope="row">
                       <label class="param-label" for="ftf_in" data-code="ftf_in">Flange-to-Flange Width <span class="symbol" aria-hidden="true" data-latex="w_{\mathrm{FTF}}">w<sub>FTF</sub></span></label>
                     </th>
-                    <td class="value"><input id="ftf_in" type="number" step="0.001" value="116"></td>
+                    <td class="value"><input id="ftf_in" type="number" step="0.5" value="116"></td>
                     <td class="units">in</td>
                   </tr>
                   <tr>
                     <th scope="row">
                       <label class="param-label" for="lebus_in" data-code="lebus_in">Lebus Liner Thickness <span class="symbol" aria-hidden="true" data-latex="t_{\mathrm{lebus}}">t<sub>lebus</sub></span></label>
                     </th>
-                    <td class="value"><input id="lebus_in" type="number" step="0.001" value="0.625"></td>
+                    <td class="value"><input id="lebus_in" type="number" step="0.1" value="0.625"></td>
                     <td class="units">in</td>
                   </tr>
                   <tr>
                     <th scope="row">
                       <label class="param-label" for="pack" data-code="pack">Packing Factor <span class="symbol" aria-hidden="true" data-latex="\phi_{\mathrm{pack}}">φ<sub>pack</sub></span></label>
                     </th>
-                    <td class="value"><input id="pack" type="number" step="0.001" value="0.877"></td>
+                    <td class="value"><input id="pack" type="number" step="0.1" value="0.877"></td>
                     <td class="units">–</td>
                   </tr>
                   <tr>
@@ -279,7 +279,7 @@
                   <th scope="row">
                     <label class="param-label" for="payload_kg" data-code="payload_kg">Payload in Water <span class="symbol" aria-hidden="true" data-latex="W_{\mathrm{payload}}">W<sub>payload</sub></span></label>
                   </th>
-                  <td class="value"><input id="payload_kg" type="number" step="1" value="8000"></td>
+                  <td class="value"><input id="payload_kg" type="number" step="100" value="8000"></td>
                   <td class="units">kg</td>
                 </tr>
                 <tr class="note">
@@ -336,21 +336,21 @@
                     <th scope="row">
                       <label class="param-label" for="gr1" data-code="gr1">Gear Ratio 1 <span class="symbol" aria-hidden="true" data-latex="G_{1}">G<sub>1</sub></span></label>
                     </th>
-                    <td class="value"><input id="gr1" type="number" step="0.1" value="20"></td>
+                    <td class="value"><input id="gr1" type="number" step="1" value="20"></td>
                     <td class="units">–</td>
                   </tr>
                   <tr>
                     <th scope="row">
                       <label class="param-label" for="gr2" data-code="gr2">Gear Ratio 2 <span class="symbol" aria-hidden="true" data-latex="G_{2}">G<sub>2</sub></span></label>
                     </th>
-                    <td class="value"><input id="gr2" type="number" step="0.1" value="5"></td>
+                    <td class="value"><input id="gr2" type="number" step="1" value="5"></td>
                     <td class="units">–</td>
                   </tr>
                   <tr>
                     <th scope="row">
                       <label class="param-label" for="gearbox_max_torque_Nm" data-code="gearbox_max_torque_Nm">Gearbox Maximum Torque <span class="symbol" aria-hidden="true" data-latex="\tau_{g,\max}">τ<sub>g,max</sub></span></label>
                     </th>
-                    <td class="value"><input id="gearbox_max_torque_Nm" type="number" step="1" placeholder="enter"></td>
+                    <td class="value"><input id="gearbox_max_torque_Nm" type="number" step="100" placeholder="enter"></td>
                     <td class="units">N·m</td>
                   </tr>
                 </tbody>
@@ -379,7 +379,7 @@
             <th scope="row">
               <label class="param-label" for="motor_eff" data-code="motor_eff">Electro-Mechanical Efficiency <span class="symbol" aria-hidden="true" data-latex="\eta_{em}">η<sub>em</sub></span></label>
             </th>
-            <td class="value"><input id="motor_eff" type="number" step="0.01" value="0.95"></td>
+            <td class="value"><input id="motor_eff" type="number" step=".1" value="0.95"></td>
             <td class="units">–</td>
           </tr>
           <tr>
@@ -397,21 +397,21 @@
             <th scope="row">
               <label class="param-label" for="motor_hp" data-code="motor_hp">Motor Rated Power <span class="symbol" aria-hidden="true" data-latex="P_{m}">P<sub>m</sub></span></label>
             </th>
-            <td class="value"><input id="motor_hp" type="number" step="0.1" value="150"></td>
+            <td class="value"><input id="motor_hp" type="number" step="25" value="150"></td>
             <td class="units">hp</td>
           </tr>
           <tr>
             <th scope="row">
               <label class="param-label" for="motor_max_rpm" data-code="motor_max_rpm">Motor Maximum Speed <span class="symbol" aria-hidden="true" data-latex="\omega_{m,\max}">ω<sub>m,max</sub></span></label>
             </th>
-            <td class="value"><input id="motor_max_rpm" type="number" step="1" value="1800"></td>
+            <td class="value"><input id="motor_max_rpm" type="number" step="100" value="1800"></td>
             <td class="units">rpm</td>
           </tr>
           <tr>
             <th scope="row">
               <label class="param-label" for="motor_tmax" data-code="motor_tmax">Motor Maximum Torque <span class="symbol" aria-hidden="true" data-latex="\tau_{m,\max}">τ<sub>m,max</sub></span></label>
             </th>
-            <td class="value"><input id="motor_tmax" type="number" step="0.1" value="230"></td>
+            <td class="value"><input id="motor_tmax" type="number" step="10" value="230"></td>
             <td class="units">N·m</td>
           </tr>
         </tbody>
@@ -436,7 +436,7 @@
                 <th scope="row">
                   <label class="param-label" for="h_emotor_eff" data-code="h_emotor_eff">Electro-hydro-mechanical Efficiency <span class="symbol" aria-hidden="true" data-latex="\eta_{eh}">η<sub>eh</sub></span></label>
                 </th>
-                <td class="value"><input id="h_emotor_eff" type="number" step="0.01" value="0.85"></td>
+                <td class="value"><input id="h_emotor_eff" type="number" step="0.1" value="0.85"></td>
                 <td class="units">–</td>
               </tr>
               <tr>
@@ -454,14 +454,14 @@
                 <th scope="row">
                   <label class="param-label" for="h_hmot_cc" data-code="h_hmot_cc">Hydraulic Motor Displacement <span class="symbol" aria-hidden="true" data-latex="q_{hm}">q<sub>hm</sub></span></label>
                 </th>
-                <td class="value"><input id="h_hmot_cc" type="number" step="0.1" value="55"></td>
+                <td class="value"><input id="h_hmot_cc" type="number" step="1" value="55"></td>
                 <td class="units">cc/rev</td>
               </tr>
               <tr>
                 <th scope="row">
                   <label class="param-label" for="h_hmot_rpm_max" data-code="h_hmot_rpm_max">Hydraulic Motor Maximum Speed <span class="symbol" aria-hidden="true" data-latex="\omega_{hm,\max}">ω<sub>hm,max</sub></span></label>
                 </th>
-                <td class="value"><input id="h_hmot_rpm_max" type="number" step="1" value="3500"></td>
+                <td class="value"><input id="h_hmot_rpm_max" type="number" step="100" value="3500"></td>
                 <td class="units">rpm</td>
               </tr>
             </tbody>
@@ -512,14 +512,14 @@
                 <th scope="row">
                   <label class="param-label" for="h_emotor_hp" data-code="h_emotor_hp">Electric Motor Nameplate Power per String <span class="symbol" aria-hidden="true" data-latex="P_{e,\mathrm{str}}">P<sub>e,str</sub></span></label>
                 </th>
-                <td class="value"><input id="h_emotor_hp" type="number" step="0.1" value="75"></td>
+                <td class="value"><input id="h_emotor_hp" type="number" step="25" value="75"></td>
                 <td class="units">hp</td>
               </tr>
               <tr>
                 <th scope="row">
                   <label class="param-label" for="h_emotor_rpm" data-code="h_emotor_rpm">Electric Motor Speed <span class="symbol" aria-hidden="true" data-latex="\omega_{e}">ω<sub>e</sub></span></label>
                 </th>
-                <td class="value"><input id="h_emotor_rpm" type="number" step="1" value="1780"></td>
+                <td class="value"><input id="h_emotor_rpm" type="number" step="100" value="1780"></td>
                 <td class="units">rpm</td>
               </tr>
               <tr>
@@ -537,14 +537,14 @@
                 <th scope="row">
                   <label class="param-label" for="h_pump_cc" data-code="h_pump_cc">Pump Displacement <span class="symbol" aria-hidden="true" data-latex="q_{\mathrm{pump}}">q<sub>pump</sub></span></label>
                 </th>
-                <td class="value"><input id="h_pump_cc" type="number" step="0.1" value="210"></td>
+                <td class="value"><input id="h_pump_cc" type="number" step="10" value="210"></td>
                 <td class="units">cc/rev</td>
               </tr>
               <tr>
                 <th scope="row">
                   <label class="param-label" for="h_max_psi" data-code="h_max_psi">System Maximum Pressure <span class="symbol" aria-hidden="true" data-latex="P_{\max}">P<sub>max</sub></span></label>
                 </th>
-                <td class="value"><input id="h_max_psi" type="number" step="1" value="3500"></td>
+                <td class="value"><input id="h_max_psi" type="number" step="100" value="3500"></td>
                 <td class="units">psi</td>
               </tr>
             </tbody>
@@ -661,14 +661,14 @@
                         <th scope="row">
                           <label class="param-label" for="depth_xmin" data-code="depth_xmin">Minimum Depth <span class="symbol" aria-hidden="true" data-latex="d_{\min}">d<sub>min</sub></span></label>
                         </th>
-                        <td class="value"><input id="depth_xmin" type="number" step="1" min="0" value="0"></td>
+                        <td class="value"><input id="depth_xmin" type="number" step="100" min="0" value="0"></td>
                         <td class="units">m</td>
                       </tr>
                       <tr>
                         <th scope="row">
                           <label class="param-label" for="depth_xmax" data-code="depth_xmax">Maximum Depth <span class="symbol" aria-hidden="true" data-latex="d_{\max}">d<sub>max</sub></span></label>
                         </th>
-                        <td class="value"><input id="depth_xmax" type="number" step="1" min="0" placeholder="auto"></td>
+                        <td class="value"><input id="depth_xmax" type="number" step="100" min="0" placeholder="auto"></td>
                         <td class="units">m</td>
                       </tr>
                     </tbody>
@@ -682,14 +682,14 @@
                         <th scope="row">
                           <label class="param-label" for="depth_speed_ymin" data-code="depth_speed_ymin">Minimum Speed <span class="symbol" aria-hidden="true" data-latex="v_{\min}">v<sub>min</sub></span></label>
                         </th>
-                        <td class="value"><input id="depth_speed_ymin" type="number" step="0.01" min="0" value="0"></td>
+                        <td class="value"><input id="depth_speed_ymin" type="number" step="0.5" min="0" value="0"></td>
                         <td class="units">m/s</td>
                       </tr>
                       <tr>
                         <th scope="row">
                           <label class="param-label" for="depth_speed_ymax" data-code="depth_speed_ymax">Maximum Speed <span class="symbol" aria-hidden="true" data-latex="v_{\max}">v<sub>max</sub></span></label>
                         </th>
-                        <td class="value"><input id="depth_speed_ymax" type="number" step="0.01" min="0" placeholder="auto"></td>
+                        <td class="value"><input id="depth_speed_ymax" type="number" step="0.5" min="0" placeholder="auto"></td>
                         <td class="units">m/s</td>
                       </tr>
                     </tbody>
@@ -703,14 +703,14 @@
                         <th scope="row">
                           <label class="param-label" for="depth_tension_ymin" data-code="depth_tension_ymin">Minimum Tension <span class="symbol" aria-hidden="true" data-latex="T_{\min}">T<sub>min</sub></span></label>
                         </th>
-                        <td class="value"><input id="depth_tension_ymin" type="number" step="1" min="0" value="0"></td>
+                        <td class="value"><input id="depth_tension_ymin" type="number" step="100" min="0" value="0"></td>
                         <td class="units">kgf</td>
                       </tr>
                       <tr>
                         <th scope="row">
                           <label class="param-label" for="depth_tension_ymax" data-code="depth_tension_ymax">Maximum Tension <span class="symbol" aria-hidden="true" data-latex="T_{\max}">T<sub>max</sub></span></label>
                         </th>
-                        <td class="value"><input id="depth_tension_ymax" type="number" step="1" min="0" placeholder="auto"></td>
+                        <td class="value"><input id="depth_tension_ymax" type="number" step="100" min="0" placeholder="auto"></td>
                         <td class="units">kgf</td>
                       </tr>
                     </tbody>
