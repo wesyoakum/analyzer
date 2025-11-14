@@ -1,795 +1,296 @@
-diff --git a/src/index.html b/src/index.html
-index a193bb6f93acff12878ef0bfb71072cf576620ad..5a66573ac8296531ee9a97953d7293d5832551cb 100644
---- a/src/index.html
-+++ b/src/index.html
-@@ -4,103 +4,64 @@
-   <meta charset="utf-8" />
-   <title>Winch Analyzer</title>
-   <meta name="viewport" content="width=device-width, initial-scale=1" />
-   <link rel="stylesheet" href="css/styles.css" />
-   <!-- KaTeX setup -->
-   <link
-     rel="stylesheet"
-     href="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/katex.min.css"
-   />
-   <script
-     defer
-     src="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/katex.min.js"
-   ></script>
-   <script
-     defer
-     src="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/contrib/auto-render.min.js"
-   ></script>
- </head>
- <body>
-   <div class="sheet">
-     <div class="build-indicator" id="build-info" aria-live="polite"></div>
-     <header class="page-header">
-       <img src="assets/winch-header%20140px.png" alt="TekMarines winch diagram" class="page-header__image" />
-       <h1 class="page-title">Winch Analyzer</h1>
-     </header>
--    <div id="err"></div>
--    <div class="tab-bar">
--      <nav class="tabs" aria-label="App sections" role="tablist">
--        <button
--          class="tab-btn active"
--          id="tab-inputs"
--          type="button"
--          role="tab"
--          aria-selected="true"
--          aria-controls="panel-inputs"
--        >Section 1: Inputs</button>
--        <button
--          class="tab-btn"
--          id="tab-performance"
--          type="button"
--          role="tab"
--          aria-selected="false"
--          aria-controls="panel-performance"
--        >Section 2: Performance Plots</button>
--        <button
--          class="tab-btn"
--          id="tab-results"
--          type="button"
--          role="tab"
--          aria-selected="false"
--          aria-controls="panel-results"
--        >Section 3: Layer &amp; Wrap Tables</button>
--        <button
--          class="tab-btn"
--          id="tab-instructions"
--          type="button"
--          role="tab"
--          aria-selected="false"
--          aria-controls="panel-instructions"
--        >Section 4: Instructions</button>
--      </nav>
--      <button id="clear_inputs" class="tab-bar__action" type="button">clear all inputs</button>
--    </div>
--
--    <div
--      id="panel-inputs"
--      class="panel active"
--      role="tabpanel"
--      tabindex="0"
--      aria-labelledby="tab-inputs"
--    >
--      <details class="card collapsible" open>
--        <summary class="collapsible-summary">
--          <h2 class="section-title">Section 1: Drum and Cable Inputs</h2>
--          <span class="collapsible-hint" aria-hidden="true"></span>
--        </summary>
--        <div class="collapsible-body">
--          <div class="input-sections">
-+    <div class="app-layout">
-+      <aside class="app-sidebar">
-+        <div class="app-sidebar__header">
-+          <h2 class="app-sidebar__title">Winch configuration</h2>
-+          <button id="clear_inputs" class="app-sidebar__action" type="button">clear all inputs</button>
-+        </div>
-+        <div class="app-sidebar__content" id="sidebar-inputs">
-+          <details class="card collapsible" data-summary-card open>
-+            <summary class="collapsible-summary">
-+              <h2 class="section-title">Section 1: Drum and Cable Inputs</h2>
-+              <span class="collapsible-hint" aria-hidden="true"></span>
-+            </summary>
-+            <div class="collapsible-body">
-+              <div class="input-sections">
-             <section class="input-section">
-               <h3 class="input-section__title">System</h3>
-               <table class="worksheet">
-                 <thead>
-                   <tr>
-                     <th scope="col">Parameter</th>
-                     <th scope="col" class="value">Input</th>
-                     <th scope="col" class="units">Units</th>
-                   </tr>
-                 </thead>
-                 <tbody>
-                   <tr>
-                     <th scope="row">
-                       <label class="param-label" for="system_select" data-code="system_select">Predefined Winch System</label>
-                     </th>
-                     <td class="value">
-                       <select id="system_select">
-                         <option value="">Custom (manual input)</option>
-                       </select>
-                     </td>
-                     <td class="units">–</td>
-                   </tr>
-                   <tr>
-                     <th scope="row">
-                       <label class="param-label" for="system_type_select" data-code="system_type">System Type</label>
-@@ -387,51 +348,51 @@
-                     <tr>
-                       <th scope="row">
-                         <label class="param-label" for="gr2" data-code="gr2">Gear Ratio 2 <span class="symbol" aria-hidden="true" data-latex="G_{2}">G<sub>2</sub></span></label>
-                       </th>
-                       <td class="value"><input id="gr2" type="number" step="0.1" value="5"></td>
-                       <td class="units">–</td>
-                     </tr>
-                     <tr>
-                       <th scope="row">
-                         <label class="param-label" for="gearbox_max_torque_Nm" data-code="gearbox_max_torque_Nm">Gearbox Maximum Torque <span class="symbol" aria-hidden="true" data-latex="\tau_{g,\max}">τ<sub>g,max</sub></span></label>
-                       </th>
-                       <td class="value"><input id="gearbox_max_torque_Nm" type="number" step="1" placeholder="enter"></td>
-                       <td class="units">N·m</td>
-                     </tr>
-                   </tbody>
-                 </table>
-               </section>
-             </section>
-           </div>
-         </div>
-       </details>
+ (cd "$(git rev-parse --show-toplevel)" && git apply --3way <<'EOF' 
+diff --git a/src/css/styles.css b/src/css/styles.css
+index 52ceba5b6e0442bf4d0aa7e1f914f644b64adf38..4f6cbedd2a94cebbd202c019a8cf37da41b385e8 100644
+--- a/src/css/styles.css
++++ b/src/css/styles.css
+@@ -3,117 +3,126 @@
+   --paper-background: #eef2f8;
+   --paper-line-strong: #c4ccdd;
+   --paper-line-soft: #dfe4ef;
+   --ink-900: #142238;
+   --ink-700: #2f3b54;
+   --ink-500: #55637d;
+   --accent: #2c56a3;
+   --accent-light: #edf2ff;
+   --tension-low: #6c2bd9;
+   --tension-high: #f97316;
+ }
  
-       
+ * {
+   box-sizing: border-box;
+ }
  
+ body {
+   margin: 0;
+   padding: 0;
+   font-family: "Inter", "Segoe UI", system-ui, -apple-system, BlinkMacSystemFont, "Roboto", "Helvetica Neue", Arial, sans-serif;
+   line-height: 1.5;
+   color: var(--ink-900);
+   background: var(--paper-background);
+ }
  
--      <section class="card" data-drive-scope="electric">
-+      <section class="card" data-drive-scope="electric" data-summary-card>
-         <h2 class="section-title">Section 1: Electric Inputs</h2>
-         <table class="worksheet">
-           <thead>
-             <tr>
-               <th scope="col">Parameter</th>
-               <th scope="col" class="value">Input</th>
-               <th scope="col" class="units">Units</th>
-             </tr>
-           </thead>
-           <tbody>
-             <tr>
-               <th scope="row">
-                 <label class="param-label" for="motor_eff" data-code="motor_eff">Electro-Mechanical Efficiency <span class="symbol" aria-hidden="true" data-latex="\eta_{em}">η<sub>em</sub></span></label>
-               </th>
-               <td class="value"><input id="motor_eff" type="number" step="0.01" value="0.95"></td>
-               <td class="units">–</td>
-             </tr>
-             <tr>
-               <th scope="row">
-                 <label class="param-label" for="electric_motor_select" data-code="electric_motor_select">Electric Motor Part Number</label>
-               </th>
-               <td class="value">
-                 <select id="electric_motor_select">
-                   <option value="">Custom (manual input)</option>
-                 </select>
-@@ -441,51 +402,51 @@
-             <tr>
-               <th scope="row">
-                 <label class="param-label" for="motor_hp" data-code="motor_hp">Motor Rated Power <span class="symbol" aria-hidden="true" data-latex="P_{m}">P<sub>m</sub></span></label>
-               </th>
-               <td class="value"><input id="motor_hp" type="number" step="0.1" value="150"></td>
-               <td class="units">hp</td>
-             </tr>
-             <tr>
-               <th scope="row">
-                 <label class="param-label" for="motor_max_rpm" data-code="motor_max_rpm">Motor Maximum Speed <span class="symbol" aria-hidden="true" data-latex="\omega_{m,\max}">ω<sub>m,max</sub></span></label>
-               </th>
-               <td class="value"><input id="motor_max_rpm" type="number" step="1" value="1800"></td>
-               <td class="units">rpm</td>
-             </tr>
-             <tr>
-               <th scope="row">
-                 <label class="param-label" for="motor_tmax" data-code="motor_tmax">Motor Maximum Torque <span class="symbol" aria-hidden="true" data-latex="\tau_{m,\max}">τ<sub>m,max</sub></span></label>
-               </th>
-               <td class="value"><input id="motor_tmax" type="number" step="0.1" value="230"></td>
-               <td class="units">N·m</td>
-             </tr>
-           </tbody>
-         </table>
-       </section>
- 
--      <section class="card" data-drive-scope="hydraulic">
-+      <section class="card" data-drive-scope="hydraulic" data-summary-card>
-         <h2 class="section-title">Section 1: Hydraulic Inputs</h2>
-         <div class="input-sections">
-           <section class="input-section">
-             <h3 class="input-section__title">Hydraulic Inputs</h3>
-             <table class="worksheet">
-               <thead>
-                 <tr>
-                   <th scope="col">Parameter</th>
-                   <th scope="col" class="value">Input</th>
-                   <th scope="col" class="units">Units</th>
-                 </tr>
-               </thead>
-               <tbody>
-                 <tr>
-                   <th scope="row">
-                     <label class="param-label" for="h_emotor_eff" data-code="h_emotor_eff">Electro-hydro-mechanical Efficiency <span class="symbol" aria-hidden="true" data-latex="\eta_{eh}">η<sub>eh</sub></span></label>
-                   </th>
-                   <td class="value"><input id="h_emotor_eff" type="number" step="0.01" value="0.85"></td>
-                   <td class="units">–</td>
-                 </tr>
-                 <tr>
-                   <th scope="row">
-                     <label class="param-label" for="hydraulic_motor_select" data-code="hydraulic_motor_select">Hydraulic Motor Part Number</label>
-                   </th>
-                   <td class="value">
-@@ -575,158 +536,294 @@
-                     <select id="hydraulic_pump_select">
-                       <option value="">Custom (manual input)</option>
-                     </select>
-                   </td>
-                   <td class="units">–</td>
-                 </tr>
-                 <tr>
-                   <th scope="row">
-                     <label class="param-label" for="h_pump_cc" data-code="h_pump_cc">Pump Displacement <span class="symbol" aria-hidden="true" data-latex="q_{\mathrm{pump}}">q<sub>pump</sub></span></label>
-                   </th>
-                   <td class="value"><input id="h_pump_cc" type="number" step="0.1" value="210"></td>
-                   <td class="units">cc/rev</td>
-                 </tr>
-                 <tr>
-                   <th scope="row">
-                     <label class="param-label" for="h_max_psi" data-code="h_max_psi">System Maximum Pressure <span class="symbol" aria-hidden="true" data-latex="P_{\max}">P<sub>max</sub></span></label>
-                   </th>
-                   <td class="value"><input id="h_max_psi" type="number" step="1" value="3500"></td>
-                   <td class="units">psi</td>
-                 </tr>
-               </tbody>
-             </table>
-           </section>
-         </div>
-       </section>
--    </div>
--
--    <div
--      id="panel-performance"
--      class="panel"
--      role="tabpanel"
--      aria-labelledby="tab-performance"
--      tabindex="0"
--      hidden
--      aria-hidden="true"
--      aria-live="polite"
--    >
--      <section class="card wave-card">
--        <div class="card-header">
--          <h2 class="section-title">Section 2: Wave Contours</h2>
--          <div class="card-header-actions">
--            <button type="button" class="refresh-link" data-refresh-plots="wave">refresh plots</button>
--          </div>
--        </div>
--        <div class="plot-controls">
--          <div class="plot-controls__group">
--            <div class="plot-controls__group-title">Scenario</div>
--            <table class="worksheet compact plot-controls__table">
--              <tbody>
--                <tr>
--                  <th scope="row">
--                    <label class="param-label" for="wave_scenario" data-code="wave_scenario">Wave Scenario <span class="symbol" aria-hidden="true" data-latex="S_{w}">S<sub>w</sub></span></label>
--                  </th>
--                  <td class="value">
--                    <select id="wave_scenario">
--                      <option value="electric" selected>Electric</option>
--                      <option value="hydraulic">Hydraulic</option>
--                    </select>
--                  </td>
--                  <td class="units">–</td>
--                </tr>
--              </tbody>
--            </table>
--          </div>
--          <details class="plot-controls__custom" data-plot-custom>
--            <summary class="plot-controls__custom-summary">Custom axis ranges</summary>
--            <div class="plot-controls__custom-body">
--              <div class="plot-controls__group">
--                <div class="plot-controls__group-title">Period axis (both plots)</div>
--                <table class="worksheet compact plot-controls__table">
--                  <tbody>
--                    <tr>
--                      <th scope="row">
--                        <label class="param-label" for="wave_tmin" data-code="wave_tmin">Minimum Wave Period <span class="symbol" aria-hidden="true" data-latex="T_{\min}">T<sub>min</sub></span></label>
--                      </th>
--                      <td class="value"><input id="wave_tmin" type="number" step="0.1" min="0" value="4"></td>
--                      <td class="units">s</td>
--                    </tr>
--                    <tr>
--                      <th scope="row">
--                        <label class="param-label" for="wave_tmax" data-code="wave_tmax">Maximum Wave Period <span class="symbol" aria-hidden="true" data-latex="T_{\max}">T<sub>max</sub></span></label>
--                      </th>
--                      <td class="value"><input id="wave_tmax" type="number" step="0.1" min="0" value="20"></td>
--                      <td class="units">s</td>
--                    </tr>
--                  </tbody>
--                </table>
--              </div>
--              <div class="plot-controls__group">
--                <div class="plot-controls__group-title">Speed axis (speed plot)</div>
--                <table class="worksheet compact plot-controls__table">
--                  <tbody>
--                    <tr>
--                      <th scope="row">
--                        <label class="param-label" for="wave_vmin" data-code="wave_vmin">Minimum Contour Speed <span class="symbol" aria-hidden="true" data-latex="v_{\min}">v<sub>min</sub></span></label>
--                      </th>
--                      <td class="value"><input id="wave_vmin" type="number" step="0.1" min="0" value="0"></td>
--                      <td class="units">m/s</td>
--                    </tr>
--                    <tr>
--                      <th scope="row">
--                        <label class="param-label" for="wave_vmax" data-code="wave_vmax">Maximum Contour Speed <span class="symbol" aria-hidden="true" data-latex="v_{\max}">v<sub>max</sub></span></label>
--                      </th>
--                      <td class="value"><input id="wave_vmax" type="number" step="0.1" min="0" placeholder="auto"></td>
--                      <td class="units">m/s</td>
--                    </tr>
--                  </tbody>
--                </table>
--              </div>
-+      <section class="card" data-summary-card>
-+        <h2 class="section-title">Section 2: Plot Controls</h2>
-+        <div class="input-sections">
-+          <section class="input-section">
-+            <h3 class="input-section__title">Wave contours</h3>
-+            <div class="plot-controls">
-               <div class="plot-controls__group">
--                <div class="plot-controls__group-title">Height axis (height plot)</div>
-+                <div class="plot-controls__group-title">Scenario</div>
-                 <table class="worksheet compact plot-controls__table">
-                   <tbody>
-                     <tr>
-                       <th scope="row">
--                        <label class="param-label" for="wave_hmin" data-code="wave_hmin">Minimum Wave Height <span class="symbol" aria-hidden="true" data-latex="H_{\min}">H<sub>min</sub></span></label>
--                      </th>
--                      <td class="value"><input id="wave_hmin" type="number" step="0.1" min="0" value="0"></td>
--                      <td class="units">m</td>
--                    </tr>
--                    <tr>
--                      <th scope="row">
--                        <label class="param-label" for="wave_hmax" data-code="wave_hmax">Maximum Wave Height <span class="symbol" aria-hidden="true" data-latex="H_{\max}">H<sub>max</sub></span></label>
-+                        <label class="param-label" for="wave_scenario" data-code="wave_scenario">Wave Scenario <span class="symbol" aria-hidden="true" data-latex="S_{w}">S<sub>w</sub></span></label>
-                       </th>
--                      <td class="value"><input id="wave_hmax" type="number" step="0.1" min="0" value="6"></td>
--                      <td class="units">m</td>
-+                      <td class="value">
-+                        <select id="wave_scenario">
-+                          <option value="electric" selected>Electric</option>
-+                          <option value="hydraulic">Hydraulic</option>
-+                        </select>
-+                      </td>
-+                      <td class="units">–</td>
-                     </tr>
-                   </tbody>
-                 </table>
-               </div>
-+              <details class="plot-controls__custom" data-plot-custom>
-+                <summary class="plot-controls__custom-summary">Custom axis ranges</summary>
-+                <div class="plot-controls__custom-body">
-+                  <div class="plot-controls__group">
-+                    <div class="plot-controls__group-title">Period axis (both plots)</div>
-+                    <table class="worksheet compact plot-controls__table">
-+                      <tbody>
-+                        <tr>
-+                          <th scope="row">
-+                            <label class="param-label" for="wave_tmin" data-code="wave_tmin">Minimum Wave Period <span class="symbol" aria-hidden="true" data-latex="T_{\min}">T<sub>min</sub></span></label>
-+                          </th>
-+                          <td class="value"><input id="wave_tmin" type="number" step="0.1" min="0" value="4"></td>
-+                          <td class="units">s</td>
-+                        </tr>
-+                        <tr>
-+                          <th scope="row">
-+                            <label class="param-label" for="wave_tmax" data-code="wave_tmax">Maximum Wave Period <span class="symbol" aria-hidden="true" data-latex="T_{\max}">T<sub>max</sub></span></label>
-+                          </th>
-+                          <td class="value"><input id="wave_tmax" type="number" step="0.1" min="0" value="20"></td>
-+                          <td class="units">s</td>
-+                        </tr>
-+                      </tbody>
-+                    </table>
-+                  </div>
-+                  <div class="plot-controls__group">
-+                    <div class="plot-controls__group-title">Speed axis (speed plot)</div>
-+                    <table class="worksheet compact plot-controls__table">
-+                      <tbody>
-+                        <tr>
-+                          <th scope="row">
-+                            <label class="param-label" for="wave_vmin" data-code="wave_vmin">Minimum Contour Speed <span class="symbol" aria-hidden="true" data-latex="v_{\min}">v<sub>min</sub></span></label>
-+                          </th>
-+                          <td class="value"><input id="wave_vmin" type="number" step="0.1" min="0" value="0"></td>
-+                          <td class="units">m/s</td>
-+                        </tr>
-+                        <tr>
-+                          <th scope="row">
-+                            <label class="param-label" for="wave_vmax" data-code="wave_vmax">Maximum Contour Speed <span class="symbol" aria-hidden="true" data-latex="v_{\max}">v<sub>max</sub></span></label>
-+                          </th>
-+                          <td class="value"><input id="wave_vmax" type="number" step="0.1" min="0" placeholder="auto"></td>
-+                          <td class="units">m/s</td>
-+                        </tr>
-+                      </tbody>
-+                    </table>
-+                  </div>
-+                  <div class="plot-controls__group">
-+                    <div class="plot-controls__group-title">Height axis (height plot)</div>
-+                    <table class="worksheet compact plot-controls__table">
-+                      <tbody>
-+                        <tr>
-+                          <th scope="row">
-+                            <label class="param-label" for="wave_hmin" data-code="wave_hmin">Minimum Wave Height <span class="symbol" aria-hidden="true" data-latex="H_{\min}">H<sub>min</sub></span></label>
-+                          </th>
-+                          <td class="value"><input id="wave_hmin" type="number" step="0.1" min="0" value="0"></td>
-+                          <td class="units">m</td>
-+                        </tr>
-+                        <tr>
-+                          <th scope="row">
-+                            <label class="param-label" for="wave_hmax" data-code="wave_hmax">Maximum Wave Height <span class="symbol" aria-hidden="true" data-latex="H_{\max}">H<sub>max</sub></span></label>
-+                          </th>
-+                          <td class="value"><input id="wave_hmax" type="number" step="0.1" min="0" value="6"></td>
-+                          <td class="units">m</td>
-+                        </tr>
-+                      </tbody>
-+                    </table>
-+                  </div>
-+                </div>
-+              </details>
-             </div>
--          </details>
-+          </section>
-+          <section class="input-section">
-+            <h3 class="input-section__title">Depth profiles</h3>
-+            <div class="plot-controls">
-+              <details class="plot-controls__custom" data-plot-custom>
-+                <summary class="plot-controls__custom-summary">Custom axis ranges</summary>
-+                <div class="plot-controls__custom-body">
-+                  <div class="plot-controls__group">
-+                    <div class="plot-controls__group-title">Depth axis (both plots)</div>
-+                    <table class="worksheet compact plot-controls__table">
-+                      <tbody>
-+                        <tr>
-+                          <th scope="row">
-+                            <label class="param-label" for="depth_xmin" data-code="depth_xmin">Minimum Depth <span class="symbol" aria-hidden="true" data-latex="d_{\min}">d<sub>min</sub></span></label>
-+                          </th>
-+                          <td class="value"><input id="depth_xmin" type="number" step="1" min="0" value="0"></td>
-+                          <td class="units">m</td>
-+                        </tr>
-+                        <tr>
-+                          <th scope="row">
-+                            <label class="param-label" for="depth_xmax" data-code="depth_xmax">Maximum Depth <span class="symbol" aria-hidden="true" data-latex="d_{\max}">d<sub>max</sub></span></label>
-+                          </th>
-+                          <td class="value"><input id="depth_xmax" type="number" step="1" min="0" placeholder="auto"></td>
-+                          <td class="units">m</td>
-+                        </tr>
-+                      </tbody>
-+                    </table>
-+                  </div>
-+                  <div class="plot-controls__group">
-+                    <div class="plot-controls__group-title">Speed axis</div>
-+                    <table class="worksheet compact plot-controls__table">
-+                      <tbody>
-+                        <tr>
-+                          <th scope="row">
-+                            <label class="param-label" for="depth_speed_ymin" data-code="depth_speed_ymin">Minimum Speed <span class="symbol" aria-hidden="true" data-latex="v_{\min}">v<sub>min</sub></span></label>
-+                          </th>
-+                          <td class="value"><input id="depth_speed_ymin" type="number" step="0.01" min="0" value="0"></td>
-+                          <td class="units">m/s</td>
-+                        </tr>
-+                        <tr>
-+                          <th scope="row">
-+                            <label class="param-label" for="depth_speed_ymax" data-code="depth_speed_ymax">Maximum Speed <span class="symbol" aria-hidden="true" data-latex="v_{\max}">v<sub>max</sub></span></label>
-+                          </th>
-+                          <td class="value"><input id="depth_speed_ymax" type="number" step="0.01" min="0" placeholder="auto"></td>
-+                          <td class="units">m/s</td>
-+                        </tr>
-+                      </tbody>
-+                    </table>
-+                  </div>
-+                  <div class="plot-controls__group">
-+                    <div class="plot-controls__group-title">Tension axis</div>
-+                    <table class="worksheet compact plot-controls__table">
-+                      <tbody>
-+                        <tr>
-+                          <th scope="row">
-+                            <label class="param-label" for="depth_tension_ymin" data-code="depth_tension_ymin">Minimum Tension <span class="symbol" aria-hidden="true" data-latex="T_{\min}">T<sub>min</sub></span></label>
-+                          </th>
-+                          <td class="value"><input id="depth_tension_ymin" type="number" step="1" min="0" value="0"></td>
-+                          <td class="units">kgf</td>
-+                        </tr>
-+                        <tr>
-+                          <th scope="row">
-+                            <label class="param-label" for="depth_tension_ymax" data-code="depth_tension_ymax">Maximum Tension <span class="symbol" aria-hidden="true" data-latex="T_{\max}">T<sub>max</sub></span></label>
-+                          </th>
-+                          <td class="value"><input id="depth_tension_ymax" type="number" step="1" min="0" placeholder="auto"></td>
-+                          <td class="units">kgf</td>
-+                        </tr>
-+                      </tbody>
-+                    </table>
-+                  </div>
-+                </div>
-+              </details>
-+            </div>
-+          </section>
-+        </div>
-+      </section>
-+    </div>
-+      </aside>
-+      <div class="app-content">
-+        <div id="err"></div>
-+        <div class="tab-bar">
-+          <nav class="tabs" aria-label="App sections" role="tablist">
-+            <button
-+              class="tab-btn active"
-+              id="tab-inputs"
-+              type="button"
-+              role="tab"
-+              aria-selected="true"
-+              aria-controls="panel-inputs"
-+            >Section 1: Inputs</button>
-+            <button
-+              class="tab-btn"
-+              id="tab-performance"
-+              type="button"
-+              role="tab"
-+              aria-selected="false"
-+              aria-controls="panel-performance"
-+            >Section 2: Performance Plots</button>
-+            <button
-+              class="tab-btn"
-+              id="tab-results"
-+              type="button"
-+              role="tab"
-+              aria-selected="false"
-+              aria-controls="panel-results"
-+            >Section 3: Layer &amp; Wrap Tables</button>
-+            <button
-+              class="tab-btn"
-+              id="tab-instructions"
-+              type="button"
-+              role="tab"
-+              aria-selected="false"
-+              aria-controls="panel-instructions"
-+            >Section 4: Instructions</button>
-+          </nav>
-         </div>
++.app-shell {
++  display: grid;
++  grid-template-columns: minmax(0, 1fr) minmax(0, 1400px) minmax(0, 1fr);
++  column-gap: 32px;
++  row-gap: 32px;
++  align-items: start;
++  max-width: calc(1400px + 260px + 64px);
++  margin: 0 auto;
++  padding: 32px 32px 64px;
++}
 +
-+        <div
-+          id="panel-inputs"
-+          class="panel active"
-+          role="tabpanel"
-+          tabindex="0"
-+          aria-labelledby="tab-inputs"
-+        >
-+          <section class="card">
-+            <div class="card-header">
-+              <h2 class="section-title">Section 1: Input Summary</h2>
-+            </div>
-+            <div id="input-summary" class="input-summary"></div>
-+          </section>
-+        </div>
+ .sheet {
+   max-width: 1400px;
+-  margin: 32px auto 64px;
++  margin: 0;
+   background: var(--paper);
+   border: 1px solid var(--paper-line-strong);
+   box-shadow: 0 18px 42px rgba(20, 34, 56, 0.14);
+   padding: 32px 40px 48px;
+   position: relative;
+-}
+-
+-.app-layout {
+-  display: grid;
+-  grid-template-columns: minmax(300px, 360px) minmax(0, 1fr);
+-  gap: 32px;
+-  align-items: start;
++  grid-column: 2 / 3;
+ }
+ 
+ .app-sidebar {
+   position: sticky;
+   top: 32px;
+   max-height: calc(100vh - 64px);
+   display: flex;
+   flex-direction: column;
+-  gap: 16px;
++  gap: 12px;
++  padding: 14px 12px;
++  width: min(100%, 260px);
+   overflow: hidden;
++  grid-column: 1 / 2;
++  justify-self: end;
+ }
+ 
+ .app-sidebar__header {
+   display: flex;
+   align-items: center;
+   justify-content: space-between;
+   gap: 12px;
+ }
+ 
+ .app-sidebar__title {
+   margin: 0;
+   font-size: 18px;
+   font-weight: 600;
+   letter-spacing: 0.01em;
+ }
+ 
+ .app-sidebar__action {
+   font-size: 13px;
+   text-transform: uppercase;
+   letter-spacing: 0.08em;
+   background: transparent;
+   border: 1px solid var(--paper-line-strong);
+   border-radius: 999px;
+   padding: 6px 16px;
+   cursor: pointer;
+   transition: background-color 0.2s ease, color 0.2s ease;
+ }
+ 
+ .app-sidebar__action:hover,
+ .app-sidebar__action:focus-visible {
+   background: var(--accent-light);
+   color: var(--accent);
+ }
+ 
+ .app-sidebar__content {
+   flex: 1 1 auto;
+   overflow-y: auto;
+-  padding-right: 16px;
+-  margin-right: -16px;
++  padding-right: 10px;
++  margin-right: -10px;
+   display: flex;
+   flex-direction: column;
+-  gap: 24px;
++  gap: 16px;
+ }
+ 
+ .app-content {
+   display: flex;
+   flex-direction: column;
+   gap: 24px;
+ }
+ 
+ .build-indicator {
+   position: absolute;
+   top: 16px;
+   right: 24px;
+   font-size: 12px;
+   letter-spacing: 0.02em;
+   color: rgba(20, 34, 56, 0.45);
+   text-transform: uppercase;
+ }
+ 
+ .build-indicator:empty {
+   display: none;
+ }
+ 
+ .page-header {
+   display: flex;
+   flex-direction: column;
+@@ -244,64 +253,74 @@ body {
+   font-weight: 600;
+   letter-spacing: 0.04em;
+   text-transform: uppercase;
+   color: var(--ink-500);
+ }
+ 
+ .worksheet--summary {
+   width: 100%;
+ }
+ 
+ .worksheet--summary td.value {
+   font-weight: 600;
+   color: var(--ink-900);
+ }
+ 
+ .worksheet--summary td,
+ .worksheet--summary th {
+   vertical-align: top;
+ }
+ 
+ .worksheet--summary .note td {
+   color: var(--ink-500);
+ }
+ 
+ @media (max-width: 1100px) {
+-  .app-layout {
+-    grid-template-columns: 1fr;
++  .app-shell {
++    grid-template-columns: minmax(0, 1fr);
++    gap: 24px;
++    padding: 24px 16px 48px;
+   }
+ 
+   .app-sidebar {
+     position: static;
+     max-height: none;
++    width: 100%;
++    padding: 0;
++    grid-column: 1;
++    justify-self: stretch;
+   }
+ 
+   .app-sidebar__content {
+     overflow: visible;
+     padding-right: 0;
+     margin-right: 0;
+   }
 +
-+        <div
-+          id="panel-performance"
-+          class="panel"
-+          role="tabpanel"
-+          aria-labelledby="tab-performance"
-+          tabindex="0"
-+          hidden
-+          aria-hidden="true"
-+          aria-live="polite"
-+        >
-+      <section class="card wave-card">
-+        <div class="card-header">
-+          <h2 class="section-title">Section 2: Wave Contours</h2>
-+          <div class="card-header-actions">
-+            <button type="button" class="refresh-link" data-refresh-plots="wave">refresh plots</button>
-+          </div>
-+        </div>
-         <div class="plot-pair" data-plot-pair>
-           <div class="plot-pair__actions">
-             <button
-               type="button"
-               class="plot-pair__toggle"
-               data-plot-pair-toggle
-               aria-expanded="false"
-               aria-label="Expand wave plots"
-             >[+]</button>
-           </div>
-           <div class="twocol waveplots">
-             <div class="col plot-column">
-               <div class="plot-panel">
-                 <div class="plot-panel__heading">
-                   <div>
-                     <div class="plot-title">Speed vs Period with Height Lines</div>
-                     <div class="dim">“How to evaluate AHC performance envelope.  The x-axis indicates wave period, the y-axis indicates peak vertical speed, and the contour set traces peak-to-trough wave heights for sinusoidal motion. The colored horizontal layer lines mark each winch layer’s available speed. Therefore, x-value of the intersection of a layer line with a contour indicates the shortest wave period for which the vertical motion can be fully compensated.”</div>                  </div>
-                 </div>
-                 <div class="plotwrap">
-                   <svg id="wave_svg" width="1000" height="540" viewBox="0 0 1000 540"></svg>
-                 </div>
-                 <div class="legend">
-                   <div class="legitem"><span class="swatch accent"></span><span>Layer speed</span></div>
-                 </div>
-               </div>
-@@ -737,120 +834,51 @@
-                   <div>
-                     <div class="plot-title">Wave Height vs Period with Speed Lines</div>
-                     <div class="dim">“Evaluates the AHC operating envelope with wave period on the x-axis and wave height on the y-axis. Iso-lines track the available winch speed for each layer. Therefore, the area below and to the right of a line represents wave conditions for which, on the indicated layer, the winch can fully compensate for wave motion.”</div>                  </div>
-                 </div>
-                 <div class="plotwrap">
-                   <svg id="wave_svg_height" width="1000" height="540" viewBox="0 0 1000 540"></svg>
-                 </div>
-                 <div class="legend">
-                   <div class="legitem"><span class="swatch gray"></span><span>Layer speed iso-line</span></div>
-                   <div class="legitem"><span class="swatch"></span><span>H = integer m</span></div>
-                   <div class="legitem"><span class="swatch dashed"></span><span>H = 0.5 m offsets</span></div>
-                 </div>
-               </div>
-             </div>
-           </div>
-         </div>
-       </section>
++  .sheet {
++    grid-column: 1;
++  }
+ }
  
-       <section class="card">
-         <div class="card-header">
-           <h2 class="section-title">Section 2: Depth Profiles</h2>
-           <div class="card-header-actions">
-             <button type="button" class="refresh-link" data-refresh-plots="depth">refresh plots</button>
-           </div>
-         </div>
--        <div class="plot-controls">
--          <details class="plot-controls__custom" data-plot-custom>
--            <summary class="plot-controls__custom-summary">Custom axis ranges</summary>
--            <div class="plot-controls__custom-body">
--              <div class="plot-controls__group">
--                <div class="plot-controls__group-title">Depth axis (both plots)</div>
--                <table class="worksheet compact plot-controls__table">
--                  <tbody>
--                    <tr>
--                      <th scope="row">
--                        <label class="param-label" for="depth_xmin" data-code="depth_xmin">Minimum Depth <span class="symbol" aria-hidden="true" data-latex="d_{\min}">d<sub>min</sub></span></label>
--                      </th>
--                      <td class="value"><input id="depth_xmin" type="number" step="1" min="0" value="0"></td>
--                      <td class="units">m</td>
--                    </tr>
--                    <tr>
--                      <th scope="row">
--                        <label class="param-label" for="depth_xmax" data-code="depth_xmax">Maximum Depth <span class="symbol" aria-hidden="true" data-latex="d_{\max}">d<sub>max</sub></span></label>
--                      </th>
--                      <td class="value"><input id="depth_xmax" type="number" step="1" min="0" placeholder="auto"></td>
--                      <td class="units">m</td>
--                    </tr>
--                  </tbody>
--                </table>
--              </div>
--              <div class="plot-controls__group">
--                <div class="plot-controls__group-title">Speed axis</div>
--                <table class="worksheet compact plot-controls__table">
--                  <tbody>
--                    <tr>
--                      <th scope="row">
--                        <label class="param-label" for="depth_speed_ymin" data-code="depth_speed_ymin">Minimum Speed <span class="symbol" aria-hidden="true" data-latex="v_{\min}">v<sub>min</sub></span></label>
--                      </th>
--                      <td class="value"><input id="depth_speed_ymin" type="number" step="0.01" min="0" value="0"></td>
--                      <td class="units">m/s</td>
--                    </tr>
--                    <tr>
--                      <th scope="row">
--                        <label class="param-label" for="depth_speed_ymax" data-code="depth_speed_ymax">Maximum Speed <span class="symbol" aria-hidden="true" data-latex="v_{\max}">v<sub>max</sub></span></label>
--                      </th>
--                      <td class="value"><input id="depth_speed_ymax" type="number" step="0.01" min="0" placeholder="auto"></td>
--                      <td class="units">m/s</td>
--                    </tr>
--                  </tbody>
--                </table>
--              </div>
--              <div class="plot-controls__group">
--                <div class="plot-controls__group-title">Tension axis</div>
--                <table class="worksheet compact plot-controls__table">
--                  <tbody>
--                    <tr>
--                      <th scope="row">
--                        <label class="param-label" for="depth_tension_ymin" data-code="depth_tension_ymin">Minimum Tension <span class="symbol" aria-hidden="true" data-latex="T_{\min}">T<sub>min</sub></span></label>
--                      </th>
--                      <td class="value"><input id="depth_tension_ymin" type="number" step="1" min="0" value="0"></td>
--                      <td class="units">kgf</td>
--                    </tr>
--                    <tr>
--                      <th scope="row">
--                        <label class="param-label" for="depth_tension_ymax" data-code="depth_tension_ymax">Maximum Tension <span class="symbol" aria-hidden="true" data-latex="T_{\max}">T<sub>max</sub></span></label>
--                      </th>
--                      <td class="value"><input id="depth_tension_ymax" type="number" step="1" min="0" placeholder="auto"></td>
--                      <td class="units">kgf</td>
--                    </tr>
--                  </tbody>
--                </table>
--              </div>
--            </div>
--          </details>
--        </div>
-+        
-         <div class="plot-pair" data-plot-pair>
-           <div class="plot-pair__actions">
-             <button
-               type="button"
-               class="plot-pair__toggle"
-               data-plot-pair-toggle
-               aria-expanded="false"
-               aria-label="Expand depth plots"
-             >[+]</button>
-           </div>
-           <div class="twocol depth-plots">
-             <div class="col plot-column">
-               <div class="plot-panel">
-                 <div class="plot-panel__heading">
-                   <div class="plot-title">Available Speed vs Depth</div>
-                 </div>
-                 <div class="plotwrap">
-                   <svg id="depth_speed_svg" viewBox="0 0 1000 540"></svg>
-                 </div>
-                 <div class="legend legend--compact">
-                   <div class="legitem"><span class="swatch accent"></span><span>Available speed</span></div>
-                   <div class="legitem"><span class="swatch rated"></span><span>Rated speed</span></div>
-                   <div class="legitem">
-                     <span class="swatch-group" aria-hidden="true">
-                       <span class="swatch flow"></span>
-@@ -1544,51 +1572,53 @@
-         <h2 class="section-title" id="component-catalog-instructions">How to update component presets</h2>
-         <p>
-           The component dropdowns now read from dedicated catalogs in
-           <code>src/js/component-selectors.mjs</code>. Add or edit part numbers directly in the matching
-           array to make them available across the app.
-         </p>
-         <ol>
-           <li>
-             Open <code>src/js/component-selectors.mjs</code> and locate the array that matches the component
-             type you want to change (for example <code>GEARBOX_OPTIONS</code> or
-             <code>ELECTRIC_MOTOR_OPTIONS</code>).
-           </li>
-           <li>
-             Add a new object with the part number, description, and any field values that should autofill
-             when the part is selected. Follow the existing entries as a template.
-           </li>
-           <li>
-             Save the file and refresh the page. The new entry will appear under the corresponding dropdown
-             and auto-populate the linked form inputs.
-           </li>
-         </ol>
-         <p class="dim">
-           Tip: if you need to clear a selection after experimenting, change any populated value and the app
-           will revert the dropdown to <em>Custom (manual input)</em> automatically.
-         </p>
--      </section>
-+        </section>
-+      </div>
-+      </div>
-     </div>
+ .input-section__title {
+   font-size: 16px;
+   font-weight: 600;
+   letter-spacing: 0.02em;
+   margin: 0;
+ }
  
-     <script
-       defer
-       src="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.js"
-       crossorigin="anonymous"
-     ></script>
-     <script>
-       window.addEventListener('DOMContentLoaded', () => {
-         if (!window.katex) {
-           console.warn('KaTeX library not available, skipping math rendering.');
-           return;
-         }
+ .input-subsection {
+   margin-top: 20px;
+ }
  
-         document.querySelectorAll('.math[data-latex]').forEach((el) => {
-           const latex = el.dataset.latex;
+ .input-subsection__title {
+   font-size: 14px;
+   font-weight: 600;
+   letter-spacing: 0.05em;
+   text-transform: uppercase;
+   color: var(--ink-700);
+   margin: 0;
+ }
  
-           if (!latex) return;
+ .card-header {
+   display: flex;
+   align-items: flex-start;
+@@ -1162,71 +1181,25 @@ th[title] {
  
-           try {
-             window.katex.render(latex, el, {
-               throwOnError: false,
-             });
-             el.setAttribute('role', 'math');
-             el.setAttribute('aria-label', latex);
+   .tab-bar {
+     gap: 12px;
+     align-items: stretch;
+   }
+ 
+   .tab-bar__actions {
+     width: 100%;
+     align-items: flex-start;
+   }
+ 
+   .tab-bar__hint {
+     text-align: left;
+   }
+ 
+   nav.tabs {
+     padding-left: 0;
+   }
+ 
+   .worksheet td.units,
+   .worksheet td.value {
+     width: auto;
+   }
+ }
+ 
+-@media print {
+-  body {
+-    background: #ffffff;
+-  }
+-
+-  .sheet {
+-    margin: 0;
+-    box-shadow: none;
+-    border-color: #000000;
+-    padding: 18mm 18mm 22mm;
+-  }
+-
+-  nav.tabs,
+-  .btnbar button,
+-  .button-row {
+-    display: none !important;
+-  }
+-
+-  .panel {
+-    display: block !important;
+-    padding-top: 0;
+-  }
+-
+-  .card {
+-    break-inside: avoid;
+-    border-color: #000000;
+-    box-shadow: none;
+-    margin-top: 18px;
+-    background: #ffffff;
+-  }
+-
+-  .worksheet thead th {
+-    background: #dfe3ef !important;
+-  }
+-
+-  th {
+-    background: #dfe3ef !important;
+-  }
+-
+-  input,
+-  select {
+-    background: #ffffff;
+-    box-shadow: none;
+-    border-color: #000000;
+-  }
+-}
+ 
+EOF
+)

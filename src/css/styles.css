@@ -25,21 +25,26 @@ body {
   background: var(--paper-background);
 }
 
+.app-shell {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1400px) minmax(0, 1fr);
+  column-gap: 32px;
+  row-gap: 32px;
+  align-items: start;
+  max-width: calc(1400px + 260px + 64px);
+  margin: 0 auto;
+  padding: 32px 32px 64px;
+}
+
 .sheet {
   max-width: 1400px;
-  margin: 32px auto 64px;
+  margin: 0;
   background: var(--paper);
   border: 1px solid var(--paper-line-strong);
   box-shadow: 0 18px 42px rgba(20, 34, 56, 0.14);
   padding: 32px 40px 48px;
   position: relative;
-}
-
-.app-layout {
-  display: grid;
-  grid-template-columns: minmax(300px, 360px) minmax(0, 1fr);
-  gap: 32px;
-  align-items: start;
+  grid-column: 2 / 3;
 }
 
 .app-sidebar {
@@ -48,8 +53,12 @@ body {
   max-height: calc(100vh - 64px);
   display: flex;
   flex-direction: column;
-  gap: 16px;
+  gap: 12px;
+  padding: 14px 12px;
+  width: min(100%, 260px);
   overflow: hidden;
+  grid-column: 1 / 2;
+  justify-self: end;
 }
 
 .app-sidebar__header {
@@ -87,11 +96,11 @@ body {
 .app-sidebar__content {
   flex: 1 1 auto;
   overflow-y: auto;
-  padding-right: 16px;
-  margin-right: -16px;
+  padding-right: 10px;
+  margin-right: -10px;
   display: flex;
   flex-direction: column;
-  gap: 24px;
+  gap: 16px;
 }
 
 .app-content {
@@ -266,19 +275,29 @@ body {
 }
 
 @media (max-width: 1100px) {
-  .app-layout {
-    grid-template-columns: 1fr;
+  .app-shell {
+    grid-template-columns: minmax(0, 1fr);
+    gap: 24px;
+    padding: 24px 16px 48px;
   }
 
   .app-sidebar {
     position: static;
     max-height: none;
+    width: 100%;
+    padding: 0;
+    grid-column: 1;
+    justify-self: stretch;
   }
 
   .app-sidebar__content {
     overflow: visible;
     padding-right: 0;
     margin-right: 0;
+  }
+
+  .sheet {
+    grid-column: 1;
   }
 }
 
@@ -1184,49 +1203,3 @@ th[title] {
   }
 }
 
-@media print {
-  body {
-    background: #ffffff;
-  }
-
-  .sheet {
-    margin: 0;
-    box-shadow: none;
-    border-color: #000000;
-    padding: 18mm 18mm 22mm;
-  }
-
-  nav.tabs,
-  .btnbar button,
-  .button-row {
-    display: none !important;
-  }
-
-  .panel {
-    display: block !important;
-    padding-top: 0;
-  }
-
-  .card {
-    break-inside: avoid;
-    border-color: #000000;
-    box-shadow: none;
-    margin-top: 18px;
-    background: #ffffff;
-  }
-
-  .worksheet thead th {
-    background: #dfe3ef !important;
-  }
-
-  th {
-    background: #dfe3ef !important;
-  }
-
-  input,
-  select {
-    background: #ffffff;
-    box-shadow: none;
-    border-color: #000000;
-  }
-}
