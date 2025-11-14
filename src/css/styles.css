@@ -27,11 +27,12 @@ body {
 
 .app-shell {
   display: grid;
-  grid-template-columns: minmax(0, 1fr) minmax(0, 1400px) minmax(0, 1fr);
+  grid-template-columns: 300px minmax(0, 1000px);
   column-gap: 32px;
   row-gap: 32px;
   align-items: start;
-  max-width: calc(1400px + 260px + 64px);
+  justify-content: center;
+  max-width: calc(300px + 1000px + 32px);
   margin: 0 auto;
   padding: 32px 32px 64px;
 }
@@ -53,12 +54,9 @@ body {
   max-height: calc(100vh - 64px);
   display: flex;
   flex-direction: column;
-  gap: 12px;
-  padding: 14px 12px;
-  width: min(100%, 460px);
+  width: 300px;
   overflow: hidden;
   grid-column: 1 / 2;
-  justify-self: end;
 }
 
 .app-sidebar__header {
@@ -79,25 +77,21 @@ body {
   font-size: 13px;
   text-transform: uppercase;
   letter-spacing: 0.08em;
-  background: transparent;
-  border: 1px solid var(--paper-line-strong);
-  border-radius: 999px;
-  padding: 6px 16px;
+  background: none;
+  border: none;
+  padding: 0;
   cursor: pointer;
-  transition: background-color 0.2s ease, color 0.2s ease;
+  transition: color 0.2s ease;
 }
 
 .app-sidebar__action:hover,
 .app-sidebar__action:focus-visible {
-  background: var(--accent-light);
   color: var(--accent);
 }
 
 .app-sidebar__content {
   flex: 1 1 auto;
   overflow-y: auto;
-  padding-right: 10px;
-  margin-right: -10px;
   display: flex;
   flex-direction: column;
   gap: 16px;
@@ -279,25 +273,23 @@ body {
     grid-template-columns: minmax(0, 1fr);
     gap: 24px;
     padding: 24px 16px 48px;
+    justify-content: center;
   }
 
   .app-sidebar {
     position: static;
     max-height: none;
     width: 100%;
-    padding: 0;
     grid-column: 1;
-    justify-self: stretch;
   }
 
   .app-sidebar__content {
     overflow: visible;
-    padding-right: 0;
-    margin-right: 0;
   }
 
   .sheet {
     grid-column: 1;
+    justify-self: center;
   }
 }
 

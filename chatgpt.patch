@@ -1,11 +1,8 @@
- (cd "$(git rev-parse --show-toplevel)" && git apply --3way <<'EOF' 
 diff --git a/src/css/styles.css b/src/css/styles.css
-index 52ceba5b6e0442bf4d0aa7e1f914f644b64adf38..4f6cbedd2a94cebbd202c019a8cf37da41b385e8 100644
+index a4c322c77fb03c1a6cbe25569e0fa1fd6bbd51f4..a9d486489c716f7e113fe091262bafdcb0bcfb1d 100644
 --- a/src/css/styles.css
 +++ b/src/css/styles.css
-@@ -3,117 +3,126 @@
-   --paper-background: #eef2f8;
-   --paper-line-strong: #c4ccdd;
+@@ -5,121 +5,115 @@
    --paper-line-soft: #dfe4ef;
    --ink-900: #142238;
    --ink-700: #2f3b54;
@@ -29,34 +26,29 @@ index 52ceba5b6e0442bf4d0aa7e1f914f644b64adf38..4f6cbedd2a94cebbd202c019a8cf37da
    background: var(--paper-background);
  }
  
-+.app-shell {
-+  display: grid;
-+  grid-template-columns: minmax(0, 1fr) minmax(0, 1400px) minmax(0, 1fr);
-+  column-gap: 32px;
-+  row-gap: 32px;
-+  align-items: start;
-+  max-width: calc(1400px + 260px + 64px);
-+  margin: 0 auto;
-+  padding: 32px 32px 64px;
-+}
-+
+ .app-shell {
+   display: grid;
+-  grid-template-columns: minmax(0, 1fr) minmax(0, 1400px) minmax(0, 1fr);
++  grid-template-columns: 300px minmax(0, 1000px);
+   column-gap: 32px;
+   row-gap: 32px;
+   align-items: start;
+-  max-width: calc(1400px + 260px + 64px);
++  justify-content: center;
++  max-width: calc(300px + 1000px + 32px);
+   margin: 0 auto;
+   padding: 32px 32px 64px;
+ }
+ 
  .sheet {
-   max-width: 1400px;
--  margin: 32px auto 64px;
-+  margin: 0;
+   max-width: 1000px;
+   margin: 0;
    background: var(--paper);
    border: 1px solid var(--paper-line-strong);
    box-shadow: 0 18px 42px rgba(20, 34, 56, 0.14);
    padding: 32px 40px 48px;
    position: relative;
--}
--
--.app-layout {
--  display: grid;
--  grid-template-columns: minmax(300px, 360px) minmax(0, 1fr);
--  gap: 32px;
--  align-items: start;
-+  grid-column: 2 / 3;
+   grid-column: 2 / 3;
  }
  
  .app-sidebar {
@@ -65,13 +57,13 @@ index 52ceba5b6e0442bf4d0aa7e1f914f644b64adf38..4f6cbedd2a94cebbd202c019a8cf37da
    max-height: calc(100vh - 64px);
    display: flex;
    flex-direction: column;
--  gap: 16px;
-+  gap: 12px;
-+  padding: 14px 12px;
-+  width: min(100%, 260px);
+-  gap: 12px;
+-  padding: 14px 12px;
+-  width: min(100%, 460px);
++  width: 300px;
    overflow: hidden;
-+  grid-column: 1 / 2;
-+  justify-self: end;
+   grid-column: 1 / 2;
+-  justify-self: end;
  }
  
  .app-sidebar__header {
@@ -92,31 +84,32 @@ index 52ceba5b6e0442bf4d0aa7e1f914f644b64adf38..4f6cbedd2a94cebbd202c019a8cf37da
    font-size: 13px;
    text-transform: uppercase;
    letter-spacing: 0.08em;
-   background: transparent;
-   border: 1px solid var(--paper-line-strong);
-   border-radius: 999px;
-   padding: 6px 16px;
+-  background: transparent;
+-  border: 1px solid var(--paper-line-strong);
+-  border-radius: 999px;
+-  padding: 6px 16px;
++  background: none;
++  border: none;
++  padding: 0;
    cursor: pointer;
-   transition: background-color 0.2s ease, color 0.2s ease;
+-  transition: background-color 0.2s ease, color 0.2s ease;
++  transition: color 0.2s ease;
  }
  
  .app-sidebar__action:hover,
  .app-sidebar__action:focus-visible {
-   background: var(--accent-light);
+-  background: var(--accent-light);
    color: var(--accent);
  }
  
  .app-sidebar__content {
    flex: 1 1 auto;
    overflow-y: auto;
--  padding-right: 16px;
--  margin-right: -16px;
-+  padding-right: 10px;
-+  margin-right: -10px;
+-  padding-right: 10px;
+-  margin-right: -10px;
    display: flex;
    flex-direction: column;
--  gap: 24px;
-+  gap: 16px;
+   gap: 16px;
  }
  
  .app-content {
@@ -139,14 +132,7 @@ index 52ceba5b6e0442bf4d0aa7e1f914f644b64adf38..4f6cbedd2a94cebbd202c019a8cf37da
    display: none;
  }
  
- .page-header {
-   display: flex;
-   flex-direction: column;
-@@ -244,64 +253,74 @@ body {
-   font-weight: 600;
-   letter-spacing: 0.04em;
-   text-transform: uppercase;
-   color: var(--ink-500);
+@@ -257,69 +251,67 @@ body {
  }
  
  .worksheet--summary {
@@ -168,32 +154,32 @@ index 52ceba5b6e0442bf4d0aa7e1f914f644b64adf38..4f6cbedd2a94cebbd202c019a8cf37da
  }
  
  @media (max-width: 1100px) {
--  .app-layout {
--    grid-template-columns: 1fr;
-+  .app-shell {
-+    grid-template-columns: minmax(0, 1fr);
-+    gap: 24px;
-+    padding: 24px 16px 48px;
+   .app-shell {
+     grid-template-columns: minmax(0, 1fr);
+     gap: 24px;
+     padding: 24px 16px 48px;
++    justify-content: center;
    }
  
    .app-sidebar {
      position: static;
      max-height: none;
-+    width: 100%;
-+    padding: 0;
-+    grid-column: 1;
-+    justify-self: stretch;
+     width: 100%;
+-    padding: 0;
+     grid-column: 1;
+-    justify-self: stretch;
    }
  
    .app-sidebar__content {
      overflow: visible;
-     padding-right: 0;
-     margin-right: 0;
+-    padding-right: 0;
+-    margin-right: 0;
    }
-+
-+  .sheet {
-+    grid-column: 1;
-+  }
+ 
+   .sheet {
+     grid-column: 1;
++    justify-self: center;
+   }
  }
  
  .input-section__title {
@@ -218,79 +204,3 @@ index 52ceba5b6e0442bf4d0aa7e1f914f644b64adf38..4f6cbedd2a94cebbd202c019a8cf37da
  
  .card-header {
    display: flex;
-   align-items: flex-start;
-@@ -1162,71 +1181,25 @@ th[title] {
- 
-   .tab-bar {
-     gap: 12px;
-     align-items: stretch;
-   }
- 
-   .tab-bar__actions {
-     width: 100%;
-     align-items: flex-start;
-   }
- 
-   .tab-bar__hint {
-     text-align: left;
-   }
- 
-   nav.tabs {
-     padding-left: 0;
-   }
- 
-   .worksheet td.units,
-   .worksheet td.value {
-     width: auto;
-   }
- }
- 
--@media print {
--  body {
--    background: #ffffff;
--  }
--
--  .sheet {
--    margin: 0;
--    box-shadow: none;
--    border-color: #000000;
--    padding: 18mm 18mm 22mm;
--  }
--
--  nav.tabs,
--  .btnbar button,
--  .button-row {
--    display: none !important;
--  }
--
--  .panel {
--    display: block !important;
--    padding-top: 0;
--  }
--
--  .card {
--    break-inside: avoid;
--    border-color: #000000;
--    box-shadow: none;
--    margin-top: 18px;
--    background: #ffffff;
--  }
--
--  .worksheet thead th {
--    background: #dfe3ef !important;
--  }
--
--  th {
--    background: #dfe3ef !important;
--  }
--
--  input,
--  select {
--    background: #ffffff;
--    box-shadow: none;
--    border-color: #000000;
--  }
--}
- 
-EOF
-)
