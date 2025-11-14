@@ -54,7 +54,7 @@ body {
   max-height: calc(100vh - 64px);
   display: flex;
   flex-direction: column;
-  width: 300px;
+  width: 600px;
   overflow: hidden;
   grid-column: 1 / 2;
 }
