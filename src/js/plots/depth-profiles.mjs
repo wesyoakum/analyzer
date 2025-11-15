@@ -232,12 +232,14 @@ function drawSpeedProfile(svg, segments, depthMin, depthMax, speedMin, speedMax,
     'text-anchor': 'middle', 'font-size': '12', fill: '#444'
   })).textContent = 'Speed (m/s)';
 
+  const inlineLabels = [];
   extraProfiles.forEach(profile => {
     if (!profile || !Array.isArray(profile.segments)) return;
     const strokeColor = profile.color || '#555';
     const defaultDash = '6 4';
     const strokeDash = (profile.strokeDasharray === undefined) ? defaultDash : profile.strokeDasharray;
     const strokeWidth = Number.isFinite(profile.strokeWidth) ? profile.strokeWidth : 2;
+    let labelPlaced = false;
     profile.segments.forEach(seg => {
       if (!seg || !Number.isFinite(seg.speed_ms)) return;
       const depthEnd = Math.min(seg.depth_start, seg.depth_end);
@@ -259,7 +261,39 @@ function drawSpeedProfile(svg, segments, depthMin, depthMax, speedMin, speedMax,
       };
       if (strokeDash) attrs['stroke-dasharray'] = strokeDash;
       svg.appendChild(svgEl('line', attrs));
+
+      if (!labelPlaced && profile.inlineLabel) {
+        const span = Math.abs(x1 - x0);
+        if (span >= 6) {
+          const midX = (x0 + x1) / 2;
+          const clampedX = Math.min(Math.max(midX, ML + 24), W - MR - 24);
+          const labelYRaw = y - 8;
+          const clampedY = Math.min(Math.max(labelYRaw, MT + 12), H - MB - 12);
+          inlineLabels.push({
+            text: profile.inlineLabel,
+            x: clampedX,
+            y: clampedY,
+            color: profile.inlineLabelColor || strokeColor
+          });
+          labelPlaced = true;
+        }
+      }
     });
+  });
+
+  inlineLabels.forEach(label => {
+    const textAttrs = {
+      x: label.x,
+      y: label.y,
+      'text-anchor': 'middle',
+      'dominant-baseline': 'middle',
+      'font-size': '12',
+      fill: label.color,
+      style: 'paint-order: stroke; stroke: #fff; stroke-width: 3px;'
+    };
+    const textEl = svgEl('text', textAttrs);
+    textEl.textContent = label.text;
+    svg.appendChild(textEl);
   });
 
   segments.forEach(S => {

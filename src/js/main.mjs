@@ -97,6 +97,12 @@ function readAccentColor() {
  * @property {string} label
  * @property {string} color
  * @property {{depth_start:number, depth_end:number, speed_ms:number}[]} segments
+ * @property {number} [strokeWidth]
+ * @property {number} [legendStrokeWidth]
+ * @property {string|null} [strokeDasharray]
+ * @property {string|null} [legendStrokeDasharray]
+ * @property {string} [inlineLabel]
+ * @property {string} [inlineLabelColor]
  */
 
 function buildDepthProfileContext({
@@ -198,13 +204,21 @@ function formatPayloadLabel(payloadKg) {
   return `Payload ${rounded.toLocaleString(undefined, { maximumFractionDigits: 0 })} kg`;
 }
 
+function formatPayloadInlineLabel(payloadKg) {
+  if (!Number.isFinite(payloadKg)) return '';
+  const rounded = Math.round(payloadKg);
+  return `${rounded.toLocaleString(undefined, { maximumFractionDigits: 0 })} kg`;
+}
+
 function computeDepthSpeedSegmentsForPayload(payloadKg, context, options = {}) {
   if (!context) return [];
   const scenario = context.scenario;
   if (scenario === 'electric' && !context.electricEnabled) return [];
   if (scenario === 'hydraulic' && !context.hydraulicEnabled) return [];
 
-  const mode = options.mode === 'power' ? 'power' : 'available';
+  const mode = options.mode === 'power'
+    ? 'power'
+    : (options.mode === 'flow' ? 'flow' : 'available');
   const payload = Number.isFinite(payloadKg) ? Math.max(0, payloadKg) : 0;
   const cableWeight = Number.isFinite(context.cable_w_kgpm) ? context.cable_w_kgpm : 0;
   const gearSafe = Math.max(context.gear_product, 1e-9);
@@ -284,6 +298,9 @@ function computeDepthSpeedSegmentsForPayload(payloadKg, context, options = {}) {
       } else if (rpmFlowPerMotor === Number.POSITIVE_INFINITY) {
         speed_flow_mpm = Number.POSITIVE_INFINITY;
       }
+      if (!Number.isFinite(speed_flow_mpm)) {
+        speed_flow_mpm = speed_flow_mpm === Number.POSITIVE_INFINITY ? Number.POSITIVE_INFINITY : 0;
+      }
       const tension_theoretical_N = theoretical_tension * G;
       let speed_power_mpm = 0;
       if (hyd.hp_elec_in_total > 0 && hyd.eff_total > 0 && tension_theoretical_N > 0) {
@@ -293,7 +310,9 @@ function computeDepthSpeedSegmentsForPayload(payloadKg, context, options = {}) {
       }
       if (!Number.isFinite(speed_power_mpm) || speed_power_mpm < 0) speed_power_mpm = 0;
       let selectedSpeedMpm = speed_power_mpm;
-      if (mode !== 'power') {
+      if (mode === 'flow') {
+        selectedSpeedMpm = speed_flow_mpm;
+      } else if (mode !== 'power') {
         selectedSpeedMpm = Math.min(speed_power_mpm, speed_flow_mpm);
       }
       if (!Number.isFinite(selectedSpeedMpm) || selectedSpeedMpm < 0) selectedSpeedMpm = 0;
@@ -1486,21 +1505,52 @@ function redrawPlots() {
     const activeScenario = getActiveScenario();
     let speedPrimaryLabel = null;
     /** @type {SpeedProfileSegments[]} */
+    let flowSpeedProfiles = [];
+    /** @type {SpeedProfileSegments[]} */
     let powerSpeedProfiles = [];
     if (Number.isFinite(payloadVal)) {
       speedPrimaryLabel = formatPayloadLabel(payloadVal);
       if (lastDepthProfileContext && lastDepthProfileContext.scenario === activeScenario) {
         const payloadSteps = buildPayloadValues(payloadVal);
         const accentColor = readAccentColor();
-        let colorIdx = 0;
+        const payloadColorMap = new Map();
+        let extraColorIdx = 0;
+        payloadSteps.forEach(p => {
+          const isPrimary = Math.abs(p - payloadVal) <= 1e-6;
+          const color = isPrimary
+            ? accentColor
+            : EXTRA_SPEED_PROFILE_COLORS[extraColorIdx++ % EXTRA_SPEED_PROFILE_COLORS.length];
+          payloadColorMap.set(p, color);
+        });
+
+        if (activeScenario === 'hydraulic') {
+          flowSpeedProfiles = payloadSteps
+            .map(p => {
+              const segments = computeDepthSpeedSegmentsForPayload(p, lastDepthProfileContext, { mode: 'flow' });
+              if (!segments.length) return null;
+              const color = payloadColorMap.get(p) || accentColor;
+              const isPrimary = Math.abs(p - payloadVal) <= 1e-6;
+              return {
+                label: `Flow limit — ${formatPayloadInlineLabel(p)}`,
+                inlineLabel: formatPayloadInlineLabel(p),
+                inlineLabelColor: color,
+                color,
+                strokeWidth: isPrimary ? 3.2 : 2.4,
+                legendStrokeWidth: isPrimary ? 3.2 : 2.4,
+                strokeDasharray: '6 4',
+                legendStrokeDasharray: '6 4',
+                segments
+              };
+            })
+            .filter(Boolean);
+        }
+
         powerSpeedProfiles = payloadSteps
           .map(p => {
             const segments = computeDepthSpeedSegmentsForPayload(p, lastDepthProfileContext, { mode: 'power' });
             if (!segments.length) return null;
+            const color = payloadColorMap.get(p) || accentColor;
             const isPrimary = Math.abs(p - payloadVal) <= 1e-6;
-            const color = isPrimary
-              ? accentColor
-              : EXTRA_SPEED_PROFILE_COLORS[colorIdx++ % EXTRA_SPEED_PROFILE_COLORS.length];
             return {
               label: formatPayloadLabel(p),
               color,
@@ -1537,7 +1587,7 @@ function redrawPlots() {
       tension_ymin: Number.isFinite(depthTensionMinVal) ? depthTensionMinVal : undefined,
       tension_ymax: Number.isFinite(depthTensionMaxVal) ? depthTensionMaxVal : undefined,
       speed_primary_label: speedPrimaryLabel,
-      speed_extra_profiles: []
+      speed_extra_profiles: flowSpeedProfiles
     });
 
     if (depthSpeedPowerSvg) {
