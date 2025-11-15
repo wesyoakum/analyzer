@@ -99,21 +99,47 @@ function fmt(value, digits = 0) {
   return value.toLocaleString('en-US', { maximumFractionDigits: digits });
 }
 
+function resetDrumSvg(svg, currentTitleEl = null) {
+  if (!svg) return null;
+
+  let titleEl = currentTitleEl;
+  if (!titleEl || titleEl.ownerSVGElement !== svg) {
+    titleEl = svg.querySelector('#drum_visual_title');
+  }
+
+  if (!titleEl) {
+    titleEl = document.createElementNS('http://www.w3.org/2000/svg', 'title');
+    titleEl.id = 'drum_visual_title';
+    svg.insertBefore(titleEl, svg.firstChild);
+  } else if (titleEl.parentNode !== svg) {
+    svg.insertBefore(titleEl, svg.firstChild);
+  } else if (titleEl.previousSibling) {
+    svg.insertBefore(titleEl, svg.firstChild);
+  }
+
+  const nodes = Array.from(svg.childNodes);
+  for (const node of nodes) {
+    if (node !== titleEl) {
+      svg.removeChild(node);
+    }
+  }
+
+  return titleEl;
+}
+
 function emptyState(summaryEl, titleEl, svg) {
-  if (titleEl) titleEl.textContent = 'Winch drum cross-section (awaiting inputs)';
+  const activeTitleEl = svg ? resetDrumSvg(svg, titleEl) : titleEl;
+  if (activeTitleEl) activeTitleEl.textContent = 'Winch drum cross-section (awaiting inputs)';
   if (svg) svg.setAttribute('aria-label', 'Winch drum cross-section awaiting inputs');
   if (summaryEl) summaryEl.textContent = 'Enter drum and cable inputs to view the drum visualization.';
-  if (svg) {
-    while (svg.firstChild) svg.removeChild(svg.firstChild);
-  }
 }
 
 export function renderDrumVisualization(rows, summary, cfg, meta) {
   const svg = /** @type {SVGSVGElement|null} */ (document.getElementById('drum_visual_svg'));
   const summaryEl = /** @type {HTMLParagraphElement|null} */ (document.getElementById('drum_summary'));
-  const titleEl = /** @type {SVGTitleElement|null} */ (document.getElementById('drum_visual_title'));
+  let titleEl = /** @type {SVGTitleElement|null} */ (document.getElementById('drum_visual_title'));
 
-  if (!svg || !summaryEl || !titleEl) return;
+  if (!svg || !summaryEl) return;
 
   if (!rows || !rows.length || !summary || !cfg) {
     emptyState(summaryEl, titleEl, svg);
@@ -133,7 +159,8 @@ export function renderDrumVisualization(rows, summary, cfg, meta) {
   const cable_dia_in = Math.max(0, (cable_dia_mm || 0) * IN_PER_MM);
   const packingFactor = Number.isFinite(packing_factor) ? Math.max(packing_factor, 0) : 0.877;
 
-  while (svg.firstChild) svg.removeChild(svg.firstChild);
+  titleEl = resetDrumSvg(svg, titleEl);
+  if (!titleEl) return;
 
   const styles = getComputedStyle(document.documentElement);
   const accentRgb = parseCssColor(cssVar(styles, '--accent', FALLBACK_HEX.accent), FALLBACK_COLORS.accent);
