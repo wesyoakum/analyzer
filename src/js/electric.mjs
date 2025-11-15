@@ -2,7 +2,6 @@
 import {
   G, M_PER_IN,
   tension_kgf, elec_available_tension_kgf,
-  TENSION_SAFETY_FACTOR
 } from './utils.mjs';
 import {
   formatDecimal,
@@ -79,7 +78,7 @@ export function rowsToElectricLayer(rows, payload_kg, cable_w_kgpm, gr1, gr2, mo
 
   for (const L of [...byLayer.values()].sort((a, b) => a.layer_no - b.layer_no)) {
     const maxTheo_kgf = tension_kgf(L.pre_deployed_m, payload_kg, cable_w_kgpm);
-    const maxReq_kgf = +(maxTheo_kgf * TENSION_SAFETY_FACTOR).toFixed(1);
+    const maxReq_kgf = maxTheo_kgf;
     const radius_m = (L.layer_dia_in * M_PER_IN) / 2;
     const maxT_Nm = +(maxReq_kgf * G * radius_m).toFixed(1);
     const maxMotorNm = +(maxT_Nm / denom).toFixed(1);

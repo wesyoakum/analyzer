@@ -9,8 +9,6 @@ export const TWO_PI    = 2 * Math.PI;
 export const CC_PER_GAL = 3785.411784;     // cc per US gallon
 export const PSI_TO_PA  = 6894.757293;     // Pa per psi
 
-export const TENSION_SAFETY_FACTOR = 1.25; // Required tension = theoretical × 1.25 safety factor
-
 export const constants = {
   IN_PER_MM, M_PER_IN, G, W_PER_HP, TWO_PI, CC_PER_GAL, PSI_TO_PA
 };
