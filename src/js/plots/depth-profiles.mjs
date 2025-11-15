@@ -1,5 +1,5 @@
 // ===== plots/depth-profiles.mjs  Speed vs Depth & Tension vs Depth (DOM-agnostic) =====
-import { niceTicks, svgEl, TENSION_SAFETY_FACTOR } from '../utils.mjs';
+import { niceTicks, svgEl } from '../utils.mjs';
 
 const CANDIDATE_POWER_COLOR = '#9249c6'; // purple
 const CANDIDATE_FLOW_COLOR = '#eed500'; // yellow
@@ -141,7 +141,7 @@ export function drawDepthProfiles(svgSpeed, svgTension, {
 
   const tensionDepth = Math.max(maxDepth, depthMax);
   const maxTheoT = payload_kg + cable_w_kgpm * tensionDepth;
-  const maxReqT = maxTheoT * TENSION_SAFETY_FACTOR;
+  const maxReqT = maxTheoT;
 
   let tensionMin = toNumber(tension_ymin);
   if (!Number.isFinite(tensionMin) || tensionMin < 0) tensionMin = 0;
@@ -473,8 +473,8 @@ function drawTensionProfile(svg, segments, depthMin, depthMax, tensionMin, tensi
 
   const safePayload = Number.isFinite(payload_kg) ? payload_kg : 0;
   const safeCableWeight = Number.isFinite(cable_w_kgpm) ? cable_w_kgpm : 0;
-  const requirementIntercept = TENSION_SAFETY_FACTOR * safePayload;
-  const requirementSlope = TENSION_SAFETY_FACTOR * safeCableWeight;
+  const requirementIntercept = safePayload;
+  const requirementSlope = safeCableWeight;
   const requiredAt = depth => requirementIntercept + requirementSlope * depth;
 
   const availablePieces = [];
@@ -579,14 +579,13 @@ function buildRequirementCurve(depthMin, depthMax, payload_kg, cable_w_kgpm) {
   const clampedMax = Math.max(depthMin, depthMax);
   if (Math.abs(clampedMax - clampedMin) < 1e-9) return [];
 
-  const factor = TENSION_SAFETY_FACTOR;
 
   return [{
     d0: clampedMin,
     d1: clampedMax,
     color: TENSION_REQUIRED_COLOR,
-    T0: (payload_kg + cable_w_kgpm * clampedMin) * factor,
-    T1: (payload_kg + cable_w_kgpm * clampedMax) * factor
+    T0: payload_kg + cable_w_kgpm * clampedMin,
+    T1: payload_kg + cable_w_kgpm * clampedMax
   }];
 }
 

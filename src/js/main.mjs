@@ -7,7 +7,6 @@ import {
   gpm_from_cc_rev_and_rpm, rpm_from_gpm_and_disp,
   psi_from_torque_and_disp_Nm_cc, torque_per_motor_from_pressure_Pa,
   line_speed_mpm_from_motor_rpm, hp_from_psi_and_gpm,
-  TENSION_SAFETY_FACTOR
 } from './utils.mjs';
 
 import { setupInputPersistence } from './persist-inputs.mjs';
@@ -243,7 +242,7 @@ function computeDepthSpeedSegmentsForPayload(payloadKg, context) {
     if (!Number.isFinite(radius_m) || radius_m <= 0) continue;
 
     const theoretical_tension = tension_kgf(depthEndRaw, payload, cableWeight);
-    const required_tension = theoretical_tension * TENSION_SAFETY_FACTOR;
+    const required_tension = theoretical_tension;
     const tension_N = required_tension * G;
     const drum_T = tension_N * radius_m;
 
@@ -1209,7 +1208,7 @@ function computeAll() {
     for (const r of rows) {
       // Base tension and torque at drum
       const theoretical_tension = tension_kgf(r.deployed_len_m, payload_kg, cable_w_kgpm);
-      const required_tension = +(theoretical_tension * TENSION_SAFETY_FACTOR).toFixed(1);
+      const required_tension = +(theoretical_tension).toFixed(1);
       r.tension_theoretical_kgf = theoretical_tension;
       r.tension_kgf = required_tension;
       const tension_N = required_tension * G;
