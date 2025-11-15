@@ -228,6 +228,16 @@ function renderWavePlot(svg, {
       'stroke-dasharray': '6 4',
       opacity: 0
     });
+    const hoverHLine = svgEl('line', {
+      x1: ML,
+      x2: W - MR,
+      y1: MT,
+      y2: MT,
+      stroke: accentColor,
+      'stroke-width': 1.5,
+      'stroke-dasharray': '6 4',
+      opacity: 0
+    });
     const hoverLabel = svgEl('text', {
       x: ML,
       y: H - MB + 20,
@@ -236,35 +246,80 @@ function renderWavePlot(svg, {
       fill: accentColor,
       opacity: 0
     });
+    const hoverYLabel = svgEl('text', {
+      x: ML - 8,
+      y: MT,
+      'text-anchor': 'end',
+      'font-size': '12',
+      fill: accentColor,
+      opacity: 0
+    });
     hoverLayer.appendChild(hoverLine);
+    hoverLayer.appendChild(hoverHLine);
     hoverLayer.appendChild(hoverLabel);
+    hoverLayer.appendChild(hoverYLabel);
     svg.appendChild(hoverLayer);
 
     const clamp = (val, min, max) => Math.min(Math.max(val, min), max);
-    const updateHover = evt => {
+    const toViewBoxPoint = evt => {
+      if (typeof DOMPoint === 'function' && svg.getScreenCTM) {
+        const ctm = svg.getScreenCTM();
+        if (ctm && typeof ctm.inverse === 'function') {
+          const point = new DOMPoint(evt.clientX, evt.clientY);
+          const svgPoint = point.matrixTransform(ctm.inverse());
+          return { x: svgPoint.x, y: svgPoint.y };
+        }
+      }
+
       const rect = svg.getBoundingClientRect();
-      const localX = evt.clientX - rect.left;
-      if (localX < ML || localX > W - MR) {
+      const vb = svg.viewBox.baseVal;
+      const vbWidth = vb && vb.width ? vb.width : rect.width;
+      const vbHeight = vb && vb.height ? vb.height : rect.height;
+      const offsetX = vb && vb.x ? vb.x : 0;
+      const offsetY = vb && vb.y ? vb.y : 0;
+      const scaleX = rect.width ? vbWidth / rect.width : 1;
+      const scaleY = rect.height ? vbHeight / rect.height : 1;
+      return {
+        x: offsetX + (evt.clientX - rect.left) * scaleX,
+        y: offsetY + (evt.clientY - rect.top) * scaleY
+      };
+    };
+    const updateHover = evt => {
+      const { x: localX, y: localY } = toViewBoxPoint(evt);
+      if (localX < ML || localX > W - MR || localY < MT || localY > H - MB) {
         hoverLine.setAttribute('opacity', '0');
         hoverLabel.setAttribute('opacity', '0');
+        hoverHLine.setAttribute('opacity', '0');
+        hoverYLabel.setAttribute('opacity', '0');
         return;
       }
 
       const clampedX = clamp(localX, ML, W - MR);
+      const clampedY = clamp(localY, MT, H - MB);
       const T = Tmin + ((clampedX - ML) / Math.max(innerW, 1e-9)) * (Tmax - Tmin);
+      const yValue = yMax - ((clampedY - MT) / Math.max(innerH, 1e-9)) * (yMax - yMin);
       hoverLine.setAttribute('x1', clampedX);
       hoverLine.setAttribute('x2', clampedX);
       hoverLine.setAttribute('opacity', '1');
+      hoverHLine.setAttribute('y1', clampedY);
+      hoverHLine.setAttribute('y2', clampedY);
+      hoverHLine.setAttribute('opacity', '1');
 
       const displayT = Math.round(T * 10) / 10;
+      const displayY = Math.round(yValue * 10) / 10;
       hoverLabel.setAttribute('x', clampedX);
       hoverLabel.textContent = `${displayT.toFixed(1)} sec`;
       hoverLabel.setAttribute('opacity', '1');
+      hoverYLabel.setAttribute('y', clampedY + 4);
+      hoverYLabel.textContent = `${displayY.toFixed(1)} ${mode === 'speed' ? 'm/s' : 'm'}`;
+      hoverYLabel.setAttribute('opacity', '1');
     };
 
     const hideHover = () => {
       hoverLine.setAttribute('opacity', '0');
       hoverLabel.setAttribute('opacity', '0');
+      hoverHLine.setAttribute('opacity', '0');
+      hoverYLabel.setAttribute('opacity', '0');
     };
 
     svg.addEventListener('pointermove', updateHover);

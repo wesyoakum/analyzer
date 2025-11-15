@@ -169,6 +169,14 @@ export function drawDepthProfiles(svgSpeed, svgTension, {
 
 // ---------- Speed vs Depth ----------
 function drawSpeedProfile(svg, segments, depthMin, depthMax, speedMin, speedMax, accentColor, ratedSpeedMs = null, options = {}) {
+  if (svg && svg._depthSpeedHoverHandlers) {
+    const { move, leave } = svg._depthSpeedHoverHandlers;
+    svg.removeEventListener('pointermove', move);
+    svg.removeEventListener('pointerleave', leave);
+    svg.removeEventListener('pointerenter', move);
+    delete svg._depthSpeedHoverHandlers;
+  }
+
   while (svg.firstChild) svg.removeChild(svg.firstChild);
 
   const ML = 64, MR = 18, MT = 18, MB = 46;
@@ -397,6 +405,118 @@ function drawSpeedProfile(svg, segments, depthMin, depthMax, speedMin, speedMax,
     svg.appendChild(svgEl('line', { x1: ML, y1: sy(0), x2: W - MR, y2: sy(0), stroke: '#bbb', 'stroke-dasharray': '4 4' }));
   }
 
+  const hoverLayer = svgEl('g', { 'pointer-events': 'none' });
+  const hoverVLine = svgEl('line', {
+    x1: ML,
+    x2: ML,
+    y1: MT,
+    y2: H - MB,
+    stroke: accentColor,
+    'stroke-width': 1.5,
+    'stroke-dasharray': '6 4',
+    opacity: 0
+  });
+  const hoverHLine = svgEl('line', {
+    x1: ML,
+    x2: W - MR,
+    y1: MT,
+    y2: MT,
+    stroke: accentColor,
+    'stroke-width': 1.5,
+    'stroke-dasharray': '6 4',
+    opacity: 0
+  });
+  const hoverXLabel = svgEl('text', {
+    x: ML,
+    y: H - MB + 20,
+    'text-anchor': 'middle',
+    'font-size': '12',
+    fill: accentColor,
+    opacity: 0
+  });
+  const hoverYLabel = svgEl('text', {
+    x: ML - 8,
+    y: MT,
+    'text-anchor': 'end',
+    'font-size': '12',
+    fill: accentColor,
+    opacity: 0
+  });
+  hoverLayer.appendChild(hoverVLine);
+  hoverLayer.appendChild(hoverHLine);
+  hoverLayer.appendChild(hoverXLabel);
+  hoverLayer.appendChild(hoverYLabel);
+  svg.appendChild(hoverLayer);
+
+  const clamp = (val, min, max) => Math.min(Math.max(val, min), max);
+  const toViewBoxPoint = evt => {
+    if (typeof DOMPoint === 'function' && svg.getScreenCTM) {
+      const ctm = svg.getScreenCTM();
+      if (ctm && typeof ctm.inverse === 'function') {
+        const point = new DOMPoint(evt.clientX, evt.clientY);
+        const svgPoint = point.matrixTransform(ctm.inverse());
+        return { x: svgPoint.x, y: svgPoint.y };
+      }
+    }
+
+    const rect = svg.getBoundingClientRect();
+    const vb = svg.viewBox.baseVal;
+    const vbWidth = vb && vb.width ? vb.width : rect.width;
+    const vbHeight = vb && vb.height ? vb.height : rect.height;
+    const offsetX = vb && vb.x ? vb.x : 0;
+    const offsetY = vb && vb.y ? vb.y : 0;
+    const scaleX = rect.width ? vbWidth / rect.width : 1;
+    const scaleY = rect.height ? vbHeight / rect.height : 1;
+    return {
+      x: offsetX + (evt.clientX - rect.left) * scaleX,
+      y: offsetY + (evt.clientY - rect.top) * scaleY
+    };
+  };
+
+  const updateHover = evt => {
+    const { x: localX, y: localY } = toViewBoxPoint(evt);
+    if (localX < ML || localX > W - MR || localY < MT || localY > H - MB) {
+      hoverVLine.setAttribute('opacity', '0');
+      hoverHLine.setAttribute('opacity', '0');
+      hoverXLabel.setAttribute('opacity', '0');
+      hoverYLabel.setAttribute('opacity', '0');
+      return;
+    }
+
+    const clampedX = clamp(localX, ML, W - MR);
+    const clampedY = clamp(localY, MT, H - MB);
+    const depthVal = depthMin + ((clampedX - ML) / Math.max(innerW, 1e-9)) * depthSpan;
+    const speedVal = speedMax - ((clampedY - MT) / Math.max(innerH, 1e-9)) * speedSpan;
+
+    hoverVLine.setAttribute('x1', clampedX);
+    hoverVLine.setAttribute('x2', clampedX);
+    hoverVLine.setAttribute('opacity', '1');
+    hoverHLine.setAttribute('y1', clampedY);
+    hoverHLine.setAttribute('y2', clampedY);
+    hoverHLine.setAttribute('opacity', '1');
+
+    const depthLabel = formatDepthLabel(depthVal);
+    const speedLabel = Math.round(speedVal * 100) / 100;
+    hoverXLabel.setAttribute('x', clampedX);
+    hoverXLabel.textContent = `${depthLabel} m`;
+    hoverXLabel.setAttribute('opacity', '1');
+    hoverYLabel.setAttribute('y', clampedY + 4);
+    hoverYLabel.textContent = `${speedLabel.toFixed(2)} m/s`;
+    hoverYLabel.setAttribute('opacity', '1');
+  };
+
+  const hideHover = () => {
+    hoverVLine.setAttribute('opacity', '0');
+    hoverHLine.setAttribute('opacity', '0');
+    hoverXLabel.setAttribute('opacity', '0');
+    hoverYLabel.setAttribute('opacity', '0');
+  };
+
+  svg.addEventListener('pointermove', updateHover);
+  svg.addEventListener('pointerenter', updateHover);
+  svg.addEventListener('pointerleave', hideHover);
+  svg._depthSpeedHoverHandlers = { move: updateHover, leave: hideHover };
+
   if (legendEntries.length) {
     const legendGroup = svgEl('g', {});
     const legendX = W - MR - 180;
@@ -535,6 +655,14 @@ function removeTrailingZeros(text) {
 
 // ---------- Tension vs Depth ----------
 function drawTensionProfile(svg, segments, depthMin, depthMax, tensionMin, tensionMax, payload_kg, cable_w_kgpm, accentColor) {
+  if (svg && svg._depthTensionHoverHandlers) {
+    const { move, leave } = svg._depthTensionHoverHandlers;
+    svg.removeEventListener('pointermove', move);
+    svg.removeEventListener('pointerleave', leave);
+    svg.removeEventListener('pointerenter', move);
+    delete svg._depthTensionHoverHandlers;
+  }
+
   while (svg.firstChild) svg.removeChild(svg.firstChild);
 
   const ML = 64, MR = 18, MT = 18, MB = 46;
@@ -680,6 +808,118 @@ function drawTensionProfile(svg, segments, depthMin, depthMax, tensionMin, tensi
   if (tensionMin <= 0 && tensionMax >= 0) {
     svg.appendChild(svgEl('line', { x1: ML, y1: sy(0), x2: W - MR, y2: sy(0), stroke: '#bbb', 'stroke-dasharray': '4 4' }));
   }
+
+  const hoverLayer = svgEl('g', { 'pointer-events': 'none' });
+  const hoverVLine = svgEl('line', {
+    x1: ML,
+    x2: ML,
+    y1: MT,
+    y2: H - MB,
+    stroke: accentColor,
+    'stroke-width': 1.5,
+    'stroke-dasharray': '6 4',
+    opacity: 0
+  });
+  const hoverHLine = svgEl('line', {
+    x1: ML,
+    x2: W - MR,
+    y1: MT,
+    y2: MT,
+    stroke: accentColor,
+    'stroke-width': 1.5,
+    'stroke-dasharray': '6 4',
+    opacity: 0
+  });
+  const hoverXLabel = svgEl('text', {
+    x: ML,
+    y: H - MB + 20,
+    'text-anchor': 'middle',
+    'font-size': '12',
+    fill: accentColor,
+    opacity: 0
+  });
+  const hoverYLabel = svgEl('text', {
+    x: ML - 8,
+    y: MT,
+    'text-anchor': 'end',
+    'font-size': '12',
+    fill: accentColor,
+    opacity: 0
+  });
+  hoverLayer.appendChild(hoverVLine);
+  hoverLayer.appendChild(hoverHLine);
+  hoverLayer.appendChild(hoverXLabel);
+  hoverLayer.appendChild(hoverYLabel);
+  svg.appendChild(hoverLayer);
+
+  const clamp = (val, min, max) => Math.min(Math.max(val, min), max);
+  const toViewBoxPoint = evt => {
+    if (typeof DOMPoint === 'function' && svg.getScreenCTM) {
+      const ctm = svg.getScreenCTM();
+      if (ctm && typeof ctm.inverse === 'function') {
+        const point = new DOMPoint(evt.clientX, evt.clientY);
+        const svgPoint = point.matrixTransform(ctm.inverse());
+        return { x: svgPoint.x, y: svgPoint.y };
+      }
+    }
+
+    const rect = svg.getBoundingClientRect();
+    const vb = svg.viewBox.baseVal;
+    const vbWidth = vb && vb.width ? vb.width : rect.width;
+    const vbHeight = vb && vb.height ? vb.height : rect.height;
+    const offsetX = vb && vb.x ? vb.x : 0;
+    const offsetY = vb && vb.y ? vb.y : 0;
+    const scaleX = rect.width ? vbWidth / rect.width : 1;
+    const scaleY = rect.height ? vbHeight / rect.height : 1;
+    return {
+      x: offsetX + (evt.clientX - rect.left) * scaleX,
+      y: offsetY + (evt.clientY - rect.top) * scaleY
+    };
+  };
+
+  const updateHover = evt => {
+    const { x: localX, y: localY } = toViewBoxPoint(evt);
+    if (localX < ML || localX > W - MR || localY < MT || localY > H - MB) {
+      hoverVLine.setAttribute('opacity', '0');
+      hoverHLine.setAttribute('opacity', '0');
+      hoverXLabel.setAttribute('opacity', '0');
+      hoverYLabel.setAttribute('opacity', '0');
+      return;
+    }
+
+    const clampedX = clamp(localX, ML, W - MR);
+    const clampedY = clamp(localY, MT, H - MB);
+    const depthVal = depthMin + ((clampedX - ML) / Math.max(innerW, 1e-9)) * depthSpan;
+    const tensionVal = tensionMax - ((clampedY - MT) / Math.max(innerH, 1e-9)) * tensionSpan;
+
+    hoverVLine.setAttribute('x1', clampedX);
+    hoverVLine.setAttribute('x2', clampedX);
+    hoverVLine.setAttribute('opacity', '1');
+    hoverHLine.setAttribute('y1', clampedY);
+    hoverHLine.setAttribute('y2', clampedY);
+    hoverHLine.setAttribute('opacity', '1');
+
+    const depthLabel = formatDepthLabel(depthVal);
+    const tensionLabel = removeTrailingZeros((Math.round(tensionVal * 10) / 10).toFixed(1));
+    hoverXLabel.setAttribute('x', clampedX);
+    hoverXLabel.textContent = `${depthLabel} m`;
+    hoverXLabel.setAttribute('opacity', '1');
+    hoverYLabel.setAttribute('y', clampedY + 4);
+    hoverYLabel.textContent = `${tensionLabel} kgf`;
+    hoverYLabel.setAttribute('opacity', '1');
+  };
+
+  const hideHover = () => {
+    hoverVLine.setAttribute('opacity', '0');
+    hoverHLine.setAttribute('opacity', '0');
+    hoverXLabel.setAttribute('opacity', '0');
+    hoverYLabel.setAttribute('opacity', '0');
+  };
+
+  svg.addEventListener('pointermove', updateHover);
+  svg.addEventListener('pointerenter', updateHover);
+  svg.addEventListener('pointerleave', hideHover);
+  svg._depthTensionHoverHandlers = { move: updateHover, leave: hideHover };
 
   function pathFrom(pts) {
     if (!pts.length) return '';
