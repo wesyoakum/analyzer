@@ -22,7 +22,7 @@ import {
 } from './hydraulic.mjs';
 
 import { drawWaveContours, drawWaveHeightContours } from './plots/wave-contours.mjs';
-import { drawDepthProfiles } from './plots/depth-profiles.mjs';
+import { drawDepthProfiles, drawStandaloneSpeedProfiles } from './plots/depth-profiles.mjs';
 import { drawHydraulicRpmTorque } from './plots/rpm-torque.mjs';
 import { setupComponentSelectors } from './component-selectors.mjs';
 import { renderDrumVisualization, clearDrumVisualization } from './drum-visual.mjs';
@@ -37,6 +37,14 @@ let lastDrumState = null;
 let lastDepthProfileContext = null;
 
 const EXTRA_SPEED_PROFILE_COLORS = ['#1b9e77', '#d95f02', '#7570b3', '#e7298a', '#66a61e', '#e6ab02'];
+
+function readAccentColor() {
+  if (typeof window !== 'undefined' && window.getComputedStyle) {
+    const val = window.getComputedStyle(document.documentElement).getPropertyValue('--accent');
+    if (val) return val.trim();
+  }
+  return '#2c56a3';
+}
 
 /**
  * @typedef {Object} DepthProfileWrap
@@ -190,12 +198,13 @@ function formatPayloadLabel(payloadKg) {
   return `Payload ${rounded.toLocaleString(undefined, { maximumFractionDigits: 0 })} kg`;
 }
 
-function computeDepthSpeedSegmentsForPayload(payloadKg, context) {
+function computeDepthSpeedSegmentsForPayload(payloadKg, context, options = {}) {
   if (!context) return [];
   const scenario = context.scenario;
   if (scenario === 'electric' && !context.electricEnabled) return [];
   if (scenario === 'hydraulic' && !context.hydraulicEnabled) return [];
 
+  const mode = options.mode === 'power' ? 'power' : 'available';
   const payload = Number.isFinite(payloadKg) ? Math.max(0, payloadKg) : 0;
   const cableWeight = Number.isFinite(context.cable_w_kgpm) ? context.cable_w_kgpm : 0;
   const gearSafe = Math.max(context.gear_product, 1e-9);
@@ -283,9 +292,12 @@ function computeDepthSpeedSegmentsForPayload(payloadKg, context) {
         speed_power_mpm = speed_power_mps * 60;
       }
       if (!Number.isFinite(speed_power_mpm) || speed_power_mpm < 0) speed_power_mpm = 0;
-      let speed_avail_mpm = Math.min(speed_power_mpm, speed_flow_mpm);
-      if (!Number.isFinite(speed_avail_mpm) || speed_avail_mpm < 0) speed_avail_mpm = 0;
-      speed_mpm = speed_avail_mpm;
+      let selectedSpeedMpm = speed_power_mpm;
+      if (mode !== 'power') {
+        selectedSpeedMpm = Math.min(speed_power_mpm, speed_flow_mpm);
+      }
+      if (!Number.isFinite(selectedSpeedMpm) || selectedSpeedMpm < 0) selectedSpeedMpm = 0;
+      speed_mpm = selectedSpeedMpm;
     }
 
     const speed_ms = speed_mpm / 60;
@@ -1453,6 +1465,7 @@ function redrawPlots() {
 
   // Depth profiles (optional - skip if controls/SVGs absent)
   const depthSpeedSvg = /** @type {SVGSVGElement|null} */ (document.getElementById('depth_speed_svg'));
+  const depthSpeedPowerSvg = /** @type {SVGSVGElement|null} */ (document.getElementById('depth_speed_power_svg'));
   const depthTensionSvg = /** @type {SVGSVGElement|null} */ (document.getElementById('depth_tension_svg'));
   const depthXminEl = /** @type {HTMLInputElement|null} */ (document.getElementById('depth_xmin'));
   const depthXmaxEl = /** @type {HTMLInputElement|null} */ (document.getElementById('depth_xmax'));
@@ -1473,22 +1486,28 @@ function redrawPlots() {
     const activeScenario = getActiveScenario();
     let speedPrimaryLabel = null;
     /** @type {SpeedProfileSegments[]} */
-    let extraSpeedProfiles = [];
+    let powerSpeedProfiles = [];
     if (Number.isFinite(payloadVal)) {
       speedPrimaryLabel = formatPayloadLabel(payloadVal);
       if (lastDepthProfileContext && lastDepthProfileContext.scenario === activeScenario) {
         const payloadSteps = buildPayloadValues(payloadVal);
+        const accentColor = readAccentColor();
         let colorIdx = 0;
-        extraSpeedProfiles = payloadSteps
-          .filter(p => Math.abs(p - payloadVal) > 1e-6)
+        powerSpeedProfiles = payloadSteps
           .map(p => {
-            const segments = computeDepthSpeedSegmentsForPayload(p, lastDepthProfileContext);
+            const segments = computeDepthSpeedSegmentsForPayload(p, lastDepthProfileContext, { mode: 'power' });
             if (!segments.length) return null;
-            const color = EXTRA_SPEED_PROFILE_COLORS[colorIdx % EXTRA_SPEED_PROFILE_COLORS.length];
-            colorIdx += 1;
+            const isPrimary = Math.abs(p - payloadVal) <= 1e-6;
+            const color = isPrimary
+              ? accentColor
+              : EXTRA_SPEED_PROFILE_COLORS[colorIdx++ % EXTRA_SPEED_PROFILE_COLORS.length];
             return {
               label: formatPayloadLabel(p),
               color,
+              strokeWidth: isPrimary ? 4 : 2.4,
+              legendStrokeWidth: isPrimary ? 4 : 2.4,
+              strokeDasharray: null,
+              legendStrokeDasharray: null,
               segments
             };
           })
@@ -1518,8 +1537,26 @@ function redrawPlots() {
       tension_ymin: Number.isFinite(depthTensionMinVal) ? depthTensionMinVal : undefined,
       tension_ymax: Number.isFinite(depthTensionMaxVal) ? depthTensionMaxVal : undefined,
       speed_primary_label: speedPrimaryLabel,
-      speed_extra_profiles: extraSpeedProfiles
+      speed_extra_profiles: []
     });
+
+    if (depthSpeedPowerSvg) {
+      if (powerSpeedProfiles.length) {
+        drawStandaloneSpeedProfiles(depthSpeedPowerSvg, {
+          segments: [],
+          extraProfiles: powerSpeedProfiles,
+          depthMin: Number.isFinite(depthXminVal) ? Math.max(0, depthXminVal) : undefined,
+          depthMax: Number.isFinite(depthXmaxVal) ? Math.max(0, depthXmaxVal) : undefined,
+          speedMin: Number.isFinite(depthSpeedMinVal) ? Math.max(0, depthSpeedMinVal) : undefined,
+          speedMax: Number.isFinite(depthSpeedMaxVal) ? Math.max(0, depthSpeedMaxVal) : undefined,
+          ratedSpeedMs: null,
+          primaryLabel: null,
+          accentColor: readAccentColor()
+        });
+      } else {
+        while (depthSpeedPowerSvg.firstChild) depthSpeedPowerSvg.removeChild(depthSpeedPowerSvg.firstChild);
+      }
+    }
   }
 
   const rpmTorqueSvg = /** @type {SVGSVGElement|null} */ (document.getElementById('hyd_rpm_torque_svg'));
@@ -1531,6 +1568,13 @@ function redrawPlots() {
 }
 
 function clearPlots() {
-  const svgs = [q('wave_svg'), q('wave_svg_height'), q('depth_speed_svg'), q('depth_tension_svg'), q('hyd_rpm_torque_svg')];
+  const svgs = [
+    q('wave_svg'),
+    q('wave_svg_height'),
+    q('depth_speed_svg'),
+    q('depth_speed_power_svg'),
+    q('depth_tension_svg'),
+    q('hyd_rpm_torque_svg')
+  ];
   svgs.forEach(svg => { if (!svg) return; while (svg.firstChild) svg.removeChild(svg.firstChild); });
 }

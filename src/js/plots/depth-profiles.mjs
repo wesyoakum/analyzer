@@ -187,11 +187,23 @@ function drawSpeedProfile(svg, segments, depthMin, depthMax, speedMin, speedMax,
   const extraProfiles = Array.isArray(options.extraProfiles) ? options.extraProfiles : [];
   const legendEntries = [];
   if (options.primaryLabel) {
-    legendEntries.push({ label: options.primaryLabel, color: accentColor });
+    legendEntries.push({ label: options.primaryLabel, color: accentColor, strokeWidth: 4.8, strokeDasharray: null });
   }
   extraProfiles.forEach(profile => {
     if (!profile || !profile.label) return;
-    legendEntries.push({ label: profile.label, color: profile.color || '#555' });
+    const defaultDash = '6 4';
+    const strokeDash = (profile.legendStrokeDasharray === undefined)
+      ? ((profile.strokeDasharray === undefined) ? defaultDash : profile.strokeDasharray)
+      : profile.legendStrokeDasharray;
+    const strokeWidth = Number.isFinite(profile.legendStrokeWidth)
+      ? profile.legendStrokeWidth
+      : (Number.isFinite(profile.strokeWidth) ? profile.strokeWidth : 3);
+    legendEntries.push({
+      label: profile.label,
+      color: profile.color || '#555',
+      strokeDasharray: strokeDash,
+      strokeWidth
+    });
   });
 
   svg.appendChild(svgEl('rect', { x: ML, y: MT, width: innerW, height: innerH, fill: '#fff', stroke: '#ccc' }));
@@ -223,6 +235,9 @@ function drawSpeedProfile(svg, segments, depthMin, depthMax, speedMin, speedMax,
   extraProfiles.forEach(profile => {
     if (!profile || !Array.isArray(profile.segments)) return;
     const strokeColor = profile.color || '#555';
+    const defaultDash = '6 4';
+    const strokeDash = (profile.strokeDasharray === undefined) ? defaultDash : profile.strokeDasharray;
+    const strokeWidth = Number.isFinite(profile.strokeWidth) ? profile.strokeWidth : 2;
     profile.segments.forEach(seg => {
       if (!seg || !Number.isFinite(seg.speed_ms)) return;
       const depthEnd = Math.min(seg.depth_start, seg.depth_end);
@@ -234,15 +249,16 @@ function drawSpeedProfile(svg, segments, depthMin, depthMax, speedMin, speedMax,
       const x1 = sx(depthStart);
       if (Math.abs(x1 - x0) < 1e-6) return;
       const y = sy(seg.speed_ms);
-      svg.appendChild(svgEl('line', {
+      const attrs = {
         x1: x0,
         y1: y,
         x2: x1,
         y2: y,
         stroke: strokeColor,
-        'stroke-width': 2,
-        'stroke-dasharray': '6 4'
-      }));
+        'stroke-width': strokeWidth
+      };
+      if (strokeDash) attrs['stroke-dasharray'] = strokeDash;
+      svg.appendChild(svgEl('line', attrs));
     });
   });
 
@@ -353,14 +369,16 @@ function drawSpeedProfile(svg, segments, depthMin, depthMax, speedMin, speedMax,
     let offsetY = 0;
     legendEntries.forEach(entry => {
       const g = svgEl('g', { transform: `translate(${legendX},${MT + 16 + offsetY})` });
-      g.appendChild(svgEl('line', {
+      const lineAttrs = {
         x1: 0,
         y1: 0,
         x2: 22,
         y2: 0,
         stroke: entry.color || '#555',
-        'stroke-width': 3
-      }));
+        'stroke-width': Number.isFinite(entry.strokeWidth) ? entry.strokeWidth : 3
+      };
+      if (entry.strokeDasharray) lineAttrs['stroke-dasharray'] = entry.strokeDasharray;
+      g.appendChild(svgEl('line', lineAttrs));
       const text = svgEl('text', { x: 28, y: 4, 'font-size': '12', fill: '#333' });
       text.textContent = entry.label;
       g.appendChild(text);
@@ -369,6 +387,72 @@ function drawSpeedProfile(svg, segments, depthMin, depthMax, speedMin, speedMax,
     });
     svg.appendChild(legendGroup);
   }
+}
+
+export function drawStandaloneSpeedProfiles(svg, {
+  segments = [],
+  extraProfiles = [],
+  depthMin: depthMinOverride,
+  depthMax: depthMaxOverride,
+  speedMin: speedMinOverride,
+  speedMax: speedMaxOverride,
+  ratedSpeedMs = null,
+  primaryLabel = null,
+  accentColor: accentOverride
+} = {}) {
+  if (!svg) return;
+
+  const allSegments = [];
+  const collectSegment = seg => {
+    if (!seg) return;
+    const d0 = Number.isFinite(seg.depth_start) ? seg.depth_start : null;
+    const d1 = Number.isFinite(seg.depth_end) ? seg.depth_end : null;
+    const speed = Number.isFinite(seg.speed_ms) ? seg.speed_ms : null;
+    if (Number.isFinite(d0)) allSegments.push({ type: 'depth', value: d0 });
+    if (Number.isFinite(d1)) allSegments.push({ type: 'depth', value: d1 });
+    if (Number.isFinite(speed)) allSegments.push({ type: 'speed', value: speed });
+  };
+
+  (segments || []).forEach(collectSegment);
+  (extraProfiles || []).forEach(profile => {
+    if (!profile || !Array.isArray(profile.segments)) return;
+    profile.segments.forEach(collectSegment);
+  });
+
+  let depthMin = Number.isFinite(depthMinOverride) ? Math.max(0, depthMinOverride) : 0;
+  let depthMax;
+  if (Number.isFinite(depthMaxOverride)) {
+    depthMax = Math.max(depthMin + 0.1, depthMaxOverride);
+  } else {
+    const depthCandidates = [depthMin + 0.1];
+    allSegments.forEach(entry => {
+      if (entry.type === 'depth' && Number.isFinite(entry.value)) depthCandidates.push(entry.value);
+    });
+    const autoDepthMax = Math.max(...depthCandidates);
+    depthMax = Number.isFinite(autoDepthMax) ? autoDepthMax : depthMin + 1;
+  }
+  if (!Number.isFinite(depthMax) || depthMax <= depthMin) depthMax = depthMin + 1;
+
+  let speedMin = Number.isFinite(speedMinOverride) ? Math.max(0, speedMinOverride) : 0;
+  let speedMax;
+  if (Number.isFinite(speedMaxOverride)) {
+    speedMax = Math.max(speedMin + 0.1, speedMaxOverride);
+  } else {
+    const speedCandidates = [speedMin + 0.1, 3];
+    allSegments.forEach(entry => {
+      if (entry.type === 'speed' && Number.isFinite(entry.value)) speedCandidates.push(entry.value);
+    });
+    const autoSpeedMax = Math.max(...speedCandidates);
+    speedMax = Number.isFinite(autoSpeedMax) ? autoSpeedMax : speedMin + 1;
+  }
+  if (!Number.isFinite(speedMax) || speedMax <= speedMin) speedMax = speedMin + 1;
+
+  const accentColor = accentOverride || getAccentColor();
+
+  drawSpeedProfile(svg, segments || [], depthMin, depthMax, speedMin, speedMax, accentColor, ratedSpeedMs, {
+    primaryLabel,
+    extraProfiles: Array.isArray(extraProfiles) ? extraProfiles : []
+  });
 }
 
 function findRatedDepthLimit(segments, ratedSpeedMs) {

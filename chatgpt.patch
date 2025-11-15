@@ -1,43 +1,273 @@
-diff --git a/src/js/utils.mjs b/src/js/utils.mjs
-index a0933dcbd7c0cd2dcfb9e5c8a8117570dd7aea66..f237ac200ece874029acd2fe66dee22a6f429822 100644
---- a/src/js/utils.mjs
-+++ b/src/js/utils.mjs
-@@ -1,38 +1,36 @@
- // ===== utils.mjs — shared constants, unit helpers, math, and SVG helpers =====
+diff --git a/src/js/plots/depth-profiles.mjs b/src/js/plots/depth-profiles.mjs
+index f245fa9fd541f80e54f540ae985405347667ea9c..22f61e1b9635e3827d4b14b23338e25d3518be3d 100644
+--- a/src/js/plots/depth-profiles.mjs
++++ b/src/js/plots/depth-profiles.mjs
+@@ -165,106 +165,122 @@ export function drawDepthProfiles(svgSpeed, svgTension, {
+     extraProfiles: Array.isArray(speed_extra_profiles) ? speed_extra_profiles : []
+   });
+   drawTensionProfile(svgTension, segments, depthMin, depthMax, tensionMin, tensionMax, payload_kg, cable_w_kgpm, accentColor);
+ }
  
- // ---- Constants (SI-centric where possible) ----
- export const IN_PER_MM = 1 / 25.4;
- export const M_PER_IN  = 0.0254;
- export const G         = 9.80665;          // m/s^2
- export const W_PER_HP  = 745.7;            // W per hp (mechanical)
- export const TWO_PI    = 2 * Math.PI;
- export const CC_PER_GAL = 3785.411784;     // cc per US gallon
- export const PSI_TO_PA  = 6894.757293;     // Pa per psi
+ // ---------- Speed vs Depth ----------
+ function drawSpeedProfile(svg, segments, depthMin, depthMax, speedMin, speedMax, accentColor, ratedSpeedMs = null, options = {}) {
+   while (svg.firstChild) svg.removeChild(svg.firstChild);
  
--export const TENSION_SAFETY_FACTOR = 1.25; // Required tension = theoretical × 1.25 safety factor
--
- export const constants = {
-   IN_PER_MM, M_PER_IN, G, W_PER_HP, TWO_PI, CC_PER_GAL, PSI_TO_PA
- };
+   const ML = 64, MR = 18, MT = 18, MB = 46;
+   const W = svg.viewBox.baseVal.width || svg.clientWidth || 1000;
+   const H = svg.viewBox.baseVal.height || svg.clientHeight || 540;
+   const innerW = W - ML - MR, innerH = H - MT - MB;
  
- // ---- DOM helpers (kept tiny; only used by main & plot modules) ----
- export const q = (id) => /** @type {HTMLElement} */ (document.getElementById(id));
- export const read = (id) => parseFloat(q(id).value.replace(',', '.'));
+   const clampDepth = d => Math.min(Math.max(d, depthMin), depthMax);
+   const clampSpeed = v => Math.min(Math.max(v, speedMin), speedMax);
+   const depthSpan = Math.max(1e-9, depthMax - depthMin);
+   const speedSpan = Math.max(1e-9, speedMax - speedMin);
  
- // ---- Numeric helpers ----
- export const truncToHalf = (x) => Math.floor(x * 2) / 2;
- export const isWhole = (x, eps = 1e-9) => Math.abs(x - Math.round(x)) < eps;
+   const sx = d => ML + (clampDepth(d) - depthMin) / depthSpan * innerW;
+   const sy = v => MT + (1 - (clampSpeed(v) - speedMin) / speedSpan) * innerH;
  
- // “nice” tick generator for axes
- export function niceTicks(min, max, count = 6) {
-   const span = Math.max(1e-12, max - min);
-   const step0 = span / Math.max(1, count);
-   const mag = Math.pow(10, Math.floor(Math.log10(step0)));
-   const norm = step0 / mag;
-   const niceNorm = norm < 1.5 ? 1 : norm < 3 ? 2 : norm < 7 ? 5 : 10;
-   const step = niceNorm * mag;
-   const tmin = Math.ceil(min / step) * step;
-   const tmax = Math.floor(max / step) * step;
-   const ticks = [];
-   for (let v = tmin; v <= tmax + 1e-12; v += step) ticks.push(+v.toFixed(10));
-   return { ticks, step };
+   const extraProfiles = Array.isArray(options.extraProfiles) ? options.extraProfiles : [];
+   const legendEntries = [];
+   if (options.primaryLabel) {
+-    legendEntries.push({ label: options.primaryLabel, color: accentColor });
++    legendEntries.push({ label: options.primaryLabel, color: accentColor, strokeWidth: 4.8, strokeDasharray: null });
+   }
+   extraProfiles.forEach(profile => {
+     if (!profile || !profile.label) return;
+-    legendEntries.push({ label: profile.label, color: profile.color || '#555' });
++    const defaultDash = '6 4';
++    const strokeDash = (profile.legendStrokeDasharray === undefined)
++      ? ((profile.strokeDasharray === undefined) ? defaultDash : profile.strokeDasharray)
++      : profile.legendStrokeDasharray;
++    const strokeWidth = Number.isFinite(profile.legendStrokeWidth)
++      ? profile.legendStrokeWidth
++      : (Number.isFinite(profile.strokeWidth) ? profile.strokeWidth : 3);
++    legendEntries.push({
++      label: profile.label,
++      color: profile.color || '#555',
++      strokeDasharray: strokeDash,
++      strokeWidth
++    });
+   });
+ 
+   svg.appendChild(svgEl('rect', { x: ML, y: MT, width: innerW, height: innerH, fill: '#fff', stroke: '#ccc' }));
+ 
+   niceTicks(depthMin, depthMax, 8).ticks.forEach(dx => {
+     if (dx < depthMin - 1e-9 || dx > depthMax + 1e-9) return;
+     const X = sx(dx);
+     svg.appendChild(svgEl('line', { x1: X, y1: MT, x2: X, y2: H - MB, stroke: '#eee' }));
+     const t = svgEl('text', { x: X, y: H - 8, 'text-anchor': 'middle', 'font-size': '12', fill: '#444' });
+     t.textContent = formatDepthLabel(dx);
+     svg.appendChild(t);
+   });
+   niceTicks(speedMin, speedMax, 6).ticks.forEach(v => {
+     if (v < speedMin - 1e-9 || v > speedMax + 1e-9) return;
+     const Y = sy(v);
+     svg.appendChild(svgEl('line', { x1: ML, y1: Y, x2: W - MR, y2: Y, stroke: '#eee' }));
+     const t = svgEl('text', { x: ML - 6, y: Y + 4, 'text-anchor': 'end', 'font-size': '12', fill: '#444' });
+     t.textContent = String(Math.round(v * 100) / 100);
+     svg.appendChild(t);
+   });
+ 
+   svg.appendChild(svgEl('text', { x: ML + innerW / 2, y: H - 4, 'text-anchor': 'middle', 'font-size': '12', fill: '#444' }))
+     .textContent = 'Depth (m)';
+   svg.appendChild(svgEl('text', {
+     x: 18, y: MT + innerH / 2, transform: `rotate(-90,18,${MT + innerH / 2})`,
+     'text-anchor': 'middle', 'font-size': '12', fill: '#444'
+   })).textContent = 'Speed (m/s)';
+ 
+   extraProfiles.forEach(profile => {
+     if (!profile || !Array.isArray(profile.segments)) return;
+     const strokeColor = profile.color || '#555';
++    const defaultDash = '6 4';
++    const strokeDash = (profile.strokeDasharray === undefined) ? defaultDash : profile.strokeDasharray;
++    const strokeWidth = Number.isFinite(profile.strokeWidth) ? profile.strokeWidth : 2;
+     profile.segments.forEach(seg => {
+       if (!seg || !Number.isFinite(seg.speed_ms)) return;
+       const depthEnd = Math.min(seg.depth_start, seg.depth_end);
+       const depthStart = Math.max(seg.depth_start, seg.depth_end);
+       if (Math.max(depthStart, depthEnd) < depthMin - 1e-9) return;
+       if (Math.min(depthStart, depthEnd) > depthMax + 1e-9) return;
+       if (seg.speed_ms < speedMin - 1e-9 || seg.speed_ms > speedMax + 1e-9) return;
+       const x0 = sx(depthEnd);
+       const x1 = sx(depthStart);
+       if (Math.abs(x1 - x0) < 1e-6) return;
+       const y = sy(seg.speed_ms);
+-      svg.appendChild(svgEl('line', {
++      const attrs = {
+         x1: x0,
+         y1: y,
+         x2: x1,
+         y2: y,
+         stroke: strokeColor,
+-        'stroke-width': 2,
+-        'stroke-dasharray': '6 4'
+-      }));
++        'stroke-width': strokeWidth
++      };
++      if (strokeDash) attrs['stroke-dasharray'] = strokeDash;
++      svg.appendChild(svgEl('line', attrs));
+     });
+   });
+ 
+   segments.forEach(S => {
+     if (!Number.isFinite(S.speed_ms)) return;
+     if (S.speed_ms < speedMin - 1e-9 || S.speed_ms > speedMax + 1e-9) return;
+     const depthEnd = Math.min(S.depth_start, S.depth_end);
+     const depthStart = Math.max(S.depth_start, S.depth_end);
+     if (Math.max(depthStart, depthEnd) < depthMin - 1e-9) return;
+     if (Math.min(depthStart, depthEnd) > depthMax + 1e-9) return;
+     const x0 = sx(depthEnd);
+     const x1 = sx(depthStart);
+     if (Math.abs(x1 - x0) < 1e-6) return;
+     const y = sy(S.speed_ms);
+     const strokeColor = (Number.isFinite(ratedSpeedMs) && isAvailableBelowRated(ratedSpeedMs, S.speed_ms))
+       ? EXCEED_COLOR
+       : accentColor;
+     svg.appendChild(svgEl('line', {
+       x1: x0,
+       y1: y,
+       x2: x1,
+       y2: y,
+       stroke: strokeColor,
+       'stroke-width': 4.8
+     }));
+@@ -331,68 +347,136 @@ function drawSpeedProfile(svg, segments, depthMin, depthMax, speedMin, speedMax,
+         if (labelText) {
+           const label = svgEl('text', {
+             x,
+             y: axisY + 20,
+             'text-anchor': 'middle',
+             'font-size': '12',
+             fill: EXCEED_COLOR
+           });
+           label.textContent = `${labelText} m`;
+           svg.appendChild(label);
+         }
+       }
+     }
+   }
+ 
+   if (speedMin <= 0 && speedMax >= 0) {
+     svg.appendChild(svgEl('line', { x1: ML, y1: sy(0), x2: W - MR, y2: sy(0), stroke: '#bbb', 'stroke-dasharray': '4 4' }));
+   }
+ 
+   if (legendEntries.length) {
+     const legendGroup = svgEl('g', {});
+     const legendX = W - MR - 180;
+     let offsetY = 0;
+     legendEntries.forEach(entry => {
+       const g = svgEl('g', { transform: `translate(${legendX},${MT + 16 + offsetY})` });
+-      g.appendChild(svgEl('line', {
++      const lineAttrs = {
+         x1: 0,
+         y1: 0,
+         x2: 22,
+         y2: 0,
+         stroke: entry.color || '#555',
+-        'stroke-width': 3
+-      }));
++        'stroke-width': Number.isFinite(entry.strokeWidth) ? entry.strokeWidth : 3
++      };
++      if (entry.strokeDasharray) lineAttrs['stroke-dasharray'] = entry.strokeDasharray;
++      g.appendChild(svgEl('line', lineAttrs));
+       const text = svgEl('text', { x: 28, y: 4, 'font-size': '12', fill: '#333' });
+       text.textContent = entry.label;
+       g.appendChild(text);
+       legendGroup.appendChild(g);
+       offsetY += 18;
+     });
+     svg.appendChild(legendGroup);
+   }
+ }
+ 
++export function drawStandaloneSpeedProfiles(svg, {
++  segments = [],
++  extraProfiles = [],
++  depthMin: depthMinOverride,
++  depthMax: depthMaxOverride,
++  speedMin: speedMinOverride,
++  speedMax: speedMaxOverride,
++  ratedSpeedMs = null,
++  primaryLabel = null,
++  accentColor: accentOverride
++} = {}) {
++  if (!svg) return;
++
++  const allSegments = [];
++  const collectSegment = seg => {
++    if (!seg) return;
++    const d0 = Number.isFinite(seg.depth_start) ? seg.depth_start : null;
++    const d1 = Number.isFinite(seg.depth_end) ? seg.depth_end : null;
++    const speed = Number.isFinite(seg.speed_ms) ? seg.speed_ms : null;
++    if (Number.isFinite(d0)) allSegments.push({ type: 'depth', value: d0 });
++    if (Number.isFinite(d1)) allSegments.push({ type: 'depth', value: d1 });
++    if (Number.isFinite(speed)) allSegments.push({ type: 'speed', value: speed });
++  };
++
++  (segments || []).forEach(collectSegment);
++  (extraProfiles || []).forEach(profile => {
++    if (!profile || !Array.isArray(profile.segments)) return;
++    profile.segments.forEach(collectSegment);
++  });
++
++  let depthMin = Number.isFinite(depthMinOverride) ? Math.max(0, depthMinOverride) : 0;
++  let depthMax;
++  if (Number.isFinite(depthMaxOverride)) {
++    depthMax = Math.max(depthMin + 0.1, depthMaxOverride);
++  } else {
++    const depthCandidates = [depthMin + 0.1];
++    allSegments.forEach(entry => {
++      if (entry.type === 'depth' && Number.isFinite(entry.value)) depthCandidates.push(entry.value);
++    });
++    const autoDepthMax = Math.max(...depthCandidates);
++    depthMax = Number.isFinite(autoDepthMax) ? autoDepthMax : depthMin + 1;
++  }
++  if (!Number.isFinite(depthMax) || depthMax <= depthMin) depthMax = depthMin + 1;
++
++  let speedMin = Number.isFinite(speedMinOverride) ? Math.max(0, speedMinOverride) : 0;
++  let speedMax;
++  if (Number.isFinite(speedMaxOverride)) {
++    speedMax = Math.max(speedMin + 0.1, speedMaxOverride);
++  } else {
++    const speedCandidates = [speedMin + 0.1, 3];
++    allSegments.forEach(entry => {
++      if (entry.type === 'speed' && Number.isFinite(entry.value)) speedCandidates.push(entry.value);
++    });
++    const autoSpeedMax = Math.max(...speedCandidates);
++    speedMax = Number.isFinite(autoSpeedMax) ? autoSpeedMax : speedMin + 1;
++  }
++  if (!Number.isFinite(speedMax) || speedMax <= speedMin) speedMax = speedMin + 1;
++
++  const accentColor = accentOverride || getAccentColor();
++
++  drawSpeedProfile(svg, segments || [], depthMin, depthMax, speedMin, speedMax, accentColor, ratedSpeedMs, {
++    primaryLabel,
++    extraProfiles: Array.isArray(extraProfiles) ? extraProfiles : []
++  });
++}
++
+ function findRatedDepthLimit(segments, ratedSpeedMs) {
+   if (!Array.isArray(segments) || !Number.isFinite(ratedSpeedMs) || ratedSpeedMs <= 0) return null;
+   const ranges = segments
+     .filter(S => Number.isFinite(S.speed_ms))
+     .map(S => ({
+       d0: Math.min(S.depth_start, S.depth_end),
+       d1: Math.max(S.depth_start, S.depth_end),
+       speed: S.speed_ms
+     }))
+     .sort((a, b) => a.d0 - b.d0);
+ 
+   if (!ranges.length) return null;
+ 
+   let deepestReach = null;
+   let hasReachable = false;
+ 
+   for (const range of ranges) {
+     if (isRatedBelowAvailable(ratedSpeedMs, range.speed)) {
+       hasReachable = true;
+       deepestReach = (deepestReach === null) ? range.d1 : Math.max(deepestReach, range.d1);
+       continue;
+     }
+ 
+     if (!hasReachable) {
+       return { depth: range.d0 };
