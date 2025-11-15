@@ -34,6 +34,274 @@ let lastElLayer = [], lastElWraps = [];
 let lastHyLayer = [], lastHyWraps = [];
 /** @type {{ rows: any, summary: any, cfg: any, meta: any } | null} */
 let lastDrumState = null;
+/** @type {DepthProfileContext|null} */
+let lastDepthProfileContext = null;
+
+const EXTRA_SPEED_PROFILE_COLORS = ['#1b9e77', '#d95f02', '#7570b3', '#e7298a', '#66a61e', '#e6ab02'];
+
+/**
+ * @typedef {Object} DepthProfileWrap
+ * @property {number} wrap_no
+ * @property {number} layer_no
+ * @property {number} layer_dia_in
+ * @property {number} pre_spooled_len_m
+ * @property {number} spooled_len_m
+ * @property {number} deployed_len_m
+ * @property {number} total_cable_len_m
+ * @property {number} pre_deployed_len_m
+ */
+
+/**
+ * @typedef {Object} DepthProfileContext
+ * @property {'electric'|'hydraulic'} scenario
+ * @property {DepthProfileWrap[]} wraps
+ * @property {number} dead_end_m
+ * @property {number} cable_w_kgpm
+ * @property {number} gr1
+ * @property {number} gr2
+ * @property {number} motors
+ * @property {number} denom_mech
+ * @property {number} gear_product
+ * @property {number} motor_max_rpm
+ * @property {number} motor_tmax
+ * @property {number} P_per_motor_W
+ * @property {boolean} electricEnabled
+ * @property {boolean} hydraulicEnabled
+ * @property {{
+ *   h_strings: number,
+ *   h_emotor_hp: number,
+ *   h_emotor_eff: number,
+ *   h_emotor_rpm: number,
+ *   h_pump_cc: number,
+ *   h_max_psi: number,
+ *   h_hmot_cc: number,
+ *   h_hmot_rpm_cap: number,
+ *   torque_per_hmotor_maxP: number,
+ *   torque_at_drum_maxP_factor: number,
+ *   q_tot_gpm: number,
+ *   rpm_flow_per_motor: number,
+ *   hp_elec_in_total: number,
+ *   eff_total: number
+ * }} hydraulic
+ */
+
+/**
+ * @typedef {Object} SpeedProfileSegments
+ * @property {string} label
+ * @property {string} color
+ * @property {{depth_start:number, depth_end:number, speed_ms:number}[]} segments
+ */
+
+function buildDepthProfileContext({
+  scenario,
+  rows,
+  cfg,
+  cable_w_kgpm,
+  gr1,
+  gr2,
+  motors,
+  motor_max_rpm,
+  motor_tmax,
+  P_per_motor_W,
+  denom_mech,
+  gear_product,
+  electricEnabled,
+  hydraulicEnabled,
+  hydraulic
+}) {
+  if (!scenario || !Array.isArray(rows)) return null;
+
+  const wraps = rows.map(r => ({
+    wrap_no: r.wrap_no,
+    layer_no: r.layer_no,
+    layer_dia_in: r.layer_dia_in,
+    pre_spooled_len_m: r.pre_spooled_len_m,
+    spooled_len_m: r.spooled_len_m,
+    deployed_len_m: r.deployed_len_m,
+    total_cable_len_m: r.total_cable_len_m,
+    pre_deployed_len_m: Number.isFinite(r.total_cable_len_m) && Number.isFinite(r.pre_spooled_len_m)
+      ? +(r.total_cable_len_m - r.pre_spooled_len_m).toFixed(3)
+      : null
+  })).filter(wrap => Number.isFinite(wrap.layer_dia_in));
+
+  const safeHydraulic = hydraulic || {};
+  const hydraulicContext = {
+    h_strings: safeHydraulic.h_strings || 0,
+    h_emotor_hp: safeHydraulic.h_emotor_hp || 0,
+    h_emotor_eff: safeHydraulic.h_emotor_eff || 0,
+    h_emotor_rpm: safeHydraulic.h_emotor_rpm || 0,
+    h_pump_cc: safeHydraulic.h_pump_cc || 0,
+    h_max_psi: safeHydraulic.h_max_psi || 0,
+    h_hmot_cc: safeHydraulic.h_hmot_cc || 0,
+    h_hmot_rpm_cap: safeHydraulic.h_hmot_rpm_cap || 0,
+    torque_per_hmotor_maxP: safeHydraulic.torque_per_hmotor_maxP || 0,
+    torque_at_drum_maxP_factor: safeHydraulic.torque_at_drum_maxP_factor || 0,
+    q_tot_gpm: safeHydraulic.q_tot_gpm || 0,
+    rpm_flow_per_motor: safeHydraulic.rpm_flow_per_motor || 0,
+    hp_elec_in_total: (safeHydraulic.h_emotor_hp || 0) * (safeHydraulic.h_strings || 0),
+    eff_total: safeHydraulic.h_emotor_eff || 0
+  };
+
+  return {
+    scenario,
+    wraps,
+    dead_end_m: Number.isFinite(cfg?.dead_end_m) ? cfg.dead_end_m : 0,
+    cable_w_kgpm: Number.isFinite(cable_w_kgpm) ? cable_w_kgpm : 0,
+    gr1: Number.isFinite(gr1) ? gr1 : 0,
+    gr2: Number.isFinite(gr2) ? gr2 : 0,
+    motors: Number.isFinite(motors) ? motors : 0,
+    denom_mech: Number.isFinite(denom_mech) ? denom_mech : 0,
+    gear_product: Number.isFinite(gear_product) ? gear_product : 0,
+    motor_max_rpm: Number.isFinite(motor_max_rpm) ? motor_max_rpm : 0,
+    motor_tmax: Number.isFinite(motor_tmax) ? motor_tmax : 0,
+    P_per_motor_W: Number.isFinite(P_per_motor_W) ? P_per_motor_W : 0,
+    electricEnabled: Boolean(electricEnabled),
+    hydraulicEnabled: Boolean(hydraulicEnabled),
+    hydraulic: hydraulicContext
+  };
+}
+
+function buildPayloadValues(basePayloadKg) {
+  if (!Number.isFinite(basePayloadKg)) return [];
+  const values = [];
+  const seen = new Set();
+  const pushVal = (val) => {
+    if (!Number.isFinite(val)) return;
+    const rounded = +Math.max(0, val).toFixed(3);
+    if (seen.has(rounded)) return;
+    seen.add(rounded);
+    values.push(rounded);
+  };
+
+  let current = Math.max(0, basePayloadKg);
+  pushVal(current);
+  while (current > 0) {
+    current -= 500;
+    if (current < 0) current = 0;
+    pushVal(current);
+    if (current === 0) break;
+  }
+  if (!seen.has(0)) pushVal(0);
+  return values;
+}
+
+function formatPayloadLabel(payloadKg) {
+  if (!Number.isFinite(payloadKg)) return '';
+  const rounded = Math.round(payloadKg);
+  return `Payload ${rounded.toLocaleString(undefined, { maximumFractionDigits: 0 })} kg`;
+}
+
+function computeDepthSpeedSegmentsForPayload(payloadKg, context) {
+  if (!context) return [];
+  const scenario = context.scenario;
+  if (scenario === 'electric' && !context.electricEnabled) return [];
+  if (scenario === 'hydraulic' && !context.hydraulicEnabled) return [];
+
+  const payload = Number.isFinite(payloadKg) ? Math.max(0, payloadKg) : 0;
+  const cableWeight = Number.isFinite(context.cable_w_kgpm) ? context.cable_w_kgpm : 0;
+  const gearSafe = Math.max(context.gear_product, 1e-9);
+  const motorsSafe = Math.max(context.motors, 1);
+  const denomSafe = Math.max(context.denom_mech, 1e-9);
+  const deadEnd = Number.isFinite(context.dead_end_m) ? context.dead_end_m : 0;
+
+  /** @type {{depth_start:number, depth_end:number, speed_ms:number}[]} */
+  const segments = [];
+  let fallbackStart = null;
+
+  for (const wrap of context.wraps) {
+    if (!wrap) continue;
+    const depthEndRaw = Number.isFinite(wrap.deployed_len_m) ? wrap.deployed_len_m : null;
+    if (!Number.isFinite(depthEndRaw)) {
+      fallbackStart = null;
+      continue;
+    }
+    let depthStartRaw = Number.isFinite(wrap.pre_deployed_len_m) ? wrap.pre_deployed_len_m : null;
+    if (!Number.isFinite(depthStartRaw)) {
+      if (Number.isFinite(wrap.total_cable_len_m) && Number.isFinite(wrap.pre_spooled_len_m)) {
+        depthStartRaw = wrap.total_cable_len_m - wrap.pre_spooled_len_m;
+      } else if (Number.isFinite(fallbackStart)) {
+        depthStartRaw = fallbackStart;
+      }
+    }
+    if (!Number.isFinite(depthStartRaw)) depthStartRaw = depthEndRaw;
+    if (depthStartRaw < depthEndRaw) {
+      const tmp = depthStartRaw;
+      depthStartRaw = depthEndRaw;
+      depthEndRaw = tmp;
+    }
+    const toDepth = (v) => {
+      if (!Number.isFinite(v)) return 0;
+      const adj = v - deadEnd;
+      return +Math.max(0, adj).toFixed(3);
+    };
+    const depthStart = toDepth(depthStartRaw);
+    const depthEnd = toDepth(depthEndRaw);
+    fallbackStart = depthEndRaw + deadEnd;
+
+    if (!Number.isFinite(wrap.layer_dia_in) || wrap.layer_dia_in <= 0) continue;
+    const radius_m = (wrap.layer_dia_in * M_PER_IN) / 2;
+    if (!Number.isFinite(radius_m) || radius_m <= 0) continue;
+
+    const theoretical_tension = tension_kgf(depthEndRaw, payload, cableWeight);
+    const required_tension = theoretical_tension * TENSION_SAFETY_FACTOR;
+    const tension_N = required_tension * G;
+    const drum_T = tension_N * radius_m;
+
+    let speed_mpm = 0;
+
+    if (scenario === 'electric') {
+      const motorTorque = drum_T / denomSafe;
+      let rpm_power_e = 0;
+      if (context.P_per_motor_W > 0 && motorTorque > 0) {
+        rpm_power_e = (context.P_per_motor_W / motorTorque) * 60 / (2 * Math.PI);
+      } else if (context.P_per_motor_W > 0 && Math.abs(motorTorque) <= 1e-9) {
+        rpm_power_e = Number.POSITIVE_INFINITY;
+      }
+      const rpmLimit = (Number.isFinite(context.motor_max_rpm) && context.motor_max_rpm > 0)
+        ? context.motor_max_rpm
+        : Number.POSITIVE_INFINITY;
+      const rpmCapped = Math.min(rpmLimit, rpm_power_e);
+      const computedMpm = Number.isFinite(rpmCapped)
+        ? line_speed_mpm_from_motor_rpm(rpmCapped, context.gr1, context.gr2, wrap.layer_dia_in)
+        : 0;
+      speed_mpm = Number.isFinite(computedMpm) && computedMpm > 0 ? computedMpm : 0;
+    } else if (scenario === 'hydraulic') {
+      const hyd = context.hydraulic || {};
+      const rpmFlowPerMotor = hyd.rpm_flow_per_motor;
+      let speed_flow_mpm = 0;
+      if (Number.isFinite(rpmFlowPerMotor)) {
+        speed_flow_mpm = rpmFlowPerMotor > 0
+          ? line_speed_mpm_from_motor_rpm(rpmFlowPerMotor, context.gr1, context.gr2, wrap.layer_dia_in)
+          : 0;
+      } else if (rpmFlowPerMotor === Number.POSITIVE_INFINITY) {
+        speed_flow_mpm = Number.POSITIVE_INFINITY;
+      }
+      const tension_theoretical_N = theoretical_tension * G;
+      let speed_power_mpm = 0;
+      if (hyd.hp_elec_in_total > 0 && hyd.eff_total > 0 && tension_theoretical_N > 0) {
+        const power_available_W = hyd.hp_elec_in_total * hyd.eff_total * W_PER_HP;
+        const speed_power_mps = power_available_W / tension_theoretical_N;
+        speed_power_mpm = speed_power_mps * 60;
+      }
+      if (!Number.isFinite(speed_power_mpm) || speed_power_mpm < 0) speed_power_mpm = 0;
+      let speed_avail_mpm = Math.min(speed_power_mpm, speed_flow_mpm);
+      if (!Number.isFinite(speed_avail_mpm) || speed_avail_mpm < 0) speed_avail_mpm = 0;
+      speed_mpm = speed_avail_mpm;
+    }
+
+    const speed_ms = speed_mpm / 60;
+    if (!Number.isFinite(speed_ms)) continue;
+
+    segments.push({
+      depth_start: depthStart,
+      depth_end: depthEnd,
+      speed_ms: Math.max(0, speed_ms)
+    });
+  }
+
+  segments.sort((a, b) => (b.depth_start || 0) - (a.depth_start || 0));
+  return segments;
+}
 
 const CSV_BUTTON_SPECS = {
   csv_el_layer: {
@@ -917,6 +1185,10 @@ function computeAll() {
     const hp_tot_usable = hp_str_usable * h_strings;
     const q_str_gpm = gpm_from_cc_rev_and_rpm(h_pump_cc, h_emotor_rpm);
     const q_tot_gpm = q_str_gpm * h_strings;
+    const rpm_flow_per_motor_available = Math.min(
+      Number.isFinite(h_hmot_rpm_cap) && h_hmot_rpm_cap > 0 ? h_hmot_rpm_cap : Number.POSITIVE_INFINITY,
+      rpm_from_gpm_and_disp(q_tot_gpm / Math.max(motors, 1), h_hmot_cc)
+    );
 
     // Max-pressure torque per hydraulic motor and at drum (pressure-limited)
     const dP_Pa = h_max_psi * PSI_TO_PA;
@@ -1082,6 +1354,38 @@ function computeAll() {
     lastElWraps = electricEnabled ? projectElectricWraps(rows) : [];
     lastHyWraps = hydraulicEnabled ? projectHydraulicWraps(rows) : [];
 
+    const scenarioActive = getActiveScenario();
+    lastDepthProfileContext = buildDepthProfileContext({
+      scenario: scenarioActive,
+      rows,
+      cfg,
+      cable_w_kgpm,
+      gr1,
+      gr2,
+      motors,
+      motor_max_rpm,
+      motor_tmax,
+      P_per_motor_W,
+      denom_mech,
+      gear_product,
+      electricEnabled,
+      hydraulicEnabled,
+      hydraulic: {
+        h_strings,
+        h_emotor_hp,
+        h_emotor_eff,
+        h_emotor_rpm,
+        h_pump_cc,
+        h_max_psi,
+        h_hmot_cc,
+        h_hmot_rpm_cap,
+        torque_per_hmotor_maxP,
+        torque_at_drum_maxP_factor,
+        q_tot_gpm,
+        rpm_flow_per_motor: rpm_flow_per_motor_available
+      }
+    });
+
     // ---- Render tables ----
     renderElectricTables(lastElLayer, lastElWraps, q('tbody_el_layer'), q('tbody_el_wraps'));
     renderHydraulicTables(lastHyLayer, lastHyWraps, q('tbody_hy_layer'), q('tbody_hy_wraps'));
@@ -1099,6 +1403,7 @@ function computeAll() {
     clearMinimumSystemHp();
     lastElLayer = lastElWraps = lastHyLayer = lastHyWraps = [];
     lastDrumState = null;
+    lastDepthProfileContext = null;
     clearDrumVisualization();
     clearPlots();
     updateCsvButtonStates();
@@ -1164,6 +1469,33 @@ function redrawPlots() {
     const operatingDepth = Number.isFinite(operatingDepthRaw) ? operatingDepthRaw : null;
     const ratedSwlRaw = read('rated_swl_kgf');
     const ratedSwl = Number.isFinite(ratedSwlRaw) ? ratedSwlRaw : null;
+    const payloadRaw = read('payload_kg');
+    const payloadVal = Number.isFinite(payloadRaw) ? Math.max(0, payloadRaw) : null;
+    const activeScenario = getActiveScenario();
+    let speedPrimaryLabel = null;
+    /** @type {SpeedProfileSegments[]} */
+    let extraSpeedProfiles = [];
+    if (Number.isFinite(payloadVal)) {
+      speedPrimaryLabel = formatPayloadLabel(payloadVal);
+      if (lastDepthProfileContext && lastDepthProfileContext.scenario === activeScenario) {
+        const payloadSteps = buildPayloadValues(payloadVal);
+        let colorIdx = 0;
+        extraSpeedProfiles = payloadSteps
+          .filter(p => Math.abs(p - payloadVal) > 1e-6)
+          .map(p => {
+            const segments = computeDepthSpeedSegmentsForPayload(p, lastDepthProfileContext);
+            if (!segments.length) return null;
+            const color = EXTRA_SPEED_PROFILE_COLORS[colorIdx % EXTRA_SPEED_PROFILE_COLORS.length];
+            colorIdx += 1;
+            return {
+              label: formatPayloadLabel(p),
+              color,
+              segments
+            };
+          })
+          .filter(Boolean);
+      }
+    }
     const depthXminVal = parseInput(depthXminEl);
     const depthXmaxVal = parseInput(depthXmaxEl);
     const depthSpeedMinVal = parseInput(depthSpeedYminEl);
@@ -1171,10 +1503,10 @@ function redrawPlots() {
     const depthTensionMinVal = parseInput(depthTensionYminEl);
     const depthTensionMaxVal = parseInput(depthTensionYmaxEl);
     drawDepthProfiles(depthSpeedSvg, depthTensionSvg, {
-      scenario: getActiveScenario(),       // 'electric' | 'hydraulic'
+      scenario: activeScenario,       // 'electric' | 'hydraulic'
       elWraps: lastElWraps,
       hyWraps: lastHyWraps,
-      payload_kg: read('payload_kg'),
+      payload_kg: payloadRaw,
       cable_w_kgpm: read('c_w_kgpm'),
       dead_end_m: read('dead_m'),
       rated_speed_ms: ratedSpeedMs,
@@ -1185,7 +1517,9 @@ function redrawPlots() {
       speed_ymin: Number.isFinite(depthSpeedMinVal) ? depthSpeedMinVal : undefined,
       speed_ymax: Number.isFinite(depthSpeedMaxVal) ? depthSpeedMaxVal : undefined,
       tension_ymin: Number.isFinite(depthTensionMinVal) ? depthTensionMinVal : undefined,
-      tension_ymax: Number.isFinite(depthTensionMaxVal) ? depthTensionMaxVal : undefined
+      tension_ymax: Number.isFinite(depthTensionMaxVal) ? depthTensionMaxVal : undefined,
+      speed_primary_label: speedPrimaryLabel,
+      speed_extra_profiles: extraSpeedProfiles
     });
   }
 

@@ -65,7 +65,9 @@ export function drawDepthProfiles(svgSpeed, svgTension, {
   speed_ymin = 0,
   speed_ymax = null,
   tension_ymin = 0,
-  tension_ymax = null
+  tension_ymax = null,
+  speed_primary_label = null,
+  speed_extra_profiles = []
 } = {}) {
   const wraps = (scenario === 'electric') ? (elWraps || []) : (hyWraps || []);
   const speedField = (scenario === 'electric')
@@ -158,12 +160,15 @@ export function drawDepthProfiles(svgSpeed, svgTension, {
   const accentColor = getAccentColor();
 
   // Render both
-  drawSpeedProfile(svgSpeed, segments, depthMin, depthMax, speedMin, speedMax, accentColor, ratedSpeedMs);
+  drawSpeedProfile(svgSpeed, segments, depthMin, depthMax, speedMin, speedMax, accentColor, ratedSpeedMs, {
+    primaryLabel: speed_primary_label,
+    extraProfiles: Array.isArray(speed_extra_profiles) ? speed_extra_profiles : []
+  });
   drawTensionProfile(svgTension, segments, depthMin, depthMax, tensionMin, tensionMax, payload_kg, cable_w_kgpm, accentColor);
 }
 
 // ---------- Speed vs Depth ----------
-function drawSpeedProfile(svg, segments, depthMin, depthMax, speedMin, speedMax, accentColor, ratedSpeedMs = null) {
+function drawSpeedProfile(svg, segments, depthMin, depthMax, speedMin, speedMax, accentColor, ratedSpeedMs = null, options = {}) {
   while (svg.firstChild) svg.removeChild(svg.firstChild);
 
   const ML = 64, MR = 18, MT = 18, MB = 46;
@@ -178,6 +183,16 @@ function drawSpeedProfile(svg, segments, depthMin, depthMax, speedMin, speedMax,
 
   const sx = d => ML + (clampDepth(d) - depthMin) / depthSpan * innerW;
   const sy = v => MT + (1 - (clampSpeed(v) - speedMin) / speedSpan) * innerH;
+
+  const extraProfiles = Array.isArray(options.extraProfiles) ? options.extraProfiles : [];
+  const legendEntries = [];
+  if (options.primaryLabel) {
+    legendEntries.push({ label: options.primaryLabel, color: accentColor });
+  }
+  extraProfiles.forEach(profile => {
+    if (!profile || !profile.label) return;
+    legendEntries.push({ label: profile.label, color: profile.color || '#555' });
+  });
 
   svg.appendChild(svgEl('rect', { x: ML, y: MT, width: innerW, height: innerH, fill: '#fff', stroke: '#ccc' }));
 
@@ -204,6 +219,32 @@ function drawSpeedProfile(svg, segments, depthMin, depthMax, speedMin, speedMax,
     x: 18, y: MT + innerH / 2, transform: `rotate(-90,18,${MT + innerH / 2})`,
     'text-anchor': 'middle', 'font-size': '12', fill: '#444'
   })).textContent = 'Speed (m/s)';
+
+  extraProfiles.forEach(profile => {
+    if (!profile || !Array.isArray(profile.segments)) return;
+    const strokeColor = profile.color || '#555';
+    profile.segments.forEach(seg => {
+      if (!seg || !Number.isFinite(seg.speed_ms)) return;
+      const depthEnd = Math.min(seg.depth_start, seg.depth_end);
+      const depthStart = Math.max(seg.depth_start, seg.depth_end);
+      if (Math.max(depthStart, depthEnd) < depthMin - 1e-9) return;
+      if (Math.min(depthStart, depthEnd) > depthMax + 1e-9) return;
+      if (seg.speed_ms < speedMin - 1e-9 || seg.speed_ms > speedMax + 1e-9) return;
+      const x0 = sx(depthEnd);
+      const x1 = sx(depthStart);
+      if (Math.abs(x1 - x0) < 1e-6) return;
+      const y = sy(seg.speed_ms);
+      svg.appendChild(svgEl('line', {
+        x1: x0,
+        y1: y,
+        x2: x1,
+        y2: y,
+        stroke: strokeColor,
+        'stroke-width': 2,
+        'stroke-dasharray': '6 4'
+      }));
+    });
+  });
 
   segments.forEach(S => {
     if (!Number.isFinite(S.speed_ms)) return;
@@ -304,6 +345,29 @@ function drawSpeedProfile(svg, segments, depthMin, depthMax, speedMin, speedMax,
 
   if (speedMin <= 0 && speedMax >= 0) {
     svg.appendChild(svgEl('line', { x1: ML, y1: sy(0), x2: W - MR, y2: sy(0), stroke: '#bbb', 'stroke-dasharray': '4 4' }));
+  }
+
+  if (legendEntries.length) {
+    const legendGroup = svgEl('g', {});
+    const legendX = W - MR - 180;
+    let offsetY = 0;
+    legendEntries.forEach(entry => {
+      const g = svgEl('g', { transform: `translate(${legendX},${MT + 16 + offsetY})` });
+      g.appendChild(svgEl('line', {
+        x1: 0,
+        y1: 0,
+        x2: 22,
+        y2: 0,
+        stroke: entry.color || '#555',
+        'stroke-width': 3
+      }));
+      const text = svgEl('text', { x: 28, y: 4, 'font-size': '12', fill: '#333' });
+      text.textContent = entry.label;
+      g.appendChild(text);
+      legendGroup.appendChild(g);
+      offsetY += 18;
+    });
+    svg.appendChild(legendGroup);
   }
 }
 
