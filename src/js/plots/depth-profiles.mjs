@@ -193,26 +193,29 @@ function drawSpeedProfile(svg, segments, depthMin, depthMax, speedMin, speedMax,
   const sy = v => MT + (1 - (clampSpeed(v) - speedMin) / speedSpan) * innerH;
 
   const extraProfiles = Array.isArray(options.extraProfiles) ? options.extraProfiles : [];
+  const showLegend = options && options.showLegend !== undefined ? Boolean(options.showLegend) : true;
   const legendEntries = [];
-  if (options.primaryLabel) {
+  if (showLegend && options.primaryLabel) {
     legendEntries.push({ label: options.primaryLabel, color: accentColor, strokeWidth: 4.8, strokeDasharray: null });
   }
-  extraProfiles.forEach(profile => {
-    if (!profile || !profile.label) return;
-    const defaultDash = '6 4';
-    const strokeDash = (profile.legendStrokeDasharray === undefined)
-      ? ((profile.strokeDasharray === undefined) ? defaultDash : profile.strokeDasharray)
-      : profile.legendStrokeDasharray;
-    const strokeWidth = Number.isFinite(profile.legendStrokeWidth)
-      ? profile.legendStrokeWidth
-      : (Number.isFinite(profile.strokeWidth) ? profile.strokeWidth : 3);
-    legendEntries.push({
-      label: profile.label,
-      color: profile.color || '#555',
-      strokeDasharray: strokeDash,
-      strokeWidth
+  if (showLegend) {
+    extraProfiles.forEach(profile => {
+      if (!profile || !profile.label) return;
+      const defaultDash = '6 4';
+      const strokeDash = (profile.legendStrokeDasharray === undefined)
+        ? ((profile.strokeDasharray === undefined) ? defaultDash : profile.strokeDasharray)
+        : profile.legendStrokeDasharray;
+      const strokeWidth = Number.isFinite(profile.legendStrokeWidth)
+        ? profile.legendStrokeWidth
+        : (Number.isFinite(profile.strokeWidth) ? profile.strokeWidth : 3);
+      legendEntries.push({
+        label: profile.label,
+        color: profile.color || '#555',
+        strokeDasharray: strokeDash,
+        strokeWidth
+      });
     });
-  });
+  }
 
   svg.appendChild(svgEl('rect', { x: ML, y: MT, width: innerW, height: innerH, fill: '#fff', stroke: '#ccc' }));
 
@@ -552,7 +555,8 @@ export function drawStandaloneSpeedProfiles(svg, {
   speedMax: speedMaxOverride,
   ratedSpeedMs = null,
   primaryLabel = null,
-  accentColor: accentOverride
+  accentColor: accentOverride,
+  showLegend = true
 } = {}) {
   if (!svg) return;
 
@@ -605,7 +609,8 @@ export function drawStandaloneSpeedProfiles(svg, {
 
   drawSpeedProfile(svg, segments || [], depthMin, depthMax, speedMin, speedMax, accentColor, ratedSpeedMs, {
     primaryLabel,
-    extraProfiles: Array.isArray(extraProfiles) ? extraProfiles : []
+    extraProfiles: Array.isArray(extraProfiles) ? extraProfiles : [],
+    showLegend
   });
 }
 

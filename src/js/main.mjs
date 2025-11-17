@@ -189,7 +189,7 @@ function buildPayloadValues(basePayloadKg) {
   let current = Math.max(0, basePayloadKg);
   pushVal(current);
   while (current > 0) {
-    current -= 500;
+    current -= 1000;
     if (current < 0) current = 0;
     pushVal(current);
     if (current === 0) break;
@@ -1546,18 +1546,21 @@ function redrawPlots() {
         }
 
         powerSpeedProfiles = payloadSteps
-          .map(p => {
+          .map((p, idx) => {
             const segments = computeDepthSpeedSegmentsForPayload(p, lastDepthProfileContext, { mode: 'power' });
             if (!segments.length) return null;
-            const color = payloadColorMap.get(p) || accentColor;
+            const color = accentColor;
             const isPrimary = Math.abs(p - payloadVal) <= 1e-6;
+            const strokeDasharray = (idx % 2 === 1) ? '6 4' : null;
             return {
               label: formatPayloadLabel(p),
+              inlineLabel: formatPayloadInlineLabel(p),
+              inlineLabelColor: color,
               color,
               strokeWidth: isPrimary ? 4 : 2.4,
               legendStrokeWidth: isPrimary ? 4 : 2.4,
-              strokeDasharray: null,
-              legendStrokeDasharray: null,
+              strokeDasharray,
+              legendStrokeDasharray: strokeDasharray,
               segments
             };
           })
@@ -1601,7 +1604,8 @@ function redrawPlots() {
           speedMax: Number.isFinite(depthSpeedMaxVal) ? Math.max(0, depthSpeedMaxVal) : undefined,
           ratedSpeedMs: null,
           primaryLabel: null,
-          accentColor: readAccentColor()
+          accentColor: readAccentColor(),
+          showLegend: false
         });
       } else {
         while (depthSpeedPowerSvg.firstChild) depthSpeedPowerSvg.removeChild(depthSpeedPowerSvg.firstChild);
