@@ -833,6 +833,16 @@ table {
   background: var(--paper);
 }
 
+table:not(.worksheet) {
+  table-layout: fixed;
+  font-size: 12px;
+}
+
+table:not(.worksheet) th,
+table:not(.worksheet) td {
+  padding: 4px 6px;
+}
+
 th,
 td {
   border: 1px solid var(--paper-line-strong);

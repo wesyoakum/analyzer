@@ -1,4 +1,4 @@
-// ===== hydraulic.mjs â€” hydraulic-side layer aggregation + table rendering =====
+// ===== hydraulic.mjs — hydraulic-side layer aggregation + table rendering =====
 
 import {
   formatDecimal,

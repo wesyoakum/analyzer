@@ -1,0 +1,58 @@
+diff a/src/css/styles.css b/src/css/styles.css	(rejected hunks)
+@@ -675,50 +675,56 @@ button:focus {
+ 
+ .worksheet td.value {
+   width: 240px;
+ }
+ 
+ .worksheet.compact td.value,
+ .worksheet.compact td.units {
+   width: auto;
+ }
+ 
+ .worksheet td.value input,
+ .worksheet td.value select {
+   width: 100%;
+ }
+ 
+ .worksheet .note td {
+   background: #f6f8fd;
+   font-style: italic;
+   color: var(--ink-500);
+ }
+ 
+ .worksheet .button-cell {
+   text-align: center;
+ }
+ 
++.is-exceeded {
++  color: #b64242;
++  background: #fdecec;
++  font-weight: 600;
++}
++
+ .tab-bar {
+   display: flex;
+   flex-wrap: wrap;
+   align-items: flex-end;
+   gap: 16px;
+   margin-top: 32px;
+ }
+ 
+ .tab-bar .tabs {
+   flex: 1 1 auto;
+ }
+ 
+ .tab-bar__action {
+   margin-left: auto;
+   align-self: center;
+   padding: 0;
+   border: none;
+   background: none;
+   font: inherit;
+   font-size: 14px;
+   text-transform: lowercase;
+   text-decoration: none;
+   color: rgba(20, 34, 56, 0.55);
+   cursor: pointer;
+ }

@@ -1,4 +1,4 @@
-// ===== electric.mjs â€” electric-side layer aggregation + table rendering =====
+// ===== electric.mjs — electric-side layer aggregation + table rendering =====
 import {
   G, M_PER_IN,
   tension_kgf, elec_available_tension_kgf,

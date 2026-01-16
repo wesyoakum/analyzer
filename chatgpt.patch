@@ -1,5 +1,5 @@
 diff --git a/src/js/main.mjs b/src/js/main.mjs
-index 5fa30b3f99ce9d5ec844f713d34d74517cc9c377..8ff9c9a763c8bdb26acb744941231b1773470f06 100644
+index 5fa30b3f99ce9d5ec844f713d34d74517cc9c377..1358c3d59375b29b7eb364933efaa6715da59e24 100644
 --- a/src/js/main.mjs
 +++ b/src/js/main.mjs
 @@ -317,114 +317,114 @@ function computeDepthSpeedSegmentsForPayload(payloadKg, context, options = {}) {
@@ -29,7 +29,7 @@ index 5fa30b3f99ce9d5ec844f713d34d74517cc9c377..8ff9c9a763c8bdb26acb744941231b17
        'layer_no', 'layer_dia_in', 'pre_on_drum_m', 'pre_deployed_m',
        'post_on_drum_m', 'post_deployed_m', 'max_tension_theoretical_kgf',
 -      'max_tension_required_kgf', 'tau_avail_kNm', 'max_motor_torque_Nm',
-+      'max_tension_required_kgf', 'tau_avail_kNm', 'max_gearbox_torque_Nm', 'max_motor_torque_Nm',
++      'max_tension_required_kgf', 'tau_gb_required_kNm', 'tau_gb_avail_kNm', 'max_motor_torque_Nm',
        'motor_rpm_at_start', 'line_speed_at_start_mpm',
        'tension_theoretical_start_kgf', 'tension_required_start_kgf', 'avail_tension_kgf'
      ],
@@ -37,7 +37,7 @@ index 5fa30b3f99ce9d5ec844f713d34d74517cc9c377..8ff9c9a763c8bdb26acb744941231b17
        'layer_no', 'layer_dia_in', 'pre_on_drum_m', 'pre_deployed_m',
        'post_on_drum_m', 'post_deployed_m', 'max_tension_theoretical_kgf',
 -      'max_tension_required_kgf', 'tau_avail_kNm', 'max_motor_torque_Nm',
-+      'max_tension_required_kgf', 'tau_avail_kNm', 'max_gearbox_torque_Nm', 'max_motor_torque_Nm',
++      'max_tension_required_kgf', 'tau_gb_required_kNm', 'tau_gb_avail_kNm', 'max_motor_torque_Nm',
        'motor_rpm_at_start', 'line_speed_at_start_mpm',
        'tension_theoretical_start_kgf', 'tension_required_start_kgf', 'avail_tension_kgf'
      ],
@@ -49,14 +49,14 @@ index 5fa30b3f99ce9d5ec844f713d34d74517cc9c377..8ff9c9a763c8bdb26acb744941231b17
        'wrap_no', 'layer_no', 'layer_dia_in', 'wrap_len_in', 'pre_spooled_len_m',
        'spooled_len_m', 'deployed_len_m', 'tension_theoretical_kgf',
 -      'tension_required_kgf', 'tau_avail_kNm', 'motor_torque_Nm', 'motor_rpm',
-+      'tension_required_kgf', 'tau_avail_kNm', 'gearbox_torque_Nm', 'motor_torque_Nm', 'motor_rpm',
++      'tension_required_kgf', 'tau_gb_required_kNm', 'tau_gb_avail_kNm', 'motor_torque_Nm', 'motor_rpm',
        'line_speed_mpm', 'avail_tension_kgf'
      ],
      header: [
        'wrap_no', 'layer_no', 'layer_dia_in', 'wrap_len_in', 'pre_spooled_len_m',
        'spooled_len_m', 'deployed_len_m', 'tension_theoretical_kgf',
 -      'tension_required_kgf', 'tau_avail_kNm', 'motor_torque_Nm', 'motor_rpm',
-+      'tension_required_kgf', 'tau_avail_kNm', 'gearbox_torque_Nm', 'motor_torque_Nm', 'motor_rpm',
++      'tension_required_kgf', 'tau_gb_required_kNm', 'tau_gb_avail_kNm', 'motor_torque_Nm', 'motor_rpm',
        'line_speed_mpm', 'avail_tension_kgf'
      ],
      getRows: () => lastElWraps
@@ -68,7 +68,7 @@ index 5fa30b3f99ce9d5ec844f713d34d74517cc9c377..8ff9c9a763c8bdb26acb744941231b17
        'post_on_drum_m', 'post_deployed_m', 'hyd_P_required_psi',
        'hyd_speed_power_mpm', 'hyd_speed_flow_mpm', 'hyd_speed_available_mpm',
 -      'hyd_hp_req', 'hyd_hp_sys', 'hyd_tau_avail_kNm',
-+      'hyd_hp_req', 'hyd_hp_sys', 'hyd_tau_avail_kNm', 'max_gearbox_torque_Nm',
++      'hyd_hp_req', 'hyd_hp_sys', 'tau_gb_required_kNm', 'tau_gb_avail_kNm',
        'hyd_tension_theoretical_start_kgf', 'hyd_tension_required_start_kgf',
        'hyd_avail_tension_kgf'
      ],
@@ -77,7 +77,7 @@ index 5fa30b3f99ce9d5ec844f713d34d74517cc9c377..8ff9c9a763c8bdb26acb744941231b17
        'post_on_drum_m', 'post_deployed_m', 'hyd_P_required_psi',
        'hyd_speed_power_mpm', 'hyd_speed_flow_mpm', 'hyd_speed_available_mpm',
 -      'hyd_hp_req', 'hyd_hp_sys', 'hyd_tau_avail_kNm',
-+      'hyd_hp_req', 'hyd_hp_sys', 'hyd_tau_avail_kNm', 'max_gearbox_torque_Nm',
++      'hyd_hp_req', 'hyd_hp_sys', 'tau_gb_required_kNm', 'tau_gb_avail_kNm',
        'hyd_tension_theoretical_start_kgf', 'hyd_tension_required_start_kgf',
        'hyd_avail_tension_kgf'
      ],
@@ -91,7 +91,7 @@ index 5fa30b3f99ce9d5ec844f713d34d74517cc9c377..8ff9c9a763c8bdb26acb744941231b17
        'tension_required_kgf', 'hyd_P_required_psi', 'hyd_speed_power_mpm',
        'hyd_speed_flow_mpm', 'hyd_speed_available_mpm', 'hyd_hp_req',
 -      'hyd_hp_sys', 'hyd_tau_avail_kNm', 'hyd_avail_tension_kgf'
-+      'hyd_hp_sys', 'hyd_tau_avail_kNm', 'gearbox_torque_Nm', 'hyd_avail_tension_kgf'
++      'hyd_hp_sys', 'tau_gb_required_kNm', 'tau_gb_avail_kNm', 'hyd_avail_tension_kgf'
      ],
      header: [
        'wrap_no', 'layer_no', 'layer_dia_in', 'wrap_len_in', 'pre_spooled_len_m',
@@ -99,7 +99,7 @@ index 5fa30b3f99ce9d5ec844f713d34d74517cc9c377..8ff9c9a763c8bdb26acb744941231b17
        'tension_required_kgf', 'hyd_P_required_psi', 'hyd_speed_power_mpm',
        'hyd_speed_flow_mpm', 'hyd_speed_available_mpm', 'hyd_hp_req',
 -      'hyd_hp_sys', 'hyd_tau_avail_kNm', 'hyd_avail_tension_kgf'
-+      'hyd_hp_sys', 'hyd_tau_avail_kNm', 'gearbox_torque_Nm', 'hyd_avail_tension_kgf'
++      'hyd_hp_sys', 'tau_gb_required_kNm', 'tau_gb_avail_kNm', 'hyd_avail_tension_kgf'
      ],
      getRows: () => lastHyWraps
    }
@@ -125,57 +125,7 @@ index 5fa30b3f99ce9d5ec844f713d34d74517cc9c377..8ff9c9a763c8bdb26acb744941231b17
    setupManualRefreshControls();
  
    setupAutoRecompute();
-@@ -1176,102 +1176,105 @@ function computeAll() {
-     const cable_w_kgpm = read('c_w_kgpm');
- 
-     const rated_speed_mpm = read('rated_speed_mpm');
-     const rated_swl_kgf = read('rated_swl_kgf');
-     const system_efficiency = read('system_efficiency');
- 
-     updateMinimumSystemHp(rated_speed_mpm, rated_swl_kgf, system_efficiency);
- 
-     const positiveOr = (value, fallback) => (Number.isFinite(value) && value > 0 ? value : fallback);
- 
-     // Shared drivetrain
-     const gr1 = positiveOr(read('gr1'), 1);
-     const gr2 = positiveOr(read('gr2'), 1);
-     const motors = positiveOr(read('motors'), 1);
-     const denom_mech = gr1 * gr2 * motors;
-     const gear_product = Math.max(gr1, 1e-9) * Math.max(gr2, 1e-9);
- 
-     const electricEnabled = driveModeEnabled('electric');
-     const hydraulicEnabled = driveModeEnabled('hydraulic');
- 
-     // Electric inputs
-     const motor_max_rpm = read('motor_max_rpm');
-     const motor_hp = positiveOr(read('motor_hp'), 0);
-     const motor_eff = positiveOr(read('motor_eff'), 1);
-     const motor_tmax = read('motor_tmax');
-+    const gearbox_max_torque_Nm = read('gearbox_max_torque_Nm');
-     const P_per_motor_W = motor_hp * motor_eff * W_PER_HP;
- 
-     // Hydraulic inputs
-     const h_strings = positiveOr(read('h_pump_strings'), 0);
-     const h_emotor_hp = positiveOr(read('h_emotor_hp'), 0);
-     const h_emotor_eff = positiveOr(read('h_emotor_eff'), 0); // electro-hydraulic efficiency
-     const h_emotor_rpm = positiveOr(read('h_emotor_rpm'), 0);
-     const h_pump_cc = positiveOr(read('h_pump_cc'), 0);
-     const h_max_psi = positiveOr(read('h_max_psi'), 0);
-     const h_hmot_cc = positiveOr(read('h_hmot_cc'), 0);
-     const h_hmot_rpm_cap = positiveOr(read('h_hmot_rpm_max'), Infinity);
- 
-     // Usable hydraulic hp & flow from pump strings
-     const hp_str_usable = h_emotor_hp * h_emotor_eff;
-     const hp_tot_usable = hp_str_usable * h_strings;
-     const q_str_gpm = gpm_from_cc_rev_and_rpm(h_pump_cc, h_emotor_rpm);
-     const q_tot_gpm = q_str_gpm * h_strings;
-     const rpm_flow_per_motor_available = Math.min(
-       Number.isFinite(h_hmot_rpm_cap) && h_hmot_rpm_cap > 0 ? h_hmot_rpm_cap : Number.POSITIVE_INFINITY,
-       rpm_from_gpm_and_disp(q_tot_gpm / Math.max(motors, 1), h_hmot_cc)
-     );
- 
-     // Max-pressure torque per hydraulic motor and at drum (pressure-limited)
-     const dP_Pa = h_max_psi * PSI_TO_PA;
+@@ -1225,53 +1225,57 @@ function computeAll() {
      const torque_per_hmotor_maxP = torque_per_motor_from_pressure_Pa(dP_Pa, h_hmot_cc); // N·m per motor at max P
      const torque_at_drum_maxP_factor = Math.max(gr1, 1) * Math.max(gr2, 1) * Math.max(motors, 1);
  
@@ -205,7 +155,9 @@ index 5fa30b3f99ce9d5ec844f713d34d74517cc9c377..8ff9c9a763c8bdb26acb744941231b17
        const torque_per_hmotor_required = drum_T / (gear_product_safe * motors_safe);
        const drum_torque_required = torque_per_hmotor_required * gear_product_safe * motors_safe;
        r.torque_Nm = +drum_torque_required.toFixed(1);
-+      r.gearbox_torque_Nm = +(drum_torque_required / (gr2_safe * motors_safe)).toFixed(1);
++      const tauGbRequiredNm = drum_torque_required / (gr2_safe * motors_safe);
++      r.tau_gb_required_kNm = +(tauGbRequiredNm / 1000).toFixed(2);
++      r.tau_gb_avail_kNm = null;
  
        // ----- ELECTRIC per wrap -----
        if (electricEnabled) {
@@ -231,7 +183,64 @@ index 5fa30b3f99ce9d5ec844f713d34d74517cc9c377..8ff9c9a763c8bdb26acb744941231b17
          r.avail_tension_kgf = elec_available_tension_kgf(motor_tmax, gr1, gr2, motors, radius_m);
        } else {
          r.motor_torque_Nm = 0;
-@@ -1395,51 +1398,57 @@ function computeAll() {
+@@ -1323,50 +1327,56 @@ function computeAll() {
+         const rpm_power_drum = Number.isFinite(speed_power_mpm) && speed_power_mpm > 0
+           ? speed_power_mpm / safe_drum_circumference
+           : Number.isFinite(speed_power_mpm) && speed_power_mpm === 0
+             ? 0
+             : NaN;
+ 
+         let speed_avail_mpm = Math.min(speed_power_mpm, speed_flow_mpm);
+         if (!Number.isFinite(speed_avail_mpm) || speed_avail_mpm < 0) speed_avail_mpm = 0;
+         const rpm_available_drum = Number.isFinite(speed_avail_mpm)
+           ? speed_avail_mpm / safe_drum_circumference
+           : NaN;
+ 
+         let hp_used_at_available = 0;
+         if (speed_avail_mpm > 0 && P_power_psi > 0) {
+           // Power used at the actual available speed
+           const drum_rpm_needed = speed_avail_mpm / Math.max(Math.PI * Math.max(D_m, 1e-9), 1e-9);
+           const motor_rpm_needed = drum_rpm_needed * (Math.max(gr1, 1) * Math.max(gr2, 1));
+           const gpm_per_motor_needed = (motor_rpm_needed * h_hmot_cc) / CC_PER_GAL;
+           const gpm_total_needed = Math.max(motors, 1) * gpm_per_motor_needed;
+           const gpm_used = Math.min(gpm_total_needed, q_tot_gpm);
+           hp_used_at_available = hp_from_psi_and_gpm(P_power_psi, gpm_used);
+           if (hp_used_at_available > hp_tot_usable) hp_used_at_available = hp_tot_usable;
+         }
+ 
+         r.hyd_P_required_psi = Math.round(P_req_psi);
++        const tauGbAvailNm = torque_per_motor_from_pressure_Pa(P_req_psi * PSI_TO_PA, h_hmot_cc)
++          * motors_safe
++          * Math.max(gr1, 1);
++        r.tau_gb_avail_kNm = Number.isFinite(tauGbAvailNm)
++          ? +(tauGbAvailNm / 1000).toFixed(2)
++          : null;
+         r.hyd_speed_power_mpm = +speed_power_mpm.toFixed(2);
+         r.hyd_speed_flow_mpm = +speed_flow_mpm.toFixed(2);
+         r.hyd_speed_available_mpm = +speed_avail_mpm.toFixed(2);
+         r.hyd_hp_used_at_available = +hp_used_at_available.toFixed(2);
+         r.hyd_elec_input_hp_used = +((h_emotor_eff > 0 ? r.hyd_hp_used_at_available / h_emotor_eff : 0)).toFixed(2);
+         r.hyd_drum_rpm_flow = Number.isFinite(rpm_flow_drum)
+           ? +Math.max(0, rpm_flow_drum).toFixed(1)
+           : 0;
+         r.hyd_drum_rpm_power = Number.isFinite(rpm_power_drum)
+           ? +Math.max(0, rpm_power_drum).toFixed(1)
+           : null;
+         r.hyd_drum_rpm_available = Number.isFinite(rpm_available_drum)
+           ? +Math.max(0, rpm_available_drum).toFixed(1)
+           : 0;
+       } else {
+         r.hyd_drum_torque_maxP_Nm = 0;
+         r.hyd_avail_tension_kgf = 0;
+         r.hyd_P_required_psi = 0;
+         r.hyd_speed_power_mpm = 0;
+         r.hyd_speed_flow_mpm = 0;
+         r.hyd_speed_available_mpm = 0;
+         r.hyd_hp_used_at_available = 0;
+         r.hyd_elec_input_hp_used = 0;
+         r.hyd_drum_rpm_flow = 0;
+         r.hyd_drum_rpm_power = 0;
+@@ -1395,51 +1405,56 @@ function computeAll() {
        motors,
        motor_max_rpm,
        motor_tmax,
@@ -262,8 +271,7 @@ index 5fa30b3f99ce9d5ec844f713d34d74517cc9c377..8ff9c9a763c8bdb26acb744941231b17
 +      lastElLayer,
 +      lastElWraps,
 +      q('tbody_el_layer'),
-+      q('tbody_el_wraps'),
-+      gearbox_max_torque_Nm
++      q('tbody_el_wraps')
 +    );
      renderHydraulicTables(lastHyLayer, lastHyWraps, q('tbody_hy_layer'), q('tbody_hy_wraps'));
  
