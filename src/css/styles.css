@@ -697,6 +697,12 @@ button:focus {
   text-align: center;
 }
 
+.is-exceeded {
+  color: #b64242;
+  background: #fdecec;
+  font-weight: 600;
+}
+
 .tab-bar {
   display: flex;
   flex-wrap: wrap;
@@ -1188,4 +1194,3 @@ th[title] {
     width: auto;
   }
 }
-

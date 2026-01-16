@@ -127,29 +127,37 @@ export function projectElectricWraps(rows) {
  * @param {HTMLElement} tbodyLayer
  * @param {HTMLElement} tbodyWraps
  */
-export function renderElectricTables(elLayers, elWraps, tbodyLayer, tbodyWraps) {
+export function renderElectricTables(elLayers, elWraps, tbodyLayer, tbodyWraps, gearboxMaxTorqueNm) {
+  const hasGearboxMax = Number.isFinite(gearboxMaxTorqueNm) && gearboxMaxTorqueNm > 0;
+  const torqueCell = (value) => {
+    const text = formatMotorTorque(value);
+    const exceeds = hasGearboxMax && Number.isFinite(value) && value > gearboxMaxTorqueNm;
+    const attrs = exceeds ? ' class="is-exceeded" title="Exceeds gearbox max torque"' : '';
+    return `<td${attrs}>${text}</td>`;
+  };
+
   // Layer table
   tbodyLayer.innerHTML = '';
   for (const r of elLayers) {
     const tr = document.createElement('tr');
     const cells = [
-      formatInteger(r.layer_no),
-      formatInches(r.layer_dia_in),
-      formatMeters(r.pre_on_drum_m),
-      formatMeters(r.pre_deployed_m),
-      formatMeters(r.post_on_drum_m),
-      formatMeters(r.post_deployed_m),
-      formatKgf(r.max_tension_theoretical_kgf),
-      formatKgf(r.max_tension_required_kgf),
-      formatDecimal(r.tau_avail_kNm, 1),
-      formatMotorTorque(r.max_motor_torque_Nm),
-      formatRpm(r.motor_rpm_at_start ?? ''),
-      formatSpeed(r.line_speed_at_start_mpm ?? ''),
-      formatKgf(r.tension_theoretical_start_kgf),
-      formatKgf(r.tension_required_start_kgf),
-      formatKgf(r.avail_tension_kgf)
+      `<td>${formatInteger(r.layer_no)}</td>`,
+      `<td>${formatInches(r.layer_dia_in)}</td>`,
+      `<td>${formatMeters(r.pre_on_drum_m)}</td>`,
+      `<td>${formatMeters(r.pre_deployed_m)}</td>`,
+      `<td>${formatMeters(r.post_on_drum_m)}</td>`,
+      `<td>${formatMeters(r.post_deployed_m)}</td>`,
+      `<td>${formatKgf(r.max_tension_theoretical_kgf)}</td>`,
+      `<td>${formatKgf(r.max_tension_required_kgf)}</td>`,
+      `<td>${formatDecimal(r.tau_avail_kNm, 1)}</td>`,
+      torqueCell(r.max_motor_torque_Nm),
+      `<td>${formatRpm(r.motor_rpm_at_start ?? '')}</td>`,
+      `<td>${formatSpeed(r.line_speed_at_start_mpm ?? '')}</td>`,
+      `<td>${formatKgf(r.tension_theoretical_start_kgf)}</td>`,
+      `<td>${formatKgf(r.tension_required_start_kgf)}</td>`,
+      `<td>${formatKgf(r.avail_tension_kgf)}</td>`
     ];
-    tr.innerHTML = cells.map(v => `<td>${v}</td>`).join('');
+    tr.innerHTML = cells.join('');
     tbodyLayer.appendChild(tr);
   }
 
@@ -158,22 +166,22 @@ export function renderElectricTables(elLayers, elWraps, tbodyLayer, tbodyWraps) 
   for (const r of elWraps) {
     const tr = document.createElement('tr');
     const cells = [
-      formatInteger(r.wrap_no),
-      formatInteger(r.layer_no),
-      formatInches(r.layer_dia_in),
-      formatInches(r.wrap_len_in),
-      formatMeters(r.pre_spooled_len_m),
-      formatMeters(r.spooled_len_m),
-      formatMeters(r.deployed_len_m),
-      formatKgf(r.tension_theoretical_kgf ?? ''),
-      formatKgf(r.tension_required_kgf ?? ''),
-      formatDecimal(r.tau_avail_kNm, 1),
-      formatMotorTorque(r.motor_torque_Nm),
-      formatRpm(r.motor_rpm),
-      formatSpeed(r.line_speed_mpm),
-      formatKgf(r.avail_tension_kgf)
+      `<td>${formatInteger(r.wrap_no)}</td>`,
+      `<td>${formatInteger(r.layer_no)}</td>`,
+      `<td>${formatInches(r.layer_dia_in)}</td>`,
+      `<td>${formatInches(r.wrap_len_in)}</td>`,
+      `<td>${formatMeters(r.pre_spooled_len_m)}</td>`,
+      `<td>${formatMeters(r.spooled_len_m)}</td>`,
+      `<td>${formatMeters(r.deployed_len_m)}</td>`,
+      `<td>${formatKgf(r.tension_theoretical_kgf ?? '')}</td>`,
+      `<td>${formatKgf(r.tension_required_kgf ?? '')}</td>`,
+      `<td>${formatDecimal(r.tau_avail_kNm, 1)}</td>`,
+      torqueCell(r.motor_torque_Nm),
+      `<td>${formatRpm(r.motor_rpm)}</td>`,
+      `<td>${formatSpeed(r.line_speed_mpm)}</td>`,
+      `<td>${formatKgf(r.avail_tension_kgf)}</td>`
     ];
-    tr.innerHTML = cells.map(v => `<td>${v}</td>`).join('');
+    tr.innerHTML = cells.join('');
     tbodyWraps.appendChild(tr);
   }
 }

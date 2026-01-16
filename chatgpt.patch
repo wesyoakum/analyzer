@@ -1,202 +1,115 @@
-diff --git a/src/js/plots/depth-profiles.mjs b/src/js/plots/depth-profiles.mjs
-index 901aa65d819c817d9c7dd8d7f5f9d943a4526c41..c2b81cf3314ab09e310fd48735b8c07e8cb618a1 100644
---- a/src/js/plots/depth-profiles.mjs
-+++ b/src/js/plots/depth-profiles.mjs
-@@ -171,70 +171,73 @@ export function drawDepthProfiles(svgSpeed, svgTension, {
- function drawSpeedProfile(svg, segments, depthMin, depthMax, speedMin, speedMax, accentColor, ratedSpeedMs = null, options = {}) {
-   if (svg && svg._depthSpeedHoverHandlers) {
-     const { move, leave } = svg._depthSpeedHoverHandlers;
-     svg.removeEventListener('pointermove', move);
-     svg.removeEventListener('pointerleave', leave);
-     svg.removeEventListener('pointerenter', move);
-     delete svg._depthSpeedHoverHandlers;
-   }
+diff --git a/src/js/main.mjs b/src/js/main.mjs
+index 5fa30b3f99ce9d5ec844f713d34d74517cc9c377..04c274d66410b53dab8372cfa892e9784d6c6ce0 100644
+--- a/src/js/main.mjs
++++ b/src/js/main.mjs
+@@ -1176,50 +1176,51 @@ function computeAll() {
+     const cable_w_kgpm = read('c_w_kgpm');
  
-   while (svg.firstChild) svg.removeChild(svg.firstChild);
+     const rated_speed_mpm = read('rated_speed_mpm');
+     const rated_swl_kgf = read('rated_swl_kgf');
+     const system_efficiency = read('system_efficiency');
  
-   const ML = 64, MR = 18, MT = 18, MB = 46;
-   const W = svg.viewBox.baseVal.width || svg.clientWidth || 1000;
-   const H = svg.viewBox.baseVal.height || svg.clientHeight || 540;
-   const innerW = W - ML - MR, innerH = H - MT - MB;
+     updateMinimumSystemHp(rated_speed_mpm, rated_swl_kgf, system_efficiency);
  
-   const clampDepth = d => Math.min(Math.max(d, depthMin), depthMax);
-   const clampSpeed = v => Math.min(Math.max(v, speedMin), speedMax);
-   const depthSpan = Math.max(1e-9, depthMax - depthMin);
-   const speedSpan = Math.max(1e-9, speedMax - speedMin);
+     const positiveOr = (value, fallback) => (Number.isFinite(value) && value > 0 ? value : fallback);
  
-   const sx = d => ML + (clampDepth(d) - depthMin) / depthSpan * innerW;
-   const sy = v => MT + (1 - (clampSpeed(v) - speedMin) / speedSpan) * innerH;
+     // Shared drivetrain
+     const gr1 = positiveOr(read('gr1'), 1);
+     const gr2 = positiveOr(read('gr2'), 1);
+     const motors = positiveOr(read('motors'), 1);
+     const denom_mech = gr1 * gr2 * motors;
+     const gear_product = Math.max(gr1, 1e-9) * Math.max(gr2, 1e-9);
  
-   const extraProfiles = Array.isArray(options.extraProfiles) ? options.extraProfiles : [];
-+  const showLegend = options && options.showLegend !== undefined ? Boolean(options.showLegend) : true;
-   const legendEntries = [];
--  if (options.primaryLabel) {
-+  if (showLegend && options.primaryLabel) {
-     legendEntries.push({ label: options.primaryLabel, color: accentColor, strokeWidth: 4.8, strokeDasharray: null });
-   }
--  extraProfiles.forEach(profile => {
--    if (!profile || !profile.label) return;
--    const defaultDash = '6 4';
--    const strokeDash = (profile.legendStrokeDasharray === undefined)
--      ? ((profile.strokeDasharray === undefined) ? defaultDash : profile.strokeDasharray)
--      : profile.legendStrokeDasharray;
--    const strokeWidth = Number.isFinite(profile.legendStrokeWidth)
--      ? profile.legendStrokeWidth
--      : (Number.isFinite(profile.strokeWidth) ? profile.strokeWidth : 3);
--    legendEntries.push({
--      label: profile.label,
--      color: profile.color || '#555',
--      strokeDasharray: strokeDash,
--      strokeWidth
-+  if (showLegend) {
-+    extraProfiles.forEach(profile => {
-+      if (!profile || !profile.label) return;
-+      const defaultDash = '6 4';
-+      const strokeDash = (profile.legendStrokeDasharray === undefined)
-+        ? ((profile.strokeDasharray === undefined) ? defaultDash : profile.strokeDasharray)
-+        : profile.legendStrokeDasharray;
-+      const strokeWidth = Number.isFinite(profile.legendStrokeWidth)
-+        ? profile.legendStrokeWidth
-+        : (Number.isFinite(profile.strokeWidth) ? profile.strokeWidth : 3);
-+      legendEntries.push({
-+        label: profile.label,
-+        color: profile.color || '#555',
-+        strokeDasharray: strokeDash,
-+        strokeWidth
-+      });
+     const electricEnabled = driveModeEnabled('electric');
+     const hydraulicEnabled = driveModeEnabled('hydraulic');
+ 
+     // Electric inputs
+     const motor_max_rpm = read('motor_max_rpm');
+     const motor_hp = positiveOr(read('motor_hp'), 0);
+     const motor_eff = positiveOr(read('motor_eff'), 1);
+     const motor_tmax = read('motor_tmax');
++    const gearbox_max_torque_Nm = read('gearbox_max_torque_Nm');
+     const P_per_motor_W = motor_hp * motor_eff * W_PER_HP;
+ 
+     // Hydraulic inputs
+     const h_strings = positiveOr(read('h_pump_strings'), 0);
+     const h_emotor_hp = positiveOr(read('h_emotor_hp'), 0);
+     const h_emotor_eff = positiveOr(read('h_emotor_eff'), 0); // electro-hydraulic efficiency
+     const h_emotor_rpm = positiveOr(read('h_emotor_rpm'), 0);
+     const h_pump_cc = positiveOr(read('h_pump_cc'), 0);
+     const h_max_psi = positiveOr(read('h_max_psi'), 0);
+     const h_hmot_cc = positiveOr(read('h_hmot_cc'), 0);
+     const h_hmot_rpm_cap = positiveOr(read('h_hmot_rpm_max'), Infinity);
+ 
+     // Usable hydraulic hp & flow from pump strings
+     const hp_str_usable = h_emotor_hp * h_emotor_eff;
+     const hp_tot_usable = hp_str_usable * h_strings;
+     const q_str_gpm = gpm_from_cc_rev_and_rpm(h_pump_cc, h_emotor_rpm);
+     const q_tot_gpm = q_str_gpm * h_strings;
+     const rpm_flow_per_motor_available = Math.min(
+       Number.isFinite(h_hmot_rpm_cap) && h_hmot_rpm_cap > 0 ? h_hmot_rpm_cap : Number.POSITIVE_INFINITY,
+       rpm_from_gpm_and_disp(q_tot_gpm / Math.max(motors, 1), h_hmot_cc)
+     );
+ 
+     // Max-pressure torque per hydraulic motor and at drum (pressure-limited)
+     const dP_Pa = h_max_psi * PSI_TO_PA;
+     const torque_per_hmotor_maxP = torque_per_motor_from_pressure_Pa(dP_Pa, h_hmot_cc); // N·m per motor at max P
+@@ -1395,51 +1396,57 @@ function computeAll() {
+       motors,
+       motor_max_rpm,
+       motor_tmax,
+       P_per_motor_W,
+       denom_mech,
+       gear_product,
+       electricEnabled,
+       hydraulicEnabled,
+       hydraulic: {
+         h_strings,
+         h_emotor_hp,
+         h_emotor_eff,
+         h_emotor_rpm,
+         h_pump_cc,
+         h_max_psi,
+         h_hmot_cc,
+         h_hmot_rpm_cap,
+         torque_per_hmotor_maxP,
+         torque_at_drum_maxP_factor,
+         q_tot_gpm,
+         rpm_flow_per_motor: rpm_flow_per_motor_available
+       }
      });
--  });
-+  }
  
-   svg.appendChild(svgEl('rect', { x: ML, y: MT, width: innerW, height: innerH, fill: '#fff', stroke: '#ccc' }));
+     // ---- Render tables ----
+-    renderElectricTables(lastElLayer, lastElWraps, q('tbody_el_layer'), q('tbody_el_wraps'));
++    renderElectricTables(
++      lastElLayer,
++      lastElWraps,
++      q('tbody_el_layer'),
++      q('tbody_el_wraps'),
++      gearbox_max_torque_Nm
++    );
+     renderHydraulicTables(lastHyLayer, lastHyWraps, q('tbody_hy_layer'), q('tbody_hy_wraps'));
  
-   niceTicks(depthMin, depthMax, 8).ticks.forEach(dx => {
-     if (dx < depthMin - 1e-9 || dx > depthMax + 1e-9) return;
-     const X = sx(dx);
-     svg.appendChild(svgEl('line', { x1: X, y1: MT, x2: X, y2: H - MB, stroke: '#eee' }));
-     const t = svgEl('text', { x: X, y: H - 8, 'text-anchor': 'middle', 'font-size': '12', fill: '#444' });
-     t.textContent = formatDepthLabel(dx);
-     svg.appendChild(t);
-   });
-   niceTicks(speedMin, speedMax, 6).ticks.forEach(v => {
-     if (v < speedMin - 1e-9 || v > speedMax + 1e-9) return;
-     const Y = sy(v);
-     svg.appendChild(svgEl('line', { x1: ML, y1: Y, x2: W - MR, y2: Y, stroke: '#eee' }));
-     const t = svgEl('text', { x: ML - 6, y: Y + 4, 'text-anchor': 'end', 'font-size': '12', fill: '#444' });
-     t.textContent = String(Math.round(v * 100) / 100);
-     svg.appendChild(t);
-   });
+     renderInputSummary();
+     renderLatexFragments(document.body);
  
-   svg.appendChild(svgEl('text', { x: ML + innerW / 2, y: H - 4, 'text-anchor': 'middle', 'font-size': '12', fill: '#444' }))
-     .textContent = 'Depth (m)';
-   svg.appendChild(svgEl('text', {
-     x: 18, y: MT + innerH / 2, transform: `rotate(-90,18,${MT + innerH / 2})`,
-     'text-anchor': 'middle', 'font-size': '12', fill: '#444'
-@@ -530,51 +533,52 @@ function drawSpeedProfile(svg, segments, depthMin, depthMax, speedMin, speedMax,
-         y2: 0,
-         stroke: entry.color || '#555',
-         'stroke-width': Number.isFinite(entry.strokeWidth) ? entry.strokeWidth : 3
-       };
-       if (entry.strokeDasharray) lineAttrs['stroke-dasharray'] = entry.strokeDasharray;
-       g.appendChild(svgEl('line', lineAttrs));
-       const text = svgEl('text', { x: 28, y: 4, 'font-size': '12', fill: '#333' });
-       text.textContent = entry.label;
-       g.appendChild(text);
-       legendGroup.appendChild(g);
-       offsetY += 18;
-     });
-     svg.appendChild(legendGroup);
+     updateCsvButtonStates();
+ 
+     // ---- Draw plots ----
+     redrawPlots();
+   } catch (e) {
+     console.error(e);
+     if (errBox) errBox.textContent = 'ERROR: ' + (e && e.message ? e.message : e);
+     clearMinimumSystemHp();
+     lastElLayer = lastElWraps = lastHyLayer = lastHyWraps = [];
+     lastDrumState = null;
+     lastDepthProfileContext = null;
+     clearDrumVisualization();
+     clearPlots();
+     updateCsvButtonStates();
+     renderInputSummary();
+     renderLatexFragments(document.body);
    }
  }
  
- export function drawStandaloneSpeedProfiles(svg, {
-   segments = [],
-   extraProfiles = [],
-   depthMin: depthMinOverride,
-   depthMax: depthMaxOverride,
-   speedMin: speedMinOverride,
-   speedMax: speedMaxOverride,
-   ratedSpeedMs = null,
-   primaryLabel = null,
--  accentColor: accentOverride
-+  accentColor: accentOverride,
-+  showLegend = true
- } = {}) {
-   if (!svg) return;
- 
-   const allSegments = [];
-   const collectSegment = seg => {
-     if (!seg) return;
-     const d0 = Number.isFinite(seg.depth_start) ? seg.depth_start : null;
-     const d1 = Number.isFinite(seg.depth_end) ? seg.depth_end : null;
-     const speed = Number.isFinite(seg.speed_ms) ? seg.speed_ms : null;
-     if (Number.isFinite(d0)) allSegments.push({ type: 'depth', value: d0 });
-     if (Number.isFinite(d1)) allSegments.push({ type: 'depth', value: d1 });
-     if (Number.isFinite(speed)) allSegments.push({ type: 'speed', value: speed });
-   };
- 
-   (segments || []).forEach(collectSegment);
-   (extraProfiles || []).forEach(profile => {
-     if (!profile || !Array.isArray(profile.segments)) return;
-     profile.segments.forEach(collectSegment);
-   });
- 
-   let depthMin = Number.isFinite(depthMinOverride) ? Math.max(0, depthMinOverride) : 0;
-   let depthMax;
-   if (Number.isFinite(depthMaxOverride)) {
-     depthMax = Math.max(depthMin + 0.1, depthMaxOverride);
-   } else {
-@@ -583,51 +587,52 @@ export function drawStandaloneSpeedProfiles(svg, {
-       if (entry.type === 'depth' && Number.isFinite(entry.value)) depthCandidates.push(entry.value);
-     });
-     const autoDepthMax = Math.max(...depthCandidates);
-     depthMax = Number.isFinite(autoDepthMax) ? autoDepthMax : depthMin + 1;
-   }
-   if (!Number.isFinite(depthMax) || depthMax <= depthMin) depthMax = depthMin + 1;
- 
-   let speedMin = Number.isFinite(speedMinOverride) ? Math.max(0, speedMinOverride) : 0;
-   let speedMax;
-   if (Number.isFinite(speedMaxOverride)) {
-     speedMax = Math.max(speedMin + 0.1, speedMaxOverride);
-   } else {
-     const speedCandidates = [speedMin + 0.1, 3];
-     allSegments.forEach(entry => {
-       if (entry.type === 'speed' && Number.isFinite(entry.value)) speedCandidates.push(entry.value);
-     });
-     const autoSpeedMax = Math.max(...speedCandidates);
-     speedMax = Number.isFinite(autoSpeedMax) ? autoSpeedMax : speedMin + 1;
-   }
-   if (!Number.isFinite(speedMax) || speedMax <= speedMin) speedMax = speedMin + 1;
- 
-   const accentColor = accentOverride || getAccentColor();
- 
-   drawSpeedProfile(svg, segments || [], depthMin, depthMax, speedMin, speedMax, accentColor, ratedSpeedMs, {
-     primaryLabel,
--    extraProfiles: Array.isArray(extraProfiles) ? extraProfiles : []
-+    extraProfiles: Array.isArray(extraProfiles) ? extraProfiles : [],
-+    showLegend
-   });
- }
- 
- function findRatedDepthLimit(segments, ratedSpeedMs) {
-   if (!Array.isArray(segments) || !Number.isFinite(ratedSpeedMs) || ratedSpeedMs <= 0) return null;
-   const ranges = segments
-     .filter(S => Number.isFinite(S.speed_ms))
-     .map(S => ({
-       d0: Math.min(S.depth_start, S.depth_end),
-       d1: Math.max(S.depth_start, S.depth_end),
-       speed: S.speed_ms
-     }))
-     .sort((a, b) => a.d0 - b.d0);
- 
-   if (!ranges.length) return null;
- 
-   let deepestReach = null;
-   let hasReachable = false;
- 
-   for (const range of ranges) {
-     if (isRatedBelowAvailable(ratedSpeedMs, range.speed)) {
-       hasReachable = true;
-       deepestReach = (deepestReach === null) ? range.d1 : Math.max(deepestReach, range.d1);
-       continue;
-     }
+ // ---- Plot redraw helper (uses decoupled plotting modules) ----

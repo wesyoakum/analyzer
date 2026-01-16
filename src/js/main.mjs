@@ -1198,6 +1198,7 @@ function computeAll() {
     const motor_hp = positiveOr(read('motor_hp'), 0);
     const motor_eff = positiveOr(read('motor_eff'), 1);
     const motor_tmax = read('motor_tmax');
+    const gearbox_max_torque_Nm = read('gearbox_max_torque_Nm');
     const P_per_motor_W = motor_hp * motor_eff * W_PER_HP;
 
     // Hydraulic inputs
@@ -1417,7 +1418,13 @@ function computeAll() {
     });
 
     // ---- Render tables ----
-    renderElectricTables(lastElLayer, lastElWraps, q('tbody_el_layer'), q('tbody_el_wraps'));
+    renderElectricTables(
+      lastElLayer,
+      lastElWraps,
+      q('tbody_el_layer'),
+      q('tbody_el_wraps'),
+      gearbox_max_torque_Nm
+    );
     renderHydraulicTables(lastHyLayer, lastHyWraps, q('tbody_hy_layer'), q('tbody_hy_wraps'));
 
     renderInputSummary();
