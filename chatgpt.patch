@@ -1,287 +1,30 @@
-From f96aa17da6c1d116540f70146229018d20a9c8f2 Mon Sep 17 00:00:00 2001
-From: Codex <codex@openai.com>
-Date: Fri, 16 Jan 2026 17:40:08 +0000
-Subject: [PATCH] Add gearbox torque column to tables and CSVs
-MIME-Version: 1.0
-Content-Type: text/plain; charset=UTF-8
-Content-Transfer-Encoding: 8bit
-
-### Motivation
-- Surface computed gearbox torque (tension × radius ÷ (gr2 × motor count)) in results so users can inspect gearbox loading per wrap and per layer.
-- Expose gearbox torque in table renderers and CSV exports to allow detection of exceedances against a user-provided gearbox limit.
-- Ensure UI highlights values that exceed the configured gearbox max torque.
-
-### Description
-- Compute per-wrap `gearbox_torque_Nm` in `src/js/main.mjs` as `drum_torque_required / (gr2_safe * motors_safe)` and add `gr2_safe` guard.
-- Compute per-layer `max_gearbox_torque_Nm` in `src/js/electric.mjs` using a `gearboxDenom` and include it in layer rows.
-- Add `gearbox_torque_Nm`/`max_gearbox_torque_Nm` fields to the projected electric and hydraulic wrap/layer datasets and include them in CSV column lists in `src/js/main.mjs`.
-- Extend `renderElectricTables()` signature to accept `gearboxMaxTorqueNm` and render a gearbox torque column in both the electric layer and wraps tables using a `torqueCell()` helper that applies `class="is-exceeded"` and a `title` when the value exceeds the provided gearbox max.
-- Add gearbox torque columns/headers to `src/index.html` for the electric and hydraulic layer/wrap tables.
-- Render gearbox torque values in hydraulic tables and aggregate a per-layer `max_gearbox_torque_Nm` in `src/js/hydraulic.mjs`.
-- Add `.is-exceeded` styling in `src/css/styles.css` for visual emphasis of exceedances.
-
-### Testing
-- Started the local server with `npm start` and the server reported "Server listening on http://localhost:3000", which succeeded.
-- Attempted an automated UI smoke test with Playwright to capture a screenshot of the updated electric table, but Chromium crashed with a SIGSEGV / `TargetClosedError`, so no screenshot was produced.
-- No other automated tests were executed as part of this change.
----
- src/css/styles.css   |  7 +++-
- src/index.html       | 12 +++++++
- src/js/electric.mjs  | 78 ++++++++++++++++++++++++++------------------
- src/js/hydraulic.mjs |  9 +++++
- src/js/main.mjs      | 27 ++++++++++-----
- 5 files changed, 91 insertions(+), 42 deletions(-)
-
-diff --git a/src/css/styles.css b/src/css/styles.css
-index 066e865..8413768 100644
---- a/src/css/styles.css
-+++ b/src/css/styles.css
-@@ -697,6 +697,12 @@ button:focus {
-   text-align: center;
- }
- 
-+.is-exceeded {
-+  color: #b64242;
-+  background: #fdecec;
-+  font-weight: 600;
-+}
-+
- .tab-bar {
-   display: flex;
-   flex-wrap: wrap;
-@@ -1188,4 +1194,3 @@ th[title] {
-     width: auto;
-   }
- }
--
-diff --git a/src/index.html b/src/index.html
-index 4578d2e..b46ea72 100644
---- a/src/index.html
-+++ b/src/index.html
-@@ -1007,6 +1007,9 @@
-               <th title="tau_avail_kNm">
-                 <span data-latex="\\tau_{avail}">τ<sub>avail</sub></span><br>(kN·m)
-               </th>
-+              <th title="max_gearbox_torque_Nm">
-+                <span data-latex="\\tau_{g}">τ<sub>g</sub></span><br>(N·m)
-+              </th>
-               <th title="max_motor_torque_Nm">
-                 <span data-latex="\\tau_{m,\\max}">τ<sub>m,max</sub></span><br>(N·m)
-               </th>
-@@ -1063,6 +1066,9 @@
-                 <th title="tau_avail_kNm">
-                   <span data-latex="\\tau_{avail}">τ<sub>avail</sub></span><br>(kN·m)
-                 </th>
-+                <th title="gearbox_torque_Nm">
-+                  <span data-latex="\\tau_{g}">τ<sub>g</sub></span><br>(N·m)
-+                </th>
-                 <th title="motor_torque_Nm">
-                   <span data-latex="\\tau_{m}">τ<sub>m</sub></span><br>(N·m)
-                 </th>
-@@ -1119,6 +1125,9 @@
-               <th title="hyd_tau_avail_kNm">
-                 <span data-latex="\\tau_{avail}">τ<sub>avail</sub></span><br>(kN·m)
-               </th>
-+              <th title="max_gearbox_torque_Nm">
-+                <span data-latex="\\tau_{g}">τ<sub>g</sub></span><br>(N·m)
-+              </th>
-               <th title="hyd_tension_theoretical_start_kgf">
-                 <span data-latex="T_{theo}">T<sub>theo</sub></span><br>(kgf)
-               </th>
-@@ -1184,6 +1193,9 @@
-                 <th title="hyd_tau_avail_kNm">
-                   <span data-latex="\\tau_{avail}">τ<sub>avail</sub></span><br>(kN·m)
-                 </th>
-+                <th title="gearbox_torque_Nm">
-+                  <span data-latex="\\tau_{g}">τ<sub>g</sub></span><br>(N·m)
-+                </th>
-                 <th title="hyd_avail_tension_kgf">
-                   <span data-latex="T_{avail}">T<sub>avail</sub></span><br>(kgf)
-                 </th>
-diff --git a/src/js/electric.mjs b/src/js/electric.mjs
-index 12002e6..decc15d 100644
---- a/src/js/electric.mjs
-+++ b/src/js/electric.mjs
-@@ -75,6 +75,7 @@ export function rowsToElectricLayer(rows, payload_kg, cable_w_kgpm, gr1, gr2, mo
-   // Final: compute max tension/torque values at the layer start (pre-wrap)
-   const out = [];
-   const denom = (gr1 || 1) * (gr2 || 1) * (motors || 1);
-+  const gearboxDenom = Math.max(gr2 || 1, 1e-9) * Math.max(motors || 1, 1);
- 
-   for (const L of [...byLayer.values()].sort((a, b) => a.layer_no - b.layer_no)) {
-     const maxTheo_kgf = tension_kgf(L.pre_deployed_m, payload_kg, cable_w_kgpm);
-@@ -82,6 +83,7 @@ export function rowsToElectricLayer(rows, payload_kg, cable_w_kgpm, gr1, gr2, mo
-     const radius_m = (L.layer_dia_in * M_PER_IN) / 2;
-     const maxT_Nm = +(maxReq_kgf * G * radius_m).toFixed(1);
-     const maxMotorNm = +(maxT_Nm / denom).toFixed(1);
-+    const maxGearboxNm = +(maxT_Nm / gearboxDenom).toFixed(1);
- 
-     out.push({
-       ...L,
-@@ -89,6 +91,7 @@ export function rowsToElectricLayer(rows, payload_kg, cable_w_kgpm, gr1, gr2, mo
-       max_tension_required_kgf: maxReq_kgf,
-       max_torque_Nm: maxT_Nm,
-       tau_avail_kNm: +(maxT_Nm / 1000).toFixed(1),
-+      max_gearbox_torque_Nm: maxGearboxNm,
-       max_motor_torque_Nm: maxMotorNm
-     });
-   }
-@@ -113,6 +116,7 @@ export function projectElectricWraps(rows) {
-     tension_required_kgf: r.tension_kgf,
-     tension_theoretical_kgf: r.tension_theoretical_kgf,
-     tau_avail_kNm: +(r.torque_Nm / 1000).toFixed(1),
-+    gearbox_torque_Nm: r.gearbox_torque_Nm,
-     motor_torque_Nm: r.motor_torque_Nm,
-     motor_rpm: r.motor_rpm,
-     line_speed_mpm: r.line_speed_mpm,
-@@ -127,29 +131,38 @@ export function projectElectricWraps(rows) {
-  * @param {HTMLElement} tbodyLayer
-  * @param {HTMLElement} tbodyWraps
-  */
--export function renderElectricTables(elLayers, elWraps, tbodyLayer, tbodyWraps) {
-+export function renderElectricTables(elLayers, elWraps, tbodyLayer, tbodyWraps, gearboxMaxTorqueNm) {
-+  const hasGearboxMax = Number.isFinite(gearboxMaxTorqueNm) && gearboxMaxTorqueNm > 0;
-+  const torqueCell = (value) => {
-+    const text = formatMotorTorque(value);
-+    const exceeds = hasGearboxMax && Number.isFinite(value) && value > gearboxMaxTorqueNm;
-+    const attrs = exceeds ? ' class="is-exceeded" title="Exceeds gearbox max torque"' : '';
-+    return `<td${attrs}>${text}</td>`;
-+  };
-+
-   // Layer table
-   tbodyLayer.innerHTML = '';
-   for (const r of elLayers) {
-     const tr = document.createElement('tr');
-     const cells = [
--      formatInteger(r.layer_no),
--      formatInches(r.layer_dia_in),
--      formatMeters(r.pre_on_drum_m),
--      formatMeters(r.pre_deployed_m),
--      formatMeters(r.post_on_drum_m),
--      formatMeters(r.post_deployed_m),
--      formatKgf(r.max_tension_theoretical_kgf),
--      formatKgf(r.max_tension_required_kgf),
--      formatDecimal(r.tau_avail_kNm, 1),
--      formatMotorTorque(r.max_motor_torque_Nm),
--      formatRpm(r.motor_rpm_at_start ?? ''),
--      formatSpeed(r.line_speed_at_start_mpm ?? ''),
--      formatKgf(r.tension_theoretical_start_kgf),
--      formatKgf(r.tension_required_start_kgf),
--      formatKgf(r.avail_tension_kgf)
-+      `<td>${formatInteger(r.layer_no)}</td>`,
-+      `<td>${formatInches(r.layer_dia_in)}</td>`,
-+      `<td>${formatMeters(r.pre_on_drum_m)}</td>`,
-+      `<td>${formatMeters(r.pre_deployed_m)}</td>`,
-+      `<td>${formatMeters(r.post_on_drum_m)}</td>`,
-+      `<td>${formatMeters(r.post_deployed_m)}</td>`,
-+      `<td>${formatKgf(r.max_tension_theoretical_kgf)}</td>`,
-+      `<td>${formatKgf(r.max_tension_required_kgf)}</td>`,
-+      `<td>${formatDecimal(r.tau_avail_kNm, 1)}</td>`,
-+      torqueCell(r.max_gearbox_torque_Nm),
-+      `<td>${formatMotorTorque(r.max_motor_torque_Nm)}</td>`,
-+      `<td>${formatRpm(r.motor_rpm_at_start ?? '')}</td>`,
-+      `<td>${formatSpeed(r.line_speed_at_start_mpm ?? '')}</td>`,
-+      `<td>${formatKgf(r.tension_theoretical_start_kgf)}</td>`,
-+      `<td>${formatKgf(r.tension_required_start_kgf)}</td>`,
-+      `<td>${formatKgf(r.avail_tension_kgf)}</td>`
-     ];
--    tr.innerHTML = cells.map(v => `<td>${v}</td>`).join('');
-+    tr.innerHTML = cells.join('');
-     tbodyLayer.appendChild(tr);
-   }
- 
-@@ -158,22 +171,23 @@ export function renderElectricTables(elLayers, elWraps, tbodyLayer, tbodyWraps)
-   for (const r of elWraps) {
-     const tr = document.createElement('tr');
-     const cells = [
--      formatInteger(r.wrap_no),
--      formatInteger(r.layer_no),
--      formatInches(r.layer_dia_in),
--      formatInches(r.wrap_len_in),
--      formatMeters(r.pre_spooled_len_m),
--      formatMeters(r.spooled_len_m),
--      formatMeters(r.deployed_len_m),
--      formatKgf(r.tension_theoretical_kgf ?? ''),
--      formatKgf(r.tension_required_kgf ?? ''),
--      formatDecimal(r.tau_avail_kNm, 1),
--      formatMotorTorque(r.motor_torque_Nm),
--      formatRpm(r.motor_rpm),
--      formatSpeed(r.line_speed_mpm),
--      formatKgf(r.avail_tension_kgf)
-+      `<td>${formatInteger(r.wrap_no)}</td>`,
-+      `<td>${formatInteger(r.layer_no)}</td>`,
-+      `<td>${formatInches(r.layer_dia_in)}</td>`,
-+      `<td>${formatInches(r.wrap_len_in)}</td>`,
-+      `<td>${formatMeters(r.pre_spooled_len_m)}</td>`,
-+      `<td>${formatMeters(r.spooled_len_m)}</td>`,
-+      `<td>${formatMeters(r.deployed_len_m)}</td>`,
-+      `<td>${formatKgf(r.tension_theoretical_kgf ?? '')}</td>`,
-+      `<td>${formatKgf(r.tension_required_kgf ?? '')}</td>`,
-+      `<td>${formatDecimal(r.tau_avail_kNm, 1)}</td>`,
-+      torqueCell(r.gearbox_torque_Nm),
-+      `<td>${formatMotorTorque(r.motor_torque_Nm)}</td>`,
-+      `<td>${formatRpm(r.motor_rpm)}</td>`,
-+      `<td>${formatSpeed(r.line_speed_mpm)}</td>`,
-+      `<td>${formatKgf(r.avail_tension_kgf)}</td>`
-     ];
--    tr.innerHTML = cells.map(v => `<td>${v}</td>`).join('');
-+    tr.innerHTML = cells.join('');
-     tbodyWraps.appendChild(tr);
-   }
- }
-diff --git a/src/js/hydraulic.mjs b/src/js/hydraulic.mjs
-index dadb9ad..178f09a 100644
---- a/src/js/hydraulic.mjs
-+++ b/src/js/hydraulic.mjs
-@@ -45,6 +45,7 @@ export function rowsToHydraulicLayer(rows) {
-         hyd_hp_sys: null,
-         hyd_tau_avail_Nm: null,
-         hyd_tau_avail_kNm: null,
-+        max_gearbox_torque_Nm: null,
-         hyd_tension_theoretical_start_kgf: null,
-         hyd_tension_required_start_kgf: null,
-         hyd_avail_tension_kgf: null
-@@ -74,6 +75,11 @@ export function rowsToHydraulicLayer(rows) {
-       L.hyd_tension_required_start_kgf = r.tension_kgf ?? null;
-       L.hyd_avail_tension_kgf = r.hyd_avail_tension_kgf ?? null;
-     }
-+    if (L && Number.isFinite(r.gearbox_torque_Nm)) {
-+      L.max_gearbox_torque_Nm = Number.isFinite(L.max_gearbox_torque_Nm)
-+        ? Math.max(L.max_gearbox_torque_Nm, r.gearbox_torque_Nm)
-+        : r.gearbox_torque_Nm;
-+    }
-   }
- 
-   return [...byLayer.values()].sort((a, b) => a.layer_no - b.layer_no);
-@@ -103,6 +109,7 @@ export function projectHydraulicWraps(rows) {
-     hyd_hp_req: r.hyd_hp_used_at_available,
-     hyd_hp_sys: r.hyd_elec_input_hp_used,
-     hyd_tau_avail_kNm: +(r.hyd_drum_torque_maxP_Nm / 1000).toFixed(1),
-+    gearbox_torque_Nm: r.gearbox_torque_Nm,
-     hyd_avail_tension_kgf: r.hyd_avail_tension_kgf,
-     hyd_drum_rpm_flow: r.hyd_drum_rpm_flow,
-     hyd_drum_rpm_power: r.hyd_drum_rpm_power,
-@@ -137,6 +144,7 @@ export function renderHydraulicTables(hyLayers, hyWraps, tbodyLayer, tbodyWraps)
-       formatHp(r.hyd_hp_req ?? ''),
-       formatHp(r.hyd_hp_sys ?? ''),
-       formatDecimal(r.hyd_tau_avail_kNm, 1),
-+      formatDecimal(r.max_gearbox_torque_Nm, 1),
-       formatKgf(r.hyd_tension_theoretical_start_kgf),
-       formatKgf(r.hyd_tension_required_start_kgf),
-       formatKgf(r.hyd_avail_tension_kgf)
-@@ -166,6 +174,7 @@ export function renderHydraulicTables(hyLayers, hyWraps, tbodyLayer, tbodyWraps)
-       formatHp(r.hyd_hp_req),
-       formatHp(r.hyd_hp_sys),
-       formatDecimal(r.hyd_tau_avail_kNm, 1),
-+      formatDecimal(r.gearbox_torque_Nm, 1),
-       formatKgf(r.hyd_avail_tension_kgf)
-     ];
-     tr.innerHTML = cells.map(v => `<td>${v}</td>`).join('');
 diff --git a/src/js/main.mjs b/src/js/main.mjs
-index 5fa30b3..8ff9c9a 100644
+index 5fa30b3f99ce9d5ec844f713d34d74517cc9c377..8ff9c9a763c8bdb26acb744941231b1773470f06 100644
 --- a/src/js/main.mjs
 +++ b/src/js/main.mjs
-@@ -339,14 +339,14 @@ const CSV_BUTTON_SPECS = {
+@@ -317,114 +317,114 @@ function computeDepthSpeedSegmentsForPayload(payloadKg, context, options = {}) {
+       }
+       if (!Number.isFinite(selectedSpeedMpm) || selectedSpeedMpm < 0) selectedSpeedMpm = 0;
+       speed_mpm = selectedSpeedMpm;
+     }
+ 
+     const speed_ms = speed_mpm / 60;
+     if (!Number.isFinite(speed_ms)) continue;
+ 
+     segments.push({
+       depth_start: depthStart,
+       depth_end: depthEnd,
+       speed_ms: Math.max(0, speed_ms)
+     });
+   }
+ 
+   segments.sort((a, b) => (b.depth_start || 0) - (a.depth_start || 0));
+   return segments;
+ }
+ 
+ const CSV_BUTTON_SPECS = {
+   csv_el_layer: {
+     filename: () => 'electric-layer.csv',
      columns: [
        'layer_no', 'layer_dia_in', 'pre_on_drum_m', 'pre_deployed_m',
        'post_on_drum_m', 'post_deployed_m', 'max_tension_theoretical_kgf',
@@ -298,7 +41,10 @@ index 5fa30b3..8ff9c9a 100644
        'motor_rpm_at_start', 'line_speed_at_start_mpm',
        'tension_theoretical_start_kgf', 'tension_required_start_kgf', 'avail_tension_kgf'
      ],
-@@ -357,13 +357,13 @@ const CSV_BUTTON_SPECS = {
+     getRows: () => lastElLayer
+   },
+   csv_el_wraps: {
+     filename: () => 'electric-wraps.csv',
      columns: [
        'wrap_no', 'layer_no', 'layer_dia_in', 'wrap_len_in', 'pre_spooled_len_m',
        'spooled_len_m', 'deployed_len_m', 'tension_theoretical_kgf',
@@ -314,7 +60,10 @@ index 5fa30b3..8ff9c9a 100644
        'line_speed_mpm', 'avail_tension_kgf'
      ],
      getRows: () => lastElWraps
-@@ -374,7 +374,7 @@ const CSV_BUTTON_SPECS = {
+   },
+   csv_hy_layer: {
+     filename: () => 'hydraulic-layer.csv',
+     columns: [
        'layer_no', 'layer_dia_in', 'pre_on_drum_m', 'pre_deployed_m',
        'post_on_drum_m', 'post_deployed_m', 'hyd_P_required_psi',
        'hyd_speed_power_mpm', 'hyd_speed_flow_mpm', 'hyd_speed_available_mpm',
@@ -323,7 +72,7 @@ index 5fa30b3..8ff9c9a 100644
        'hyd_tension_theoretical_start_kgf', 'hyd_tension_required_start_kgf',
        'hyd_avail_tension_kgf'
      ],
-@@ -382,7 +382,7 @@ const CSV_BUTTON_SPECS = {
+     header: [
        'layer_no', 'layer_dia_in', 'pre_on_drum_m', 'pre_deployed_m',
        'post_on_drum_m', 'post_deployed_m', 'hyd_P_required_psi',
        'hyd_speed_power_mpm', 'hyd_speed_flow_mpm', 'hyd_speed_available_mpm',
@@ -332,7 +81,12 @@ index 5fa30b3..8ff9c9a 100644
        'hyd_tension_theoretical_start_kgf', 'hyd_tension_required_start_kgf',
        'hyd_avail_tension_kgf'
      ],
-@@ -395,14 +395,14 @@ const CSV_BUTTON_SPECS = {
+     getRows: () => lastHyLayer
+   },
+   csv_hy_wraps: {
+     filename: () => 'hydraulic-wraps.csv',
+     columns: [
+       'wrap_no', 'layer_no', 'layer_dia_in', 'wrap_len_in', 'pre_spooled_len_m',
        'spooled_len_m', 'deployed_len_m', 'tension_theoretical_kgf',
        'tension_required_kgf', 'hyd_P_required_psi', 'hyd_speed_power_mpm',
        'hyd_speed_flow_mpm', 'hyd_speed_available_mpm', 'hyd_hp_req',
@@ -349,7 +103,51 @@ index 5fa30b3..8ff9c9a 100644
      ],
      getRows: () => lastHyWraps
    }
-@@ -1198,6 +1198,7 @@ function computeAll() {
+ };
+ 
+ const SYSTEM_TYPE_SELECT_ID = 'system_type_select';
+ const DEFAULT_SYSTEM_TYPE = 'electric';
+ 
+ // ---- Wire up events once DOM is ready ----
+ document.addEventListener('DOMContentLoaded', () => {
+   setupInputPersistence();
+ 
+   setupComponentSelectors();
+ 
+   setupCollapsibleToggles();
+ 
+   setupDriveModeControls();
+ 
+   setupCsvDownloads();
+ 
+   setupPlotResizeToggles();
+ 
+   setupManualRefreshControls();
+ 
+   setupAutoRecompute();
+@@ -1176,102 +1176,105 @@ function computeAll() {
+     const cable_w_kgpm = read('c_w_kgpm');
+ 
+     const rated_speed_mpm = read('rated_speed_mpm');
+     const rated_swl_kgf = read('rated_swl_kgf');
+     const system_efficiency = read('system_efficiency');
+ 
+     updateMinimumSystemHp(rated_speed_mpm, rated_swl_kgf, system_efficiency);
+ 
+     const positiveOr = (value, fallback) => (Number.isFinite(value) && value > 0 ? value : fallback);
+ 
+     // Shared drivetrain
+     const gr1 = positiveOr(read('gr1'), 1);
+     const gr2 = positiveOr(read('gr2'), 1);
+     const motors = positiveOr(read('motors'), 1);
+     const denom_mech = gr1 * gr2 * motors;
+     const gear_product = Math.max(gr1, 1e-9) * Math.max(gr2, 1e-9);
+ 
+     const electricEnabled = driveModeEnabled('electric');
+     const hydraulicEnabled = driveModeEnabled('hydraulic');
+ 
+     // Electric inputs
+     const motor_max_rpm = read('motor_max_rpm');
      const motor_hp = positiveOr(read('motor_hp'), 0);
      const motor_eff = positiveOr(read('motor_eff'), 1);
      const motor_tmax = read('motor_tmax');
@@ -357,7 +155,49 @@ index 5fa30b3..8ff9c9a 100644
      const P_per_motor_W = motor_hp * motor_eff * W_PER_HP;
  
      // Hydraulic inputs
-@@ -1247,9 +1248,11 @@ function computeAll() {
+     const h_strings = positiveOr(read('h_pump_strings'), 0);
+     const h_emotor_hp = positiveOr(read('h_emotor_hp'), 0);
+     const h_emotor_eff = positiveOr(read('h_emotor_eff'), 0); // electro-hydraulic efficiency
+     const h_emotor_rpm = positiveOr(read('h_emotor_rpm'), 0);
+     const h_pump_cc = positiveOr(read('h_pump_cc'), 0);
+     const h_max_psi = positiveOr(read('h_max_psi'), 0);
+     const h_hmot_cc = positiveOr(read('h_hmot_cc'), 0);
+     const h_hmot_rpm_cap = positiveOr(read('h_hmot_rpm_max'), Infinity);
+ 
+     // Usable hydraulic hp & flow from pump strings
+     const hp_str_usable = h_emotor_hp * h_emotor_eff;
+     const hp_tot_usable = hp_str_usable * h_strings;
+     const q_str_gpm = gpm_from_cc_rev_and_rpm(h_pump_cc, h_emotor_rpm);
+     const q_tot_gpm = q_str_gpm * h_strings;
+     const rpm_flow_per_motor_available = Math.min(
+       Number.isFinite(h_hmot_rpm_cap) && h_hmot_rpm_cap > 0 ? h_hmot_rpm_cap : Number.POSITIVE_INFINITY,
+       rpm_from_gpm_and_disp(q_tot_gpm / Math.max(motors, 1), h_hmot_cc)
+     );
+ 
+     // Max-pressure torque per hydraulic motor and at drum (pressure-limited)
+     const dP_Pa = h_max_psi * PSI_TO_PA;
+     const torque_per_hmotor_maxP = torque_per_motor_from_pressure_Pa(dP_Pa, h_hmot_cc); // N·m per motor at max P
+     const torque_at_drum_maxP_factor = Math.max(gr1, 1) * Math.max(gr2, 1) * Math.max(motors, 1);
+ 
+     // Generate wraps from geometry
+     const { rows, summary, meta } = calcLayers(cfg);
+ 
+     const wrapsNoteEl = /** @type {HTMLTableCellElement|null} */ (document.getElementById('wraps_note'));
+     if (wrapsNoteEl) {
+       const calcWraps = meta && Number.isFinite(meta.wraps_per_layer_calc) ? meta.wraps_per_layer_calc : undefined;
+       const display = (typeof calcWraps === 'number') ? calcWraps.toFixed(1) : '–';
+       wrapsNoteEl.textContent = `Leave blank or set to 0 to use calculated wraps (always truncated to .0/.5). Auto-calculated wraps per layer: ${display}.`;
+     }
+ 
+     // Per-wrap calculations (electric + hydraulic)
+     for (const r of rows) {
+       // Base tension and torque at drum
+       const theoretical_tension = tension_kgf(r.deployed_len_m, payload_kg, cable_w_kgpm);
+       const required_tension = +(theoretical_tension).toFixed(1);
+       r.tension_theoretical_kgf = theoretical_tension;
+       r.tension_kgf = required_tension;
+       const tension_N = required_tension * G;
+       const radius_m = (r.layer_dia_in * M_PER_IN) / 2;
        const drum_T = tension_N * radius_m;
        const motors_safe = Math.max(motors, 1);
        const gear_product_safe = Math.max(gear_product, 1e-9);
@@ -369,7 +209,51 @@ index 5fa30b3..8ff9c9a 100644
  
        // ----- ELECTRIC per wrap -----
        if (electricEnabled) {
-@@ -1417,7 +1420,13 @@ function computeAll() {
+         const motorTorque_e = r.torque_Nm / (denom_mech || 1);
+         r.motor_torque_Nm = +motorTorque_e.toFixed(2);
+ 
+         // RPM limited by available power per motor and capped by motor max rpm
+         let rpm_power_e = 0;
+         if (P_per_motor_W > 0 && motorTorque_e > 0) {
+           rpm_power_e = (P_per_motor_W / motorTorque_e) * 60 / (2 * Math.PI);
+         } else if (P_per_motor_W > 0 && motorTorque_e === 0) {
+           rpm_power_e = Number.POSITIVE_INFINITY;
+         } else {
+           rpm_power_e = 0;
+         }
+         const rpm_capped_e = Math.min(Number.isFinite(motor_max_rpm) ? motor_max_rpm : Infinity, rpm_power_e);
+         r.motor_rpm = +((Number.isFinite(rpm_capped_e) ? rpm_capped_e : 0)).toFixed(1);
+ 
+         // Line speed at drum
+         r.line_speed_mpm = +line_speed_mpm_from_motor_rpm(r.motor_rpm, gr1, gr2, r.layer_dia_in).toFixed(2);
+ 
+         // Available line tension from motor torque cap
+         r.avail_tension_kgf = elec_available_tension_kgf(motor_tmax, gr1, gr2, motors, radius_m);
+       } else {
+         r.motor_torque_Nm = 0;
+@@ -1395,51 +1398,57 @@ function computeAll() {
+       motors,
+       motor_max_rpm,
+       motor_tmax,
+       P_per_motor_W,
+       denom_mech,
+       gear_product,
+       electricEnabled,
+       hydraulicEnabled,
+       hydraulic: {
+         h_strings,
+         h_emotor_hp,
+         h_emotor_eff,
+         h_emotor_rpm,
+         h_pump_cc,
+         h_max_psi,
+         h_hmot_cc,
+         h_hmot_rpm_cap,
+         torque_per_hmotor_maxP,
+         torque_at_drum_maxP_factor,
+         q_tot_gpm,
+         rpm_flow_per_motor: rpm_flow_per_motor_available
+       }
      });
  
      // ---- Render tables ----
@@ -384,5 +268,25 @@ index 5fa30b3..8ff9c9a 100644
      renderHydraulicTables(lastHyLayer, lastHyWraps, q('tbody_hy_layer'), q('tbody_hy_wraps'));
  
      renderInputSummary();
--- 
-2.43.0
+     renderLatexFragments(document.body);
+ 
+     updateCsvButtonStates();
+ 
+     // ---- Draw plots ----
+     redrawPlots();
+   } catch (e) {
+     console.error(e);
+     if (errBox) errBox.textContent = 'ERROR: ' + (e && e.message ? e.message : e);
+     clearMinimumSystemHp();
+     lastElLayer = lastElWraps = lastHyLayer = lastHyWraps = [];
+     lastDrumState = null;
+     lastDepthProfileContext = null;
+     clearDrumVisualization();
+     clearPlots();
+     updateCsvButtonStates();
+     renderInputSummary();
+     renderLatexFragments(document.body);
+   }
+ }
+ 
+ // ---- Plot redraw helper (uses decoupled plotting modules) ----

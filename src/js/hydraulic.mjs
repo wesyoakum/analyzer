@@ -45,6 +45,7 @@ export function rowsToHydraulicLayer(rows) {
         hyd_hp_sys: null,
         hyd_tau_avail_Nm: null,
         hyd_tau_avail_kNm: null,
+        max_gearbox_torque_Nm: null,
         hyd_tension_theoretical_start_kgf: null,
         hyd_tension_required_start_kgf: null,
         hyd_avail_tension_kgf: null
@@ -73,6 +74,11 @@ export function rowsToHydraulicLayer(rows) {
       L.hyd_tension_theoretical_start_kgf = r.tension_theoretical_kgf ?? null;
       L.hyd_tension_required_start_kgf = r.tension_kgf ?? null;
       L.hyd_avail_tension_kgf = r.hyd_avail_tension_kgf ?? null;
+    }
+    if (L && Number.isFinite(r.gearbox_torque_Nm)) {
+      L.max_gearbox_torque_Nm = Number.isFinite(L.max_gearbox_torque_Nm)
+        ? Math.max(L.max_gearbox_torque_Nm, r.gearbox_torque_Nm)
+        : r.gearbox_torque_Nm;
     }
   }
 
@@ -103,6 +109,7 @@ export function projectHydraulicWraps(rows) {
     hyd_hp_req: r.hyd_hp_used_at_available,
     hyd_hp_sys: r.hyd_elec_input_hp_used,
     hyd_tau_avail_kNm: +(r.hyd_drum_torque_maxP_Nm / 1000).toFixed(1),
+    gearbox_torque_Nm: r.gearbox_torque_Nm,
     hyd_avail_tension_kgf: r.hyd_avail_tension_kgf,
     hyd_drum_rpm_flow: r.hyd_drum_rpm_flow,
     hyd_drum_rpm_power: r.hyd_drum_rpm_power,
@@ -137,6 +144,7 @@ export function renderHydraulicTables(hyLayers, hyWraps, tbodyLayer, tbodyWraps)
       formatHp(r.hyd_hp_req ?? ''),
       formatHp(r.hyd_hp_sys ?? ''),
       formatDecimal(r.hyd_tau_avail_kNm, 1),
+      formatDecimal(r.max_gearbox_torque_Nm, 1),
       formatKgf(r.hyd_tension_theoretical_start_kgf),
       formatKgf(r.hyd_tension_required_start_kgf),
       formatKgf(r.hyd_avail_tension_kgf)
@@ -166,6 +174,7 @@ export function renderHydraulicTables(hyLayers, hyWraps, tbodyLayer, tbodyWraps)
       formatHp(r.hyd_hp_req),
       formatHp(r.hyd_hp_sys),
       formatDecimal(r.hyd_tau_avail_kNm, 1),
+      formatDecimal(r.gearbox_torque_Nm, 1),
       formatKgf(r.hyd_avail_tension_kgf)
     ];
     tr.innerHTML = cells.map(v => `<td>${v}</td>`).join('');
