@@ -9,7 +9,7 @@ import {
   line_speed_mpm_from_motor_rpm, hp_from_psi_and_gpm,
 } from './utils.mjs';
 
-import { setupInputPersistence } from './persist-inputs.mjs';
+import { collectInputState, setupInputPersistence } from './persist-inputs.mjs';
 
 import { calcLayers } from './layer-engine.mjs';
 
@@ -411,6 +411,183 @@ const CSV_BUTTON_SPECS = {
 const SYSTEM_TYPE_SELECT_ID = 'system_type_select';
 const DEFAULT_SYSTEM_TYPE = 'electric';
 
+function applyProjectState(state) {
+  if (!state || typeof state !== 'object') return;
+  Object.entries(state).forEach(([id, value]) => {
+    const el = document.getElementById(id);
+    if (!el) return;
+    if (el.tagName === 'INPUT') {
+      const input = /** @type {HTMLInputElement} */ (el);
+      if (input.type === 'checkbox') {
+        input.checked = Boolean(value);
+      } else if (input.type === 'radio') {
+        input.checked = value === input.value;
+      } else {
+        input.value = value == null ? '' : String(value);
+      }
+    } else if (el.tagName === 'SELECT') {
+      const select = /** @type {HTMLSelectElement} */ (el);
+      if (select.multiple && Array.isArray(value)) {
+        const values = new Set(value.map(String));
+        Array.from(select.options).forEach(opt => {
+          opt.selected = values.has(opt.value);
+        });
+      } else {
+        select.value = value == null ? '' : String(value);
+      }
+    } else if (el.tagName === 'TEXTAREA') {
+      el.value = value == null ? '' : String(value);
+    }
+    el.dispatchEvent(new Event('change', { bubbles: true }));
+  });
+}
+
+async function setupProjectManager() {
+  const nameInput = /** @type {HTMLInputElement|null} */ (document.getElementById('project_name'));
+  const select = /** @type {HTMLSelectElement|null} */ (document.getElementById('project_select'));
+  const saveBtn = document.getElementById('save_project');
+  const loadBtn = document.getElementById('load_project');
+  const deleteBtn = document.getElementById('delete_project');
+  if (!nameInput || !select || !saveBtn || !loadBtn || !deleteBtn) return;
+
+  const renderProjects = (projects) => {
+    const currentSelection = select.value;
+    while (select.options.length > 1) {
+      select.remove(1);
+    }
+    projects.forEach(project => {
+      if (!project || typeof project !== 'object' || !project.id || !project.name) return;
+      const option = document.createElement('option');
+      option.value = project.id;
+      option.textContent = project.name;
+      select.appendChild(option);
+    });
+    select.value = projects.some(project => project.id === currentSelection) ? currentSelection : '';
+  };
+
+  const loadProjects = async () => {
+    try {
+      const response = await fetch('/api/projects');
+      if (!response.ok) {
+        console.warn('Unable to load projects from server.');
+        return [];
+      }
+      const body = await response.json();
+      const projects = Array.isArray(body?.projects) ? body.projects : [];
+      renderProjects(projects);
+      return projects;
+    } catch (err) {
+      console.warn('Unable to fetch projects:', err);
+      return [];
+    }
+  };
+
+  saveBtn.addEventListener('click', async () => {
+    const selectedId = select.value || undefined;
+    const name = nameInput.value.trim();
+    if (!name) {
+      window.alert('Enter a project name before saving.');
+      return;
+    }
+
+    const payload = {
+      ...(selectedId ? { id: selectedId } : {}),
+      name,
+      state: collectInputState()
+    };
+
+    try {
+      const response = await fetch('/api/projects', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(payload)
+      });
+
+      if (!response.ok) {
+        window.alert('Failed to save project.');
+        return;
+      }
+
+      const body = await response.json();
+      const project = body?.project;
+      if (!project?.id) {
+        window.alert('Project saved but response was invalid.');
+        return;
+      }
+
+      await loadProjects();
+      select.value = project.id;
+      nameInput.value = project.name || name;
+    } catch (err) {
+      console.error(err);
+      window.alert('Unable to save project.');
+    }
+  });
+
+  loadBtn.addEventListener('click', async () => {
+    const selectedId = select.value;
+    if (!selectedId) {
+      window.alert('Select a saved project to load.');
+      return;
+    }
+
+    try {
+      const response = await fetch(`/api/projects/${encodeURIComponent(selectedId)}`);
+      if (!response.ok) {
+        window.alert('Project not found.');
+        return;
+      }
+      const body = await response.json();
+      const project = body?.project;
+      if (!project || typeof project.state !== 'object' || project.state === null) {
+        window.alert('Saved project is malformed.');
+        return;
+      }
+      applyProjectState(project.state);
+      nameInput.value = project.name || '';
+      computeAll();
+    } catch (err) {
+      console.error(err);
+      window.alert('Unable to load project.');
+    }
+  });
+
+  deleteBtn.addEventListener('click', async () => {
+    const selectedId = select.value;
+    if (!selectedId) {
+      window.alert('Select a saved project to delete.');
+      return;
+    }
+
+    const selectedName = select.selectedOptions?.[0]?.textContent || 'this project';
+    if (!window.confirm(`Delete ${selectedName}?`)) return;
+
+    try {
+      const response = await fetch(`/api/projects/${encodeURIComponent(selectedId)}`, {
+        method: 'DELETE'
+      });
+      if (!response.ok && response.status !== 404) {
+        window.alert('Failed to delete project.');
+        return;
+      }
+      await loadProjects();
+      nameInput.value = '';
+    } catch (err) {
+      console.error(err);
+      window.alert('Unable to delete project.');
+    }
+  });
+
+  select.addEventListener('change', () => {
+    const option = select.selectedOptions?.[0];
+    if (option?.value) {
+      nameInput.value = option.textContent || '';
+    }
+  });
+
+  await loadProjects();
+}
+
 // ---- Wire up events once DOM is ready ----
 document.addEventListener('DOMContentLoaded', () => {
   setupInputPersistence();
@@ -426,6 +603,8 @@ document.addEventListener('DOMContentLoaded', () => {
   setupPlotResizeToggles();
 
   setupManualRefreshControls();
+
+  setupProjectManager();
 
   setupAutoRecompute();
 

@@ -73,6 +73,32 @@ body {
   letter-spacing: 0.01em;
 }
 
+.project-controls {
+  margin-top: 8px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.project-controls input,
+.project-controls select {
+  height: 32px;
+  border: 1px solid var(--paper-line-strong);
+  border-radius: 6px;
+  padding: 0 10px;
+  color: var(--ink-900);
+  background: #fff;
+}
+
+.project-controls input {
+  min-width: 170px;
+}
+
+.project-controls select {
+  min-width: 190px;
+}
+
 .app-sidebar__action {
   font-size: 13px;
   text-transform: uppercase;
@@ -87,6 +113,15 @@ body {
 .app-sidebar__action:hover,
 .app-sidebar__action:focus-visible {
   color: var(--accent);
+}
+
+.app-sidebar__action--button {
+  border: 1px solid var(--paper-line-strong);
+  border-radius: 6px;
+  padding: 6px 10px;
+  background: #fff;
+  text-transform: none;
+  letter-spacing: 0.01em;
 }
 
 .app-sidebar__content {
