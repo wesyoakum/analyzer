@@ -23,7 +23,18 @@
   <div class="app-shell">
     <aside class="app-sidebar">
       <div class="app-sidebar__header">
-        <h2 class="app-sidebar__title">Winch configuration</h2>
+        <div>
+          <h2 class="app-sidebar__title">Winch configuration</h2>
+          <div class="project-controls" aria-label="Project controls">
+            <input id="project_name" type="text" placeholder="Project name" aria-label="Project name">
+            <select id="project_select" aria-label="Saved projects">
+              <option value="">Saved projects</option>
+            </select>
+            <button id="save_project" class="app-sidebar__action app-sidebar__action--button" type="button">Save</button>
+            <button id="load_project" class="app-sidebar__action app-sidebar__action--button" type="button">Load</button>
+            <button id="delete_project" class="app-sidebar__action app-sidebar__action--button" type="button">Delete</button>
+          </div>
+        </div>
         <button id="clear_inputs" class="app-sidebar__action" type="button">clear all inputs</button>
       </div>
       <div class="app-sidebar__content" id="sidebar-inputs">
