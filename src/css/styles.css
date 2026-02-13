@@ -1239,3 +1239,92 @@ th[title] {
     width: auto;
   }
 }
+
+
+.pdf-export-mode .panel[hidden] {
+  display: block !important;
+}
+
+.pdf-export-mode .panel {
+  display: block !important;
+}
+
+@media print {
+  @page {
+    size: A4 portrait;
+    margin: 14mm;
+  }
+
+  body {
+    background: #fff;
+  }
+
+  .app-shell {
+    display: block;
+    max-width: none;
+    padding: 0;
+    margin: 0;
+  }
+
+  .app-sidebar,
+  .tab-bar,
+  .card-header-actions,
+  .btnbar,
+  .refresh-link,
+  #err {
+    display: none !important;
+  }
+
+  .sheet {
+    border: none;
+    box-shadow: none;
+    max-width: none;
+    padding: 0;
+    margin: 0;
+  }
+
+  .page-header {
+    margin-bottom: 14px;
+    border-bottom: 1px solid var(--paper-line-strong);
+    padding-bottom: 10px;
+  }
+
+  .page-header::after {
+    display: block;
+    white-space: pre-line;
+    margin-top: 6px;
+    font-size: 12px;
+    color: var(--ink-500);
+    content: "Project: " var(--report-project-name) "\AGenerated: " var(--report-generated-at);
+  }
+
+  .build-indicator,
+  #panel-instructions {
+    display: none !important;
+  }
+
+  .panel,
+  .panel[hidden],
+  .panel.active {
+    display: block !important;
+  }
+
+  .card {
+    break-inside: avoid;
+    page-break-inside: avoid;
+    margin-top: 12px;
+    border-color: #d1d8e6;
+  }
+
+  .plotwrap {
+    overflow: visible;
+  }
+
+  svg {
+    max-width: 100% !important;
+  }
+
+  table {
+    font-size: 10px;
+  }
+}
