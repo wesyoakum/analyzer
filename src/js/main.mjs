@@ -450,6 +450,79 @@ async function setupProjectManager() {
   const deleteBtn = document.getElementById('delete_project');
   if (!nameInput || !select || !saveBtn || !loadBtn || !deleteBtn) return;
 
+  const LOCAL_PROJECTS_KEY = 'analyzer.projects.v1';
+
+  const getProjectStorage = () => {
+    if (typeof window === 'undefined' || !window.localStorage) return null;
+    try {
+      const probeKey = `${LOCAL_PROJECTS_KEY}.__probe__`;
+      window.localStorage.setItem(probeKey, '1');
+      window.localStorage.removeItem(probeKey);
+      return window.localStorage;
+    } catch (err) {
+      console.warn('Project fallback storage disabled:', err);
+      return null;
+    }
+  };
+
+  const readLocalProjects = () => {
+    const storage = getProjectStorage();
+    if (!storage) return [];
+    try {
+      const raw = storage.getItem(LOCAL_PROJECTS_KEY);
+      if (!raw) return [];
+      const parsed = JSON.parse(raw);
+      if (!Array.isArray(parsed)) return [];
+      return parsed.filter(project => project && typeof project === 'object' && project.id && project.name);
+    } catch (err) {
+      console.warn('Unable to read local projects:', err);
+      return [];
+    }
+  };
+
+  const writeLocalProjects = (projects) => {
+    const storage = getProjectStorage();
+    if (!storage) return false;
+    try {
+      storage.setItem(LOCAL_PROJECTS_KEY, JSON.stringify(projects));
+      return true;
+    } catch (err) {
+      console.warn('Unable to persist local projects:', err);
+      return false;
+    }
+  };
+
+  const saveLocalProject = ({ id, name, state }) => {
+    const timestamp = new Date().toISOString();
+    const projects = readLocalProjects();
+    const existingIndex = id ? projects.findIndex(project => project.id === id) : -1;
+    if (existingIndex >= 0) {
+      const existing = projects[existingIndex];
+      const merged = {
+        ...existing,
+        id: existing.id,
+        name,
+        state,
+        updatedAt: timestamp,
+        createdAt: existing.createdAt || timestamp
+      };
+      projects[existingIndex] = merged;
+      writeLocalProjects(projects);
+      return merged;
+    }
+
+    const created = {
+      id: `${Date.now()}-${Math.random().toString(16).slice(2, 10)}`,
+      name,
+      state,
+      createdAt: timestamp,
+      updatedAt: timestamp
+    };
+    projects.push(created);
+    writeLocalProjects(projects);
+    return created;
+  };
+
   const renderProjects = (projects) => {
     const currentSelection = select.value;
     while (select.options.length > 1) {
@@ -469,16 +542,18 @@ async function setupProjectManager() {
     try {
       const response = await fetch('/api/projects');
       if (!response.ok) {
-        console.warn('Unable to load projects from server.');
-        return [];
+        const localProjects = readLocalProjects();
+        renderProjects(localProjects);
+        return localProjects;
       }
       const body = await response.json();
       const projects = Array.isArray(body?.projects) ? body.projects : [];
       renderProjects(projects);
       return projects;
     } catch (err) {
-      console.warn('Unable to fetch projects:', err);
-      return [];
+      const localProjects = readLocalProjects();
+      renderProjects(localProjects);
+      return localProjects;
     }
   };
 
@@ -504,7 +579,10 @@ async function setupProjectManager() {
       });
 
       if (!response.ok) {
-        window.alert('Failed to save project.');
+        const saved = saveLocalProject(payload);
+        await loadProjects();
+        select.value = saved.id;
+        nameInput.value = saved.name || name;
         return;
       }
 
@@ -519,8 +597,10 @@ async function setupProjectManager() {
       select.value = project.id;
       nameInput.value = project.name || name;
     } catch (err) {
-      console.error(err);
-      window.alert('Unable to save project.');
+      const saved = saveLocalProject(payload);
+      await loadProjects();
+      select.value = saved.id;
+      nameInput.value = saved.name || name;
     }
   });
 
@@ -534,7 +614,14 @@ async function setupProjectManager() {
     try {
       const response = await fetch(`/api/projects/${encodeURIComponent(selectedId)}`);
       if (!response.ok) {
-        window.alert('Project not found.');
+        const localProject = readLocalProjects().find(project => project.id === selectedId);
+        if (!localProject || typeof localProject.state !== 'object' || localProject.state === null) {
+          window.alert('Project not found.');
+          return;
+        }
+        applyProjectState(localProject.state);
+        nameInput.value = localProject.name || '';
+        computeAll();
         return;
       }
       const body = await response.json();
@@ -547,8 +634,14 @@ async function setupProjectManager() {
       nameInput.value = project.name || '';
       computeAll();
     } catch (err) {
-      console.error(err);
-      window.alert('Unable to load project.');
+      const localProject = readLocalProjects().find(project => project.id === selectedId);
+      if (!localProject || typeof localProject.state !== 'object' || localProject.state === null) {
+        window.alert('Unable to load project.');
+        return;
+      }
+      applyProjectState(localProject.state);
+      nameInput.value = localProject.name || '';
+      computeAll();
     }
   });
 
@@ -567,14 +660,19 @@ async function setupProjectManager() {
         method: 'DELETE'
       });
       if (!response.ok && response.status !== 404) {
-        window.alert('Failed to delete project.');
+        const projects = readLocalProjects().filter(project => project.id !== selectedId);
+        writeLocalProjects(projects);
+        await loadProjects();
+        nameInput.value = '';
         return;
       }
       await loadProjects();
       nameInput.value = '';
     } catch (err) {
-      console.error(err);
-      window.alert('Unable to delete project.');
+      const projects = readLocalProjects().filter(project => project.id !== selectedId);
+      writeLocalProjects(projects);
+      await loadProjects();
+      nameInput.value = '';
     }
   });
 
