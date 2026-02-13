@@ -710,6 +710,8 @@ document.addEventListener('DOMContentLoaded', () => {
 
   setupTabs();
 
+  setupPdfExport();
+
   renderDocumentMath();
 
   document.querySelectorAll('.param-label').forEach(label => {
@@ -853,6 +855,45 @@ function setupTabs() {
     .find(tab => tab.classList.contains('active') || tab.getAttribute('aria-selected') === 'true');
 
   activate(initialTab || tabEntries[0].tab);
+}
+
+function setupPdfExport() {
+  const exportBtn = /** @type {HTMLButtonElement|null} */ (document.getElementById('export_pdf'));
+  if (!exportBtn) return;
+
+  const syncReportMeta = () => {
+    const projectInput = /** @type {HTMLInputElement|null} */ (document.getElementById('project_name'));
+    const projectName = (projectInput?.value || '').trim() || 'Untitled project';
+    document.documentElement.style.setProperty('--report-project-name', `"${projectName.replace(/"/g, '\\"')}"`);
+
+    const stamp = new Intl.DateTimeFormat('en-US', {
+      year: 'numeric',
+      month: 'short',
+      day: '2-digit',
+      hour: '2-digit',
+      minute: '2-digit',
+      timeZoneName: 'short'
+    }).format(new Date());
+    document.documentElement.style.setProperty('--report-generated-at', `"${stamp.replace(/"/g, '\\"')}"`);
+  };
+
+  const preparePrintLayout = () => {
+    syncReportMeta();
+    document.body.classList.add('pdf-export-mode');
+  };
+
+  const cleanupPrintLayout = () => {
+    document.body.classList.remove('pdf-export-mode');
+  };
+
+  exportBtn.addEventListener('click', () => {
+    computeAll();
+    preparePrintLayout();
+    window.print();
+  });
+
+  window.addEventListener('beforeprint', preparePrintLayout);
+  window.addEventListener('afterprint', cleanupPrintLayout);
 }
 
 function setupCsvDownloads() {
