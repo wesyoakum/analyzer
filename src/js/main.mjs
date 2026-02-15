@@ -1078,8 +1078,11 @@ function setupManualRefreshControls() {
 
 function renderInputSummary() {
   const summaryRoot = /** @type {HTMLElement|null} */ (document.getElementById('input-summary'));
+  const summaryIntro = /** @type {HTMLElement|null} */ (document.getElementById('input-summary-intro'));
   const sourceRoot = /** @type {HTMLElement|null} */ (document.getElementById('sidebar-inputs'));
   if (!summaryRoot || !sourceRoot) return;
+
+  renderInputSummaryIntro(summaryIntro);
 
   const cards = Array.from(sourceRoot.querySelectorAll('[data-summary-card]'))
     .map(el => /** @type {HTMLElement} */ (el))
@@ -1141,6 +1144,55 @@ function renderInputSummary() {
   });
 
   summaryRoot.replaceChildren(frag);
+}
+
+/**
+ * @param {HTMLElement|null} introRoot
+ */
+function renderInputSummaryIntro(introRoot) {
+  if (!introRoot) return;
+
+  const projectName = normalizeText((/** @type {HTMLInputElement|null} */ (document.getElementById('project_name')))?.value || 'Current configuration');
+  const systemType = extractControlValue('system_type_select');
+  const winchType = extractControlValue('winch_type_select');
+  const selectedSystem = extractControlValue('system_select');
+  const generatedAt = new Date().toLocaleString();
+
+  const modeText = selectedSystem === 'Custom (manual input)'
+    ? 'Custom parameter set'
+    : `Preset basis: ${selectedSystem}`;
+
+  introRoot.innerHTML = '';
+
+  const intro = document.createElement('p');
+  intro.className = 'summary-intro__body';
+  intro.textContent = 'This section documents the exact options and numeric values used for the calculations, plots, and tabulated results in the remainder of this report.';
+
+  const meta = document.createElement('div');
+  meta.className = 'summary-intro__meta';
+  meta.innerHTML = `
+    <p><strong>Project:</strong> ${projectName}</p>
+    <p><strong>System:</strong> ${systemType} / ${winchType}</p>
+    <p><strong>Configuration Basis:</strong> ${modeText}</p>
+    <p><strong>Snapshot Generated:</strong> ${generatedAt}</p>
+  `;
+
+  introRoot.append(intro, meta);
+}
+
+/**
+ * @param {string} id
+ */
+function extractControlValue(id) {
+  const control = document.getElementById(id);
+  if (control instanceof HTMLSelectElement) {
+    const option = control.selectedOptions[0];
+    return normalizeText(option ? option.textContent : control.value);
+  }
+  if (control instanceof HTMLInputElement || control instanceof HTMLTextAreaElement) {
+    return normalizeText(control.value);
+  }
+  return '–';
 }
 
 /**
@@ -1228,7 +1280,7 @@ function buildSummaryTable(tableEl) {
   const header = tableEl.tHead ? tableEl.tHead.cloneNode(true) : null;
   if (header instanceof HTMLTableSectionElement) {
     const headers = header.querySelectorAll('th');
-    if (headers.length > 1) headers[1].textContent = 'Value';
+    if (headers.length > 1) headers[1].textContent = 'Selected Value';
     summaryTable.appendChild(header);
   }
 
