@@ -66,6 +66,11 @@ body {
   padding-inline: 0;
 }
 
+.sheet section {
+  margin-inline: 0;
+  padding-inline: 0;
+}
+
 .sheet .page-title,
 .sheet .section-title,
 .sheet .input-section__title,
