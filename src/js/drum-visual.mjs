@@ -170,7 +170,6 @@ export function renderDrumVisualization(rows, summary, cfg, meta) {
   const tensionHighRgb = parseCssColor(cssVar(styles, '--tension-high', FALLBACK_HEX.tensionHigh), FALLBACK_COLORS.tensionHigh);
   const cableFillCss = rgbToCss(cableGrayRgb, 0.9);
   const cableStrokeCss = rgbToCss(cableGrayRgb, 0.9);
-
   const uniqueLayers = [];
   const seen = new Set();
   for (const row of rows) {
@@ -232,6 +231,7 @@ export function renderDrumVisualization(rows, summary, cfg, meta) {
 
   const strokeWidth = 0.85;
   const strokeWidthAttr = strokeWidth.toFixed(3);
+  const cableStrokeWidthAttr = '0.650';
 
   let coreStrokeColor = null;
   if (coreHeightPx > 0 && coreWidthPx > 0) {
@@ -396,7 +396,7 @@ export function renderDrumVisualization(rows, summary, cfg, meta) {
           r: cableRadiusPx.toFixed(2),
           fill: fillCss,
           stroke: layer.strokeColor,
-          'stroke-width': strokeWidthAttr,
+          'stroke-width': cableStrokeWidthAttr,
           'vector-effect': 'non-scaling-stroke'
         }));
 
@@ -406,7 +406,7 @@ export function renderDrumVisualization(rows, summary, cfg, meta) {
           r: cableRadiusPx.toFixed(2),
           fill: fillCss,
           stroke: layer.strokeColor,
-          'stroke-width': strokeWidthAttr,
+          'stroke-width': cableStrokeWidthAttr,
           'vector-effect': 'non-scaling-stroke'
         }));
       }
