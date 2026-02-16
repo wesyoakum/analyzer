@@ -1402,8 +1402,11 @@ th[title] {
   .btnbar,
   .refresh-link,
   .plot-panel__toggle,
+  .plot-settings-btn,
+  .plot-pair__actions,
   .collapse-toggle,
   .collapsible-hint,
+  .report-toolbar,
   #err {
     display: none !important;
   }
@@ -1417,29 +1420,13 @@ th[title] {
   }
 
   .page-header {
-    margin-bottom: 14px;
-    padding-bottom: 10px;
-  }
-
-  .page-header::after {
-    display: block;
-    white-space: pre-line;
-    margin-top: 6px;
-    font-size: 12px;
-    color: var(--ink-500);
-    content: "Project: " var(--report-project-name) "\AGenerated: " var(--report-generated-at);
-  }
-
-  .build-indicator {
-    display: block !important;
-  }
-
-  .report-toolbar {
-    margin-bottom: 8px;
+    display: none !important;
   }
 
   #panel-instructions {
     display: block !important;
+    break-before: page;
+    page-break-before: always;
   }
 
   .instructions-only {
@@ -1458,8 +1445,8 @@ th[title] {
   }
 
   .card {
-    break-inside: auto;
-    page-break-inside: auto;
+    break-inside: avoid;
+    page-break-inside: avoid;
     margin-top: 8px;
     border-color: #d1d8e6;
   }
@@ -1475,6 +1462,26 @@ th[title] {
     height: 0;
     margin: 0;
     border: 0;
+  }
+
+  .plot-panel,
+  .plot-panel__heading,
+  .plotwrap,
+  .drum-visual,
+  details.collapsible,
+  .collapsible-body,
+  table {
+    break-inside: avoid;
+    page-break-inside: avoid;
+  }
+
+  .pdf-break-before {
+    break-before: page;
+    page-break-before: always;
+  }
+
+  .pdf-hide-temporary {
+    display: none !important;
   }
 
   .plotwrap {
