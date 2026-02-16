@@ -714,7 +714,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
   setupTabs();
 
-  setupDocxExport();
+  setupPdfExport();
 
   renderDocumentMath();
 
@@ -903,187 +903,122 @@ function setupTabs() {
   activate(initialTab || tabEntries[0].tab);
 }
 
-function setupDocxExport() {
-  const exportBtn = /** @type {HTMLButtonElement|null} */ (document.getElementById('export_docx'));
+function setupPdfExport() {
+  const exportBtn = /** @type {HTMLButtonElement|null} */ (document.getElementById('export_pdf'));
   if (!exportBtn) return;
+
+  /** @type {Array<() => void>} */
+  let printCleanupSteps = [];
+
+  const preparePrintLayout = () => {
+    if (printCleanupSteps.length) return;
+
+    const cleanupSteps = [];
+
+    let figureIndex = 1;
+    const figureTargets = Array.from(document.querySelectorAll('#panel-performance .plot-panel, #panel-results .drum-visual'));
+    figureTargets.forEach(target => {
+      if (!(target instanceof HTMLElement)) return;
+      const label = document.createElement('p');
+      label.className = 'pdf-item-label pdf-item-label--figure';
+      label.textContent = `Figure ${figureIndex}`;
+      figureIndex += 1;
+      target.insertAdjacentElement('afterend', label);
+      cleanupSteps.push(() => label.remove());
+    });
+
+    let tableIndex = 1;
+    const tableTargets = Array.from(document.querySelectorAll('#panel-results table, #panel-instructions table'));
+    tableTargets.forEach(table => {
+      if (!(table instanceof HTMLTableElement)) return;
+      if (table.closest('.instructions-only')) return;
+      const label = document.createElement('p');
+      const tableNumber = tableIndex;
+      label.className = 'pdf-item-label pdf-item-label--table';
+      label.textContent = `Table ${tableNumber}`;
+      tableIndex += 1;
+      table.insertAdjacentElement('beforebegin', label);
+      cleanupSteps.push(() => label.remove());
+
+      if (tableNumber === 5) {
+        table.classList.add('pdf-allow-split');
+        cleanupSteps.push(() => table.classList.remove('pdf-allow-split'));
+        const card = table.closest('.card');
+        if (card instanceof HTMLElement) {
+          card.classList.add('pdf-allow-split');
+          cleanupSteps.push(() => card.classList.remove('pdf-allow-split'));
+        }
+      }
+    });
+
+    // Allow lightweight inline page-break markers in editable report text.
+    const marker = '<< Add Page Break Here>>';
+    const markerNodes = Array.from(document.querySelectorAll('.sheet p, .sheet div, .sheet span'));
+    markerNodes.forEach(node => {
+      if (!node.textContent || !node.textContent.includes(marker)) return;
+
+      const originalText = node.textContent;
+      node.textContent = originalText.replaceAll(marker, '').trim();
+
+      const pageBreak = document.createElement('div');
+      pageBreak.className = 'pdf-page-break';
+      pageBreak.setAttribute('aria-hidden', 'true');
+      node.insertAdjacentElement('afterend', pageBreak);
+
+      cleanupSteps.push(() => {
+        node.textContent = originalText;
+        pageBreak.remove();
+      });
+    });
+
+    const section34Card = document.querySelector('#panel-results .card[data-drive-scope="hydraulic"]');
+    if (section34Card instanceof HTMLElement) {
+      section34Card.classList.add('pdf-break-before');
+      cleanupSteps.push(() => section34Card.classList.remove('pdf-break-before'));
+    }
+
+    const equationsCard = /** @type {HTMLElement|null} */ (document.getElementById('hydraulic-core-equations'));
+    if (equationsCard) {
+      const headings = Array.from(equationsCard.querySelectorAll('h3, h4'));
+      const shouldHide = heading => /^\s*[CD]\)/.test((heading.textContent || '').trim());
+
+      headings.forEach(heading => {
+        if (!(heading instanceof HTMLElement) || !shouldHide(heading)) return;
+        heading.classList.add('pdf-hide-temporary');
+        cleanupSteps.push(() => heading.classList.remove('pdf-hide-temporary'));
+
+        let sib = heading.nextElementSibling;
+        while (sib && !(sib.matches('h3') || sib.matches('h4'))) {
+          sib.classList.add('pdf-hide-temporary');
+          const node = sib;
+          cleanupSteps.push(() => node.classList.remove('pdf-hide-temporary'));
+          sib = sib.nextElementSibling;
+        }
+      });
+    }
+
+    document.body.classList.add('pdf-export-mode');
+
+    cleanupSteps.push(() => {
+      document.body.classList.remove('pdf-export-mode');
+    });
+
+    printCleanupSteps = cleanupSteps;
+  };
+
+  const cleanupPrintLayout = () => {
+    printCleanupSteps.forEach(fn => fn());
+    printCleanupSteps = [];
+  };
+
   exportBtn.addEventListener('click', () => {
     computeAll();
-    triggerDocxDownload(buildDocxBlob(), buildDocxFilename());
-  });
-}
-
-function buildDocxFilename() {
-  const now = new Date();
-  const pad = value => String(value).padStart(2, '0');
-  const stamp = [now.getFullYear(), pad(now.getMonth() + 1), pad(now.getDate())].join('')
-    + '-'
-    + [pad(now.getHours()), pad(now.getMinutes()), pad(now.getSeconds())].join('');
-  return `winch-report-${stamp}.docx`;
-}
-
-function buildDocxBlob() {
-  const report = /** @type {HTMLElement|null} */ (document.querySelector('.app-content'));
-  const reportClone = report ? report.cloneNode(true) : document.createElement('div');
-  if (reportClone instanceof HTMLElement) {
-    reportClone.querySelectorAll('.panel[hidden]').forEach(panel => panel.removeAttribute('hidden'));
-    reportClone.querySelectorAll('.instructions-only').forEach(el => el.remove());
-  }
-
-  const html = `<!doctype html><html><head><meta charset="utf-8"><style>
-    body{font-family:Calibri,Arial,sans-serif;font-size:11pt;color:#111;line-height:1.35;}
-    h1,h2,h3,h4{margin:12pt 0 6pt;}
-    p,li{margin:6pt 0;}
-    table{border-collapse:collapse;width:100%;margin:8pt 0;}
-    th,td{border:1px solid #333;padding:4pt;vertical-align:top;}
-  </style></head><body>${reportClone instanceof HTMLElement ? reportClone.innerHTML : ''}</body></html>`;
-
-  const documentXml = `<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
-<w:document xmlns:w="http://schemas.openxmlformats.org/wordprocessingml/2006/main" xmlns:r="http://schemas.openxmlformats.org/officeDocument/2006/relationships">
-  <w:body>
-    <w:altChunk r:id="htmlChunk1"/>
-    <w:sectPr>
-      <w:pgSz w:w="12240" w:h="15840"/>
-      <w:pgMar w:top="1440" w:right="1440" w:bottom="1440" w:left="1440" w:header="720" w:footer="720" w:gutter="0"/>
-    </w:sectPr>
-  </w:body>
-</w:document>`;
-
-  const docRelsXml = `<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
-<Relationships xmlns="http://schemas.openxmlformats.org/package/2006/relationships">
-  <Relationship Id="htmlChunk1" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/aFChunk" Target="afchunk.html"/>
-</Relationships>`;
-
-  const rootRelsXml = `<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
-<Relationships xmlns="http://schemas.openxmlformats.org/package/2006/relationships">
-  <Relationship Id="rId1" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/officeDocument" Target="word/document.xml"/>
-</Relationships>`;
-
-  const contentTypesXml = `<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
-<Types xmlns="http://schemas.openxmlformats.org/package/2006/content-types">
-  <Default Extension="rels" ContentType="application/vnd.openxmlformats-package.relationships+xml"/>
-  <Default Extension="xml" ContentType="application/xml"/>
-  <Default Extension="html" ContentType="text/html"/>
-  <Override PartName="/word/document.xml" ContentType="application/vnd.openxmlformats-officedocument.wordprocessingml.document.main+xml"/>
-</Types>`;
-
-  const zip = createZipArchive([
-    { path: '[Content_Types].xml', content: contentTypesXml },
-    { path: '_rels/.rels', content: rootRelsXml },
-    { path: 'word/document.xml', content: documentXml },
-    { path: 'word/_rels/document.xml.rels', content: docRelsXml },
-    { path: 'word/afchunk.html', content: html }
-  ]);
-
-  return new Blob([zip], { type: 'application/vnd.openxmlformats-officedocument.wordprocessingml.document' });
-}
-
-function triggerDocxDownload(docxBlob, filename) {
-  const url = URL.createObjectURL(docxBlob);
-  const link = document.createElement('a');
-  link.href = url;
-  link.download = filename;
-  document.body.appendChild(link);
-  link.click();
-  document.body.removeChild(link);
-  URL.revokeObjectURL(url);
-}
-
-function createZipArchive(files) {
-  const encoder = new TextEncoder();
-  const localRecords = [];
-  const centralRecords = [];
-  let offset = 0;
-
-  files.forEach(file => {
-    const pathBytes = encoder.encode(file.path);
-    const dataBytes = encoder.encode(file.content);
-    const crc = crc32(dataBytes);
-    const size = dataBytes.length;
-
-    const localHeader = new Uint8Array(30 + pathBytes.length);
-    const localView = new DataView(localHeader.buffer);
-    localView.setUint32(0, 0x04034b50, true);
-    localView.setUint16(4, 20, true);
-    localView.setUint16(6, 0, true);
-    localView.setUint16(8, 0, true);
-    localView.setUint16(10, 0, true);
-    localView.setUint16(12, 0, true);
-    localView.setUint32(14, crc, true);
-    localView.setUint32(18, size, true);
-    localView.setUint32(22, size, true);
-    localView.setUint16(26, pathBytes.length, true);
-    localView.setUint16(28, 0, true);
-    localHeader.set(pathBytes, 30);
-
-    localRecords.push(localHeader, dataBytes);
-
-    const centralHeader = new Uint8Array(46 + pathBytes.length);
-    const centralView = new DataView(centralHeader.buffer);
-    centralView.setUint32(0, 0x02014b50, true);
-    centralView.setUint16(4, 20, true);
-    centralView.setUint16(6, 20, true);
-    centralView.setUint16(8, 0, true);
-    centralView.setUint16(10, 0, true);
-    centralView.setUint16(12, 0, true);
-    centralView.setUint16(14, 0, true);
-    centralView.setUint32(16, crc, true);
-    centralView.setUint32(20, size, true);
-    centralView.setUint32(24, size, true);
-    centralView.setUint16(28, pathBytes.length, true);
-    centralView.setUint16(30, 0, true);
-    centralView.setUint16(32, 0, true);
-    centralView.setUint16(34, 0, true);
-    centralView.setUint16(36, 0, true);
-    centralView.setUint32(38, 0, true);
-    centralView.setUint32(42, offset, true);
-    centralHeader.set(pathBytes, 46);
-    centralRecords.push(centralHeader);
-
-    offset += localHeader.length + dataBytes.length;
+    preparePrintLayout();
+    window.print();
   });
 
-  const centralSize = centralRecords.reduce((acc, part) => acc + part.length, 0);
-  const endRecord = new Uint8Array(22);
-  const endView = new DataView(endRecord.buffer);
-  endView.setUint32(0, 0x06054b50, true);
-  endView.setUint16(4, 0, true);
-  endView.setUint16(6, 0, true);
-  endView.setUint16(8, files.length, true);
-  endView.setUint16(10, files.length, true);
-  endView.setUint32(12, centralSize, true);
-  endView.setUint32(16, offset, true);
-  endView.setUint16(20, 0, true);
-
-  const totalSize = offset + centralSize + endRecord.length;
-  const archive = new Uint8Array(totalSize);
-  let cursor = 0;
-  [...localRecords, ...centralRecords, endRecord].forEach(chunk => {
-    archive.set(chunk, cursor);
-    cursor += chunk.length;
-  });
-
-  return archive;
-}
-
-let crcTable = null;
-
-function crc32(bytes) {
-  if (!crcTable) {
-    crcTable = new Uint32Array(256);
-    for (let i = 0; i < 256; i += 1) {
-      let value = i;
-      for (let j = 0; j < 8; j += 1) {
-        value = (value & 1) ? (0xedb88320 ^ (value >>> 1)) : (value >>> 1);
-      }
-      crcTable[i] = value >>> 0;
-    }
-  }
-
-  let crc = 0xffffffff;
-  bytes.forEach(byte => {
-    crc = crcTable[(crc ^ byte) & 0xff] ^ (crc >>> 8);
-  });
-  return (crc ^ 0xffffffff) >>> 0;
+  window.addEventListener('beforeprint', preparePrintLayout);
+  window.addEventListener('afterprint', cleanupPrintLayout);
 }
 
 function setupCsvDownloads() {
