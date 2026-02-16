@@ -61,6 +61,11 @@ body {
   font-family: var(--doc-serif);
 }
 
+.sheet div {
+  margin-inline: 0;
+  padding-inline: 0;
+}
+
 .sheet .page-title,
 .sheet .section-title,
 .sheet .input-section__title,
