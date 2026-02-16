@@ -702,6 +702,8 @@ document.addEventListener('DOMContentLoaded', () => {
 
   setupManualRefreshControls();
 
+  setupPlotSettingsDialogs();
+
   setupProjectManager();
 
   setupAutoRecompute();
@@ -721,18 +723,54 @@ document.addEventListener('DOMContentLoaded', () => {
     }
   });
 
-  // Wave plot controls
-  q('wave_scenario').addEventListener('change', () => redrawPlots());
-  ['wave_tmin', 'wave_tmax', 'wave_vmin', 'wave_vmax', 'wave_hmin', 'wave_hmax']
-    .forEach(id => q(id).addEventListener('change', () => redrawPlots()));
-
-  // Depth plot controls
-  ['depth_xmin', 'depth_xmax', 'depth_speed_ymin', 'depth_speed_ymax', 'depth_tension_ymin', 'depth_tension_ymax']
-    .forEach(id => q(id).addEventListener('change', () => redrawPlots()));
+  // Wave/depth/hydraulic plot controls
+  ['wave_scenario', 'wave_tmin', 'wave_tmax', 'wave_vmin', 'wave_vmax', 'wave_hmin', 'wave_hmax',
+    'depth_xmin', 'depth_xmax', 'depth_speed_ymin', 'depth_speed_ymax', 'depth_tension_ymin', 'depth_tension_ymax',
+    'hyd_torque_xmin', 'hyd_torque_xmax', 'hyd_rpm_ymin', 'hyd_rpm_ymax']
+    .forEach(id => {
+      const el = document.getElementById(id);
+      if (!el) return;
+      el.addEventListener('change', () => redrawPlots());
+    });
 
   // Initial compute
   computeAll();
 });
+
+
+function setupPlotSettingsDialogs() {
+  document.querySelectorAll('[data-plot-settings-target]').forEach(btn => {
+    if (!(btn instanceof HTMLButtonElement)) return;
+    const id = btn.dataset.plotSettingsTarget;
+    if (!id) return;
+    const dialog = /** @type {HTMLDialogElement|null} */ (document.getElementById(id));
+    if (!dialog) return;
+    btn.addEventListener('click', () => {
+      if (typeof dialog.showModal === 'function') dialog.showModal();
+    });
+  });
+
+  document.querySelectorAll('[data-sync-source]').forEach(proxy => {
+    if (!(proxy instanceof HTMLInputElement)) return;
+    const sourceId = proxy.dataset.syncSource;
+    if (!sourceId) return;
+    const source = /** @type {HTMLInputElement|null} */ (document.getElementById(sourceId));
+    if (!source) return;
+
+    const syncFromSource = () => {
+      proxy.value = source.value;
+    };
+    const syncToSource = () => {
+      source.value = proxy.value;
+      source.dispatchEvent(new Event('change', { bubbles: true }));
+    };
+
+    syncFromSource();
+    source.addEventListener('change', syncFromSource);
+    proxy.addEventListener('change', syncToSource);
+    proxy.addEventListener('input', syncToSource);
+  });
+}
 
 function renderDocumentMath() {
   if (typeof window.renderMathInElement === 'function') {
@@ -1987,9 +2025,21 @@ function redrawPlots() {
   }
 
   const rpmTorqueSvg = /** @type {SVGSVGElement|null} */ (document.getElementById('hyd_rpm_torque_svg'));
+  const hydTorqueXminEl = /** @type {HTMLInputElement|null} */ (document.getElementById('hyd_torque_xmin'));
+  const hydTorqueXmaxEl = /** @type {HTMLInputElement|null} */ (document.getElementById('hyd_torque_xmax'));
+  const hydRpmYminEl = /** @type {HTMLInputElement|null} */ (document.getElementById('hyd_rpm_ymin'));
+  const hydRpmYmaxEl = /** @type {HTMLInputElement|null} */ (document.getElementById('hyd_rpm_ymax'));
   if (rpmTorqueSvg) {
+    const torqueMinVal = parseInput(hydTorqueXminEl);
+    const torqueMaxVal = parseInput(hydTorqueXmaxEl);
+    const rpmMinVal = parseInput(hydRpmYminEl);
+    const rpmMaxVal = parseInput(hydRpmYmaxEl);
     drawHydraulicRpmTorque(rpmTorqueSvg, {
-      wraps: lastHyWraps
+      wraps: lastHyWraps,
+      torqueMin: Number.isFinite(torqueMinVal) ? torqueMinVal : undefined,
+      torqueMax: Number.isFinite(torqueMaxVal) ? torqueMaxVal : undefined,
+      rpmMin: Number.isFinite(rpmMinVal) ? rpmMinVal : undefined,
+      rpmMax: Number.isFinite(rpmMaxVal) ? rpmMaxVal : undefined
     });
   }
 }

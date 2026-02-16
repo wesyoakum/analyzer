@@ -15,8 +15,15 @@ function getAccentColor() {
  * @param {SVGSVGElement} svg
  * @param {Object} opts
  * @param {Array<Object>} [opts.wraps]
+ * @param {number} [opts.torqueMin]
+ * @param {number} [opts.torqueMax]
+ * @param {number} [opts.rpmMin]
+ * @param {number} [opts.rpmMax]
  */
-export function drawHydraulicRpmTorque(svg, { wraps = [] } = {}) {
+export function drawHydraulicRpmTorque(
+  svg,
+  { wraps = [], torqueMin = 0, torqueMax = null, rpmMin = 0, rpmMax = null } = {}
+) {
   if (!svg) return;
   while (svg.firstChild) svg.removeChild(svg.firstChild);
 
@@ -51,23 +58,26 @@ export function drawHydraulicRpmTorque(svg, { wraps = [] } = {}) {
   const innerW = W - ML - MR;
   const innerH = H - MT - MB;
 
-  const torqueMin = 0;
+  const torqueMinVal = Number.isFinite(Number(torqueMin)) ? Math.max(0, Number(torqueMin)) : 0;
   const torqueMaxData = Math.max(...data.map(d => d.torque));
-  const torqueExtent = Math.max(torqueMin + 1, torqueMaxData);
-  const { step: torqueStep } = niceTicks(torqueMin, torqueExtent, 6);
-  const torqueMax = torqueMin + Math.max(1, Math.ceil((torqueExtent - torqueMin) / Math.max(torqueStep, 1e-9))) * Math.max(torqueStep, 1e-9);
-  const rpmMaxCandidate = Math.max(...data.map(d => d.rpmAvail));
-  const rpmMin = 0;
-  const rpmMax = Math.max(rpmMin + 1, rpmMaxCandidate * 1.1);
+  const torqueExtent = Math.max(torqueMinVal + 1, torqueMaxData);
+  const { step: torqueStep } = niceTicks(torqueMinVal, torqueExtent, 6);
+  const autoTorqueMax = torqueMinVal + Math.max(1, Math.ceil((torqueExtent - torqueMinVal) / Math.max(torqueStep, 1e-9))) * Math.max(torqueStep, 1e-9);
+  const torqueMaxVal = Number.isFinite(Number(torqueMax)) && Number(torqueMax) > torqueMinVal ? Number(torqueMax) : autoTorqueMax;
 
-  const sx = torque => ML + (Math.min(Math.max(torque, torqueMin), torqueMax) - torqueMin) / (torqueMax - torqueMin) * innerW;
-  const sy = rpm => MT + (1 - (Math.min(Math.max(rpm, rpmMin), rpmMax) - rpmMin) / (rpmMax - rpmMin)) * innerH;
+  const rpmMinVal = Number.isFinite(Number(rpmMin)) ? Math.max(0, Number(rpmMin)) : 0;
+  const rpmMaxCandidate = Math.max(...data.map(d => d.rpmAvail));
+  const autoRpmMax = Math.max(rpmMinVal + 1, rpmMaxCandidate * 1.1);
+  const rpmMaxVal = Number.isFinite(Number(rpmMax)) && Number(rpmMax) > rpmMinVal ? Number(rpmMax) : autoRpmMax;
+
+  const sx = torque => ML + (Math.min(Math.max(torque, torqueMinVal), torqueMaxVal) - torqueMinVal) / (torqueMaxVal - torqueMinVal) * innerW;
+  const sy = rpm => MT + (1 - (Math.min(Math.max(rpm, rpmMinVal), rpmMaxVal) - rpmMinVal) / (rpmMaxVal - rpmMinVal)) * innerH;
 
   svg.appendChild(svgEl('rect', { x: ML, y: MT, width: innerW, height: innerH, fill: '#fff', stroke: '#ccc' }));
 
-  const torqueTicks = niceTicks(torqueMin, torqueMax, 6).ticks;
+  const torqueTicks = niceTicks(torqueMinVal, torqueMaxVal, 6).ticks;
   torqueTicks.forEach(t => {
-    if (t < torqueMin - 1e-9 || t > torqueMax + 1e-9) return;
+    if (t < torqueMinVal - 1e-9 || t > torqueMaxVal + 1e-9) return;
     const X = sx(t);
     svg.appendChild(svgEl('line', { x1: X, y1: MT, x2: X, y2: H - MB, stroke: '#eee' }));
     const label = svgEl('text', { x: X, y: H - 30, 'text-anchor': 'middle', 'font-size': '12', fill: '#444' });
@@ -75,9 +85,9 @@ export function drawHydraulicRpmTorque(svg, { wraps = [] } = {}) {
     svg.appendChild(label);
   });
 
-  const rpmTicks = niceTicks(rpmMin, rpmMax, 6).ticks;
+  const rpmTicks = niceTicks(rpmMinVal, rpmMaxVal, 6).ticks;
   rpmTicks.forEach(r => {
-    if (r < rpmMin - 1e-9 || r > rpmMax + 1e-9) return;
+    if (r < rpmMinVal - 1e-9 || r > rpmMaxVal + 1e-9) return;
     const Y = sy(r);
     svg.appendChild(svgEl('line', { x1: ML, y1: Y, x2: W - MR, y2: Y, stroke: '#eee' }));
     const label = svgEl('text', { x: ML - 8, y: Y + 4, 'text-anchor': 'end', 'font-size': '12', fill: '#444' });
@@ -113,8 +123,8 @@ export function drawHydraulicRpmTorque(svg, { wraps = [] } = {}) {
 
     if (dropAtMaxTorque) {
       const lastPoint = points[points.length - 1];
-      if (lastPoint && lastPoint[1] > rpmMin + 1e-9) {
-        points.push([lastPoint[0], rpmMin]);
+      if (lastPoint && lastPoint[1] > rpmMinVal + 1e-9) {
+        points.push([lastPoint[0], rpmMinVal]);
       }
     }
 
@@ -135,7 +145,7 @@ export function drawHydraulicRpmTorque(svg, { wraps = [] } = {}) {
   if (minPoint) {
     const y = sy(minPoint.rpmAvail);
     svg.appendChild(svgEl('line', {
-      x1: ML,
+      x1: sx(torqueMinVal),
       y1: y,
       x2: sx(minPoint.torque),
       y2: y,
@@ -143,7 +153,6 @@ export function drawHydraulicRpmTorque(svg, { wraps = [] } = {}) {
       'stroke-width': 2
     }));
   }
-
 }
 
 function toNumber(val) {
