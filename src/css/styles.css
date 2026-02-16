@@ -1382,7 +1382,7 @@ th[title] {
 @media print {
   @page {
     size: A4 portrait;
-    margin: 14mm;
+    margin: 0;
   }
 
   body {
@@ -1402,8 +1402,11 @@ th[title] {
   .btnbar,
   .refresh-link,
   .plot-panel__toggle,
+  .plot-settings-btn,
+  .plot-pair__actions,
   .collapse-toggle,
   .collapsible-hint,
+  .report-toolbar,
   #err {
     display: none !important;
   }
@@ -1412,7 +1415,7 @@ th[title] {
     border: 1px solid transparent;
     box-shadow: none;
     max-width: none;
-    padding: 0 30px;
+    padding: 14mm 30px;
     margin: 0;
   }
 
@@ -1421,25 +1424,10 @@ th[title] {
     padding-bottom: 10px;
   }
 
-  .page-header::after {
-    display: block;
-    white-space: pre-line;
-    margin-top: 6px;
-    font-size: 12px;
-    color: var(--ink-500);
-    content: "Project: " var(--report-project-name) "\AGenerated: " var(--report-generated-at);
-  }
-
-  .build-indicator {
-    display: block !important;
-  }
-
-  .report-toolbar {
-    margin-bottom: 8px;
-  }
-
   #panel-instructions {
     display: block !important;
+    break-before: page;
+    page-break-before: always;
   }
 
   .instructions-only {
@@ -1475,6 +1463,45 @@ th[title] {
     height: 0;
     margin: 0;
     border: 0;
+  }
+
+  .plot-panel,
+  .plot-panel__heading,
+  .plotwrap,
+  .drum-visual,
+  details.collapsible,
+  .collapsible-body,
+  table {
+    break-inside: avoid;
+    page-break-inside: avoid;
+  }
+
+  .pdf-break-before {
+    break-before: page;
+    page-break-before: always;
+  }
+
+  .pdf-hide-temporary {
+    display: none !important;
+  }
+
+
+  #panel-performance .card {
+    margin-top: calc(8px + 1lh);
+  }
+
+  #panel-performance .card:first-child {
+    margin-top: 8px;
+  }
+
+  .pdf-item-label {
+    text-align: center;
+  }
+
+  .pdf-allow-split,
+  .pdf-allow-split table {
+    break-inside: auto !important;
+    page-break-inside: auto !important;
   }
 
   .plotwrap {

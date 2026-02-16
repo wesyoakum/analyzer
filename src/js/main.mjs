@@ -910,31 +910,10 @@ function setupPdfExport() {
   /** @type {Array<() => void>} */
   let printCleanupSteps = [];
 
-  const syncReportMeta = () => {
-    const projectInput = /** @type {HTMLInputElement|null} */ (document.getElementById('project_name'));
-    const projectName = (projectInput?.value || '').trim() || 'Untitled project';
-    document.documentElement.style.setProperty('--report-project-name', `"${projectName.replace(/"/g, '\\"')}"`);
-
-    const stamp = formatGeneratedStamp(new Date());
-    document.documentElement.style.setProperty('--report-generated-at', `"${stamp.replace(/"/g, '\\"')}"`);
-  };
-
   const preparePrintLayout = () => {
     if (printCleanupSteps.length) return;
 
     const cleanupSteps = [];
-
-    // Ensure all collapsible sections are fully expanded in the exported report.
-    const collapsibles = Array.from(document.querySelectorAll('details.collapsible'));
-    collapsibles.forEach(details => {
-      const wasOpen = details.hasAttribute('open');
-      if (!wasOpen) {
-        details.setAttribute('open', '');
-        cleanupSteps.push(() => {
-          details.removeAttribute('open');
-        });
-      }
-    });
 
     let figureIndex = 1;
     const figureTargets = Array.from(document.querySelectorAll('#panel-performance .plot-panel, #panel-results .drum-visual'));
@@ -944,7 +923,7 @@ function setupPdfExport() {
       label.className = 'pdf-item-label pdf-item-label--figure';
       label.textContent = `Figure ${figureIndex}`;
       figureIndex += 1;
-      target.insertAdjacentElement('beforebegin', label);
+      target.insertAdjacentElement('afterend', label);
       cleanupSteps.push(() => label.remove());
     });
 
@@ -954,11 +933,22 @@ function setupPdfExport() {
       if (!(table instanceof HTMLTableElement)) return;
       if (table.closest('.instructions-only')) return;
       const label = document.createElement('p');
+      const tableNumber = tableIndex;
       label.className = 'pdf-item-label pdf-item-label--table';
-      label.textContent = `Table ${tableIndex}`;
+      label.textContent = `Table ${tableNumber}`;
       tableIndex += 1;
       table.insertAdjacentElement('beforebegin', label);
       cleanupSteps.push(() => label.remove());
+
+      if (tableNumber === 5) {
+        table.classList.add('pdf-allow-split');
+        cleanupSteps.push(() => table.classList.remove('pdf-allow-split'));
+        const card = table.closest('.card');
+        if (card instanceof HTMLElement) {
+          card.classList.add('pdf-allow-split');
+          cleanupSteps.push(() => card.classList.remove('pdf-allow-split'));
+        }
+      }
     });
 
     // Allow lightweight inline page-break markers in editable report text.
@@ -981,7 +971,32 @@ function setupPdfExport() {
       });
     });
 
-    syncReportMeta();
+    const section34Card = document.querySelector('#panel-results .card[data-drive-scope="hydraulic"]');
+    if (section34Card instanceof HTMLElement) {
+      section34Card.classList.add('pdf-break-before');
+      cleanupSteps.push(() => section34Card.classList.remove('pdf-break-before'));
+    }
+
+    const equationsCard = /** @type {HTMLElement|null} */ (document.getElementById('hydraulic-core-equations'));
+    if (equationsCard) {
+      const headings = Array.from(equationsCard.querySelectorAll('h3, h4'));
+      const shouldHide = heading => /^\s*[CD]\)/.test((heading.textContent || '').trim());
+
+      headings.forEach(heading => {
+        if (!(heading instanceof HTMLElement) || !shouldHide(heading)) return;
+        heading.classList.add('pdf-hide-temporary');
+        cleanupSteps.push(() => heading.classList.remove('pdf-hide-temporary'));
+
+        let sib = heading.nextElementSibling;
+        while (sib && !(sib.matches('h3') || sib.matches('h4'))) {
+          sib.classList.add('pdf-hide-temporary');
+          const node = sib;
+          cleanupSteps.push(() => node.classList.remove('pdf-hide-temporary'));
+          sib = sib.nextElementSibling;
+        }
+      });
+    }
+
     document.body.classList.add('pdf-export-mode');
 
     cleanupSteps.push(() => {
@@ -1314,11 +1329,9 @@ function renderInputSummary() {
 function renderInputSummaryIntro(introRoot) {
   if (!introRoot) return;
 
-  const projectName = normalizeText((/** @type {HTMLInputElement|null} */ (document.getElementById('project_name')))?.value || 'Current configuration');
   const systemType = extractControlValue('system_type_select');
   const winchType = extractControlValue('winch_type_select');
   const selectedSystem = extractControlValue('system_select');
-  const generatedAt = new Date().toLocaleString();
 
   const modeText = selectedSystem === 'Custom (manual input)'
     ? 'Custom parameter set'
@@ -1333,10 +1346,8 @@ function renderInputSummaryIntro(introRoot) {
   const meta = document.createElement('div');
   meta.className = 'summary-intro__meta';
   meta.innerHTML = `
-    <p><strong>Project:</strong> ${projectName}</p>
     <p><strong>System:</strong> ${systemType} / ${winchType}</p>
     <p><strong>Configuration Basis:</strong> ${modeText}</p>
-    <p><strong>Snapshot Generated:</strong> ${generatedAt}</p>
   `;
 
   introRoot.append(intro, meta);
@@ -1775,7 +1786,7 @@ function computeAll() {
     if (wrapsNoteEl) {
       const calcWraps = meta && Number.isFinite(meta.wraps_per_layer_calc) ? meta.wraps_per_layer_calc : undefined;
       const display = (typeof calcWraps === 'number') ? calcWraps.toFixed(1) : '–';
-      wrapsNoteEl.textContent = `Leave blank or set to 0 to use calculated wraps (always truncated to .0/.5). Auto-calculated wraps per layer: ${display}.`;
+      wrapsNoteEl.textContent = `Auto-calculated wraps per layer: ${display}.`;
     }
 
     // Per-wrap calculations (electric + hydraulic)
