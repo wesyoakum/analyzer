@@ -754,7 +754,7 @@
                 <div class="plot-panel__heading">
                   <div class="plot-title">Power-Limited Speed vs Depth by Payload</div>
                   <div class="dim">Lines show the power-limited speed profile for the entered payload and each 1,000&nbsp;kg decrement down to zero.</div>
-                  <button type="button" class="plot-settings-btn" data-plot-settings-target="plot-settings-depth-speed" aria-label="Open axis settings for power-limited speed vs depth plot">⚙</button>
+                  <button type="button" class="plot-settings-btn" data-plot-settings-target="plot-settings-depth-speed-power" aria-label="Open axis settings for power-limited speed vs depth plot">⚙</button>
                 </div>
                 <div class="plotwrap">
                   <svg id="depth_speed_power_svg" viewBox="0 0 1000 540"></svg>
@@ -1482,8 +1482,8 @@
       <dialog id="plot-settings-wave-height" class="plot-settings-dialog">
         <form method="dialog" class="plot-settings-dialog__card">
           <h3>Wave Height vs Period Axis Settings</h3>
-          <label>Period Min (s)<input id="wave_tmin_height_proxy" data-sync-source="wave_tmin" type="number" step="0.1" min="0" value="4"></label>
-          <label>Period Max (s)<input id="wave_tmax_height_proxy" data-sync-source="wave_tmax" type="number" step="0.1" min="0" value="20"></label>
+          <label>Period Min (s)<input id="wave_tmin_height" type="number" step="0.1" min="0" value="4"></label>
+          <label>Period Max (s)<input id="wave_tmax_height" type="number" step="0.1" min="0" value="20"></label>
           <label>Height Min (m)<input id="wave_hmin" type="number" step="0.1" min="0" value="0"></label>
           <label>Height Max (m)<input id="wave_hmax" type="number" step="0.1" min="0" value="6"></label>
           <menu>
@@ -1508,10 +1508,23 @@
       <dialog id="plot-settings-depth-tension" class="plot-settings-dialog">
         <form method="dialog" class="plot-settings-dialog__card">
           <h3>Depth Tension Axis Settings</h3>
-          <label>Depth Min (m)<input id="depth_xmin_tension_proxy" data-sync-source="depth_xmin" type="number" step="100" min="0" value="0"></label>
-          <label>Depth Max (m)<input id="depth_xmax_tension_proxy" data-sync-source="depth_xmax" type="number" step="100" min="0" placeholder="auto"></label>
+          <label>Depth Min (m)<input id="depth_xmin_tension" type="number" step="100" min="0" value="0"></label>
+          <label>Depth Max (m)<input id="depth_xmax_tension" type="number" step="100" min="0" placeholder="auto"></label>
           <label>Tension Min (kgf)<input id="depth_tension_ymin" type="number" step="100" min="0" value="0"></label>
           <label>Tension Max (kgf)<input id="depth_tension_ymax" type="number" step="100" min="0" placeholder="auto"></label>
+          <menu>
+            <button type="submit">Done</button>
+          </menu>
+        </form>
+      </dialog>
+
+      <dialog id="plot-settings-depth-speed-power" class="plot-settings-dialog">
+        <form method="dialog" class="plot-settings-dialog__card">
+          <h3>Power-Limited Speed Axis Settings</h3>
+          <label>Depth Min (m)<input id="depth_xmin_power" type="number" step="100" min="0" value="0"></label>
+          <label>Depth Max (m)<input id="depth_xmax_power" type="number" step="100" min="0" placeholder="auto"></label>
+          <label>Speed Min (m/s)<input id="depth_speed_ymin_power" type="number" step="0.5" min="0" value="0"></label>
+          <label>Speed Max (m/s)<input id="depth_speed_ymax_power" type="number" step="0.5" min="0" placeholder="auto"></label>
           <menu>
             <button type="submit">Done</button>
           </menu>
