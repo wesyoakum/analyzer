@@ -1459,6 +1459,34 @@ th[title] {
     border-color: #d1d8e6;
   }
 
+  h1,
+  h2,
+  h3,
+  h4,
+  h5,
+  h6,
+  .section-title,
+  .input-section__title,
+  .plot-panel__heading,
+  .pdf-item-label {
+    break-after: avoid;
+    page-break-after: avoid;
+  }
+
+  h1 + *,
+  h2 + *,
+  h3 + *,
+  h4 + *,
+  h5 + *,
+  h6 + *,
+  .section-title + *,
+  .input-section__title + *,
+  .plot-panel__heading + *,
+  .pdf-item-label + * {
+    break-before: avoid;
+    page-break-before: avoid;
+  }
+
   del,
   s {
     display: none !important;
