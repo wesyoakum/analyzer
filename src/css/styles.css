@@ -1420,8 +1420,7 @@ th[title] {
   }
 
   .page-header {
-    margin-bottom: 14px;
-    padding-bottom: 10px;
+    display: none !important;
   }
 
   #panel-instructions {
@@ -1446,8 +1445,8 @@ th[title] {
   }
 
   .card {
-    break-inside: auto;
-    page-break-inside: auto;
+    break-inside: avoid;
+    page-break-inside: avoid;
     margin-top: 8px;
     border-color: #d1d8e6;
   }
