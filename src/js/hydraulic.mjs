@@ -1,4 +1,3 @@
-// ===== hydraulic.mjs — hydraulic-side layer aggregation + table rendering =====
 
 import {
   formatDecimal,
@@ -143,9 +142,8 @@ export function renderHydraulicTables(hyLayers, hyWraps, tbodyLayer, tbodyWraps)
       formatSpeed(r.hyd_speed_available_mpm ?? ''),
       formatHp(r.hyd_hp_req ?? ''),
       formatHp(r.hyd_hp_sys ?? ''),
-      formatDecimal(r.hyd_tau_avail_kNm, 1),
-      formatDecimal(r.max_gearbox_torque_Nm, 1),
-      formatKgf(r.hyd_tension_theoretical_start_kgf),
+      formatInteger(r.hyd_tau_avail_kNm),
+      formatInteger(r.max_gearbox_torque_Nm),
       formatKgf(r.hyd_tension_required_start_kgf),
       formatKgf(r.hyd_avail_tension_kgf)
     ];
@@ -165,7 +163,6 @@ export function renderHydraulicTables(hyLayers, hyWraps, tbodyLayer, tbodyWraps)
       formatMeters(r.pre_spooled_len_m),
       formatMeters(r.spooled_len_m),
       formatMeters(r.deployed_len_m),
-      formatKgf(r.tension_theoretical_kgf ?? ''),
       formatKgf(r.tension_required_kgf ?? ''),
       formatPsi(r.hyd_P_required_psi),
       formatSpeed(r.hyd_speed_power_mpm),
@@ -173,8 +170,8 @@ export function renderHydraulicTables(hyLayers, hyWraps, tbodyLayer, tbodyWraps)
       formatSpeed(r.hyd_speed_available_mpm),
       formatHp(r.hyd_hp_req),
       formatHp(r.hyd_hp_sys),
-      formatDecimal(r.hyd_tau_avail_kNm, 1),
-      formatDecimal(r.gearbox_torque_Nm, 1),
+      formatInteger(r.hyd_tau_avail_kNm),
+      formatInteger(r.gearbox_torque_Nm),
       formatKgf(r.hyd_avail_tension_kgf)
     ];
     tr.innerHTML = cells.map(v => `<td>${v}</td>`).join('');

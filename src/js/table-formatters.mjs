@@ -23,7 +23,7 @@ export function formatDecimal(value, decimals) {
 }
 
 export function formatMeters(value) {
-  return formatDecimal(value, 2);
+  return formatInteger(value);
 }
 
 export function formatInches(value) {
@@ -45,11 +45,11 @@ export function formatTorqueKnmFromNm(value) {
 }
 
 export function formatMotorTorque(value) {
-  return formatDecimal(value, 1);
+  return formatInteger(value);
 }
 
 export function formatHp(value) {
-  return formatDecimal(value, 2);
+  return formatInteger(value);
 }
 
 export function formatPsi(value) {
