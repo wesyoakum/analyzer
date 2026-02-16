@@ -1,4 +1,7 @@
 :root {
+  --sidebar-width: 520px;
+  --sheet-width: 1080px;
+  --shell-column-gap: 32px;
   --paper: #ffffff;
   --paper-background: #eef2f8;
   --paper-line-strong: #c4ccdd;
@@ -28,18 +31,18 @@ body {
 
 .app-shell {
   display: grid;
-  grid-template-columns: 600px minmax(0, 1000px);
-  column-gap: 32px;
+  grid-template-columns: var(--sidebar-width) minmax(0, var(--sheet-width));
+  column-gap: var(--shell-column-gap);
   row-gap: 32px;
   align-items: start; 
   justify-content: center;
-  max-width: calc(600px + 1000px + 32px);
+  max-width: calc(var(--sidebar-width) + var(--sheet-width) + var(--shell-column-gap));
   margin: 0 auto;
   padding: 32px 32px 64px;
 }
 
 .sheet {
-  max-width: 1000px;
+  max-width: var(--sheet-width);
   margin: 0;
   background: var(--paper);
   border: 1px solid var(--paper-line-strong);
@@ -90,7 +93,7 @@ body {
   max-height: calc(100vh - 64px);
   display: flex;
   flex-direction: column;
-  width: 600px;
+  width: var(--sidebar-width);
   overflow: hidden;
   grid-column: 1 / 2;
 }
