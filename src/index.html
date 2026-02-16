@@ -37,6 +37,15 @@
         </div>
         <button id="clear_inputs" class="app-sidebar__action" type="button">clear all inputs</button>
       </div>
+      <div class="report-toolbar" aria-label="Report actions">
+        <button
+          id="export_pdf"
+          class="app-sidebar__action app-sidebar__action--button"
+          type="button"
+          aria-label="Export customer report as PDF"
+        >export pdf</button>
+        <div class="build-indicator" id="build-info" aria-live="polite"></div>
+      </div>
       <div class="app-sidebar__content" id="sidebar-inputs">
         <details class="card collapsible" data-summary-card open>
           <summary class="collapsible-summary">
@@ -570,15 +579,6 @@
         </div>
     </aside>
     <div class="sheet">
-      <div class="report-toolbar">
-        <button
-          id="export_pdf"
-          class="tab-bar__action"
-          type="button"
-          aria-label="Export customer report as PDF"
-        >export pdf</button>
-        <div class="build-indicator" id="build-info" aria-live="polite"></div>
-      </div>
       <header class="page-header">
         <img src="assets/winch-header%20140px.png" alt="TekMarines winch diagram" class="page-header__image" />
         <h1 class="page-title">Winch Analyzer</h1>
