@@ -1382,7 +1382,7 @@ th[title] {
 @media print {
   @page {
     size: A4 portrait;
-    margin: 0;
+    margin: 0.5in;
   }
 
   body {
