@@ -1019,6 +1019,63 @@ th[title] {
   color: var(--accent);
 }
 
+
+.plot-settings-btn {
+  border: 1px solid var(--paper-line-strong);
+  background: var(--paper);
+  color: var(--ink-600);
+  border-radius: 999px;
+  width: 28px;
+  height: 28px;
+  min-width: 28px;
+  padding: 0;
+  line-height: 1;
+  cursor: pointer;
+}
+
+.plot-settings-btn:hover,
+.plot-settings-btn:focus-visible {
+  color: var(--accent);
+  border-color: var(--accent);
+}
+
+.plot-settings-dialog {
+  border: none;
+  padding: 0;
+  border-radius: 10px;
+  max-width: 360px;
+  width: calc(100% - 32px);
+}
+
+.plot-settings-dialog::backdrop {
+  background: rgba(22, 30, 52, 0.45);
+}
+
+.plot-settings-dialog__card {
+  margin: 0;
+  padding: 18px;
+  display: grid;
+  gap: 10px;
+}
+
+.plot-settings-dialog__card label {
+  display: grid;
+  gap: 4px;
+  font-size: 13px;
+  color: var(--ink-700);
+}
+
+.plot-settings-dialog__card input,
+.plot-settings-dialog__card select {
+  width: 100%;
+}
+
+.plot-settings-dialog__card menu {
+  margin: 8px 0 0;
+  padding: 0;
+  display: flex;
+  justify-content: flex-end;
+}
 .plot-panel__toggle {
   padding: 0;
   min-width: 0;
