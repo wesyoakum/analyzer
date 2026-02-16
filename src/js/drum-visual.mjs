@@ -169,8 +169,7 @@ export function renderDrumVisualization(rows, summary, cfg, meta) {
   const tensionLowRgb = parseCssColor(cssVar(styles, '--tension-low', FALLBACK_HEX.tensionLow), FALLBACK_COLORS.tensionLow);
   const tensionHighRgb = parseCssColor(cssVar(styles, '--tension-high', FALLBACK_HEX.tensionHigh), FALLBACK_COLORS.tensionHigh);
   const cableFillCss = rgbToCss(cableGrayRgb, 0.9);
-  const cableStrokeCss = rgbToCss(ink900Rgb, 0.78);
-
+  const cableStrokeCss = rgbToCss(cableGrayRgb, 0.9);
   const uniqueLayers = [];
   const seen = new Set();
   for (const row of rows) {
