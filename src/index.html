@@ -570,7 +570,15 @@
         </div>
     </aside>
     <div class="sheet">
-      <div class="build-indicator" id="build-info" aria-live="polite"></div>
+      <div class="report-toolbar">
+        <button
+          id="export_pdf"
+          class="tab-bar__action"
+          type="button"
+          aria-label="Export customer report as PDF"
+        >export pdf</button>
+        <div class="build-indicator" id="build-info" aria-live="polite"></div>
+      </div>
       <header class="page-header">
         <img src="assets/winch-header%20140px.png" alt="TekMarines winch diagram" class="page-header__image" />
         <h1 class="page-title">Winch Analyzer</h1>
@@ -612,15 +620,6 @@
               aria-controls="panel-instructions"
             >Section 4: Instructions</button>
           </nav>
-          <div class="tab-bar__actions">
-            <button
-              id="export_pdf"
-              class="tab-bar__action"
-              type="button"
-              aria-label="Export customer report as PDF"
-            >export customer pdf</button>
-            <div class="tab-bar__hint">Generates a print-ready report with the latest inputs, plots, and tables.</div>
-          </div>
         </div>
       
         <div
@@ -652,9 +651,7 @@
       <section class="card wave-card">
         <div class="card-header">
           <h2 class="section-title">Section 2.1: Wave Contours</h2>
-          <div class="card-header-actions">
-            <button type="button" class="refresh-link" data-refresh-plots="wave">refresh plots</button>
-          </div>
+          <div class="card-header-actions"></div>
         </div>
         
         <div class="plot-pair" data-plot-pair>
@@ -708,9 +705,7 @@
       <section class="card">
         <div class="card-header">
           <h2 class="section-title">Section 2.2: Depth Profiles</h2>
-          <div class="card-header-actions">
-            <button type="button" class="refresh-link" data-refresh-plots="depth">refresh plots</button>
-          </div>
+          <div class="card-header-actions"></div>
         </div>
         
         <div class="plot-pair" data-plot-pair>
@@ -789,9 +784,7 @@
       <section class="card" data-drive-scope="hydraulic">
         <div class="card-header">
           <h2 class="section-title">Section 2.3: Hydraulic RPM vs Torque</h2>
-          <div class="card-header-actions">
-            <button type="button" class="refresh-link" data-refresh-plots="hydraulic">refresh plots</button>
-          </div>
+          <div class="card-header-actions"></div>
         </div>
         <div class="plot-panel">
           <div class="plot-panel__heading">
@@ -824,9 +817,7 @@
       <div class="card" id="drum_card">
         <div class="card-header">
           <h2 class="section-title">Section 3.1: Drum Visualization</h2>
-          <div class="card-header-actions">
-            <button type="button" class="refresh-link" data-drum-refresh>refresh plots</button>
-          </div>
+          <div class="card-header-actions"></div>
         </div>
         <div class="drum-visual">
           <svg
@@ -892,7 +883,12 @@
       <details class="card collapsible" data-drive-scope="electric">
         <summary class="collapsible-summary">
           <span class="section-title">Section 3.3: Electric Wraps Table</span>
-          <span class="collapsible-hint" aria-hidden="true"></span>
+          <span
+            class="collapsible-hint"
+            aria-hidden="true"
+            data-collapsible-open-label="hide wrap table [-]"
+            data-collapsible-closed-label="view wrap table [+]"
+          ></span>
         </summary>
         <div class="collapsible-body">
           <div class="btnbar">
@@ -995,7 +991,12 @@
       <details class="card collapsible" data-drive-scope="hydraulic">
         <summary class="collapsible-summary">
           <span class="section-title">Section 3.5: Hydraulic Wraps Table</span>
-          <span class="collapsible-hint" aria-hidden="true"></span>
+          <span
+            class="collapsible-hint"
+            aria-hidden="true"
+            data-collapsible-open-label="hide wrap table [-]"
+            data-collapsible-closed-label="view wrap table [+]"
+          ></span>
         </summary>
         <div class="collapsible-body">
           <div class="btnbar">

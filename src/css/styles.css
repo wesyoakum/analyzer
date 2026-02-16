@@ -172,14 +172,20 @@ body {
 }
 
 
+.report-toolbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  margin-bottom: 12px;
+}
+
 .build-indicator {
-  position: absolute;
-  top: 16px;
-  right: 24px;
   font-size: 12px;
   letter-spacing: 0.02em;
   color: rgba(20, 34, 56, 0.45);
   text-transform: uppercase;
+  text-align: right;
 }
 
 .build-indicator:empty {
@@ -625,13 +631,6 @@ body {
   color: var(--ink-500);
 }
 
-.collapsible-hint::after {
-  content: '[+]';
-}
-
-.collapsible[open] .collapsible-hint::after {
-  content: '[-]';
-}
 
 .collapsible-body {
   padding: 0 24px 24px;
@@ -1321,6 +1320,10 @@ th[title] {
   margin-bottom: 24px;
 }
 
+#panel-performance .plot-panel {
+  margin-bottom: 14px;
+}
+
 .depth-controls {
   margin-top: 0;
 }
@@ -1332,6 +1335,15 @@ th[title] {
 @media (max-width: 720px) {
   .sheet {
     padding: 0 30px;
+  }
+
+  .report-toolbar {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .build-indicator {
+    text-align: left;
   }
 
   .tab-bar {
@@ -1418,8 +1430,19 @@ th[title] {
     content: "Project: " var(--report-project-name) "\AGenerated: " var(--report-generated-at);
   }
 
-  .build-indicator,
+  .build-indicator {
+    display: block !important;
+  }
+
+  .report-toolbar {
+    margin-bottom: 8px;
+  }
+
   #panel-instructions {
+    display: block !important;
+  }
+
+  .instructions-only {
     display: none !important;
   }
 
@@ -1456,6 +1479,20 @@ th[title] {
 
   .plotwrap {
     overflow: visible;
+  }
+
+  #panel-performance .plot-panel,
+  #panel-results .drum-visual {
+    margin-bottom: 14px;
+  }
+
+  .pdf-item-label {
+    margin: 8px 0 6px;
+    font-size: 11px;
+    font-weight: 600;
+    color: var(--ink-700);
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
   }
 
   svg {
