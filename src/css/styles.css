@@ -1487,6 +1487,43 @@ th[title] {
     page-break-before: avoid;
   }
 
+  p,
+  .dim,
+  .table-title,
+  .plot-title {
+    break-after: avoid;
+    page-break-after: avoid;
+  }
+
+  p + table,
+  p + img,
+  p + .plot-panel,
+  p + .plotwrap,
+  .dim + table,
+  .dim + img,
+  .dim + .plot-panel,
+  .dim + .plotwrap,
+  .table-title + table,
+  .plot-title + .plotwrap {
+    break-before: avoid;
+    page-break-before: avoid;
+  }
+
+  .card-header {
+    break-after: avoid;
+    page-break-after: avoid;
+  }
+
+  .card-header + table,
+  .card-header + img,
+  .card-header + .plot-pair,
+  .card-header + .plot-panel,
+  .card-header + .plotwrap,
+  .card-header + details.collapsible {
+    break-before: avoid;
+    page-break-before: avoid;
+  }
+
   del,
   s {
     display: none !important;
