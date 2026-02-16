@@ -8,7 +8,7 @@
   --ink-500: #55637d;
   --accent: #2c56a3;
   --accent-light: #edf2ff;
-  --doc-serif: "Source Serif 4", "Times New Roman", Georgia, serif;
+  --doc-serif: "Inter", "Segoe UI", system-ui, -apple-system, BlinkMacSystemFont, "Roboto", "Helvetica Neue", Arial, sans-serif;
   --tension-low: #6c2bd9;
   --tension-high: #f97316;
 }
