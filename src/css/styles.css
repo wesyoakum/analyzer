@@ -44,7 +44,7 @@ body {
   background: var(--paper);
   border: 1px solid var(--paper-line-strong);
   box-shadow: 0 18px 42px rgba(20, 34, 56, 0.14);
-  padding: 38px 52px 54px;
+  padding: 0;
   position: relative;
   grid-column: 2 / 3;
   font-family: var(--doc-serif);
@@ -59,6 +59,11 @@ body {
 .sheet .dim,
 .sheet .drum-summary {
   font-family: var(--doc-serif);
+}
+
+.sheet div {
+  margin-inline: 0;
+  padding-inline: 0;
 }
 
 .sheet .page-title,
@@ -1261,7 +1266,7 @@ th[title] {
 
 @media (max-width: 720px) {
   .sheet {
-    padding: 24px 20px 36px;
+    padding: 0;
   }
 
   .tab-bar {
