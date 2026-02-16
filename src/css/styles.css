@@ -1420,7 +1420,7 @@ th[title] {
   }
 
   .page-header {
-    display: none !important;
+    display: flex !important;
   }
 
   #panel-instructions {
