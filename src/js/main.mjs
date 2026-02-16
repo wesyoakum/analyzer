@@ -700,9 +700,11 @@ document.addEventListener('DOMContentLoaded', () => {
 
   setupPlotResizeToggles();
 
-  setupManualRefreshControls();
+  setupWrapTableToggleLabels();
 
   setupPlotSettingsDialogs();
+
+  configureSectionFourContent();
 
   setupProjectManager();
 
@@ -792,24 +794,28 @@ function updateBuildIndicator() {
   const indicator = /** @type {HTMLElement|null} */ (document.getElementById('build-info'));
   if (!indicator) return;
 
-  const lastModified = new Date(document.lastModified);
-  if (Number.isNaN(lastModified.getTime())) {
-    indicator.textContent = `Updated ${document.lastModified}`;
-    return;
-  }
+  indicator.textContent = formatGeneratedStamp(new Date());
+}
 
-  const formatter = new Intl.DateTimeFormat('en-US', {
+/**
+ * @param {Date} date
+ */
+function formatGeneratedStamp(date) {
+  const parts = new Intl.DateTimeFormat('en-CA', {
+    timeZone: 'America/Chicago',
     year: 'numeric',
-    month: 'short',
+    month: '2-digit',
     day: '2-digit',
     hour: '2-digit',
     minute: '2-digit',
     second: '2-digit',
     hour12: false,
-    timeZone: 'UTC'
-  });
+    timeZoneName: 'short'
+  }).formatToParts(date);
 
-  indicator.textContent = `Updated ${formatter.format(lastModified)} UTC`;
+  const map = Object.fromEntries(parts.map(({ type, value }) => [type, value]));
+  const zone = (map.timeZoneName || 'CDT').toUpperCase();
+  return `GENERATED ${map.year}-${map.month}-${map.day}, ${map.hour}:${map.minute}:${map.second} ${zone}`;
 }
 
 function setupTabs() {
@@ -909,14 +915,7 @@ function setupPdfExport() {
     const projectName = (projectInput?.value || '').trim() || 'Untitled project';
     document.documentElement.style.setProperty('--report-project-name', `"${projectName.replace(/"/g, '\\"')}"`);
 
-    const stamp = new Intl.DateTimeFormat('en-US', {
-      year: 'numeric',
-      month: 'short',
-      day: '2-digit',
-      hour: '2-digit',
-      minute: '2-digit',
-      timeZoneName: 'short'
-    }).format(new Date());
+    const stamp = formatGeneratedStamp(new Date());
     document.documentElement.style.setProperty('--report-generated-at', `"${stamp.replace(/"/g, '\\"')}"`);
   };
 
@@ -935,6 +934,31 @@ function setupPdfExport() {
           details.removeAttribute('open');
         });
       }
+    });
+
+    let figureIndex = 1;
+    const figureTargets = Array.from(document.querySelectorAll('#panel-performance .plot-panel, #panel-results .drum-visual'));
+    figureTargets.forEach(target => {
+      if (!(target instanceof HTMLElement)) return;
+      const label = document.createElement('p');
+      label.className = 'pdf-item-label pdf-item-label--figure';
+      label.textContent = `Figure ${figureIndex}`;
+      figureIndex += 1;
+      target.insertAdjacentElement('beforebegin', label);
+      cleanupSteps.push(() => label.remove());
+    });
+
+    let tableIndex = 1;
+    const tableTargets = Array.from(document.querySelectorAll('#panel-results table, #panel-instructions table'));
+    tableTargets.forEach(table => {
+      if (!(table instanceof HTMLTableElement)) return;
+      if (table.closest('.instructions-only')) return;
+      const label = document.createElement('p');
+      label.className = 'pdf-item-label pdf-item-label--table';
+      label.textContent = `Table ${tableIndex}`;
+      tableIndex += 1;
+      table.insertAdjacentElement('beforebegin', label);
+      cleanupSteps.push(() => label.remove());
     });
 
     // Allow lightweight inline page-break markers in editable report text.
@@ -1141,24 +1165,76 @@ function setupPlotResizeToggles() {
   });
 }
 
-function setupManualRefreshControls() {
-  const plotButtons = document.querySelectorAll('[data-refresh-plots]');
-  plotButtons.forEach(btn => {
-    btn.addEventListener('click', () => {
-      redrawPlots();
-    });
-  });
 
-  const drumButton = /** @type {HTMLButtonElement|null} */ (document.querySelector('[data-drum-refresh]'));
-  if (drumButton) {
-    drumButton.addEventListener('click', () => {
-      if (lastDrumState) {
-        const { rows, summary, cfg, meta } = lastDrumState;
-        renderDrumVisualization(rows, summary, cfg, meta);
-      } else {
-        computeAll();
-      }
+function setupWrapTableToggleLabels() {
+  const detailsItems = Array.from(document.querySelectorAll('details.collapsible'));
+  detailsItems.forEach(details => {
+    const hint = details.querySelector('.collapsible-hint');
+    if (!(hint instanceof HTMLElement)) return;
+
+    const openLabel = hint.dataset.collapsibleOpenLabel || '[-]';
+    const closedLabel = hint.dataset.collapsibleClosedLabel || '[+]';
+
+    const apply = () => {
+      hint.textContent = details.hasAttribute('open') ? openLabel : closedLabel;
+    };
+
+    apply();
+    details.addEventListener('toggle', apply);
+  });
+}
+
+function configureSectionFourContent() {
+  const tab = /** @type {HTMLElement|null} */ (document.getElementById('tab-instructions'));
+  if (tab) tab.textContent = 'Section 4: Symbols, Calculations, and Instructions';
+
+  const title = /** @type {HTMLElement|null} */ (document.getElementById('hydraulic-core-equations-title'));
+  if (title) title.textContent = 'Section 4: Symbols, Calculations, and Instructions';
+
+  const equationCard = /** @type {HTMLElement|null} */ (document.getElementById('hydraulic-core-equations'));
+  const exportGuideCard = /** @type {HTMLElement|null} */ (document.getElementById('preset-export-guide'));
+  const catalogCard = /** @type {HTMLElement|null} */ (document.getElementById('component-catalog-card'));
+  const panel = /** @type {HTMLElement|null} */ (document.getElementById('panel-instructions'));
+
+  if (panel && exportGuideCard) panel.appendChild(exportGuideCard);
+
+  if (equationCard) {
+    const headings = equationCard.querySelectorAll('h3');
+    if (headings[0]) headings[0].textContent = 'Section 4.1: Symbols';
+    if (headings[1]) headings[1].textContent = 'Section 4.2: Calculations';
+
+    const rows = Array.from(equationCard.querySelectorAll('tbody tr'));
+    rows.forEach(row => {
+      if (!(row instanceof HTMLTableRowElement)) return;
+      const symbolCell = row.cells[0];
+      const descCell = row.cells[1];
+      if (!symbolCell || !descCell) return;
+      const symbol = (symbolCell.textContent || '').replace(/\s+/g, '');
+      if (symbol.includes('n_e')) descCell.textContent = 'electric prime mover speed';
+      if (symbol.includes('P_{nom}')) descCell.textContent = 'total nominal prime-mover power';
+      if (symbol.includes('P_{avail}')) descCell.textContent = 'available prime-mover power';
+      if (symbol.includes('η_{em}') || symbol.includes('\eta_{em}')) descCell.textContent = 'electromechanical chain efficiency';
     });
+
+    const calcHeadings = equationCard.querySelectorAll('h3 + ol ~ h3');
+    calcHeadings.forEach(heading => {
+      if (!(heading instanceof HTMLElement)) return;
+      const h4 = document.createElement('h4');
+      h4.textContent = heading.textContent || '';
+      heading.replaceWith(h4);
+    });
+  }
+
+  if (catalogCard) {
+    const heading = catalogCard.querySelector('.section-title');
+    if (heading) heading.textContent = 'Section 4.3: Instructions — How to update component presets';
+    catalogCard.classList.add('instructions-only');
+  }
+
+  if (exportGuideCard) {
+    const heading = exportGuideCard.querySelector('.section-title');
+    if (heading) heading.textContent = 'Section 4.3: Instructions — Exporting component presets';
+    exportGuideCard.classList.add('instructions-only');
   }
 }
 
@@ -1428,6 +1504,15 @@ function extractSummaryValue(tableCell) {
     if (formControl.type === 'radio') {
       return formControl.checked ? normalizeText(formControl.value) : '–';
     }
+    if (formControl.id === 'wraps_override') {
+      const wrapValue = Number(formControl.value);
+      if (!(Number.isFinite(wrapValue) && wrapValue > 0)) {
+        const autoWraps = Number(lastDrumState?.meta?.wraps_per_layer_used);
+        if (Number.isFinite(autoWraps) && autoWraps > 0) {
+          return autoWraps.toFixed(1);
+        }
+      }
+    }
     return normalizeText(formControl.value);
   }
 
@@ -1437,7 +1522,8 @@ function extractSummaryValue(tableCell) {
       return selections.length ? selections.join(', ') : '–';
     }
     const option = formControl.selectedOptions[0];
-    return option ? normalizeText(option.textContent) : '–';
+    const text = option ? normalizeText(option.textContent) : '–';
+    return text === 'Custom (manual input)' ? '–' : text;
   }
 
   if (formControl instanceof HTMLTextAreaElement) {
