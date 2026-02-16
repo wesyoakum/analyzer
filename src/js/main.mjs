@@ -901,6 +901,9 @@ function setupPdfExport() {
   const exportBtn = /** @type {HTMLButtonElement|null} */ (document.getElementById('export_pdf'));
   if (!exportBtn) return;
 
+  /** @type {Array<() => void>} */
+  let printCleanupSteps = [];
+
   const syncReportMeta = () => {
     const projectInput = /** @type {HTMLInputElement|null} */ (document.getElementById('project_name'));
     const projectName = (projectInput?.value || '').trim() || 'Untitled project';
@@ -918,12 +921,55 @@ function setupPdfExport() {
   };
 
   const preparePrintLayout = () => {
+    if (printCleanupSteps.length) return;
+
+    const cleanupSteps = [];
+
+    // Ensure all collapsible sections are fully expanded in the exported report.
+    const collapsibles = Array.from(document.querySelectorAll('details.collapsible'));
+    collapsibles.forEach(details => {
+      const wasOpen = details.hasAttribute('open');
+      if (!wasOpen) {
+        details.setAttribute('open', '');
+        cleanupSteps.push(() => {
+          details.removeAttribute('open');
+        });
+      }
+    });
+
+    // Allow lightweight inline page-break markers in editable report text.
+    const marker = '<< Add Page Break Here>>';
+    const markerNodes = Array.from(document.querySelectorAll('.sheet p, .sheet div, .sheet span'));
+    markerNodes.forEach(node => {
+      if (!node.textContent || !node.textContent.includes(marker)) return;
+
+      const originalText = node.textContent;
+      node.textContent = originalText.replaceAll(marker, '').trim();
+
+      const pageBreak = document.createElement('div');
+      pageBreak.className = 'pdf-page-break';
+      pageBreak.setAttribute('aria-hidden', 'true');
+      node.insertAdjacentElement('afterend', pageBreak);
+
+      cleanupSteps.push(() => {
+        node.textContent = originalText;
+        pageBreak.remove();
+      });
+    });
+
     syncReportMeta();
     document.body.classList.add('pdf-export-mode');
+
+    cleanupSteps.push(() => {
+      document.body.classList.remove('pdf-export-mode');
+    });
+
+    printCleanupSteps = cleanupSteps;
   };
 
   const cleanupPrintLayout = () => {
-    document.body.classList.remove('pdf-export-mode');
+    printCleanupSteps.forEach(fn => fn());
+    printCleanupSteps = [];
   };
 
   exportBtn.addEventListener('click', () => {
