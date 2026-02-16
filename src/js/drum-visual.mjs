@@ -163,14 +163,13 @@ export function renderDrumVisualization(rows, summary, cfg, meta) {
   if (!titleEl) return;
 
   const styles = getComputedStyle(document.documentElement);
-  const accentRgb = parseCssColor(cssVar(styles, '--accent', FALLBACK_HEX.accent), FALLBACK_COLORS.accent);
   const ink700Rgb = parseCssColor(cssVar(styles, '--ink-700', FALLBACK_HEX.ink700), FALLBACK_COLORS.ink700);
   const ink900Rgb = parseCssColor(cssVar(styles, '--ink-900', FALLBACK_HEX.ink900), FALLBACK_COLORS.ink900);
-  const paperRgb = parseCssColor(cssVar(styles, '--paper', FALLBACK_HEX.paper), FALLBACK_COLORS.paper);
+  const cableGrayRgb = parseCssColor(cssVar(styles, '--paper-line-strong', '#c4ccdd'), [196, 204, 221]);
   const tensionLowRgb = parseCssColor(cssVar(styles, '--tension-low', FALLBACK_HEX.tensionLow), FALLBACK_COLORS.tensionLow);
   const tensionHighRgb = parseCssColor(cssVar(styles, '--tension-high', FALLBACK_HEX.tensionHigh), FALLBACK_COLORS.tensionHigh);
-  const cableFillCss = rgbToCss(mixRgb(accentRgb, paperRgb, 0.45), 0.82);
-  const cableStrokeCss = rgbToCss(accentRgb, 0.94);
+  const cableFillCss = rgbToCss(cableGrayRgb, 0.9);
+  const cableStrokeCss = rgbToCss(cableGrayRgb, 0.9);
 
   const uniqueLayers = [];
   const seen = new Set();
