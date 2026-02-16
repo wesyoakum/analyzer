@@ -64,6 +64,8 @@ export function drawDepthProfiles(svgSpeed, svgTension, {
   depth_xmax = null,
   speed_ymin = 0,
   speed_ymax = null,
+  tension_depth_xmin = null,
+  tension_depth_xmax = null,
   tension_ymin = 0,
   tension_ymax = null,
   speed_primary_label = null,
@@ -139,7 +141,22 @@ export function drawDepthProfiles(svgSpeed, svgTension, {
   }
   if (speedMax <= speedMin) speedMax = speedMin + 1;
 
-  const tensionDepth = Math.max(maxDepth, depthMax);
+  let tensionDepthMin = toNumber(tension_depth_xmin);
+  if (!Number.isFinite(tensionDepthMin) || tensionDepthMin < 0) tensionDepthMin = depthMin;
+
+  let tensionDepthMax = toNumber(tension_depth_xmax);
+  const tensionDepthCandidates = [tensionDepthMin + 0.1];
+  if (Number.isFinite(maxDepth)) tensionDepthCandidates.push(maxDepth);
+  if (Number.isFinite(opDepth)) tensionDepthCandidates.push(opDepth);
+  const autoTensionDepthMax = Math.max(...tensionDepthCandidates);
+  if (Number.isFinite(tensionDepthMax)) {
+    tensionDepthMax = Math.max(tensionDepthMin + 0.1, tensionDepthMax);
+  } else {
+    tensionDepthMax = autoTensionDepthMax;
+  }
+  if (tensionDepthMax <= tensionDepthMin) tensionDepthMax = tensionDepthMin + 1;
+
+  const tensionDepth = Math.max(maxDepth, tensionDepthMax);
   const maxTheoT = payload_kg + cable_w_kgpm * tensionDepth;
   const maxReqT = maxTheoT;
 
@@ -164,7 +181,7 @@ export function drawDepthProfiles(svgSpeed, svgTension, {
     primaryLabel: speed_primary_label,
     extraProfiles: Array.isArray(speed_extra_profiles) ? speed_extra_profiles : []
   });
-  drawTensionProfile(svgTension, segments, depthMin, depthMax, tensionMin, tensionMax, payload_kg, cable_w_kgpm, accentColor);
+  drawTensionProfile(svgTension, segments, tensionDepthMin, tensionDepthMax, tensionMin, tensionMax, payload_kg, cable_w_kgpm, accentColor);
 }
 
 // ---------- Speed vs Depth ----------
