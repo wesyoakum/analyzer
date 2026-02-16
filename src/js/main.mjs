@@ -923,7 +923,7 @@ function setupPdfExport() {
       label.className = 'pdf-item-label pdf-item-label--figure';
       label.textContent = `Figure ${figureIndex}`;
       figureIndex += 1;
-      target.insertAdjacentElement('beforebegin', label);
+      target.insertAdjacentElement('afterend', label);
       cleanupSteps.push(() => label.remove());
     });
 
@@ -933,11 +933,22 @@ function setupPdfExport() {
       if (!(table instanceof HTMLTableElement)) return;
       if (table.closest('.instructions-only')) return;
       const label = document.createElement('p');
+      const tableNumber = tableIndex;
       label.className = 'pdf-item-label pdf-item-label--table';
-      label.textContent = `Table ${tableIndex}`;
+      label.textContent = `Table ${tableNumber}`;
       tableIndex += 1;
       table.insertAdjacentElement('beforebegin', label);
       cleanupSteps.push(() => label.remove());
+
+      if (tableNumber === 5) {
+        table.classList.add('pdf-allow-split');
+        cleanupSteps.push(() => table.classList.remove('pdf-allow-split'));
+        const card = table.closest('.card');
+        if (card instanceof HTMLElement) {
+          card.classList.add('pdf-allow-split');
+          cleanupSteps.push(() => card.classList.remove('pdf-allow-split'));
+        }
+      }
     });
 
     // Allow lightweight inline page-break markers in editable report text.

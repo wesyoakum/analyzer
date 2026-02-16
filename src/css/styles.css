@@ -1382,7 +1382,7 @@ th[title] {
 @media print {
   @page {
     size: A4 portrait;
-    margin: 14mm;
+    margin: 0;
   }
 
   body {
@@ -1415,7 +1415,7 @@ th[title] {
     border: 1px solid transparent;
     box-shadow: none;
     max-width: none;
-    padding: 0 30px;
+    padding: 14mm 30px;
     margin: 0;
   }
 
@@ -1482,6 +1482,25 @@ th[title] {
 
   .pdf-hide-temporary {
     display: none !important;
+  }
+
+
+  #panel-performance .card {
+    margin-top: calc(8px + 1lh);
+  }
+
+  #panel-performance .card:first-child {
+    margin-top: 8px;
+  }
+
+  .pdf-item-label {
+    text-align: center;
+  }
+
+  .pdf-allow-split,
+  .pdf-allow-split table {
+    break-inside: auto !important;
+    page-break-inside: auto !important;
   }
 
   .plotwrap {
