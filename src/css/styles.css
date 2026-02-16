@@ -1420,7 +1420,15 @@ th[title] {
   }
 
   .page-header {
-    display: none !important;
+    display: flex !important;
+    gap: 8px;
+    margin-bottom: 12px;
+    padding-bottom: 0;
+  }
+
+  #panel-inputs .card:first-child {
+    break-inside: auto;
+    page-break-inside: auto;
   }
 
   #panel-instructions {
