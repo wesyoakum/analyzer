@@ -1509,6 +1509,21 @@ th[title] {
     page-break-before: avoid;
   }
 
+  .card-header {
+    break-after: avoid;
+    page-break-after: avoid;
+  }
+
+  .card-header + table,
+  .card-header + img,
+  .card-header + .plot-pair,
+  .card-header + .plot-panel,
+  .card-header + .plotwrap,
+  .card-header + details.collapsible {
+    break-before: avoid;
+    page-break-before: avoid;
+  }
+
   del,
   s {
     display: none !important;
