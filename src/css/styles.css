@@ -1367,12 +1367,17 @@ th[title] {
   .panel[hidden],
   .panel.active {
     display: block !important;
+    padding-top: 0;
+  }
+
+  .panel + .panel {
+    margin-top: 8px;
   }
 
   .card {
-    break-inside: avoid;
-    page-break-inside: avoid;
-    margin-top: 12px;
+    break-inside: auto;
+    page-break-inside: auto;
+    margin-top: 8px;
     border-color: #d1d8e6;
   }
 
