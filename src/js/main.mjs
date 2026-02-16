@@ -1901,25 +1901,21 @@ function redrawPlots() {
         });
 
         if (activeScenario === 'hydraulic') {
-          flowSpeedProfiles = payloadSteps
-            .map(p => {
-              const segments = computeDepthSpeedSegmentsForPayload(p, lastDepthProfileContext, { mode: 'flow' });
-              if (!segments.length) return null;
-              const color = payloadColorMap.get(p) || accentColor;
-              const isPrimary = Math.abs(p - payloadVal) <= 1e-6;
-              return {
-                label: `Flow limit — ${formatPayloadInlineLabel(p)}`,
-                inlineLabel: formatPayloadInlineLabel(p),
-                inlineLabelColor: color,
-                color,
-                strokeWidth: isPrimary ? 3.2 : 2.4,
-                legendStrokeWidth: isPrimary ? 3.2 : 2.4,
-                strokeDasharray: '6 4',
-                legendStrokeDasharray: '6 4',
-                segments
-              };
-            })
-            .filter(Boolean);
+          const segments = computeDepthSpeedSegmentsForPayload(payloadVal, lastDepthProfileContext, { mode: 'flow' });
+          if (segments.length) {
+            const color = payloadColorMap.get(payloadVal) || accentColor;
+            flowSpeedProfiles = [{
+              label: `Flow limit — ${formatPayloadInlineLabel(payloadVal)}`,
+              inlineLabel: formatPayloadInlineLabel(payloadVal),
+              inlineLabelColor: color,
+              color,
+              strokeWidth: 3.2,
+              legendStrokeWidth: 3.2,
+              strokeDasharray: '6 4',
+              legendStrokeDasharray: '6 4',
+              segments
+            }];
+          }
         }
 
         powerSpeedProfiles = payloadSteps
