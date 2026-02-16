@@ -1487,6 +1487,28 @@ th[title] {
     page-break-before: avoid;
   }
 
+  p,
+  .dim,
+  .table-title,
+  .plot-title {
+    break-after: avoid;
+    page-break-after: avoid;
+  }
+
+  p + table,
+  p + img,
+  p + .plot-panel,
+  p + .plotwrap,
+  .dim + table,
+  .dim + img,
+  .dim + .plot-panel,
+  .dim + .plotwrap,
+  .table-title + table,
+  .plot-title + .plotwrap {
+    break-before: avoid;
+    page-break-before: avoid;
+  }
+
   del,
   s {
     display: none !important;
