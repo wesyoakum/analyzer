@@ -1255,11 +1255,11 @@ th[title] {
   font-size: 13px;
 }
 
-#panel-performance .plot-panel {
+.plot-panel--compact {
   margin: 0;
 }
 
-#panel-performance .plot-panel .legend {
+.legend--panel {
   margin-top: 12px;
 }
 
@@ -1410,11 +1410,11 @@ th[title] {
   }
 
 
-  #panel-performance .card {
+  .card--performance {
     margin-top: calc(8px + 1lh);
   }
 
-  #panel-performance .card:first-child {
+  .card--performance-first {
     margin-top: 8px;
   }
 
@@ -1430,7 +1430,7 @@ th[title] {
     overflow: visible;
   }
 
-  #panel-performance .plot-panel,
+  .plot-panel--performance,
   #panel-results .drum-visual {
     margin-bottom: 14px;
   }
