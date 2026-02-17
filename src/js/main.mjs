@@ -940,18 +940,6 @@ function setupPdfExport() {
 
     });
 
-    const sectionBoundaryPanels = [
-      document.getElementById('panel-performance'),
-      document.getElementById('panel-results'),
-      document.getElementById('panel-instructions'),
-    ];
-
-    sectionBoundaryPanels.forEach(panel => {
-      if (!(panel instanceof HTMLElement)) return;
-      panel.classList.add('pdf-break-before');
-      cleanupSteps.push(() => panel.classList.remove('pdf-break-before'));
-    });
-
     const equationsCard = /** @type {HTMLElement|null} */ (document.getElementById('hydraulic-core-equations'));
     if (equationsCard) {
       const headings = Array.from(equationsCard.querySelectorAll('h3, h4'));
