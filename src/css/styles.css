@@ -1097,40 +1097,10 @@ th[title] {
   gap: 16px;
 }
 
-.plot-pair__actions {
-  display: flex;
-  justify-content: flex-end;
-}
-
-.plot-pair__toggle {
-  padding: 0;
-  min-width: 0;
-  font-size: 14px;
-  line-height: 1;
-  border: none;
-  background: none;
-  color: var(--ink-600);
-  cursor: pointer;
-}
-
-.plot-pair__toggle:hover,
-.plot-pair__toggle:focus-visible {
-  color: var(--accent);
-}
-
 .plot-column {
   position: relative;
 }
 
-.plot-column.is-expanded {
-  flex: 1 1 100%;
-  min-width: 100%;
-}
-
-.plot-pair.is-expanded .col {
-  flex: 1 1 100%;
-  min-width: 100%;
-}
 
 .legend {
   display: flex;
@@ -1270,9 +1240,8 @@ th[title] {
 }
 
 .col {
-  flex: 1 1 460px;
-  min-width: 360px;
-  transition: flex-basis 0.2s ease;
+  flex: 1 1 100%;
+  min-width: 100%;
 }
 
 .col svg {
