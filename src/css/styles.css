@@ -1395,15 +1395,8 @@ th[title] {
     padding-bottom: 0;
   }
 
-  #panel-inputs .card:first-child {
-    break-inside: auto;
-    page-break-inside: auto;
-  }
-
   #panel-instructions {
     display: block !important;
-    break-before: page;
-    page-break-before: always;
   }
 
   .instructions-only {
@@ -1422,75 +1415,8 @@ th[title] {
   }
 
   .card {
-    break-inside: avoid;
-    page-break-inside: avoid;
     margin-top: 8px;
     border-color: #d1d8e6;
-  }
-
-  h1,
-  h2,
-  h3,
-  h4,
-  h5,
-  h6,
-  .section-title,
-  .input-section__title,
-  .plot-panel__heading,
-  .pdf-item-label {
-    break-after: avoid;
-    page-break-after: avoid;
-  }
-
-  h1 + *,
-  h2 + *,
-  h3 + *,
-  h4 + *,
-  h5 + *,
-  h6 + *,
-  .section-title + *,
-  .input-section__title + *,
-  .plot-panel__heading + *,
-  .pdf-item-label + * {
-    break-before: avoid;
-    page-break-before: avoid;
-  }
-
-  p,
-  .dim,
-  .table-title,
-  .plot-title {
-    break-after: avoid;
-    page-break-after: avoid;
-  }
-
-  p + table,
-  p + img,
-  p + .plot-panel,
-  p + .plotwrap,
-  .dim + table,
-  .dim + img,
-  .dim + .plot-panel,
-  .dim + .plotwrap,
-  .table-title + table,
-  .plot-title + .plotwrap {
-    break-before: avoid;
-    page-break-before: avoid;
-  }
-
-  .card-header {
-    break-after: avoid;
-    page-break-after: avoid;
-  }
-
-  .card-header + table,
-  .card-header + img,
-  .card-header + .plot-pair,
-  .card-header + .plot-panel,
-  .card-header + .plotwrap,
-  .card-header + details.collapsible {
-    break-before: avoid;
-    page-break-before: avoid;
   }
 
   del,
@@ -1499,27 +1425,12 @@ th[title] {
   }
 
   .pdf-page-break {
-    break-before: page;
-    page-break-before: always;
     height: 0;
     margin: 0;
     border: 0;
   }
 
-  .plot-panel,
-  .plot-panel__heading,
-  .plotwrap,
-  .drum-visual,
-  details.collapsible,
-  .collapsible-body,
-  table {
-    break-inside: avoid;
-    page-break-inside: avoid;
-  }
-
   .pdf-break-before {
-    break-before: page;
-    page-break-before: always;
   }
 
   .pdf-hide-temporary {
@@ -1541,8 +1452,6 @@ th[title] {
 
   .pdf-allow-split,
   .pdf-allow-split table {
-    break-inside: auto !important;
-    page-break-inside: auto !important;
   }
 
   .plotwrap {
