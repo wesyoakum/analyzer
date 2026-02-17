@@ -641,7 +641,7 @@
       
         <div
           id="panel-performance"
-          class="panel"
+          class="panel panel--performance"
           role="tabpanel"
           aria-labelledby="tab-performance"
           tabindex="0"
@@ -649,14 +649,14 @@
           aria-hidden="true"
           aria-live="polite"
         >
-      <section class="card wave-card">
+      <section class="card card--performance card--performance-first wave-card">
         <div class="card-header">
           <h2 class="section-title">Section 2.1: Wave Contours</h2>
           <div class="card-header-actions"></div>
         </div>
         
         <div class="plot-pair">
-          <div class="plot-panel">
+          <div class="plot-panel plot-panel--compact plot-panel--performance">
             <div class="plot-panel__heading">
               <div>
                 <div class="plot-title">Speed vs Period with Height Lines</div>
@@ -667,11 +667,11 @@
             <div class="plotwrap">
               <svg id="wave_svg" width="1000" height="540" viewBox="0 0 1000 540"></svg>
             </div>
-            <div class="legend">
+            <div class="legend legend--panel">
               <div class="legitem"><span class="swatch accent"></span><span>Layer speed</span></div>
             </div>
           </div>
-          <div class="plot-panel">
+          <div class="plot-panel plot-panel--compact plot-panel--performance">
             <div class="plot-panel__heading">
               <div>
                 <div class="plot-title">Wave Height vs Period with Speed Lines</div>
@@ -682,7 +682,7 @@
             <div class="plotwrap">
               <svg id="wave_svg_height" width="1000" height="540" viewBox="0 0 1000 540"></svg>
             </div>
-            <div class="legend">
+            <div class="legend legend--panel">
               <div class="legitem"><span class="swatch gray"></span><span>Layer speed iso-line</span></div>
               <div class="legitem"><span class="swatch"></span><span>H = integer m</span></div>
               <div class="legitem"><span class="swatch dashed"></span><span>H = 0.5 m offsets</span></div>
@@ -691,14 +691,14 @@
         </div>
       </section>
 
-      <section class="card">
+      <section class="card card--performance">
         <div class="card-header">
           <h2 class="section-title">Section 2.2: Depth Profiles</h2>
           <div class="card-header-actions"></div>
         </div>
         
         <div class="plot-pair">
-          <div class="plot-panel">
+          <div class="plot-panel plot-panel--compact plot-panel--performance">
             <div class="plot-panel__heading">
               <div>
                 <div class="plot-title">Available Speed vs Depth</div>
@@ -708,7 +708,7 @@
             <div class="plotwrap">
               <svg id="depth_speed_svg" viewBox="0 0 1000 540"></svg>
             </div>
-            <div class="legend legend--compact">
+            <div class="legend legend--compact legend--panel">
               <div class="legitem"><span class="swatch accent"></span><span>Available speed</span></div>
               <div class="legitem"><span class="swatch rated"></span><span>Rated speed</span></div>
               <div class="legitem">
@@ -725,7 +725,7 @@
               </div>
             </div>
           </div>
-          <div class="plot-panel">
+          <div class="plot-panel plot-panel--compact plot-panel--performance">
             <div class="plot-panel__heading">
               <div>
                 <div class="plot-title">Available Speed vs Depth by Payload</div>
@@ -737,7 +737,7 @@
               <svg id="depth_speed_power_svg" viewBox="0 0 1000 540"></svg>
             </div>
           </div>
-          <div class="plot-panel">
+          <div class="plot-panel plot-panel--compact plot-panel--performance">
             <div class="plot-panel__heading">
               <div>
                 <div class="plot-title">Tension vs Depth</div>
@@ -747,7 +747,7 @@
             <div class="plotwrap">
               <svg id="depth_tension_svg" viewBox="0 0 1000 540"></svg>
             </div>
-            <div class="legend legend--compact">
+            <div class="legend legend--compact legend--panel">
               <div class="legitem"><span class="swatch theoretical"></span><span>Required tension</span></div>
               <div class="legitem">
                 <span class="swatch-group" aria-hidden="true">
@@ -761,13 +761,13 @@
         </div>
       </section>
 
-      <section class="card" data-drive-scope="hydraulic">
+      <section class="card card--performance" data-drive-scope="hydraulic">
         <div class="card-header">
           <h2 class="section-title">Section 2.3: Hydraulic RPM vs Torque</h2>
           <div class="card-header-actions"></div>
         </div>
         <div class="plot-pair">
-          <div class="plot-panel">
+          <div class="plot-panel plot-panel--compact plot-panel--performance">
             <div class="plot-panel__heading">
               <div>
                 <div class="plot-title">Available RPM vs Torque</div>
@@ -778,7 +778,7 @@
             <div class="plotwrap">
               <svg id="hyd_rpm_torque_svg" viewBox="0 0 1000 540"></svg>
             </div>
-            <div class="legend legend--compact">
+            <div class="legend legend--compact legend--panel">
               <div class="legitem"><span class="swatch accent"></span><span>Available RPM</span></div>
               <div class="legitem"><span class="swatch flow"></span><span>Flow-limited RPM</span></div>
               <div class="legitem"><span class="swatch power"></span><span>Power-limited RPM</span></div>
