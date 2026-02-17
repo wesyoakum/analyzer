@@ -1402,8 +1402,6 @@ th[title] {
 
   #panel-instructions {
     display: block !important;
-    break-before: page;
-    page-break-before: always;
   }
 
   .instructions-only {
@@ -1499,8 +1497,6 @@ th[title] {
   }
 
   .pdf-page-break {
-    break-before: page;
-    page-break-before: always;
     height: 0;
     margin: 0;
     border: 0;
@@ -1518,8 +1514,6 @@ th[title] {
   }
 
   .pdf-break-before {
-    break-before: page;
-    page-break-before: always;
   }
 
   .pdf-hide-temporary {

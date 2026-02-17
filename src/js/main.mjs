@@ -949,32 +949,6 @@ function setupPdfExport() {
       }
     });
 
-    // Allow lightweight inline page-break markers in editable report text.
-    const marker = '<< Add Page Break Here>>';
-    const markerNodes = Array.from(document.querySelectorAll('.sheet p, .sheet div, .sheet span'));
-    markerNodes.forEach(node => {
-      if (!node.textContent || !node.textContent.includes(marker)) return;
-
-      const originalText = node.textContent;
-      node.textContent = originalText.replaceAll(marker, '').trim();
-
-      const pageBreak = document.createElement('div');
-      pageBreak.className = 'pdf-page-break';
-      pageBreak.setAttribute('aria-hidden', 'true');
-      node.insertAdjacentElement('afterend', pageBreak);
-
-      cleanupSteps.push(() => {
-        node.textContent = originalText;
-        pageBreak.remove();
-      });
-    });
-
-    const section34Card = document.querySelector('#panel-results .card[data-drive-scope="hydraulic"]');
-    if (section34Card instanceof HTMLElement) {
-      section34Card.classList.add('pdf-break-before');
-      cleanupSteps.push(() => section34Card.classList.remove('pdf-break-before'));
-    }
-
     const equationsCard = /** @type {HTMLElement|null} */ (document.getElementById('hydraulic-core-equations'));
     if (equationsCard) {
       const headings = Array.from(equationsCard.querySelectorAll('h3, h4'));
