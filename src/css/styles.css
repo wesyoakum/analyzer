@@ -995,6 +995,9 @@ th[title] {
 }
 
 .plot-panel__heading > div {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
   flex: 1;
 }
 
@@ -1236,11 +1239,11 @@ th[title] {
 
 .plot-title {
   font-weight: 600;
-  margin: 12px 0 6px;
+  margin: 0;
 }
 
 .plot-panel__heading .plot-title {
-  margin: 0 0 6px;
+  margin: 0;
 }
 
 .plot-panel__heading .dim {
@@ -1258,10 +1261,6 @@ th[title] {
 
 #panel-performance .plot-panel .legend {
   margin-top: 12px;
-}
-
-#panel-performance .plot-panel .dim {
-  margin-bottom: 6px;
 }
 
 .depth-controls {
