@@ -895,6 +895,22 @@ nav.tabs {
   margin-top: 0;
 }
 
+#panel-performance .card-header {
+  margin-bottom: 8px;
+}
+
+#panel-performance .plot-pair {
+  gap: 16px;
+}
+
+#panel-performance .plot-panel {
+  gap: 8px;
+}
+
+#panel-performance .legend--panel {
+  margin-top: 0;
+}
+
 .drum-visual {
   display: block;
 }
