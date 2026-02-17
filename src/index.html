@@ -700,7 +700,9 @@
         <div class="plot-pair">
           <div class="plot-panel">
             <div class="plot-panel__heading">
-              <div class="plot-title">Available Speed vs Depth</div>
+              <div>
+                <div class="plot-title">Available Speed vs Depth</div>
+              </div>
               <button type="button" class="plot-settings-btn" data-plot-settings-target="plot-settings-depth-speed" aria-label="Open axis settings for speed vs depth plot">⚙</button>
             </div>
             <div class="plotwrap">
@@ -725,8 +727,10 @@
           </div>
           <div class="plot-panel">
             <div class="plot-panel__heading">
-              <div class="plot-title">Available Speed vs Depth by Payload</div>
-              <div class="dim">Lines show the available speed profile for the entered payload and each 1,000&nbsp;kg decrement down to zero.</div>
+              <div>
+                <div class="plot-title">Available Speed vs Depth by Payload</div>
+                <div class="dim">Lines show the available speed profile for the entered payload and each 1,000&nbsp;kg decrement down to zero.</div>
+              </div>
               <button type="button" class="plot-settings-btn" data-plot-settings-target="plot-settings-depth-speed-power" aria-label="Open axis settings for available speed vs depth by payload plot">⚙</button>
             </div>
             <div class="plotwrap">
@@ -735,7 +739,9 @@
           </div>
           <div class="plot-panel">
             <div class="plot-panel__heading">
-              <div class="plot-title">Tension vs Depth</div>
+              <div>
+                <div class="plot-title">Tension vs Depth</div>
+              </div>
               <button type="button" class="plot-settings-btn" data-plot-settings-target="plot-settings-depth-tension" aria-label="Open axis settings for tension vs depth plot">⚙</button>
             </div>
             <div class="plotwrap">
@@ -760,19 +766,23 @@
           <h2 class="section-title">Section 2.3: Hydraulic RPM vs Torque</h2>
           <div class="card-header-actions"></div>
         </div>
-        <div class="plot-panel">
-          <div class="plot-panel__heading">
-            <div class="plot-title">Available RPM vs Torque</div>
-            <button type="button" class="plot-settings-btn" data-plot-settings-target="plot-settings-hyd-rpm" aria-label="Open axis settings for hydraulic RPM vs torque plot">⚙</button>
-          </div>
-          <p class="dim">Motor RPM per motor, evaluated at the start of each wrap. Available RPM is the lower of the flow-limited and power-limited RPM.</p>
-          <div class="plotwrap">
-            <svg id="hyd_rpm_torque_svg" viewBox="0 0 1000 540"></svg>
-          </div>
-          <div class="legend legend--compact">
-            <div class="legitem"><span class="swatch accent"></span><span>Available RPM</span></div>
-            <div class="legitem"><span class="swatch flow"></span><span>Flow-limited RPM</span></div>
-            <div class="legitem"><span class="swatch power"></span><span>Power-limited RPM</span></div>
+        <div class="plot-pair">
+          <div class="plot-panel">
+            <div class="plot-panel__heading">
+              <div>
+                <div class="plot-title">Available RPM vs Torque</div>
+                <div class="dim">Motor RPM per motor, evaluated at the start of each wrap. Available RPM is the lower of the flow-limited and power-limited RPM.</div>
+              </div>
+              <button type="button" class="plot-settings-btn" data-plot-settings-target="plot-settings-hyd-rpm" aria-label="Open axis settings for hydraulic RPM vs torque plot">⚙</button>
+            </div>
+            <div class="plotwrap">
+              <svg id="hyd_rpm_torque_svg" viewBox="0 0 1000 540"></svg>
+            </div>
+            <div class="legend legend--compact">
+              <div class="legitem"><span class="swatch accent"></span><span>Available RPM</span></div>
+              <div class="legitem"><span class="swatch flow"></span><span>Flow-limited RPM</span></div>
+              <div class="legitem"><span class="swatch power"></span><span>Power-limited RPM</span></div>
+            </div>
           </div>
         </div>
       </section>
