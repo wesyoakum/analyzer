@@ -3,6 +3,8 @@ import path from 'path';
 import { fileURLToPath } from 'url';
 import fs from 'fs/promises';
 import crypto from 'crypto';
+import { execFile } from 'child_process';
+import { promisify } from 'util';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -15,6 +17,21 @@ const PRESET_STORE = path.join(DATA_DIR, 'presets.json');
 const LOCK_FILE = path.join(DATA_DIR, 'presets.lock');
 const PROJECT_STORE = path.join(DATA_DIR, 'projects.json');
 const PROJECT_LOCK_FILE = path.join(DATA_DIR, 'projects.lock');
+const execFileAsync = promisify(execFile);
+
+async function readLatestCommitTimestamp() {
+  const repoRoot = path.resolve(__dirname, '..');
+  const { stdout } = await execFileAsync('git', ['log', '-1', '--format=%cI'], {
+    cwd: repoRoot,
+  });
+
+  const isoTimestamp = stdout.trim();
+  if (!isoTimestamp) {
+    throw new Error('Git returned an empty commit timestamp.');
+  }
+
+  return isoTimestamp;
+}
 
 function generateId() {
   if (typeof crypto.randomUUID === 'function') {
@@ -323,6 +340,15 @@ app.get('/api/projects', async (req, res, next) => {
   try {
     const projects = await readProjects();
     res.json({ projects });
+  } catch (err) {
+    next(err);
+  }
+});
+
+app.get('/api/build-info', async (req, res, next) => {
+  try {
+    const latestCommitAt = await readLatestCommitTimestamp();
+    res.json({ latestCommitAt });
   } catch (err) {
     next(err);
   }

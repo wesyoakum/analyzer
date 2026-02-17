@@ -792,7 +792,26 @@ function updateBuildIndicator() {
   const indicator = /** @type {HTMLElement|null} */ (document.getElementById('build-info'));
   if (!indicator) return;
 
-  indicator.textContent = formatGeneratedStamp(new Date());
+  indicator.textContent = 'LATEST COMMIT TIME UNAVAILABLE';
+
+  fetch('/api/build-info')
+    .then(response => {
+      if (!response.ok) {
+        throw new Error(`Build info request failed with status ${response.status}`);
+      }
+      return response.json();
+    })
+    .then(payload => {
+      const rawTimestamp = typeof payload?.latestCommitAt === 'string' ? payload.latestCommitAt : '';
+      if (!rawTimestamp) {
+        throw new Error('Build info response did not include latestCommitAt.');
+      }
+
+      indicator.textContent = formatGeneratedStamp(new Date(rawTimestamp));
+    })
+    .catch(() => {
+      indicator.textContent = 'LATEST COMMIT TIME UNAVAILABLE';
+    });
 }
 
 /**
@@ -813,7 +832,7 @@ function formatGeneratedStamp(date) {
 
   const map = Object.fromEntries(parts.map(({ type, value }) => [type, value]));
   const zone = (map.timeZoneName || 'CDT').toUpperCase();
-  return `GENERATED ${map.year}-${map.month}-${map.day}, ${map.hour}:${map.minute}:${map.second} ${zone}`;
+  return `LATEST COMMIT ${map.year}-${map.month}-${map.day}, ${map.hour}:${map.minute}:${map.second} ${zone}`;
 }
 
 function setupTabs() {
