@@ -1428,6 +1428,8 @@ th[title] {
     height: 0;
     margin: 0;
     border: 0;
+    break-after: page;
+    page-break-after: always;
   }
 
   .pdf-break-before {
