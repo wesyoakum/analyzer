@@ -885,9 +885,18 @@ nav.tabs {
   margin-top: 0;
 }
 
+#panel-performance {
+  /* Section 2 vertical rhythm controls. */
+  --perf-card-gap: 16px;
+  --perf-card-pad-y: 16px;
+  --perf-card-pad-x: 20px;
+  --perf-panel-gap: 16px;
+  --perf-header-gap: 8px;
+}
+
 #panel-performance .card--performance {
-  margin-top: 16px;
-  padding: 16px 20px;
+  margin-top: var(--perf-card-gap);
+  padding: var(--perf-card-pad-y) var(--perf-card-pad-x);
 }
 
 #panel-performance .card--performance:first-of-type,
@@ -896,19 +905,19 @@ nav.tabs {
 }
 
 #panel-performance .card-header {
-  margin-bottom: 8px;
+  margin-bottom: var(--perf-header-gap);
 }
 
 #panel-performance .plot-pair {
-  gap: 16px;
+  gap: var(--perf-panel-gap);
 }
 
 #panel-performance .plot-panel {
-  gap: 8px;
+  gap: var(--perf-header-gap);
 }
 
 #panel-performance .legend--panel {
-  margin-top: 0;
+  margin-top: calc(var(--perf-header-gap) - var(--perf-header-gap));
 }
 
 .drum-visual {
@@ -1436,9 +1445,12 @@ th[title] {
   }
 
 
-  #panel-performance .card--performance {
-    margin-top: calc(8px + 1lh);
-    padding: 12px 16px;
+  #panel-performance {
+    --perf-card-gap: calc(8px + 1lh);
+    --perf-card-pad-y: 12px;
+    --perf-card-pad-x: 16px;
+    --perf-panel-gap: 16px;
+    --perf-header-gap: 8px;
   }
 
   #panel-performance .card--performance:first-of-type,
