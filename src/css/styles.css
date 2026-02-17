@@ -1353,6 +1353,18 @@ th[title] {
   display: block !important;
 }
 
+.report-root {
+  display: none;
+}
+
+.report-document h1 {
+  margin-bottom: 8px;
+}
+
+.report-block {
+  margin-top: 12px;
+}
+
 @media print {
   @page {
     size: A4 portrait;
@@ -1370,8 +1382,8 @@ th[title] {
     margin: 0;
   }
 
-  .app-sidebar,
-  .tab-bar,
+  .app-shell .app-sidebar,
+  .app-shell .tab-bar,
   .card-header-actions,
   .btnbar,
   .refresh-link,
@@ -1391,6 +1403,15 @@ th[title] {
     max-width: none;
     padding: 14mm 30px;
     margin: 0;
+  }
+
+  .app-content,
+  .page-header {
+    display: none !important;
+  }
+
+  .report-root {
+    display: block !important;
   }
 
   .page-header {
@@ -1438,10 +1459,6 @@ th[title] {
   }
 
   .pdf-break-before {
-  }
-
-  .pdf-hide-temporary {
-    display: none !important;
   }
 
 

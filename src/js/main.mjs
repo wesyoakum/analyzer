@@ -11,15 +11,10 @@ import {
 
 import { collectInputState, setupInputPersistence } from './persist-inputs.mjs';
 
-import { calcLayers } from './layer-engine.mjs';
 
-import {
-  rowsToElectricLayer, projectElectricWraps, renderElectricTables
-} from './electric.mjs';
+import { renderElectricTables } from './electric.mjs';
 
-import {
-  rowsToHydraulicLayer, projectHydraulicWraps, renderHydraulicTables
-} from './hydraulic.mjs';
+import { renderHydraulicTables } from './hydraulic.mjs';
 
 import { drawWaveContours, drawWaveHeightContours } from './plots/wave-contours.mjs';
 import { drawDepthProfiles, drawStandaloneSpeedProfiles } from './plots/depth-profiles.mjs';
@@ -27,6 +22,8 @@ import { drawHydraulicRpmTorque } from './plots/rpm-torque.mjs';
 import { setupComponentSelectors } from './component-selectors.mjs';
 import { renderDrumVisualization, clearDrumVisualization } from './drum-visual.mjs';
 import { renderLatexFragments } from './katex-renderer.mjs';
+import { buildComputationModel } from './analysis-data.mjs';
+import { renderReport } from './report-renderer.mjs';
 
 // ---- App state for plots/tables ----
 let lastElLayer = [], lastElWraps = [];
@@ -35,6 +32,7 @@ let lastHyLayer = [], lastHyWraps = [];
 let lastDrumState = null;
 /** @type {DepthProfileContext|null} */
 let lastDepthProfileContext = null;
+let lastComputedModel = null;
 
 const EXTRA_SPEED_PROFILE_COLORS = ['#1b9e77', '#d95f02', '#7570b3', '#e7298a', '#66a61e', '#e6ab02'];
 
@@ -924,83 +922,10 @@ function setupPdfExport() {
   const exportBtn = /** @type {HTMLButtonElement|null} */ (document.getElementById('export_pdf'));
   if (!exportBtn) return;
 
-  /** @type {Array<() => void>} */
-  let printCleanupSteps = [];
-
-  const preparePrintLayout = () => {
-    if (printCleanupSteps.length) return;
-
-    const cleanupSteps = [];
-
-    let figureIndex = 1;
-    const figureTargets = Array.from(document.querySelectorAll('#panel-performance .plot-panel, #panel-results .drum-visual'));
-    figureTargets.forEach(target => {
-      if (!(target instanceof HTMLElement)) return;
-      const label = document.createElement('p');
-      label.className = 'pdf-item-label pdf-item-label--figure';
-      label.textContent = `Figure ${figureIndex}`;
-      figureIndex += 1;
-      target.insertAdjacentElement('afterend', label);
-      cleanupSteps.push(() => label.remove());
-    });
-
-    let tableIndex = 1;
-    const tableTargets = Array.from(document.querySelectorAll('#panel-results table, #panel-instructions table'));
-    tableTargets.forEach(table => {
-      if (!(table instanceof HTMLTableElement)) return;
-      if (table.closest('.instructions-only')) return;
-      const label = document.createElement('p');
-      const tableNumber = tableIndex;
-      label.className = 'pdf-item-label pdf-item-label--table';
-      label.textContent = `Table ${tableNumber}`;
-      tableIndex += 1;
-      table.insertAdjacentElement('beforebegin', label);
-      cleanupSteps.push(() => label.remove());
-
-    });
-
-    const equationsCard = /** @type {HTMLElement|null} */ (document.getElementById('hydraulic-core-equations'));
-    if (equationsCard) {
-      const headings = Array.from(equationsCard.querySelectorAll('h3, h4'));
-      const shouldHide = heading => /^\s*[CD]\)/.test((heading.textContent || '').trim());
-
-      headings.forEach(heading => {
-        if (!(heading instanceof HTMLElement) || !shouldHide(heading)) return;
-        heading.classList.add('pdf-hide-temporary');
-        cleanupSteps.push(() => heading.classList.remove('pdf-hide-temporary'));
-
-        let sib = heading.nextElementSibling;
-        while (sib && !(sib.matches('h3') || sib.matches('h4'))) {
-          sib.classList.add('pdf-hide-temporary');
-          const node = sib;
-          cleanupSteps.push(() => node.classList.remove('pdf-hide-temporary'));
-          sib = sib.nextElementSibling;
-        }
-      });
-    }
-
-    document.body.classList.add('pdf-export-mode');
-
-    cleanupSteps.push(() => {
-      document.body.classList.remove('pdf-export-mode');
-    });
-
-    printCleanupSteps = cleanupSteps;
-  };
-
-  const cleanupPrintLayout = () => {
-    printCleanupSteps.forEach(fn => fn());
-    printCleanupSteps = [];
-  };
-
   exportBtn.addEventListener('click', () => {
     computeAll();
-    preparePrintLayout();
     window.print();
   });
-
-  window.addEventListener('beforeprint', preparePrintLayout);
-  window.addEventListener('afterprint', cleanupPrintLayout);
 }
 
 function setupCsvDownloads() {
@@ -1667,13 +1592,20 @@ function computeAll() {
   if (errBox) errBox.textContent = '';
 
   try {
-    // Geometry & load inputs
     const wraps_override_input = read('wraps_override');
     const wraps_per_layer_override = (
       Number.isFinite(wraps_override_input) && wraps_override_input > 0
     ) ? wraps_override_input : undefined;
 
-    const cfg = {
+    const rated_speed_mpm = read('rated_speed_mpm');
+    const rated_swl_kgf = read('rated_swl_kgf');
+    const system_efficiency = read('system_efficiency');
+    updateMinimumSystemHp(rated_speed_mpm, rated_swl_kgf, system_efficiency);
+
+    const electricEnabled = driveModeEnabled('electric');
+    const hydraulicEnabled = driveModeEnabled('hydraulic');
+
+    const model = buildComputationModel({
       cable_dia_mm: read('c_mm'),
       operating_depth_m: read('depth_m'),
       dead_end_m: read('dead_m'),
@@ -1682,269 +1614,75 @@ function computeAll() {
       flange_to_flange_in: read('ftf_in'),
       lebus_thk_in: read('lebus_in'),
       packing_factor: read('pack'),
-      wraps_per_layer_override
-    };
-    const payload_kg = read('payload_kg');
-    const cable_w_kgpm = read('c_w_kgpm');
+      wraps_per_layer_override,
+      payload_kg: read('payload_kg'),
+      cable_w_kgpm: read('c_w_kgpm'),
+      gr1: read('gr1'),
+      gr2: read('gr2'),
+      motors: read('motors'),
+      electricEnabled,
+      hydraulicEnabled,
+      motor_max_rpm: read('motor_max_rpm'),
+      motor_hp: read('motor_hp'),
+      motor_eff: read('motor_eff'),
+      motor_tmax: read('motor_tmax'),
+      gearbox_max_torque_Nm: read('gearbox_max_torque_Nm'),
+      h_strings: read('h_pump_strings'),
+      h_emotor_hp: read('h_emotor_hp'),
+      h_emotor_eff: read('h_emotor_eff'),
+      h_emotor_rpm: read('h_emotor_rpm'),
+      h_pump_cc: read('h_pump_cc'),
+      h_max_psi: read('h_max_psi'),
+      h_hmot_cc: read('h_hmot_cc'),
+      h_hmot_rpm_cap: read('h_hmot_rpm_max')
+    });
 
-    const rated_speed_mpm = read('rated_speed_mpm');
-    const rated_swl_kgf = read('rated_swl_kgf');
-    const system_efficiency = read('system_efficiency');
-
-    updateMinimumSystemHp(rated_speed_mpm, rated_swl_kgf, system_efficiency);
-
-    const positiveOr = (value, fallback) => (Number.isFinite(value) && value > 0 ? value : fallback);
-
-    // Shared drivetrain
-    const gr1 = positiveOr(read('gr1'), 1);
-    const gr2 = positiveOr(read('gr2'), 1);
-    const motors = positiveOr(read('motors'), 1);
-    const denom_mech = gr1 * gr2 * motors;
-    const gear_product = Math.max(gr1, 1e-9) * Math.max(gr2, 1e-9);
-
-    const electricEnabled = driveModeEnabled('electric');
-    const hydraulicEnabled = driveModeEnabled('hydraulic');
-
-    // Electric inputs
-    const motor_max_rpm = read('motor_max_rpm');
-    const motor_hp = positiveOr(read('motor_hp'), 0);
-    const motor_eff = positiveOr(read('motor_eff'), 1);
-    const motor_tmax = read('motor_tmax');
-    const gearbox_max_torque_Nm = read('gearbox_max_torque_Nm');
-    const P_per_motor_W = motor_hp * motor_eff * W_PER_HP;
-
-    // Hydraulic inputs
-    const h_strings = positiveOr(read('h_pump_strings'), 0);
-    const h_emotor_hp = positiveOr(read('h_emotor_hp'), 0);
-    const h_emotor_eff = positiveOr(read('h_emotor_eff'), 0); // electro-hydraulic efficiency
-    const h_emotor_rpm = positiveOr(read('h_emotor_rpm'), 0);
-    const h_pump_cc = positiveOr(read('h_pump_cc'), 0);
-    const h_max_psi = positiveOr(read('h_max_psi'), 0);
-    const h_hmot_cc = positiveOr(read('h_hmot_cc'), 0);
-    const h_hmot_rpm_cap = positiveOr(read('h_hmot_rpm_max'), Infinity);
-
-    // Usable hydraulic hp & flow from pump strings
-    const hp_str_usable = h_emotor_hp * h_emotor_eff;
-    const hp_tot_usable = hp_str_usable * h_strings;
-    const q_str_gpm = gpm_from_cc_rev_and_rpm(h_pump_cc, h_emotor_rpm);
-    const q_tot_gpm = q_str_gpm * h_strings;
-    const rpm_flow_per_motor_available = Math.min(
-      Number.isFinite(h_hmot_rpm_cap) && h_hmot_rpm_cap > 0 ? h_hmot_rpm_cap : Number.POSITIVE_INFINITY,
-      rpm_from_gpm_and_disp(q_tot_gpm / Math.max(motors, 1), h_hmot_cc)
-    );
-
-    // Max-pressure torque per hydraulic motor and at drum (pressure-limited)
-    const dP_Pa = h_max_psi * PSI_TO_PA;
-    const torque_per_hmotor_maxP = torque_per_motor_from_pressure_Pa(dP_Pa, h_hmot_cc); // N·m per motor at max P
-    const torque_at_drum_maxP_factor = Math.max(gr1, 1) * Math.max(gr2, 1) * Math.max(motors, 1);
-
-    // Generate wraps from geometry
-    const { rows, summary, meta } = calcLayers(cfg);
+    lastComputedModel = model;
 
     const wrapsNoteEl = /** @type {HTMLTableCellElement|null} */ (document.getElementById('wraps_note'));
     if (wrapsNoteEl) {
-      const calcWraps = meta && Number.isFinite(meta.wraps_per_layer_calc) ? meta.wraps_per_layer_calc : undefined;
+      const calcWraps = model.meta && Number.isFinite(model.meta.wraps_per_layer_calc) ? model.meta.wraps_per_layer_calc : undefined;
       const display = (typeof calcWraps === 'number') ? calcWraps.toFixed(1) : '–';
       wrapsNoteEl.textContent = `Auto-calculated wraps per layer: ${display}.`;
     }
 
-    // Per-wrap calculations (electric + hydraulic)
-    for (const r of rows) {
-      // Base tension and torque at drum
-      const theoretical_tension = tension_kgf(r.deployed_len_m, payload_kg, cable_w_kgpm);
-      const required_tension = +(theoretical_tension).toFixed(1);
-      r.tension_theoretical_kgf = theoretical_tension;
-      r.tension_kgf = required_tension;
-      const tension_N = required_tension * G;
-      const radius_m = (r.layer_dia_in * M_PER_IN) / 2;
-      const drum_T = tension_N * radius_m;
-      const motors_safe = Math.max(motors, 1);
-      const gear_product_safe = Math.max(gear_product, 1e-9);
-      const torque_per_hmotor_required = drum_T / (gear_product_safe * motors_safe);
-      const drum_torque_required = torque_per_hmotor_required * gear_product_safe * motors_safe;
-      r.torque_Nm = +drum_torque_required.toFixed(1);
+    lastDrumState = { rows: model.rows, summary: model.summary, cfg: model.cfg, meta: model.meta };
+    renderDrumVisualization(model.rows, model.summary, model.cfg, model.meta);
 
-      // ----- ELECTRIC per wrap -----
-      if (electricEnabled) {
-        const motorTorque_e = r.torque_Nm / (denom_mech || 1);
-        r.motor_torque_Nm = +motorTorque_e.toFixed(2);
-
-        // RPM limited by available power per motor and capped by motor max rpm
-        let rpm_power_e = 0;
-        if (P_per_motor_W > 0 && motorTorque_e > 0) {
-          rpm_power_e = (P_per_motor_W / motorTorque_e) * 60 / (2 * Math.PI);
-        } else if (P_per_motor_W > 0 && motorTorque_e === 0) {
-          rpm_power_e = Number.POSITIVE_INFINITY;
-        } else {
-          rpm_power_e = 0;
-        }
-        const rpm_capped_e = Math.min(Number.isFinite(motor_max_rpm) ? motor_max_rpm : Infinity, rpm_power_e);
-        r.motor_rpm = +((Number.isFinite(rpm_capped_e) ? rpm_capped_e : 0)).toFixed(1);
-
-        // Line speed at drum
-        r.line_speed_mpm = +line_speed_mpm_from_motor_rpm(r.motor_rpm, gr1, gr2, r.layer_dia_in).toFixed(2);
-
-        // Available line tension from motor torque cap
-        r.avail_tension_kgf = elec_available_tension_kgf(motor_tmax, gr1, gr2, motors, radius_m);
-      } else {
-        r.motor_torque_Nm = 0;
-        r.motor_rpm = 0;
-        r.line_speed_mpm = 0;
-        r.avail_tension_kgf = 0;
-      }
-
-      // ----- HYDRAULIC per wrap -----
-      if (hydraulicEnabled) {
-        // Pressure-limited drum torque and available tension
-        const drum_T_pressure_max = torque_per_hmotor_maxP * torque_at_drum_maxP_factor; // N·m at drum
-        r.hyd_drum_torque_maxP_Nm = +drum_T_pressure_max.toFixed(2);
-        const hyd_avail_tension_N = drum_T_pressure_max / Math.max(radius_m, 1e-12);
-        r.hyd_avail_tension_kgf = +(hyd_avail_tension_N / G).toFixed(1);
-
-        const D_m = r.layer_dia_in * M_PER_IN;
-        const safe_drum_circumference = Math.max(Math.PI * Math.max(D_m, 1e-9), 1e-9);
-
-        // Pressure required for current torque (per motor)
-        const torque_per_hmotor = torque_per_hmotor_required;
-        let P_req_psi = psi_from_torque_and_disp_Nm_cc(torque_per_hmotor, h_hmot_cc);
-        if (!Number.isFinite(P_req_psi) || P_req_psi < 0) P_req_psi = 0;
-
-        // Flow-limited speed
-        const rpm_flow_per_motor = Math.min(
-          h_hmot_rpm_cap,
-          rpm_from_gpm_and_disp(q_tot_gpm / Math.max(motors, 1), h_hmot_cc)
-        );
-        const speed_flow_mpm = line_speed_mpm_from_motor_rpm(rpm_flow_per_motor, gr1, gr2, r.layer_dia_in);
-        const rpm_flow_clean = Number.isFinite(rpm_flow_per_motor) && rpm_flow_per_motor > 0 ? rpm_flow_per_motor : 0;
-        const rpm_flow_drum = rpm_flow_clean / gear_product_safe;
-
-        // Power-limited speed (cap pressure at max if P_req exceeds max)
-        const P_power_psi = (P_req_psi > 0) ? Math.min(P_req_psi, h_max_psi) : 0;
-        const hp_elec_in_total = h_emotor_hp * h_strings;
-        const eff_total = h_emotor_eff;
-
-        let speed_power_mpm = 0;
-        if (hp_elec_in_total > 0 && eff_total > 0 && theoretical_tension > 0) {
-          const tension_theoretical_N = theoretical_tension * G;
-          if (tension_theoretical_N > 0) {
-            const power_available_W = hp_elec_in_total * eff_total * W_PER_HP;
-            const speed_power_mps = power_available_W / tension_theoretical_N;
-            speed_power_mpm = speed_power_mps * 60;
-          }
-        }
-        if (!Number.isFinite(speed_power_mpm) || speed_power_mpm < 0) speed_power_mpm = 0;
-        const rpm_power_drum = Number.isFinite(speed_power_mpm) && speed_power_mpm > 0
-          ? speed_power_mpm / safe_drum_circumference
-          : Number.isFinite(speed_power_mpm) && speed_power_mpm === 0
-            ? 0
-            : NaN;
-
-        let speed_avail_mpm = Math.min(speed_power_mpm, speed_flow_mpm);
-        if (!Number.isFinite(speed_avail_mpm) || speed_avail_mpm < 0) speed_avail_mpm = 0;
-        const rpm_available_drum = Number.isFinite(speed_avail_mpm)
-          ? speed_avail_mpm / safe_drum_circumference
-          : NaN;
-
-        let hp_used_at_available = 0;
-        if (speed_avail_mpm > 0 && P_power_psi > 0) {
-          // Power used at the actual available speed
-          const drum_rpm_needed = speed_avail_mpm / Math.max(Math.PI * Math.max(D_m, 1e-9), 1e-9);
-          const motor_rpm_needed = drum_rpm_needed * (Math.max(gr1, 1) * Math.max(gr2, 1));
-          const gpm_per_motor_needed = (motor_rpm_needed * h_hmot_cc) / CC_PER_GAL;
-          const gpm_total_needed = Math.max(motors, 1) * gpm_per_motor_needed;
-          const gpm_used = Math.min(gpm_total_needed, q_tot_gpm);
-          hp_used_at_available = hp_from_psi_and_gpm(P_power_psi, gpm_used);
-          if (hp_used_at_available > hp_tot_usable) hp_used_at_available = hp_tot_usable;
-        }
-
-        r.hyd_P_required_psi = Math.round(P_req_psi);
-        r.hyd_speed_power_mpm = +speed_power_mpm.toFixed(2);
-        r.hyd_speed_flow_mpm = +speed_flow_mpm.toFixed(2);
-        r.hyd_speed_available_mpm = +speed_avail_mpm.toFixed(2);
-        r.hyd_hp_used_at_available = +hp_used_at_available.toFixed(2);
-        r.hyd_elec_input_hp_used = +((h_emotor_eff > 0 ? r.hyd_hp_used_at_available / h_emotor_eff : 0)).toFixed(2);
-        r.hyd_drum_rpm_flow = Number.isFinite(rpm_flow_drum)
-          ? +Math.max(0, rpm_flow_drum).toFixed(1)
-          : 0;
-        r.hyd_drum_rpm_power = Number.isFinite(rpm_power_drum)
-          ? +Math.max(0, rpm_power_drum).toFixed(1)
-          : null;
-        r.hyd_drum_rpm_available = Number.isFinite(rpm_available_drum)
-          ? +Math.max(0, rpm_available_drum).toFixed(1)
-          : 0;
-      } else {
-        r.hyd_drum_torque_maxP_Nm = 0;
-        r.hyd_avail_tension_kgf = 0;
-        r.hyd_P_required_psi = 0;
-        r.hyd_speed_power_mpm = 0;
-        r.hyd_speed_flow_mpm = 0;
-        r.hyd_speed_available_mpm = 0;
-        r.hyd_hp_used_at_available = 0;
-        r.hyd_elec_input_hp_used = 0;
-        r.hyd_drum_rpm_flow = 0;
-        r.hyd_drum_rpm_power = 0;
-        r.hyd_drum_rpm_available = 0;
-      }
-    }
-
-    // ---- Drum visualization ----
-    lastDrumState = { rows, summary, cfg, meta };
-    renderDrumVisualization(rows, summary, cfg, meta);
-
-    // ---- Aggregate into per-layer tables ----
-    lastElLayer = electricEnabled ? rowsToElectricLayer(rows, payload_kg, cable_w_kgpm, gr1, gr2, motors) : [];
-    lastHyLayer = hydraulicEnabled ? rowsToHydraulicLayer(rows) : [];
-    lastElWraps = electricEnabled ? projectElectricWraps(rows) : [];
-    lastHyWraps = hydraulicEnabled ? projectHydraulicWraps(rows) : [];
+    lastElLayer = model.tables.elLayer;
+    lastHyLayer = model.tables.hyLayer;
+    lastElWraps = model.tables.elWraps;
+    lastHyWraps = model.tables.hyWraps;
 
     const scenarioActive = getActiveScenario();
     lastDepthProfileContext = buildDepthProfileContext({
       scenario: scenarioActive,
-      rows,
-      cfg,
-      cable_w_kgpm,
-      gr1,
-      gr2,
-      motors,
-      motor_max_rpm,
-      motor_tmax,
-      P_per_motor_W,
-      denom_mech,
-      gear_product,
-      electricEnabled,
-      hydraulicEnabled,
+      rows: model.rows,
+      cfg: model.cfg,
+      cable_w_kgpm: model.inputs.cable_w_kgpm,
+      gr1: model.inputs.gr1,
+      gr2: model.inputs.gr2,
+      motors: model.inputs.motors,
+      motor_max_rpm: model.inputs.motor_max_rpm,
+      motor_tmax: model.inputs.motor_tmax,
+      P_per_motor_W: model.inputs.P_per_motor_W,
+      denom_mech: model.inputs.denom_mech,
+      gear_product: model.inputs.gear_product,
+      electricEnabled: model.electricEnabled,
+      hydraulicEnabled: model.hydraulicEnabled,
       hydraulic: {
-        h_strings,
-        h_emotor_hp,
-        h_emotor_eff,
-        h_emotor_rpm,
-        h_pump_cc,
-        h_max_psi,
-        h_hmot_cc,
-        h_hmot_rpm_cap,
-        torque_per_hmotor_maxP,
-        torque_at_drum_maxP_factor,
-        q_tot_gpm,
-        rpm_flow_per_motor: rpm_flow_per_motor_available
+        ...model.hydraulic,
+        rpm_flow_per_motor: model.hydraulic.rpm_flow_per_motor_available
       }
     });
 
-    // ---- Render tables ----
-    renderElectricTables(
-      lastElLayer,
-      lastElWraps,
-      q('tbody_el_layer'),
-      q('tbody_el_wraps'),
-      gearbox_max_torque_Nm
-    );
+    renderElectricTables(lastElLayer, lastElWraps, q('tbody_el_layer'), q('tbody_el_wraps'), model.inputs.gearbox_max_torque_Nm);
     renderHydraulicTables(lastHyLayer, lastHyWraps, q('tbody_hy_layer'), q('tbody_hy_wraps'));
 
     renderInputSummary();
+    renderReport(document.getElementById('report-root'), { ...model, inputState: collectInputState() });
     renderLatexFragments(document.body);
-
     updateCsvButtonStates();
-
-    // ---- Draw plots ----
     redrawPlots();
   } catch (e) {
     console.error(e);
@@ -1953,10 +1691,12 @@ function computeAll() {
     lastElLayer = lastElWraps = lastHyLayer = lastHyWraps = [];
     lastDrumState = null;
     lastDepthProfileContext = null;
+    lastComputedModel = null;
     clearDrumVisualization();
     clearPlots();
     updateCsvButtonStates();
     renderInputSummary();
+    renderReport(document.getElementById('report-root'), null);
     renderLatexFragments(document.body);
   }
 }
