@@ -938,15 +938,6 @@ function setupPdfExport() {
       table.insertAdjacentElement('beforebegin', label);
       cleanupSteps.push(() => label.remove());
 
-      if (tableNumber === 5) {
-        table.classList.add('pdf-allow-split');
-        cleanupSteps.push(() => table.classList.remove('pdf-allow-split'));
-        const card = table.closest('.card');
-        if (card instanceof HTMLElement) {
-          card.classList.add('pdf-allow-split');
-          cleanupSteps.push(() => card.classList.remove('pdf-allow-split'));
-        }
-      }
     });
 
     const equationsCard = /** @type {HTMLElement|null} */ (document.getElementById('hydraulic-core-equations'));
