@@ -656,39 +656,36 @@
         </div>
         
         <div class="plot-pair">
-          <div class="twocol waveplots">
-            <div class="col plot-column">
-              <div class="plot-panel">
-                <div class="plot-panel__heading">
-                  <div>
-                    <div class="plot-title">Speed vs Period with Height Lines</div>
-                    <div class="dim">How to evaluate AHC performance envelope.  The x-axis indicates wave period, the y-axis indicates peak vertical speed, and the contour set traces peak-to-trough wave heights for sinusoidal motion. The colored horizontal layer lines mark each winch layer’s available speed. Therefore, x-value of the intersection of a layer line with a contour indicates the shortest wave period for which the vertical motion can be fully compensated.</div>                  </div>
-                  <button type="button" class="plot-settings-btn" data-plot-settings-target="plot-settings-wave-speed" aria-label="Open axis settings for speed vs period plot">⚙</button>
-                </div>
-                <div class="plotwrap">
-                  <svg id="wave_svg" width="1000" height="540" viewBox="0 0 1000 540"></svg>
-                </div>
-                <div class="legend">
-                  <div class="legitem"><span class="swatch accent"></span><span>Layer speed</span></div>
-                </div>
+          <div class="plot-panel">
+            <div class="plot-panel__heading">
+              <div>
+                <div class="plot-title">Speed vs Period with Height Lines</div>
+                <div class="dim">How to evaluate AHC performance envelope.  The x-axis indicates wave period, the y-axis indicates peak vertical speed, and the contour set traces peak-to-trough wave heights for sinusoidal motion. The colored horizontal layer lines mark each winch layer’s available speed. Therefore, x-value of the intersection of a layer line with a contour indicates the shortest wave period for which the vertical motion can be fully compensated.</div>
               </div>
-            <div class="col plot-column">
-              <div class="plot-panel">
-                <div class="plot-panel__heading">
-                  <div>
-                    <div class="plot-title">Wave Height vs Period with Speed Lines</div>
-                    <div class="dim">Evaluates the AHC operating envelope with wave period on the x-axis and wave height on the y-axis. Iso-lines track the available winch speed for each layer. Therefore, the area below and to the right of a line represents wave conditions for which, on the indicated layer, the winch can fully compensate for wave motion.</div>                  </div>
-                  <button type="button" class="plot-settings-btn" data-plot-settings-target="plot-settings-wave-height" aria-label="Open axis settings for wave height vs period plot">⚙</button>
-                </div>
-                <div class="plotwrap">
-                  <svg id="wave_svg_height" width="1000" height="540" viewBox="0 0 1000 540"></svg>
-                </div>
-                <div class="legend">
-                  <div class="legitem"><span class="swatch gray"></span><span>Layer speed iso-line</span></div>
-                  <div class="legitem"><span class="swatch"></span><span>H = integer m</span></div>
-                  <div class="legitem"><span class="swatch dashed"></span><span>H = 0.5 m offsets</span></div>
-                </div>
+              <button type="button" class="plot-settings-btn" data-plot-settings-target="plot-settings-wave-speed" aria-label="Open axis settings for speed vs period plot">⚙</button>
+            </div>
+            <div class="plotwrap">
+              <svg id="wave_svg" width="1000" height="540" viewBox="0 0 1000 540"></svg>
+            </div>
+            <div class="legend">
+              <div class="legitem"><span class="swatch accent"></span><span>Layer speed</span></div>
+            </div>
+          </div>
+          <div class="plot-panel">
+            <div class="plot-panel__heading">
+              <div>
+                <div class="plot-title">Wave Height vs Period with Speed Lines</div>
+                <div class="dim">Evaluates the AHC operating envelope with wave period on the x-axis and wave height on the y-axis. Iso-lines track the available winch speed for each layer. Therefore, the area below and to the right of a line represents wave conditions for which, on the indicated layer, the winch can fully compensate for wave motion.</div>
               </div>
+              <button type="button" class="plot-settings-btn" data-plot-settings-target="plot-settings-wave-height" aria-label="Open axis settings for wave height vs period plot">⚙</button>
+            </div>
+            <div class="plotwrap">
+              <svg id="wave_svg_height" width="1000" height="540" viewBox="0 0 1000 540"></svg>
+            </div>
+            <div class="legend">
+              <div class="legitem"><span class="swatch gray"></span><span>Layer speed iso-line</span></div>
+              <div class="legitem"><span class="swatch"></span><span>H = integer m</span></div>
+              <div class="legitem"><span class="swatch dashed"></span><span>H = 0.5 m offsets</span></div>
             </div>
           </div>
         </div>
@@ -701,63 +698,57 @@
         </div>
         
         <div class="plot-pair">
-          <div class="twocol depth-plots">
-            <div class="col plot-column">
-              <div class="plot-panel">
-                <div class="plot-panel__heading">
-                  <div class="plot-title">Available Speed vs Depth</div>
-                  <button type="button" class="plot-settings-btn" data-plot-settings-target="plot-settings-depth-speed" aria-label="Open axis settings for speed vs depth plot">⚙</button>
-                </div>
-                <div class="plotwrap">
-                  <svg id="depth_speed_svg" viewBox="0 0 1000 540"></svg>
-                </div>
-                <div class="legend legend--compact">
-                  <div class="legitem"><span class="swatch accent"></span><span>Available speed</span></div>
-                  <div class="legitem"><span class="swatch rated"></span><span>Rated speed</span></div>
-                  <div class="legitem">
-                    <span class="swatch-group" aria-hidden="true">
-                      <span class="swatch flow"></span>
-                      <span class="swatch power"></span>
-                    </span>
-                    <span>
-                      Candidate speeds (
-                      <span data-latex="V_{p}">V<sub>p</sub></span>,
-                      <span data-latex="V_{Q}">V<sub>Q</sub></span>
-                      )
-                    </span>
-                  </div>
-                </div>
-              </div>
-              <div class="plot-panel">
-                <div class="plot-panel__heading">
-                  <div class="plot-title">Available Speed vs Depth by Payload</div>
-                  <div class="dim">Lines show the available speed profile for the entered payload and each 1,000&nbsp;kg decrement down to zero.</div>
-                  <button type="button" class="plot-settings-btn" data-plot-settings-target="plot-settings-depth-speed-power" aria-label="Open axis settings for available speed vs depth by payload plot">⚙</button>
-                </div>
-                <div class="plotwrap">
-                  <svg id="depth_speed_power_svg" viewBox="0 0 1000 540"></svg>
-                </div>
+          <div class="plot-panel">
+            <div class="plot-panel__heading">
+              <div class="plot-title">Available Speed vs Depth</div>
+              <button type="button" class="plot-settings-btn" data-plot-settings-target="plot-settings-depth-speed" aria-label="Open axis settings for speed vs depth plot">⚙</button>
+            </div>
+            <div class="plotwrap">
+              <svg id="depth_speed_svg" viewBox="0 0 1000 540"></svg>
+            </div>
+            <div class="legend legend--compact">
+              <div class="legitem"><span class="swatch accent"></span><span>Available speed</span></div>
+              <div class="legitem"><span class="swatch rated"></span><span>Rated speed</span></div>
+              <div class="legitem">
+                <span class="swatch-group" aria-hidden="true">
+                  <span class="swatch flow"></span>
+                  <span class="swatch power"></span>
+                </span>
+                <span>
+                  Candidate speeds (
+                  <span data-latex="V_{p}">V<sub>p</sub></span>,
+                  <span data-latex="V_{Q}">V<sub>Q</sub></span>
+                  )
+                </span>
               </div>
             </div>
-            <div class="col plot-column">
-              <div class="plot-panel">
-                <div class="plot-panel__heading">
-                  <div class="plot-title">Tension vs Depth</div>
-                  <button type="button" class="plot-settings-btn" data-plot-settings-target="plot-settings-depth-tension" aria-label="Open axis settings for tension vs depth plot">⚙</button>
-                </div>
-                <div class="plotwrap">
-                  <svg id="depth_tension_svg" viewBox="0 0 1000 540"></svg>
-                </div>
-                <div class="legend legend--compact">
-                  <div class="legitem"><span class="swatch theoretical"></span><span>Required tension</span></div>
-                  <div class="legitem">
-                    <span class="swatch-group" aria-hidden="true">
-                      <span class="swatch accent"></span>
-                      <span class="swatch red"></span>
-                    </span>
-                    <span>Available tension (normal / exceeded)</span>
-                  </div>
-                </div>
+          </div>
+          <div class="plot-panel">
+            <div class="plot-panel__heading">
+              <div class="plot-title">Available Speed vs Depth by Payload</div>
+              <div class="dim">Lines show the available speed profile for the entered payload and each 1,000&nbsp;kg decrement down to zero.</div>
+              <button type="button" class="plot-settings-btn" data-plot-settings-target="plot-settings-depth-speed-power" aria-label="Open axis settings for available speed vs depth by payload plot">⚙</button>
+            </div>
+            <div class="plotwrap">
+              <svg id="depth_speed_power_svg" viewBox="0 0 1000 540"></svg>
+            </div>
+          </div>
+          <div class="plot-panel">
+            <div class="plot-panel__heading">
+              <div class="plot-title">Tension vs Depth</div>
+              <button type="button" class="plot-settings-btn" data-plot-settings-target="plot-settings-depth-tension" aria-label="Open axis settings for tension vs depth plot">⚙</button>
+            </div>
+            <div class="plotwrap">
+              <svg id="depth_tension_svg" viewBox="0 0 1000 540"></svg>
+            </div>
+            <div class="legend legend--compact">
+              <div class="legitem"><span class="swatch theoretical"></span><span>Required tension</span></div>
+              <div class="legitem">
+                <span class="swatch-group" aria-hidden="true">
+                  <span class="swatch accent"></span>
+                  <span class="swatch red"></span>
+                </span>
+                <span>Available tension (normal / exceeded)</span>
               </div>
             </div>
           </div>

@@ -1094,13 +1094,8 @@ th[title] {
 .plot-pair {
   display: flex;
   flex-direction: column;
-  gap: 16px;
+  gap: 24px;
 }
-
-.plot-column {
-  position: relative;
-}
-
 
 .legend {
   display: flex;
@@ -1233,22 +1228,6 @@ th[title] {
   font-variant-numeric: tabular-nums;
 }
 
-.twocol {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 24px;
-}
-
-.col {
-  flex: 1 1 100%;
-  min-width: 100%;
-}
-
-.col svg {
-  width: 100%;
-  height: auto;
-}
-
 .subtitle {
   margin: 8px 0 0;
   font-size: 13px;
@@ -1273,24 +1252,16 @@ th[title] {
   font-size: 13px;
 }
 
-.waveplots .legend {
+#panel-performance .plot-panel {
+  margin: 0;
+}
+
+#panel-performance .plot-panel .legend {
   margin-top: 12px;
 }
 
-.waveplots .dim {
+#panel-performance .plot-panel .dim {
   margin-bottom: 6px;
-}
-
-.waveplots {
-  margin-bottom: 24px;
-}
-
-.depth-plots {
-  margin-bottom: 24px;
-}
-
-#panel-performance .plot-panel {
-  margin-bottom: 14px;
 }
 
 .depth-controls {
