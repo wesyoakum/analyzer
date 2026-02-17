@@ -885,6 +885,16 @@ nav.tabs {
   margin-top: 0;
 }
 
+#panel-performance .card--performance {
+  margin-top: 16px;
+  padding: 16px 20px;
+}
+
+#panel-performance .card--performance:first-of-type,
+#panel-performance .card--performance-first {
+  margin-top: 0;
+}
+
 .drum-visual {
   display: block;
 }
@@ -1410,11 +1420,13 @@ th[title] {
   }
 
 
-  .card--performance {
+  #panel-performance .card--performance {
     margin-top: calc(8px + 1lh);
+    padding: 12px 16px;
   }
 
-  .card--performance-first {
+  #panel-performance .card--performance:first-of-type,
+  #panel-performance .card--performance-first {
     margin-top: 8px;
   }
 
