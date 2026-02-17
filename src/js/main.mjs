@@ -698,8 +698,6 @@ document.addEventListener('DOMContentLoaded', () => {
 
   setupCsvDownloads();
 
-  setupPlotResizeToggles();
-
   setupWrapTableToggleLabels();
 
   setupPlotSettingsDialogs();
@@ -1157,29 +1155,6 @@ function setupCollapsibleToggles() {
     });
   }
 }
-
-function setupPlotResizeToggles() {
-  const toggles = document.querySelectorAll('[data-plot-pair-toggle]');
-  toggles.forEach(btn => {
-    const pair = btn.closest('[data-plot-pair]');
-    if (!pair) return;
-
-    const setState = (expanded) => {
-      pair.classList.toggle('is-expanded', expanded);
-      btn.textContent = expanded ? '[-]' : '[+]';
-      btn.setAttribute('aria-expanded', expanded ? 'true' : 'false');
-      btn.setAttribute('aria-label', expanded ? 'Collapse plots to two columns' : 'Expand plots to full width');
-    };
-
-    setState(pair.classList.contains('is-expanded'));
-
-    btn.addEventListener('click', () => {
-      const next = !pair.classList.contains('is-expanded');
-      setState(next);
-    });
-  });
-}
-
 
 function setupWrapTableToggleLabels() {
   const detailsItems = Array.from(document.querySelectorAll('details.collapsible'));
