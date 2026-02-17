@@ -2083,7 +2083,7 @@ function redrawPlots() {
     /** @type {SpeedProfileSegments[]} */
     let flowSpeedProfiles = [];
     /** @type {SpeedProfileSegments[]} */
-    let powerSpeedProfiles = [];
+    let payloadSpeedProfiles = [];
     if (Number.isFinite(payloadVal)) {
       speedPrimaryLabel = formatPayloadLabel(payloadVal);
       if (lastDepthProfileContext && lastDepthProfileContext.scenario === activeScenario) {
@@ -2117,9 +2117,9 @@ function redrawPlots() {
           }
         }
 
-        powerSpeedProfiles = payloadSteps
+        payloadSpeedProfiles = payloadSteps
           .map((p, idx) => {
-            const segments = computeDepthSpeedSegmentsForPayload(p, lastDepthProfileContext, { mode: 'power' });
+            const segments = computeDepthSpeedSegmentsForPayload(p, lastDepthProfileContext, { mode: 'available' });
             if (!segments.length) return null;
             const color = accentColor;
             const isPrimary = Math.abs(p - payloadVal) <= 1e-6;
@@ -2174,10 +2174,10 @@ function redrawPlots() {
     });
 
     if (depthSpeedPowerSvg) {
-      if (powerSpeedProfiles.length) {
+      if (payloadSpeedProfiles.length) {
         drawStandaloneSpeedProfiles(depthSpeedPowerSvg, {
           segments: [],
-          extraProfiles: powerSpeedProfiles,
+          extraProfiles: payloadSpeedProfiles,
           depthMin: Number.isFinite(depthXminPowerVal) ? Math.max(0, depthXminPowerVal) : undefined,
           depthMax: Number.isFinite(depthXmaxPowerVal) ? Math.max(0, depthXmaxPowerVal) : undefined,
           speedMin: Number.isFinite(depthSpeedMinPowerVal) ? Math.max(0, depthSpeedMinPowerVal) : undefined,
