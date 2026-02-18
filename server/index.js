@@ -338,6 +338,25 @@ function buildModelFromProjectState(state) {
   });
 }
 
+function parseChromiumLaunchArgs() {
+  const launchArgs = [];
+
+  if (process.env.PLAYWRIGHT_DISABLE_SANDBOX === '1' || process.env.PLAYWRIGHT_DISABLE_SANDBOX === 'true') {
+    launchArgs.push('--no-sandbox');
+  }
+
+  const extraArgsRaw = process.env.PLAYWRIGHT_CHROMIUM_ARGS;
+  if (typeof extraArgsRaw === 'string' && extraArgsRaw.trim().length > 0) {
+    const extraArgs = extraArgsRaw
+      .split(',')
+      .map((arg) => arg.trim())
+      .filter(Boolean);
+    launchArgs.push(...extraArgs);
+  }
+
+  return [...new Set(launchArgs)];
+}
+
 async function resolveReportStateFromPayload(payload) {
   if (typeof payload !== 'object' || payload === null || Array.isArray(payload)) {
     return { error: ['Report payload must be a JSON object.'] };
@@ -741,7 +760,11 @@ app.post('/api/reports/pdf', async (req, res, next) => {
       throw new Error('Playwright is required for PDF generation. Install the "playwright" package and browser binaries.');
     }
 
-    browser = await playwright.chromium.launch({ headless: true });
+    const launchArgs = parseChromiumLaunchArgs();
+    browser = await playwright.chromium.launch({
+      headless: true,
+      ...(launchArgs.length > 0 ? { args: launchArgs } : {}),
+    });
     const page = await browser.newPage();
     await page.setContent(fullDocumentHtml, { waitUntil: 'networkidle' });
 
