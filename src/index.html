@@ -44,7 +44,10 @@
           type="button"
           aria-label="Export customer report as PDF"
         >export pdf</button>
-        <div class="build-indicator" id="build-info" aria-live="polite"></div>
+        <div class="report-toolbar__status">
+          <div class="api-warning" id="api-warning" role="status" aria-live="polite" hidden></div>
+          <div class="build-indicator" id="build-info" aria-live="polite"></div>
+        </div>
       </div>
       <div class="app-sidebar__content" id="sidebar-inputs">
         <details class="card collapsible" data-summary-card open>

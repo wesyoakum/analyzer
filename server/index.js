@@ -593,6 +593,10 @@ app.get('/api/build-info', async (req, res, next) => {
   }
 });
 
+app.get('/api/health', (req, res) => {
+  res.status(200).json({ ok: true, service: 'analyzer-api' });
+});
+
 app.get('/api/projects/:id', async (req, res, next) => {
   try {
     const projects = await readProjects();

@@ -708,6 +708,8 @@ document.addEventListener('DOMContentLoaded', () => {
 
   updateBuildIndicator();
 
+  checkApiHealth();
+
   setupTabs();
 
   setupPdfExport();
@@ -809,6 +811,38 @@ function updateBuildIndicator() {
     })
     .catch(() => {
       indicator.textContent = 'LATEST COMMIT TIME UNAVAILABLE';
+    });
+}
+
+function checkApiHealth() {
+  const warning = /** @type {HTMLElement|null} */ (document.getElementById('api-warning'));
+  if (!warning) return;
+
+  const showWarning = () => {
+    warning.hidden = false;
+    warning.textContent = 'API routing issue detected. /api/health is unavailable, so export pdf may fail until routing is fixed.';
+  };
+
+  fetch('/api/health', {
+    headers: {
+      accept: 'application/json'
+    }
+  })
+    .then(async (response) => {
+      if (!response.ok) {
+        throw new Error(`Health check failed with status ${response.status}`);
+      }
+
+      const payload = await response.json();
+      if (payload?.ok !== true || payload?.service !== 'analyzer-api') {
+        throw new Error('Unexpected health check payload.');
+      }
+
+      warning.hidden = true;
+      warning.textContent = '';
+    })
+    .catch(() => {
+      showWarning();
     });
 }
 
