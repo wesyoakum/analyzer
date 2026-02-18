@@ -996,7 +996,37 @@ function setupPdfExport() {
 
   const PRINT_FALLBACK_FLAG = '__WINCH_PDF_ENABLE_PRINT_FALLBACK__';
   const MAX_ERROR_MESSAGE_LENGTH = 400;
+  const REQUIRED_REPORT_STATE_NUMERIC_FIELDS = [
+    'c_mm',
+    'depth_m',
+    'dead_m',
+    'core_in',
+    'flange_dia_in',
+    'ftf_in',
+    'lebus_in',
+    'pack',
+    'payload_kg',
+    'c_w_kgpm',
+    'gr1',
+    'gr2',
+    'motors',
+    'motor_max_rpm',
+    'motor_hp',
+    'motor_eff',
+    'motor_tmax',
+    'gearbox_max_torque_Nm',
+    'h_pump_strings',
+    'h_emotor_hp',
+    'h_emotor_eff',
+    'h_emotor_rpm',
+    'h_pump_cc',
+    'h_max_psi',
+    'h_hmot_cc',
+    'h_hmot_rpm_max'
+  ];
   const reportToolbar = exportBtn.closest('.report-toolbar') || exportBtn.parentElement;
+  const projectNameInput = /** @type {HTMLInputElement|null} */ (document.getElementById('project_name'));
+  const projectSelect = /** @type {HTMLSelectElement|null} */ (document.getElementById('project_select'));
   const statusEl = document.createElement('div');
   statusEl.className = 'build-indicator';
   statusEl.setAttribute('aria-live', 'polite');
@@ -1016,6 +1046,67 @@ function setupPdfExport() {
   const getCurrentStatePayload = () => {
     computeAll();
     return collectInputState();
+  };
+
+  const toFiniteStateNumber = (state, key) => {
+    const raw = state?.[key];
+    if (typeof raw === 'number') return Number.isFinite(raw) ? raw : Number.NaN;
+    if (typeof raw === 'string') {
+      const parsed = Number.parseFloat(raw.replace(',', '.'));
+      return Number.isFinite(parsed) ? parsed : Number.NaN;
+    }
+    return Number.NaN;
+  };
+
+  const buildInlineStatePayload = (state) => {
+    const payload = { ...state };
+    const missingOrInvalid = [];
+
+    REQUIRED_REPORT_STATE_NUMERIC_FIELDS.forEach((fieldName) => {
+      const parsedValue = toFiniteStateNumber(payload, fieldName);
+      if (!Number.isFinite(parsedValue)) {
+        missingOrInvalid.push(fieldName);
+        return;
+      }
+      payload[fieldName] = parsedValue;
+    });
+
+    const wrapsOverride = payload.wraps_override;
+    if (wrapsOverride !== undefined && wrapsOverride !== null && wrapsOverride !== '') {
+      const wrapsOverrideValue = toFiniteStateNumber(payload, 'wraps_override');
+      if (Number.isFinite(wrapsOverrideValue)) {
+        payload.wraps_override = wrapsOverrideValue;
+      }
+    }
+
+    return { payload, missingOrInvalid };
+  };
+
+  const createOrUpdateProjectForPdf = async (statePayload) => {
+    const selectedProjectId = String(projectSelect?.value || '').trim();
+    const payload = {
+      ...(selectedProjectId ? { id: selectedProjectId } : {}),
+      name: (projectNameInput?.value || '').trim() || 'Untitled report project',
+      state: statePayload
+    };
+
+    const response = await fetch('/api/projects', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(payload)
+    });
+
+    if (!response.ok) {
+      throw new Error('Failed to save project before PDF export.');
+    }
+
+    const body = await response.json().catch(() => null);
+    const projectId = body?.project?.id;
+    if (typeof projectId !== 'string' || !projectId.trim()) {
+      throw new Error('Project save response did not include a valid project id.');
+    }
+
+    return projectId.trim();
   };
 
   const clearStatus = () => {
@@ -1135,6 +1226,16 @@ function setupPdfExport() {
     if (contentType.includes('application/json')) {
       const body = await response.json().catch(() => null);
       const rawMessage = body?.error?.message || body?.message || `PDF export failed with status ${response.status}.`;
+      const detailLines = Array.isArray(body?.error?.details)
+        ? body.error.details
+          .map((detail) => String(detail || '').trim())
+          .filter(Boolean)
+        : [];
+
+      if (response.status === 400 && detailLines.length) {
+        return sanitizeErrorMessage(`${rawMessage} Details: ${detailLines.join(' | ')}`);
+      }
+
       return sanitizeErrorMessage(rawMessage);
     }
 
@@ -1164,11 +1265,29 @@ function setupPdfExport() {
     exportBtn.disabled = true;
     setStatus('Generating PDF report… this may take a few seconds.');
 
-    const payload = { state: getCurrentStatePayload() };
+    const { payload: inlineState, missingOrInvalid } = buildInlineStatePayload(getCurrentStatePayload());
+    if (missingOrInvalid.length) {
+      setErrorStatus({
+        message: sanitizeErrorMessage(`Cannot export PDF because required numeric fields are missing/invalid: ${missingOrInvalid.join(', ')}`),
+        canRetry: false
+      });
+      exportBtn.disabled = false;
+      return;
+    }
+
+    let payload = { state: inlineState };
+
     const controller = new AbortController();
     pendingRequest = controller;
 
     try {
+      try {
+        const projectId = await createOrUpdateProjectForPdf(inlineState);
+        payload = { projectId };
+      } catch (projectSaveError) {
+        console.warn('[pdf export] falling back to inline report state payload', projectSaveError);
+      }
+
       const response = await fetch('/api/reports/pdf', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
