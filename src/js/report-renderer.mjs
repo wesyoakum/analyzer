@@ -15,7 +15,7 @@ function escapeHtml(value) {
 function tableFromRows(title, columns, rows, sectionId) {
   const head = columns.map(c => `<th scope="col">${c.label}</th>`).join('');
   const body = rows.map((row) => `<tr>${columns.map(c => `<td>${c.value(row)}</td>`).join('')}</tr>`).join('');
-  return `<section id="${sectionId}" class="report-block report-section-table"><h3>${title}</h3><table class="worksheet"><thead><tr>${head}</tr></thead><tbody>${body}</tbody></table></section>`;
+  return `<section id="${sectionId}" class="report-block report-section-table report-print-section report-print-section--tables"><div class="report-table-wrap report-print-keep-with-content"><h3 class="report-item-label">${title}</h3><table class="worksheet report-table"><thead><tr>${head}</tr></thead><tbody>${body}</tbody></table></div></section>`;
 }
 
 export function renderReportHtml(model, options = {}) {
@@ -25,7 +25,9 @@ export function renderReportHtml(model, options = {}) {
   const projectName = String(model?.inputState?.project_name || 'Untitled project').trim() || 'Untitled project';
   const scenario = model.electricEnabled ? (model.hydraulicEnabled ? 'Electric + Hydraulic' : 'Electric') : 'Hydraulic';
   const summary = model.summary || {};
-  const figures = [
+  const figures = Array.isArray(model?.report?.figures) && model.report.figures.length
+    ? model.report.figures
+    : [
     'Wave contours',
     'Depth profiles',
     'Hydraulic RPM & torque envelope',
@@ -33,18 +35,36 @@ export function renderReportHtml(model, options = {}) {
   ];
 
   const summaryTable = `
-    <section id="report-summary" class="report-block report-section-summary">
-      <h3>Table 1: Configuration summary</h3>
-      <table class="worksheet">
-        <tbody>
-          <tr><th scope="row">Project</th><td>${escapeHtml(projectName)}</td></tr>
-          <tr><th scope="row">Drive scenario</th><td>${escapeHtml(scenario)}</td></tr>
-          <tr><th scope="row">Layers</th><td>${fmt(summary.total_layers, 0)}</td></tr>
-          <tr><th scope="row">Wraps per layer (used)</th><td>${fmt(model.meta?.wraps_per_layer_used, 1)}</td></tr>
-          <tr><th scope="row">Total cable capacity (m)</th><td>${fmt(summary.cable_len_m, 1)}</td></tr>
-        </tbody>
-      </table>
+    <section id="report-summary" class="report-block report-section-summary report-print-section report-print-section--cover-meta">
+      <div class="report-table-wrap report-print-keep-with-content">
+        <h3 class="report-item-label">Table 1: Configuration summary</h3>
+        <table class="worksheet report-table">
+          <tbody>
+            <tr><th scope="row">Project</th><td>${escapeHtml(projectName)}</td></tr>
+            <tr><th scope="row">Drive scenario</th><td>${escapeHtml(scenario)}</td></tr>
+            <tr><th scope="row">Layers</th><td>${fmt(summary.total_layers, 0)}</td></tr>
+            <tr><th scope="row">Wraps per layer (used)</th><td>${fmt(model.meta?.wraps_per_layer_used, 1)}</td></tr>
+            <tr><th scope="row">Total cable capacity (m)</th><td>${fmt(summary.cable_len_m, 1)}</td></tr>
+          </tbody>
+        </table>
+      </div>
     </section>`;
+
+  const figuresSection = `
+    <section id="report-figures" class="report-block report-section-figures report-print-section report-print-section--charts">
+      <h3>Figures</h3>
+      <div class="report-figure-grid">
+        ${figures.map((title, i) => `<figure class="report-figure report-print-keep-with-content"><figcaption class="report-item-label">Figure ${i + 1}: ${escapeHtml(title)}</figcaption><div class="report-figure-body">Rendered chart content for ${escapeHtml(title)}</div></figure>`).join('')}
+      </div>
+    </section>`;
+
+  const equations = Array.isArray(model?.report?.equations) && model.report.equations.length
+    ? model.report.equations
+    : [
+      { latex: 'T=\\left(m_{p}+w_{c}L\\right)g', text: 'T = (m_p + w_c L) g' },
+      { latex: 'v=\\omega r', text: 'v = \\omega r' },
+      { latex: 'P=T\\omega', text: 'P = T \\omega' }
+    ];
 
   const electricLayerTable = tableFromRows(
     'Table 2: Electric layer table',
@@ -71,22 +91,24 @@ export function renderReportHtml(model, options = {}) {
   );
 
   return `
-    <article id="report-document" class="report-document" aria-label="Printable report">
-      <header id="report-header" class="report-header">
+    <article id="report-document" class="report-document report-print-document" aria-label="Printable report">
+      <header id="report-header" class="report-header report-print-section report-print-section--cover-meta">
         <h1>Winch Analyzer Report</h1>
         <p><strong>Generated:</strong> ${generatedAt.toLocaleString()}</p>
       </header>
       ${summaryTable}
-      <section id="report-figures" class="report-block report-section-figures"><h3>Figures</h3>${figures.map((t, i) => `<p>Figure ${i + 1}: ${escapeHtml(t)}</p>`).join('')}</section>
+      ${figuresSection}
       ${electricLayerTable}
       ${hydraulicLayerTable}
-      <section id="report-equations" class="report-block report-section-equations">
+      <section id="report-equations" class="report-block report-section-equations report-print-section report-print-section--appendices">
         <h3>Equations summary</h3>
-        <ul>
-          <li><span data-latex="T=\\left(m_{p}+w_{c}L\\right)g">T = (m_p + w_c L) g</span></li>
-          <li><span data-latex="v=\\omega r">v = \omega r</span></li>
-          <li><span data-latex="P=T\\omega">P = T \omega</span></li>
+        <ul class="report-equation-list">
+          ${equations.map((item) => `<li class="report-equation-card report-print-keep-with-content"><div class="report-item-label">Equation</div><span data-latex="${escapeHtml(item.latex)}">${escapeHtml(item.text)}</span></li>`).join('')}
         </ul>
+      </section>
+      <section id="report-appendix" class="report-block report-section-appendix report-print-section report-print-section--appendices">
+        <h3>Appendix</h3>
+        <p class="report-print-keep-with-content">Generated report metadata and derivation notes are included for audit and handoff workflows.</p>
       </section>
     </article>`;
 }

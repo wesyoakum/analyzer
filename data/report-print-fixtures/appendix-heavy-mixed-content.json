@@ -1,0 +1,616 @@
+{
+  "name": "appendix-heavy-mixed-content",
+  "inputState": {
+    "project_name": "Regression Fixture B"
+  },
+  "electricEnabled": false,
+  "hydraulicEnabled": true,
+  "summary": {
+    "total_layers": 32,
+    "cable_len_m": 2110.0
+  },
+  "meta": {
+    "wraps_per_layer_used": 9.8
+  },
+  "tables": {
+    "elLayer": [],
+    "hyLayer": [
+      {
+        "layer_no": 1,
+        "hyd_P_required_psi": 1500,
+        "hyd_speed_available_mpm": 44.0,
+        "hyd_avail_tension_kgf": 1200.0
+      },
+      {
+        "layer_no": 2,
+        "hyd_P_required_psi": 1517,
+        "hyd_speed_available_mpm": 43.83,
+        "hyd_avail_tension_kgf": 1207.1
+      },
+      {
+        "layer_no": 3,
+        "hyd_P_required_psi": 1534,
+        "hyd_speed_available_mpm": 43.66,
+        "hyd_avail_tension_kgf": 1214.2
+      },
+      {
+        "layer_no": 4,
+        "hyd_P_required_psi": 1551,
+        "hyd_speed_available_mpm": 43.49,
+        "hyd_avail_tension_kgf": 1221.3
+      },
+      {
+        "layer_no": 5,
+        "hyd_P_required_psi": 1568,
+        "hyd_speed_available_mpm": 43.32,
+        "hyd_avail_tension_kgf": 1228.4
+      },
+      {
+        "layer_no": 6,
+        "hyd_P_required_psi": 1585,
+        "hyd_speed_available_mpm": 43.15,
+        "hyd_avail_tension_kgf": 1235.5
+      },
+      {
+        "layer_no": 7,
+        "hyd_P_required_psi": 1602,
+        "hyd_speed_available_mpm": 42.98,
+        "hyd_avail_tension_kgf": 1242.6
+      },
+      {
+        "layer_no": 8,
+        "hyd_P_required_psi": 1619,
+        "hyd_speed_available_mpm": 42.81,
+        "hyd_avail_tension_kgf": 1249.7
+      },
+      {
+        "layer_no": 9,
+        "hyd_P_required_psi": 1636,
+        "hyd_speed_available_mpm": 42.64,
+        "hyd_avail_tension_kgf": 1256.8
+      },
+      {
+        "layer_no": 10,
+        "hyd_P_required_psi": 1653,
+        "hyd_speed_available_mpm": 42.47,
+        "hyd_avail_tension_kgf": 1263.9
+      },
+      {
+        "layer_no": 11,
+        "hyd_P_required_psi": 1670,
+        "hyd_speed_available_mpm": 42.3,
+        "hyd_avail_tension_kgf": 1271.0
+      },
+      {
+        "layer_no": 12,
+        "hyd_P_required_psi": 1687,
+        "hyd_speed_available_mpm": 42.13,
+        "hyd_avail_tension_kgf": 1278.1
+      },
+      {
+        "layer_no": 13,
+        "hyd_P_required_psi": 1704,
+        "hyd_speed_available_mpm": 41.96,
+        "hyd_avail_tension_kgf": 1285.2
+      },
+      {
+        "layer_no": 14,
+        "hyd_P_required_psi": 1721,
+        "hyd_speed_available_mpm": 41.79,
+        "hyd_avail_tension_kgf": 1292.3
+      },
+      {
+        "layer_no": 15,
+        "hyd_P_required_psi": 1738,
+        "hyd_speed_available_mpm": 41.62,
+        "hyd_avail_tension_kgf": 1299.4
+      },
+      {
+        "layer_no": 16,
+        "hyd_P_required_psi": 1755,
+        "hyd_speed_available_mpm": 41.45,
+        "hyd_avail_tension_kgf": 1306.5
+      },
+      {
+        "layer_no": 17,
+        "hyd_P_required_psi": 1772,
+        "hyd_speed_available_mpm": 41.28,
+        "hyd_avail_tension_kgf": 1313.6
+      },
+      {
+        "layer_no": 18,
+        "hyd_P_required_psi": 1789,
+        "hyd_speed_available_mpm": 41.11,
+        "hyd_avail_tension_kgf": 1320.7
+      },
+      {
+        "layer_no": 19,
+        "hyd_P_required_psi": 1806,
+        "hyd_speed_available_mpm": 40.94,
+        "hyd_avail_tension_kgf": 1327.8
+      },
+      {
+        "layer_no": 20,
+        "hyd_P_required_psi": 1823,
+        "hyd_speed_available_mpm": 40.769999999999996,
+        "hyd_avail_tension_kgf": 1334.9
+      },
+      {
+        "layer_no": 21,
+        "hyd_P_required_psi": 1840,
+        "hyd_speed_available_mpm": 40.6,
+        "hyd_avail_tension_kgf": 1342.0
+      },
+      {
+        "layer_no": 22,
+        "hyd_P_required_psi": 1857,
+        "hyd_speed_available_mpm": 40.43,
+        "hyd_avail_tension_kgf": 1349.1
+      },
+      {
+        "layer_no": 23,
+        "hyd_P_required_psi": 1874,
+        "hyd_speed_available_mpm": 40.26,
+        "hyd_avail_tension_kgf": 1356.2
+      },
+      {
+        "layer_no": 24,
+        "hyd_P_required_psi": 1891,
+        "hyd_speed_available_mpm": 40.09,
+        "hyd_avail_tension_kgf": 1363.3
+      },
+      {
+        "layer_no": 25,
+        "hyd_P_required_psi": 1908,
+        "hyd_speed_available_mpm": 39.92,
+        "hyd_avail_tension_kgf": 1370.4
+      },
+      {
+        "layer_no": 26,
+        "hyd_P_required_psi": 1925,
+        "hyd_speed_available_mpm": 39.75,
+        "hyd_avail_tension_kgf": 1377.5
+      },
+      {
+        "layer_no": 27,
+        "hyd_P_required_psi": 1942,
+        "hyd_speed_available_mpm": 39.58,
+        "hyd_avail_tension_kgf": 1384.6
+      },
+      {
+        "layer_no": 28,
+        "hyd_P_required_psi": 1959,
+        "hyd_speed_available_mpm": 39.41,
+        "hyd_avail_tension_kgf": 1391.7
+      },
+      {
+        "layer_no": 29,
+        "hyd_P_required_psi": 1976,
+        "hyd_speed_available_mpm": 39.24,
+        "hyd_avail_tension_kgf": 1398.8
+      },
+      {
+        "layer_no": 30,
+        "hyd_P_required_psi": 1993,
+        "hyd_speed_available_mpm": 39.07,
+        "hyd_avail_tension_kgf": 1405.9
+      },
+      {
+        "layer_no": 31,
+        "hyd_P_required_psi": 2010,
+        "hyd_speed_available_mpm": 38.9,
+        "hyd_avail_tension_kgf": 1413.0
+      },
+      {
+        "layer_no": 32,
+        "hyd_P_required_psi": 2027,
+        "hyd_speed_available_mpm": 38.73,
+        "hyd_avail_tension_kgf": 1420.1
+      },
+      {
+        "layer_no": 33,
+        "hyd_P_required_psi": 2044,
+        "hyd_speed_available_mpm": 38.56,
+        "hyd_avail_tension_kgf": 1427.2
+      },
+      {
+        "layer_no": 34,
+        "hyd_P_required_psi": 2061,
+        "hyd_speed_available_mpm": 38.39,
+        "hyd_avail_tension_kgf": 1434.3
+      },
+      {
+        "layer_no": 35,
+        "hyd_P_required_psi": 2078,
+        "hyd_speed_available_mpm": 38.22,
+        "hyd_avail_tension_kgf": 1441.4
+      },
+      {
+        "layer_no": 36,
+        "hyd_P_required_psi": 2095,
+        "hyd_speed_available_mpm": 38.05,
+        "hyd_avail_tension_kgf": 1448.5
+      },
+      {
+        "layer_no": 37,
+        "hyd_P_required_psi": 2112,
+        "hyd_speed_available_mpm": 37.88,
+        "hyd_avail_tension_kgf": 1455.6
+      },
+      {
+        "layer_no": 38,
+        "hyd_P_required_psi": 2129,
+        "hyd_speed_available_mpm": 37.71,
+        "hyd_avail_tension_kgf": 1462.7
+      },
+      {
+        "layer_no": 39,
+        "hyd_P_required_psi": 2146,
+        "hyd_speed_available_mpm": 37.54,
+        "hyd_avail_tension_kgf": 1469.8
+      },
+      {
+        "layer_no": 40,
+        "hyd_P_required_psi": 2163,
+        "hyd_speed_available_mpm": 37.37,
+        "hyd_avail_tension_kgf": 1476.9
+      },
+      {
+        "layer_no": 41,
+        "hyd_P_required_psi": 2180,
+        "hyd_speed_available_mpm": 37.2,
+        "hyd_avail_tension_kgf": 1484.0
+      },
+      {
+        "layer_no": 42,
+        "hyd_P_required_psi": 2197,
+        "hyd_speed_available_mpm": 37.03,
+        "hyd_avail_tension_kgf": 1491.1
+      },
+      {
+        "layer_no": 43,
+        "hyd_P_required_psi": 2214,
+        "hyd_speed_available_mpm": 36.86,
+        "hyd_avail_tension_kgf": 1498.2
+      },
+      {
+        "layer_no": 44,
+        "hyd_P_required_psi": 2231,
+        "hyd_speed_available_mpm": 36.69,
+        "hyd_avail_tension_kgf": 1505.3
+      },
+      {
+        "layer_no": 45,
+        "hyd_P_required_psi": 2248,
+        "hyd_speed_available_mpm": 36.519999999999996,
+        "hyd_avail_tension_kgf": 1512.4
+      },
+      {
+        "layer_no": 46,
+        "hyd_P_required_psi": 2265,
+        "hyd_speed_available_mpm": 36.35,
+        "hyd_avail_tension_kgf": 1519.5
+      },
+      {
+        "layer_no": 47,
+        "hyd_P_required_psi": 2282,
+        "hyd_speed_available_mpm": 36.18,
+        "hyd_avail_tension_kgf": 1526.6
+      },
+      {
+        "layer_no": 48,
+        "hyd_P_required_psi": 2299,
+        "hyd_speed_available_mpm": 36.01,
+        "hyd_avail_tension_kgf": 1533.7
+      },
+      {
+        "layer_no": 49,
+        "hyd_P_required_psi": 2316,
+        "hyd_speed_available_mpm": 35.84,
+        "hyd_avail_tension_kgf": 1540.8
+      },
+      {
+        "layer_no": 50,
+        "hyd_P_required_psi": 2333,
+        "hyd_speed_available_mpm": 35.67,
+        "hyd_avail_tension_kgf": 1547.9
+      },
+      {
+        "layer_no": 51,
+        "hyd_P_required_psi": 2350,
+        "hyd_speed_available_mpm": 35.5,
+        "hyd_avail_tension_kgf": 1555.0
+      },
+      {
+        "layer_no": 52,
+        "hyd_P_required_psi": 2367,
+        "hyd_speed_available_mpm": 35.33,
+        "hyd_avail_tension_kgf": 1562.1
+      },
+      {
+        "layer_no": 53,
+        "hyd_P_required_psi": 2384,
+        "hyd_speed_available_mpm": 35.16,
+        "hyd_avail_tension_kgf": 1569.2
+      },
+      {
+        "layer_no": 54,
+        "hyd_P_required_psi": 2401,
+        "hyd_speed_available_mpm": 34.99,
+        "hyd_avail_tension_kgf": 1576.3
+      },
+      {
+        "layer_no": 55,
+        "hyd_P_required_psi": 2418,
+        "hyd_speed_available_mpm": 34.82,
+        "hyd_avail_tension_kgf": 1583.4
+      },
+      {
+        "layer_no": 56,
+        "hyd_P_required_psi": 2435,
+        "hyd_speed_available_mpm": 34.65,
+        "hyd_avail_tension_kgf": 1590.5
+      },
+      {
+        "layer_no": 57,
+        "hyd_P_required_psi": 2452,
+        "hyd_speed_available_mpm": 34.48,
+        "hyd_avail_tension_kgf": 1597.6
+      },
+      {
+        "layer_no": 58,
+        "hyd_P_required_psi": 2469,
+        "hyd_speed_available_mpm": 34.31,
+        "hyd_avail_tension_kgf": 1604.7
+      },
+      {
+        "layer_no": 59,
+        "hyd_P_required_psi": 2486,
+        "hyd_speed_available_mpm": 34.14,
+        "hyd_avail_tension_kgf": 1611.8
+      },
+      {
+        "layer_no": 60,
+        "hyd_P_required_psi": 2503,
+        "hyd_speed_available_mpm": 33.97,
+        "hyd_avail_tension_kgf": 1618.9
+      },
+      {
+        "layer_no": 61,
+        "hyd_P_required_psi": 2520,
+        "hyd_speed_available_mpm": 33.8,
+        "hyd_avail_tension_kgf": 1626.0
+      },
+      {
+        "layer_no": 62,
+        "hyd_P_required_psi": 2537,
+        "hyd_speed_available_mpm": 33.629999999999995,
+        "hyd_avail_tension_kgf": 1633.1
+      },
+      {
+        "layer_no": 63,
+        "hyd_P_required_psi": 2554,
+        "hyd_speed_available_mpm": 33.46,
+        "hyd_avail_tension_kgf": 1640.2
+      },
+      {
+        "layer_no": 64,
+        "hyd_P_required_psi": 2571,
+        "hyd_speed_available_mpm": 33.29,
+        "hyd_avail_tension_kgf": 1647.3
+      },
+      {
+        "layer_no": 65,
+        "hyd_P_required_psi": 2588,
+        "hyd_speed_available_mpm": 33.12,
+        "hyd_avail_tension_kgf": 1654.4
+      },
+      {
+        "layer_no": 66,
+        "hyd_P_required_psi": 2605,
+        "hyd_speed_available_mpm": 32.95,
+        "hyd_avail_tension_kgf": 1661.5
+      },
+      {
+        "layer_no": 67,
+        "hyd_P_required_psi": 2622,
+        "hyd_speed_available_mpm": 32.78,
+        "hyd_avail_tension_kgf": 1668.6
+      },
+      {
+        "layer_no": 68,
+        "hyd_P_required_psi": 2639,
+        "hyd_speed_available_mpm": 32.61,
+        "hyd_avail_tension_kgf": 1675.7
+      },
+      {
+        "layer_no": 69,
+        "hyd_P_required_psi": 2656,
+        "hyd_speed_available_mpm": 32.44,
+        "hyd_avail_tension_kgf": 1682.8
+      },
+      {
+        "layer_no": 70,
+        "hyd_P_required_psi": 2673,
+        "hyd_speed_available_mpm": 32.269999999999996,
+        "hyd_avail_tension_kgf": 1689.9
+      },
+      {
+        "layer_no": 71,
+        "hyd_P_required_psi": 2690,
+        "hyd_speed_available_mpm": 32.1,
+        "hyd_avail_tension_kgf": 1697.0
+      },
+      {
+        "layer_no": 72,
+        "hyd_P_required_psi": 2707,
+        "hyd_speed_available_mpm": 31.93,
+        "hyd_avail_tension_kgf": 1704.1
+      },
+      {
+        "layer_no": 73,
+        "hyd_P_required_psi": 2724,
+        "hyd_speed_available_mpm": 31.759999999999998,
+        "hyd_avail_tension_kgf": 1711.2
+      },
+      {
+        "layer_no": 74,
+        "hyd_P_required_psi": 2741,
+        "hyd_speed_available_mpm": 31.59,
+        "hyd_avail_tension_kgf": 1718.3
+      },
+      {
+        "layer_no": 75,
+        "hyd_P_required_psi": 2758,
+        "hyd_speed_available_mpm": 31.42,
+        "hyd_avail_tension_kgf": 1725.4
+      },
+      {
+        "layer_no": 76,
+        "hyd_P_required_psi": 2775,
+        "hyd_speed_available_mpm": 31.25,
+        "hyd_avail_tension_kgf": 1732.5
+      },
+      {
+        "layer_no": 77,
+        "hyd_P_required_psi": 2792,
+        "hyd_speed_available_mpm": 31.08,
+        "hyd_avail_tension_kgf": 1739.6
+      },
+      {
+        "layer_no": 78,
+        "hyd_P_required_psi": 2809,
+        "hyd_speed_available_mpm": 30.909999999999997,
+        "hyd_avail_tension_kgf": 1746.6999999999998
+      },
+      {
+        "layer_no": 79,
+        "hyd_P_required_psi": 2826,
+        "hyd_speed_available_mpm": 30.74,
+        "hyd_avail_tension_kgf": 1753.8
+      },
+      {
+        "layer_no": 80,
+        "hyd_P_required_psi": 2843,
+        "hyd_speed_available_mpm": 30.57,
+        "hyd_avail_tension_kgf": 1760.9
+      },
+      {
+        "layer_no": 81,
+        "hyd_P_required_psi": 2860,
+        "hyd_speed_available_mpm": 30.4,
+        "hyd_avail_tension_kgf": 1768.0
+      },
+      {
+        "layer_no": 82,
+        "hyd_P_required_psi": 2877,
+        "hyd_speed_available_mpm": 30.229999999999997,
+        "hyd_avail_tension_kgf": 1775.1
+      },
+      {
+        "layer_no": 83,
+        "hyd_P_required_psi": 2894,
+        "hyd_speed_available_mpm": 30.06,
+        "hyd_avail_tension_kgf": 1782.1999999999998
+      },
+      {
+        "layer_no": 84,
+        "hyd_P_required_psi": 2911,
+        "hyd_speed_available_mpm": 29.89,
+        "hyd_avail_tension_kgf": 1789.3
+      },
+      {
+        "layer_no": 85,
+        "hyd_P_required_psi": 2928,
+        "hyd_speed_available_mpm": 29.72,
+        "hyd_avail_tension_kgf": 1796.4
+      }
+    ]
+  },
+  "report": {
+    "figures": [
+      "Operational envelope chart 1",
+      "Operational envelope chart 2",
+      "Operational envelope chart 3",
+      "Operational envelope chart 4",
+      "Operational envelope chart 5",
+      "Operational envelope chart 6",
+      "Operational envelope chart 7",
+      "Operational envelope chart 8"
+    ],
+    "equations": [
+      {
+        "latex": "Q_{1}=A_{1}v_{1}",
+        "text": "Q1 = A1 v1"
+      },
+      {
+        "latex": "Q_{2}=A_{2}v_{2}",
+        "text": "Q2 = A2 v2"
+      },
+      {
+        "latex": "Q_{3}=A_{3}v_{3}",
+        "text": "Q3 = A3 v3"
+      },
+      {
+        "latex": "Q_{4}=A_{4}v_{4}",
+        "text": "Q4 = A4 v4"
+      },
+      {
+        "latex": "Q_{5}=A_{5}v_{5}",
+        "text": "Q5 = A5 v5"
+      },
+      {
+        "latex": "Q_{6}=A_{6}v_{6}",
+        "text": "Q6 = A6 v6"
+      },
+      {
+        "latex": "Q_{7}=A_{7}v_{7}",
+        "text": "Q7 = A7 v7"
+      },
+      {
+        "latex": "Q_{8}=A_{8}v_{8}",
+        "text": "Q8 = A8 v8"
+      },
+      {
+        "latex": "Q_{9}=A_{9}v_{9}",
+        "text": "Q9 = A9 v9"
+      },
+      {
+        "latex": "Q_{10}=A_{10}v_{10}",
+        "text": "Q10 = A10 v10"
+      },
+      {
+        "latex": "Q_{11}=A_{11}v_{11}",
+        "text": "Q11 = A11 v11"
+      },
+      {
+        "latex": "Q_{12}=A_{12}v_{12}",
+        "text": "Q12 = A12 v12"
+      },
+      {
+        "latex": "Q_{13}=A_{13}v_{13}",
+        "text": "Q13 = A13 v13"
+      },
+      {
+        "latex": "Q_{14}=A_{14}v_{14}",
+        "text": "Q14 = A14 v14"
+      },
+      {
+        "latex": "Q_{15}=A_{15}v_{15}",
+        "text": "Q15 = A15 v15"
+      },
+      {
+        "latex": "Q_{16}=A_{16}v_{16}",
+        "text": "Q16 = A16 v16"
+      },
+      {
+        "latex": "Q_{17}=A_{17}v_{17}",
+        "text": "Q17 = A17 v17"
+      },
+      {
+        "latex": "Q_{18}=A_{18}v_{18}",
+        "text": "Q18 = A18 v18"
+      }
+    ]
+  }
+}
