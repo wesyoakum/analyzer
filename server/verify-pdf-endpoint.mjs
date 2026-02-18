@@ -19,19 +19,26 @@ const serverCode = await fs.readFile(serverIndexPath, 'utf8');
 const nginxCode = await fs.readFile(nginxConfigPath, 'utf8');
 
 const jsonMiddlewareSnippet = "app.use(express.json({ limit: '1mb' }));";
+const healthRouteSnippet = "app.get('/api/health'";
 const pdfRouteSnippet = "app.post('/api/reports/pdf'";
 const notFoundMiddlewareSnippet = 'app.use((req, res, next) => {';
 const errorMiddlewareSnippet = 'app.use((err, req, res, next) => {';
 
 const jsonIndex = serverCode.indexOf(jsonMiddlewareSnippet);
+const healthRouteIndex = serverCode.indexOf(healthRouteSnippet);
 const pdfRouteIndex = serverCode.indexOf(pdfRouteSnippet);
 const notFoundIndex = serverCode.indexOf(notFoundMiddlewareSnippet);
 const errorIndex = serverCode.indexOf(errorMiddlewareSnippet);
 
 assertCondition(jsonIndex >= 0, `Missing JSON middleware: ${jsonMiddlewareSnippet}`);
+assertCondition(healthRouteIndex >= 0, `Missing health route: ${healthRouteSnippet}`);
 assertCondition(pdfRouteIndex >= 0, `Missing PDF route: ${pdfRouteSnippet}`);
 assertCondition(notFoundIndex >= 0, `Missing not-found middleware: ${notFoundMiddlewareSnippet}`);
 assertCondition(errorIndex >= 0, `Missing error middleware: ${errorMiddlewareSnippet}`);
+
+assertCondition(jsonIndex < healthRouteIndex, 'express.json middleware must be registered before /api/health.');
+assertCondition(healthRouteIndex < notFoundIndex, '/api/health must be registered before not-found middleware.');
+assertCondition(healthRouteIndex < errorIndex, '/api/health must be registered before error middleware.');
 
 assertCondition(jsonIndex < pdfRouteIndex, 'express.json middleware must be registered before /api/reports/pdf.');
 assertCondition(pdfRouteIndex < notFoundIndex, '/api/reports/pdf must be registered before not-found middleware.');
@@ -43,4 +50,4 @@ assertCondition(nginxCode.includes('limit_except POST OPTIONS {'), 'Nginx must a
 assertCondition(!nginxCode.includes('proxy_set_header Content-Type'), 'Nginx should not override Content-Type for proxied API requests.');
 assertCondition(!nginxCode.includes('proxy_hide_header Content-Type'), 'Nginx should not hide Content-Type for proxied API requests.');
 
-console.log('Verified /api/reports/pdf route ordering, JSON parser placement, and nginx proxy behavior for Content-Type.');
+console.log('Verified /api/health and /api/reports/pdf route ordering, JSON parser placement, and nginx proxy behavior for Content-Type.');

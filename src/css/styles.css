@@ -180,6 +180,26 @@ body {
   margin-bottom: 12px;
 }
 
+.report-toolbar__status {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  align-items: flex-end;
+}
+
+.api-warning {
+  font-size: 12px;
+  color: #8a3e00;
+  background: rgba(255, 196, 107, 0.28);
+  border: 1px solid rgba(186, 104, 0, 0.35);
+  border-radius: 4px;
+  padding: 4px 8px;
+  text-transform: none;
+  letter-spacing: 0.01em;
+  max-width: 320px;
+  text-align: right;
+}
+
 .build-indicator {
   font-size: 12px;
   letter-spacing: 0.02em;
@@ -1316,8 +1336,14 @@ th[title] {
     align-items: stretch;
   }
 
+  .report-toolbar__status {
+    align-items: stretch;
+  }
+
+  .api-warning,
   .build-indicator {
     text-align: left;
+    max-width: none;
   }
 
   .tab-bar {
