@@ -9,6 +9,12 @@
 
 ## Deployment smoke checks
 
+- Run the full live wiring audit (nginx config + upstream process + smoke checks):
+  ```bash
+  ./deploy/verify-runtime-wiring.sh
+  ```
+  - The script fails fast if nginx is not installed, if Node is not listening on the configured upstream port, or if either API route is not properly wired through nginx.
+
 - Confirm API health responds from Node:
   ```bash
   curl -si http://localhost/api/health
