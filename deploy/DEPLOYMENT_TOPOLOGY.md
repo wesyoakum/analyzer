@@ -9,6 +9,18 @@
 
 ## Deployment smoke checks
 
+## Playwright runtime requirements for PDF export
+
+- The PDF endpoint (`POST /api/reports/pdf`) launches Playwright Chromium from the same runtime where `npm start` runs.
+- Install browser binaries during image build (or machine provisioning), not only in local dev shells:
+  ```bash
+  npm install
+  npx playwright install chromium
+  ```
+- In hardened Linux/container environments that require a non-default Chromium sandbox mode, set one or both of:
+  - `PLAYWRIGHT_DISABLE_SANDBOX=true` (adds `--no-sandbox`), or
+  - `PLAYWRIGHT_CHROMIUM_ARGS="--no-sandbox,--disable-dev-shm-usage"` (comma-separated extra launch args).
+
 - Run the full live wiring audit (nginx config + upstream process + smoke checks):
   ```bash
   ./deploy/verify-runtime-wiring.sh
