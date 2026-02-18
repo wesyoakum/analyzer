@@ -922,10 +922,186 @@ function setupPdfExport() {
   const exportBtn = /** @type {HTMLButtonElement|null} */ (document.getElementById('export_pdf'));
   if (!exportBtn) return;
 
-  exportBtn.addEventListener('click', () => {
+  const PRINT_FALLBACK_FLAG = '__WINCH_PDF_ENABLE_PRINT_FALLBACK__';
+  const MAX_ERROR_MESSAGE_LENGTH = 400;
+  const reportToolbar = exportBtn.closest('.report-toolbar') || exportBtn.parentElement;
+  const statusEl = document.createElement('div');
+  statusEl.className = 'build-indicator';
+  statusEl.setAttribute('aria-live', 'polite');
+  statusEl.hidden = true;
+  if (reportToolbar) {
+    reportToolbar.appendChild(statusEl);
+  }
+
+  /** @type {AbortController|null} */
+  let pendingRequest = null;
+
+  const getPrintFallbackEnabled = () => {
+    if (typeof window === 'undefined') return false;
+    return Boolean(window[PRINT_FALLBACK_FLAG]);
+  };
+
+  const getCurrentStatePayload = () => {
     computeAll();
+    return collectInputState();
+  };
+
+  const clearStatus = () => {
+    statusEl.textContent = '';
+    statusEl.hidden = true;
+  };
+
+  const setStatus = (message) => {
+    statusEl.textContent = message;
+    statusEl.hidden = !message;
+  };
+
+  const setErrorStatus = ({ message, canRetry = false, onRetry = null }) => {
+    statusEl.hidden = false;
+    statusEl.replaceChildren();
+
+    const text = document.createElement('span');
+    text.textContent = message;
+    statusEl.appendChild(text);
+
+    if (canRetry && typeof onRetry === 'function') {
+      const retryBtn = document.createElement('button');
+      retryBtn.type = 'button';
+      retryBtn.className = 'app-sidebar__action app-sidebar__action--button';
+      retryBtn.textContent = 'Retry';
+      retryBtn.style.marginLeft = '0.5rem';
+      retryBtn.addEventListener('click', onRetry, { once: true });
+      statusEl.appendChild(retryBtn);
+    }
+  };
+
+  const sanitizeErrorMessage = (message) => {
+    if (!message) return 'Failed to generate the PDF report.';
+    const normalized = String(message).replace(/\s+/g, ' ').trim();
+    if (!normalized) return 'Failed to generate the PDF report.';
+    if (normalized.length <= MAX_ERROR_MESSAGE_LENGTH) return normalized;
+    return normalized.slice(0, MAX_ERROR_MESSAGE_LENGTH - 1) + '…';
+  };
+
+  const triggerBlobDownload = (blob, filename) => {
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement('a');
+    link.href = url;
+    link.download = filename;
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    URL.revokeObjectURL(url);
+  };
+
+  const parseFilename = (response) => {
+    const disposition = response.headers.get('Content-Disposition') || '';
+    const encoded = disposition.match(/filename\*=UTF-8''([^;]+)/i);
+    if (encoded && encoded[1]) {
+      try {
+        return decodeURIComponent(encoded[1]);
+      } catch (_) {
+        return 'winch-analyzer-report.pdf';
+      }
+    }
+    const plain = disposition.match(/filename="?([^";]+)"?/i);
+    if (plain && plain[1]) return plain[1];
+    return 'winch-analyzer-report.pdf';
+  };
+
+  const parseBackendError = async (response) => {
+    if (response.status === 413) {
+      return 'Report payload is too large. Reduce optional fields and try again.';
+    }
+
+    const contentType = response.headers.get('Content-Type') || '';
+    if (contentType.includes('application/json')) {
+      const body = await response.json().catch(() => null);
+      const rawMessage = body?.error?.message || body?.message || `PDF export failed with status ${response.status}.`;
+      return sanitizeErrorMessage(rawMessage);
+    }
+
+    const text = await response.text().catch(() => '');
+    const fallback = text || `PDF export failed with status ${response.status}.`;
+    return sanitizeErrorMessage(fallback);
+  };
+
+  const runBrowserPrintFallback = () => {
+    setStatus('PDF service unavailable. Opening browser print preview…');
     window.print();
-  });
+    window.setTimeout(clearStatus, 1500);
+  };
+
+  const requestPdfExport = async () => {
+    if (pendingRequest) {
+      setStatus('PDF generation is already in progress…');
+      return;
+    }
+
+    exportBtn.disabled = true;
+    setStatus('Generating PDF report… this may take a few seconds.');
+
+    const payload = { state: getCurrentStatePayload() };
+    const controller = new AbortController();
+    pendingRequest = controller;
+
+    try {
+      const response = await fetch('/api/reports/pdf', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(payload),
+        signal: controller.signal
+      });
+
+      if (!response.ok) {
+        const backendMessage = await parseBackendError(response);
+        if (getPrintFallbackEnabled()) {
+          runBrowserPrintFallback();
+          return;
+        }
+
+        setErrorStatus({
+          message: backendMessage,
+          canRetry: true,
+          onRetry: () => { requestPdfExport(); }
+        });
+        return;
+      }
+
+      const blob = await response.blob();
+      if (!blob || blob.size === 0) {
+        setErrorStatus({
+          message: 'The PDF was generated but the response was empty. Please retry.',
+          canRetry: true,
+          onRetry: () => { requestPdfExport(); }
+        });
+        return;
+      }
+
+      const filename = parseFilename(response);
+      triggerBlobDownload(blob, filename.endsWith('.pdf') ? filename : `${filename}.pdf`);
+      setStatus('PDF report ready. Download started.');
+      window.setTimeout(clearStatus, 2500);
+    } catch (error) {
+      if (controller.signal.aborted) return;
+
+      if (getPrintFallbackEnabled()) {
+        runBrowserPrintFallback();
+        return;
+      }
+
+      setErrorStatus({
+        message: sanitizeErrorMessage(error && error.message ? error.message : 'Unable to generate PDF right now.'),
+        canRetry: true,
+        onRetry: () => { requestPdfExport(); }
+      });
+    } finally {
+      pendingRequest = null;
+      exportBtn.disabled = false;
+    }
+  };
+
+  exportBtn.addEventListener('click', requestPdfExport);
 }
 
 function setupCsvDownloads() {
