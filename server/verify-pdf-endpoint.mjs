@@ -45,9 +45,11 @@ assertCondition(pdfRouteIndex < notFoundIndex, '/api/reports/pdf must be registe
 assertCondition(pdfRouteIndex < errorIndex, '/api/reports/pdf must be registered before error middleware.');
 
 assertCondition(nginxCode.includes('location /api/ {'), 'Nginx must contain /api/ reverse proxy location.');
+assertCondition(nginxCode.includes('location = /api/health {'), 'Nginx must contain explicit /api/health location.');
+assertCondition(nginxCode.includes('limit_except GET HEAD OPTIONS {'), 'Nginx must allow GET/HEAD/OPTIONS for /api/health.');
 assertCondition(nginxCode.includes('location = /api/reports/pdf {'), 'Nginx must contain explicit /api/reports/pdf location.');
 assertCondition(nginxCode.includes('limit_except POST OPTIONS {'), 'Nginx must allow POST/OPTIONS for /api/reports/pdf.');
 assertCondition(!nginxCode.includes('proxy_set_header Content-Type'), 'Nginx should not override Content-Type for proxied API requests.');
 assertCondition(!nginxCode.includes('proxy_hide_header Content-Type'), 'Nginx should not hide Content-Type for proxied API requests.');
 
-console.log('Verified /api/health and /api/reports/pdf route ordering, JSON parser placement, and nginx proxy behavior for Content-Type.');
+console.log('Verified /api/health and /api/reports/pdf route ordering, nginx reverse-proxy rules, JSON parser placement, and Content-Type pass-through behavior.');
