@@ -1,6 +1,7 @@
 import fs from 'fs/promises';
 import path from 'path';
 import { fileURLToPath } from 'url';
+import vm from 'vm';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -44,6 +45,32 @@ assertCondition(jsonIndex < pdfRouteIndex, 'express.json middleware must be regi
 assertCondition(pdfRouteIndex < notFoundIndex, '/api/reports/pdf must be registered before not-found middleware.');
 assertCondition(pdfRouteIndex < errorIndex, '/api/reports/pdf must be registered before error middleware.');
 
+assertCondition(serverCode.includes("app.set('trust proxy', true);"), 'Express app must enable trust proxy for forwarded headers.');
+assertCondition(serverCode.includes('const requestBaseUrl = resolveSafeRequestBaseUrl(req);'), 'PDF route must derive its base URL from resolveSafeRequestBaseUrl(req).');
+
+const baseUrlHelperMatch = serverCode.match(/function firstForwardedHeaderValue\(value\) \{[\s\S]*?\n\}\n\nfunction resolveSafeRequestBaseUrl\(req\) \{[\s\S]*?\n\}/);
+assertCondition(Boolean(baseUrlHelperMatch), 'Missing forwarded-header base URL helper functions.');
+
+const helperContext = {};
+vm.createContext(helperContext);
+vm.runInContext(`${baseUrlHelperMatch[0]}; globalThis.resolveSafeRequestBaseUrl = resolveSafeRequestBaseUrl;`, helperContext);
+
+const forwardedHeaderReq = {
+  protocol: 'http',
+  get(headerName) {
+    const headers = {
+      'x-forwarded-proto': 'https, http',
+      'x-forwarded-host': 'reports.example.com',
+      host: 'internal-service:3000',
+    };
+    return headers[headerName.toLowerCase()] ?? null;
+  },
+};
+assertCondition(
+  helperContext.resolveSafeRequestBaseUrl(forwardedHeaderReq) === 'https://reports.example.com',
+  'resolveSafeRequestBaseUrl must prefer forwarded protocol/host values when provided.',
+);
+
 assertCondition(nginxCode.includes('location /api/ {'), 'Nginx must contain /api/ reverse proxy location.');
 assertCondition(nginxCode.includes('location = /api/health {'), 'Nginx must contain explicit /api/health location.');
 assertCondition(nginxCode.includes('limit_except GET HEAD OPTIONS {'), 'Nginx must allow GET/HEAD/OPTIONS for /api/health.');
@@ -52,4 +79,4 @@ assertCondition(nginxCode.includes('limit_except POST OPTIONS {'), 'Nginx must a
 assertCondition(!nginxCode.includes('proxy_set_header Content-Type'), 'Nginx should not override Content-Type for proxied API requests.');
 assertCondition(!nginxCode.includes('proxy_hide_header Content-Type'), 'Nginx should not hide Content-Type for proxied API requests.');
 
-console.log('Verified /api/health and /api/reports/pdf route ordering, nginx reverse-proxy rules, JSON parser placement, and Content-Type pass-through behavior.');
+console.log('Verified /api/health and /api/reports/pdf route ordering, proxy-aware base URL handling, nginx reverse-proxy rules, JSON parser placement, and Content-Type pass-through behavior.');
