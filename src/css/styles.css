@@ -1345,14 +1345,6 @@ th[title] {
 }
 
 
-.pdf-export-mode .panel[hidden] {
-  display: block !important;
-}
-
-.pdf-export-mode .panel {
-  display: block !important;
-}
-
 .report-root {
   display: none;
 }
@@ -1363,6 +1355,42 @@ th[title] {
 
 .report-block {
   margin-top: 12px;
+}
+
+.report-item-label {
+  margin: 8px 0 6px;
+  font-size: 11px;
+  font-weight: 600;
+  color: var(--ink-700);
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+
+.report-table-wrap,
+.report-figure,
+.report-equation-card {
+  break-inside: avoid;
+  page-break-inside: avoid;
+}
+
+.report-figure-grid,
+.report-equation-list {
+  display: grid;
+  gap: 10px;
+}
+
+.report-figure,
+.report-equation-card {
+  border: 1px solid #d1d8e6;
+  border-radius: 8px;
+  padding: 10px;
+  background: #fff;
+}
+
+.report-equation-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
 }
 
 @media print {
@@ -1459,6 +1487,8 @@ th[title] {
   }
 
   .pdf-break-before {
+    break-before: page;
+    page-break-before: always;
   }
 
 
@@ -1475,12 +1505,53 @@ th[title] {
     margin-top: 8px;
   }
 
-  .pdf-item-label {
-    text-align: center;
+  .report-print-document {
+    break-after: page;
+    page-break-after: always;
   }
 
-  .pdf-allow-split,
-  .pdf-allow-split table {
+  .report-print-section--cover-meta {
+    break-before: auto;
+    page-break-before: auto;
+  }
+
+  .report-print-section--charts,
+  .report-print-section--tables,
+  .report-print-section--appendices {
+    break-before: page;
+    page-break-before: always;
+  }
+
+  .report-print-keep-with-content,
+  .report-table-wrap,
+  .report-figure,
+  .report-equation-card {
+    break-inside: avoid;
+    page-break-inside: avoid;
+  }
+
+  .report-table-wrap .report-item-label,
+  .report-figure .report-item-label,
+  .report-equation-card .report-item-label {
+    break-after: avoid;
+    page-break-after: avoid;
+    margin-top: 0;
+  }
+
+  .report-table {
+    break-inside: auto;
+    page-break-inside: auto;
+  }
+
+  .report-table thead {
+    display: table-header-group;
+  }
+
+  .report-table tr,
+  .report-table th,
+  .report-table td {
+    break-inside: avoid;
+    page-break-inside: avoid;
   }
 
   .plotwrap {
@@ -1492,13 +1563,8 @@ th[title] {
     margin-bottom: 14px;
   }
 
-  .pdf-item-label {
-    margin: 8px 0 6px;
-    font-size: 11px;
-    font-weight: 600;
-    color: var(--ink-700);
-    text-transform: uppercase;
-    letter-spacing: 0.04em;
+  .report-item-label {
+    text-align: left;
   }
 
   svg {

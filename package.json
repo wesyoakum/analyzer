@@ -4,7 +4,8 @@
   "type": "module",
   "private": true,
   "scripts": {
-    "start": "node server/index.js"
+    "start": "node server/index.js",
+    "verify:report-print": "node server/verify-report-print-fixtures.mjs"
   },
   "dependencies": {
     "express": "^4.19.2",
