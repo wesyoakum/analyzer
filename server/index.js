@@ -338,6 +338,112 @@ function buildModelFromProjectState(state) {
   });
 }
 
+async function resolveReportStateFromPayload(payload) {
+  if (typeof payload !== 'object' || payload === null || Array.isArray(payload)) {
+    return { error: ['Report payload must be a JSON object.'] };
+  }
+
+  if (payload.state !== undefined) {
+    return { state: payload.state };
+  }
+
+  if (payload.projectId !== undefined || payload.reportId !== undefined) {
+    const projectId = String(payload.projectId ?? payload.reportId ?? '').trim();
+    if (!projectId) {
+      return { error: ['"projectId" or "reportId" must be a non-empty string when provided.'] };
+    }
+
+    const projects = await readProjects();
+    const matchingProject = projects.find((item) => item.id === projectId);
+    if (!matchingProject) {
+      return { notFound: true };
+    }
+
+    return { state: matchingProject.state };
+  }
+
+  return { state: payload };
+}
+
+function quoteHtmlAttribute(value) {
+  return String(value)
+    .replaceAll('&', '&amp;')
+    .replaceAll('"', '&quot;')
+    .replaceAll('<', '&lt;')
+    .replaceAll('>', '&gt;');
+}
+
+async function buildPdfDocumentHtml(reportBodyHtml, requestBaseUrl) {
+  const assetDirectory = path.join(STATIC_ROOT, 'assets');
+  const assetEntries = await fs.readdir(assetDirectory, { withFileTypes: true });
+  const preloadEntries = assetEntries
+    .filter((entry) => entry.isFile())
+    .map((entry) => entry.name)
+    .filter((name) => /\.(png|jpg|jpeg|gif|svg|webp|woff|woff2|ttf|otf)$/i.test(name));
+
+  const preloadTags = preloadEntries
+    .map((name) => {
+      const encodedName = encodeURIComponent(name).replaceAll('%2F', '/');
+      const fileUrl = `${requestBaseUrl}/assets/${encodedName}`;
+      const ext = path.extname(name).toLowerCase();
+      const asValue = ['.woff', '.woff2', '.ttf', '.otf'].includes(ext) ? 'font' : 'image';
+      const typeMap = {
+        '.png': 'image/png',
+        '.jpg': 'image/jpeg',
+        '.jpeg': 'image/jpeg',
+        '.gif': 'image/gif',
+        '.svg': 'image/svg+xml',
+        '.webp': 'image/webp',
+        '.woff': 'font/woff',
+        '.woff2': 'font/woff2',
+        '.ttf': 'font/ttf',
+        '.otf': 'font/otf',
+      };
+      const typeAttr = typeMap[ext] ? ` type="${typeMap[ext]}"` : '';
+      const crossOriginAttr = asValue === 'font' ? ' crossorigin="anonymous"' : '';
+      return `<link rel="preload" href="${quoteHtmlAttribute(fileUrl)}" as="${asValue}"${typeAttr}${crossOriginAttr}>`;
+    })
+    .join('\n    ');
+
+  return `<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width,initial-scale=1">
+    <title>Winch Analyzer Report</title>
+    ${preloadTags}
+    <link rel="stylesheet" href="${quoteHtmlAttribute(`${requestBaseUrl}/css/styles.css`)}">
+    <style>
+      body {
+        background: #fff;
+        margin: 0;
+        color: #111;
+        font-family: Inter, "Segoe UI", Arial, sans-serif;
+      }
+      .report-document {
+        padding: 0;
+      }
+      .report-document table {
+        width: 100%;
+        border-collapse: collapse;
+      }
+    </style>
+  </head>
+  <body>
+    ${reportBodyHtml}
+  </body>
+</html>`;
+}
+
+function toStablePdfFilename(projectName) {
+  const normalized = String(projectName || 'winch-analyzer-report')
+    .toLowerCase()
+    .replace(/[^a-z0-9]+/g, '-')
+    .replace(/(^-|-$)/g, '');
+
+  return `${normalized || 'winch-analyzer-report'}-report.pdf`;
+}
+
 async function withProjectFileLock(fn) {
   await ensureJsonStore(PROJECT_STORE);
   let lockHandle;
@@ -598,6 +704,73 @@ app.post('/api/reports/html', async (req, res, next) => {
     });
   } catch (err) {
     next(err);
+  }
+});
+
+app.post('/api/reports/pdf', async (req, res, next) => {
+  let browser;
+  try {
+    const resolved = await resolveReportStateFromPayload(req.body);
+    if (resolved.error) {
+      return sendError(res, 400, 'Invalid report payload.', resolved.error);
+    }
+    if (resolved.notFound) {
+      return sendError(res, 404, 'Project not found for provided report identifier.');
+    }
+
+    const statePayload = resolved.state;
+    const { valid, errors } = validateReportStatePayload(statePayload);
+    if (!valid) {
+      return sendError(res, 400, 'Invalid report payload.', errors);
+    }
+
+    const model = buildModelFromProjectState(statePayload);
+    const generatedAt = new Date();
+    const reportBodyHtml = renderReportHtml({ ...model, inputState: statePayload }, { generatedAt });
+    const requestBaseUrl = `${req.protocol}://${req.get('host')}`;
+    const fullDocumentHtml = await buildPdfDocumentHtml(reportBodyHtml, requestBaseUrl);
+
+    let playwright;
+    try {
+      playwright = await import('playwright');
+    } catch (err) {
+      throw new Error('Playwright is required for PDF generation. Install the "playwright" package and browser binaries.');
+    }
+
+    browser = await playwright.chromium.launch({ headless: true });
+    const page = await browser.newPage();
+    await page.setContent(fullDocumentHtml, { waitUntil: 'networkidle' });
+
+    const pdfOptionsPayload = req.body?.pdfOptions ?? {};
+    const pdfBuffer = await page.pdf({
+      format: pdfOptionsPayload.format === 'Letter' ? 'Letter' : 'A4',
+      printBackground: true,
+      margin: {
+        top: '0.5in',
+        right: '0.5in',
+        bottom: '0.5in',
+        left: '0.5in',
+      },
+      displayHeaderFooter: Boolean(pdfOptionsPayload.headerTemplate || pdfOptionsPayload.footerTemplate),
+      headerTemplate: pdfOptionsPayload.headerTemplate || '<div></div>',
+      footerTemplate: pdfOptionsPayload.footerTemplate || '<div></div>',
+    });
+
+    const filename = toStablePdfFilename(statePayload.project_name);
+    res.setHeader('Content-Type', 'application/pdf');
+    res.setHeader('Content-Disposition', `attachment; filename="${filename}"`);
+    res.setHeader('Content-Length', String(pdfBuffer.length));
+    return res.status(200).send(pdfBuffer);
+  } catch (err) {
+    return next(err);
+  } finally {
+    if (browser) {
+      try {
+        await browser.close();
+      } catch (closeErr) {
+        console.error('Failed to close PDF browser instance', closeErr);
+      }
+    }
   }
 });
 
