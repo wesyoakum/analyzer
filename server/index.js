@@ -12,6 +12,7 @@ const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
 const app = express();
+app.set('trust proxy', true);
 const PORT = process.env.PORT || 3000;
 const STATIC_ROOT = path.resolve(__dirname, '..', 'src');
 const DATA_DIR = path.resolve(__dirname, '..', 'data');
@@ -392,6 +393,33 @@ function quoteHtmlAttribute(value) {
     .replaceAll('>', '&gt;');
 }
 
+function firstForwardedHeaderValue(value) {
+  if (typeof value !== 'string') {
+    return null;
+  }
+
+  const [firstValue] = value.split(',');
+  const normalized = firstValue?.trim();
+  return normalized ? normalized : null;
+}
+
+function resolveSafeRequestBaseUrl(req) {
+  const forwardedProto = firstForwardedHeaderValue(req.get('x-forwarded-proto'));
+  const forwardedHost = firstForwardedHeaderValue(req.get('x-forwarded-host'));
+
+  const protocol = forwardedProto && ['http', 'https'].includes(forwardedProto.toLowerCase())
+    ? forwardedProto.toLowerCase()
+    : (req.protocol === 'https' ? 'https' : 'http');
+
+  const hostCandidate = forwardedHost || req.get('host') || '';
+  const host = hostCandidate.replace(/^https?:\/\//i, '').split('/')[0].trim();
+  if (!host) {
+    return `${protocol}://localhost`;
+  }
+
+  return `${protocol}://${host}`;
+}
+
 async function buildPdfDocumentHtml(reportBodyHtml, requestBaseUrl) {
   const assetDirectory = path.join(STATIC_ROOT, 'assets');
   const assetEntries = await fs.readdir(assetDirectory, { withFileTypes: true });
@@ -403,7 +431,7 @@ async function buildPdfDocumentHtml(reportBodyHtml, requestBaseUrl) {
   const preloadTags = preloadEntries
     .map((name) => {
       const encodedName = encodeURIComponent(name).replaceAll('%2F', '/');
-      const fileUrl = `${requestBaseUrl}/assets/${encodedName}`;
+      const fileUrl = `/assets/${encodedName}`;
       const ext = path.extname(name).toLowerCase();
       const asValue = ['.woff', '.woff2', '.ttf', '.otf'].includes(ext) ? 'font' : 'image';
       const typeMap = {
@@ -430,8 +458,9 @@ async function buildPdfDocumentHtml(reportBodyHtml, requestBaseUrl) {
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width,initial-scale=1">
     <title>Winch Analyzer Report</title>
+    <base href="${quoteHtmlAttribute(`${requestBaseUrl}/`)}">
     ${preloadTags}
-    <link rel="stylesheet" href="${quoteHtmlAttribute(`${requestBaseUrl}/css/styles.css`)}">
+    <link rel="stylesheet" href="/css/styles.css">
     <style>
       body {
         background: #fff;
@@ -750,7 +779,7 @@ app.post('/api/reports/pdf', async (req, res, next) => {
     const model = buildModelFromProjectState(statePayload);
     const generatedAt = new Date();
     const reportBodyHtml = renderReportHtml({ ...model, inputState: statePayload }, { generatedAt });
-    const requestBaseUrl = `${req.protocol}://${req.get('host')}`;
+    const requestBaseUrl = resolveSafeRequestBaseUrl(req);
     const fullDocumentHtml = await buildPdfDocumentHtml(reportBodyHtml, requestBaseUrl);
 
     let playwright;
