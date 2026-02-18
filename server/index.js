@@ -5,6 +5,8 @@ import fs from 'fs/promises';
 import crypto from 'crypto';
 import { execFile } from 'child_process';
 import { promisify } from 'util';
+import { buildComputationModel } from '../src/js/analysis-data.mjs';
+import { renderReportHtml } from '../src/js/report-renderer.mjs';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -31,6 +33,20 @@ async function readLatestCommitTimestamp() {
   }
 
   return isoTimestamp;
+}
+
+async function readLatestCommitHash() {
+  const repoRoot = path.resolve(__dirname, '..');
+  const { stdout } = await execFileAsync('git', ['rev-parse', '--short', 'HEAD'], {
+    cwd: repoRoot,
+  });
+
+  const hash = stdout.trim();
+  if (!hash) {
+    throw new Error('Git returned an empty commit hash.');
+  }
+
+  return hash;
 }
 
 function generateId() {
@@ -203,6 +219,123 @@ function validateProjectPayload(payload) {
   }
 
   return { valid: errors.length === 0, errors };
+}
+
+const REQUIRED_REPORT_STATE_NUMERIC_FIELDS = [
+  'c_mm',
+  'depth_m',
+  'dead_m',
+  'core_in',
+  'flange_dia_in',
+  'ftf_in',
+  'lebus_in',
+  'pack',
+  'payload_kg',
+  'c_w_kgpm',
+  'gr1',
+  'gr2',
+  'motors',
+  'motor_max_rpm',
+  'motor_hp',
+  'motor_eff',
+  'motor_tmax',
+  'gearbox_max_torque_Nm',
+  'h_pump_strings',
+  'h_emotor_hp',
+  'h_emotor_eff',
+  'h_emotor_rpm',
+  'h_pump_cc',
+  'h_max_psi',
+  'h_hmot_cc',
+  'h_hmot_rpm_max',
+];
+
+function stateNumber(state, key) {
+  const raw = state[key];
+  if (typeof raw === 'number') return raw;
+  if (typeof raw === 'string') {
+    const parsed = Number.parseFloat(raw.replace(',', '.'));
+    return parsed;
+  }
+  return Number.NaN;
+}
+
+function normalizeSystemType(rawSystemType) {
+  return rawSystemType === 'hydraulic' ? 'hydraulic' : 'electric';
+}
+
+function validateReportStatePayload(payload) {
+  const errors = [];
+
+  if (typeof payload !== 'object' || payload === null || Array.isArray(payload)) {
+    errors.push('Report body must be a JSON object containing the saved project state fields.');
+    return { valid: false, errors };
+  }
+
+  REQUIRED_REPORT_STATE_NUMERIC_FIELDS.forEach((fieldName) => {
+    if (payload[fieldName] === undefined) {
+      errors.push(`Report state field "${fieldName}" is required.`);
+      return;
+    }
+
+    if (!Number.isFinite(stateNumber(payload, fieldName))) {
+      errors.push(`Report state field "${fieldName}" must be a finite number.`);
+    }
+  });
+
+  if (payload.wraps_override !== undefined && payload.wraps_override !== '' && !Number.isFinite(stateNumber(payload, 'wraps_override'))) {
+    errors.push('Report state field "wraps_override" must be a finite number when provided.');
+  }
+
+  if (payload.project_name !== undefined && typeof payload.project_name !== 'string') {
+    errors.push('Report state field "project_name" must be a string when provided.');
+  }
+
+  if (payload.system_type_select !== undefined && payload.system_type_select !== 'electric' && payload.system_type_select !== 'hydraulic') {
+    errors.push('Report state field "system_type_select" must be either "electric" or "hydraulic" when provided.');
+  }
+
+  return { valid: errors.length === 0, errors };
+}
+
+function buildModelFromProjectState(state) {
+  const wrapsOverrideValue = stateNumber(state, 'wraps_override');
+  const wraps_per_layer_override = Number.isFinite(wrapsOverrideValue) && wrapsOverrideValue > 0
+    ? wrapsOverrideValue
+    : undefined;
+  const systemType = normalizeSystemType(state.system_type_select);
+
+  return buildComputationModel({
+    cable_dia_mm: stateNumber(state, 'c_mm'),
+    operating_depth_m: stateNumber(state, 'depth_m'),
+    dead_end_m: stateNumber(state, 'dead_m'),
+    core_dia_in: stateNumber(state, 'core_in'),
+    flange_dia_in: stateNumber(state, 'flange_dia_in'),
+    flange_to_flange_in: stateNumber(state, 'ftf_in'),
+    lebus_thk_in: stateNumber(state, 'lebus_in'),
+    packing_factor: stateNumber(state, 'pack'),
+    wraps_per_layer_override,
+    payload_kg: stateNumber(state, 'payload_kg'),
+    cable_w_kgpm: stateNumber(state, 'c_w_kgpm'),
+    gr1: stateNumber(state, 'gr1'),
+    gr2: stateNumber(state, 'gr2'),
+    motors: stateNumber(state, 'motors'),
+    electricEnabled: systemType === 'electric',
+    hydraulicEnabled: systemType === 'hydraulic',
+    motor_max_rpm: stateNumber(state, 'motor_max_rpm'),
+    motor_hp: stateNumber(state, 'motor_hp'),
+    motor_eff: stateNumber(state, 'motor_eff'),
+    motor_tmax: stateNumber(state, 'motor_tmax'),
+    gearbox_max_torque_Nm: stateNumber(state, 'gearbox_max_torque_Nm'),
+    h_strings: stateNumber(state, 'h_pump_strings'),
+    h_emotor_hp: stateNumber(state, 'h_emotor_hp'),
+    h_emotor_eff: stateNumber(state, 'h_emotor_eff'),
+    h_emotor_rpm: stateNumber(state, 'h_emotor_rpm'),
+    h_pump_cc: stateNumber(state, 'h_pump_cc'),
+    h_max_psi: stateNumber(state, 'h_max_psi'),
+    h_hmot_cc: stateNumber(state, 'h_hmot_cc'),
+    h_hmot_rpm_cap: stateNumber(state, 'h_hmot_rpm_max'),
+  });
 }
 
 async function withProjectFileLock(fn) {
@@ -436,6 +569,33 @@ app.delete('/api/projects/:id', async (req, res, next) => {
     }
 
     res.status(204).send();
+  } catch (err) {
+    next(err);
+  }
+});
+
+app.post('/api/reports/html', async (req, res, next) => {
+  const statePayload = req.body;
+  const { valid, errors } = validateReportStatePayload(statePayload);
+  if (!valid) {
+    return sendError(res, 400, 'Invalid report payload.', errors);
+  }
+
+  try {
+    const model = buildModelFromProjectState(statePayload);
+    const generatedAt = new Date();
+    const versionHash = await readLatestCommitHash();
+    const reportTitle = `${String(statePayload.project_name || 'Untitled project').trim() || 'Untitled project'} - Winch Analyzer Report`;
+    const html = renderReportHtml({ ...model, inputState: statePayload }, { generatedAt });
+
+    res.json({
+      html,
+      metadata: {
+        reportTitle,
+        generatedAt: generatedAt.toISOString(),
+        versionHash,
+      },
+    });
   } catch (err) {
     next(err);
   }
