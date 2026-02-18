@@ -818,6 +818,29 @@ function checkApiHealth() {
   const warning = /** @type {HTMLElement|null} */ (document.getElementById('api-warning'));
   if (!warning) return;
 
+  const sanitizeDebugSnippet = (value, maxLength = 180) => {
+    if (!value) return '';
+    const normalized = String(value).replace(/[\r\n\t]+/g, ' ').replace(/\s+/g, ' ').trim();
+    if (!normalized) return '';
+    return normalized.length <= maxLength ? normalized : `${normalized.slice(0, maxLength - 1)}…`;
+  };
+
+  const summarizeHealthFailure = ({ status = 'n/a', contentType = 'n/a', snippet = '', reason = '' } = {}) => {
+    const parts = [
+      `status=${status}`,
+      `contentType=${contentType || 'n/a'}`
+    ];
+    if (snippet) parts.push(`snippet="${snippet}"`);
+    if (reason) parts.push(`reason="${sanitizeDebugSnippet(reason, 240)}"`);
+    return parts.join(' | ');
+  };
+
+  const logHealthFailure = (detail) => {
+    console.groupCollapsed('[api health] /api/health check failed');
+    console.warn('debug:', detail);
+    console.groupEnd();
+  };
+
   const showWarning = () => {
     warning.hidden = false;
     warning.textContent = 'API routing issue detected. /api/health is unavailable, so export pdf may fail until routing is fixed.';
@@ -829,20 +852,35 @@ function checkApiHealth() {
     }
   })
     .then(async (response) => {
+      const contentType = response.headers.get('Content-Type') || '';
+      const baseDetail = {
+        status: response.status,
+        contentType: contentType || 'n/a',
+        snippet: ''
+      };
+
       if (!response.ok) {
-        throw new Error(`Health check failed with status ${response.status}`);
+        if (!contentType.includes('application/json')) {
+          const text = await response.text().catch(() => '');
+          baseDetail.snippet = sanitizeDebugSnippet(text);
+        }
+        throw new Error(summarizeHealthFailure(baseDetail));
       }
 
       const payload = await response.json();
       if (payload?.ok !== true || payload?.service !== 'analyzer-api') {
-        throw new Error('Unexpected health check payload.');
+        throw new Error(summarizeHealthFailure({
+          ...baseDetail,
+          reason: 'Unexpected health check payload.'
+        }));
       }
 
       warning.hidden = true;
       warning.textContent = '';
     })
-    .catch(() => {
+    .catch((error) => {
       showWarning();
+      logHealthFailure(error && error.message ? error.message : summarizeHealthFailure({ reason: 'unknown error' }));
     });
 }
 
@@ -1056,22 +1094,54 @@ function setupPdfExport() {
   };
 
   const parseBackendError = async (response) => {
+    const sanitizeDebugSnippet = (value, maxLength = 180) => {
+      if (!value) return '';
+      const normalized = String(value).replace(/[\r\n\t]+/g, ' ').replace(/\s+/g, ' ').trim();
+      if (!normalized) return '';
+      return normalized.length <= maxLength ? normalized : `${normalized.slice(0, maxLength - 1)}…`;
+    };
+
+    const summarizeDebugContext = ({ status, contentType = 'n/a', snippet = '' }) => {
+      const parts = [
+        `status=${status}`,
+        `contentType=${contentType || 'n/a'}`
+      ];
+      if (snippet) parts.push(`snippet="${snippet}"`);
+      return parts.join(' | ');
+    };
+
+    const contentType = response.headers.get('Content-Type') || '';
+    let textSnippet = '';
+
+    if (!contentType.includes('application/json')) {
+      const responseText = await response.text().catch(() => '');
+      textSnippet = sanitizeDebugSnippet(extractHtmlText(responseText) || responseText);
+    }
+
+    const debugContext = summarizeDebugContext({
+      status: response.status,
+      contentType: contentType || 'n/a',
+      snippet: textSnippet
+    });
+
+    console.groupCollapsed('[pdf export] backend error detail');
+    console.warn(debugContext);
+    console.groupEnd();
+
     if (response.status === 413) {
       return 'Report payload is too large. Reduce optional fields and try again.';
     }
 
-    const contentType = response.headers.get('Content-Type') || '';
     if (contentType.includes('application/json')) {
       const body = await response.json().catch(() => null);
       const rawMessage = body?.error?.message || body?.message || `PDF export failed with status ${response.status}.`;
       return sanitizeErrorMessage(rawMessage);
     }
 
-    const text = await response.text().catch(() => '');
-    const parsedText = extractHtmlText(text);
+    const parsedText = textSnippet;
     if (parsedText) {
       if (response.status === 405) {
-        return sanitizeErrorMessage('PDF export endpoint rejected the request (405). Ensure the API server is running and allows POST /api/reports/pdf.');
+        return sanitizeErrorMessage('PDF export endpoint rejected the request (405): endpoint exists but method blocked by gateway, or API route missing/wrong upstream.');
       }
       return sanitizeErrorMessage(parsedText);
     }
