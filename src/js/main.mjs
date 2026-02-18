@@ -983,6 +983,18 @@ function setupPdfExport() {
     return normalized.slice(0, MAX_ERROR_MESSAGE_LENGTH - 1) + '…';
   };
 
+  const extractHtmlText = (message) => {
+    if (!message) return '';
+    const raw = String(message);
+
+    if (typeof DOMParser !== 'undefined' && /<[^>]+>/.test(raw)) {
+      const parsed = new DOMParser().parseFromString(raw, 'text/html');
+      return parsed.body?.textContent?.replace(/\s+/g, ' ').trim() || '';
+    }
+
+    return raw.replace(/<[^>]+>/g, ' ').replace(/\s+/g, ' ').trim();
+  };
+
   const triggerBlobDownload = (blob, filename) => {
     const url = URL.createObjectURL(blob);
     const link = document.createElement('a');
@@ -1022,8 +1034,15 @@ function setupPdfExport() {
     }
 
     const text = await response.text().catch(() => '');
-    const fallback = text || `PDF export failed with status ${response.status}.`;
-    return sanitizeErrorMessage(fallback);
+    const parsedText = extractHtmlText(text);
+    if (parsedText) {
+      if (response.status === 405) {
+        return sanitizeErrorMessage('PDF export endpoint rejected the request (405). Ensure the API server is running and allows POST /api/reports/pdf.');
+      }
+      return sanitizeErrorMessage(parsedText);
+    }
+
+    return sanitizeErrorMessage(`PDF export failed with status ${response.status}.`);
   };
 
   const runBrowserPrintFallback = () => {
