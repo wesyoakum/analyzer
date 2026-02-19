@@ -23,9 +23,7 @@ printf '%s\n' "$NGINX_DUMP"
 for expected in \
   'location /api/ { proxy_pass http://analyzer_node; }' \
   'location = /api/health {' \
-  'limit_except GET HEAD OPTIONS {' \
-  'location = /api/reports/pdf {' \
-  'limit_except POST OPTIONS {'
+  'limit_except GET HEAD OPTIONS {'
 do
   if ! grep -Fq "$expected" <<<"$NGINX_DUMP"; then
     echo "ERROR: expected nginx snippet not found: $expected" >&2
@@ -57,24 +55,5 @@ if ! grep -Fq '{"ok":true,"service":"analyzer-api"}' <<<"$HEALTH_RESPONSE"; then
 fi
 
 echo "OK: /api/health returned expected JSON payload"
-
-print_section "Smoke check: POST /api/reports/pdf"
-PDF_RESPONSE="$(curl -si -X POST "http://localhost/api/reports/pdf" -H 'Content-Type: application/json' -d '{}')"
-printf '%s\n' "$PDF_RESPONSE"
-
-if grep -Fq '405 Not Allowed' <<<"$PDF_RESPONSE"; then
-  echo "ERROR: /api/reports/pdf returned 405 (likely nginx method filter issue)" >&2
-  exit 1
-fi
-if grep -Eiq '<!doctype html>|<html' <<<"$PDF_RESPONSE"; then
-  echo "ERROR: /api/reports/pdf returned HTML (likely static fallback), not API JSON" >&2
-  exit 1
-fi
-if ! grep -Eiq 'content-type: application/json' <<<"$PDF_RESPONSE"; then
-  echo "ERROR: /api/reports/pdf did not return JSON" >&2
-  exit 1
-fi
-
-echo "OK: /api/reports/pdf reached backend API and returned JSON"
 
 echo "\nAll runtime wiring checks passed."

@@ -4,12 +4,9 @@
   "type": "module",
   "private": true,
   "scripts": {
-    "start": "node server/index.js",
-    "verify:report-print": "node server/verify-report-print-fixtures.mjs",
-    "verify:pdf-endpoint": "node server/verify-pdf-endpoint.mjs"
+    "start": "node server/index.js"
   },
   "dependencies": {
-    "express": "^4.19.2",
-    "playwright": "^1.53.1"
+    "express": "^4.19.2"
   }
 }

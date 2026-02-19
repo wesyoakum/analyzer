@@ -15,7 +15,7 @@ function escapeHtml(value) {
 function tableFromRows(title, columns, rows, sectionId) {
   const head = columns.map(c => `<th scope="col">${c.label}</th>`).join('');
   const body = rows.map((row) => `<tr>${columns.map(c => `<td>${c.value(row)}</td>`).join('')}</tr>`).join('');
-  return `<section id="${sectionId}" class="report-block report-section-table report-print-section report-print-section--tables"><div class="report-table-wrap report-print-keep-with-content"><h3 class="report-item-label">${title}</h3><table class="worksheet report-table"><thead><tr>${head}</tr></thead><tbody>${body}</tbody></table></div></section>`;
+  return `<section id="${sectionId}" class="report-block report-section-table"><div class="report-table-wrap"><h3 class="report-item-label">${title}</h3><table class="worksheet report-table"><thead><tr>${head}</tr></thead><tbody>${body}</tbody></table></div></section>`;
 }
 
 export function renderReportHtml(model, options = {}) {
@@ -35,8 +35,8 @@ export function renderReportHtml(model, options = {}) {
   ];
 
   const summaryTable = `
-    <section id="report-summary" class="report-block report-section-summary report-print-section report-print-section--cover-meta">
-      <div class="report-table-wrap report-print-keep-with-content">
+    <section id="report-summary" class="report-block report-section-summary">
+      <div class="report-table-wrap">
         <h3 class="report-item-label">Table 1: Configuration summary</h3>
         <table class="worksheet report-table">
           <tbody>
@@ -51,10 +51,10 @@ export function renderReportHtml(model, options = {}) {
     </section>`;
 
   const figuresSection = `
-    <section id="report-figures" class="report-block report-section-figures report-print-section report-print-section--charts">
+    <section id="report-figures" class="report-block report-section-figures">
       <h3>Figures</h3>
       <div class="report-figure-grid">
-        ${figures.map((title, i) => `<figure class="report-figure report-print-keep-with-content"><figcaption class="report-item-label">Figure ${i + 1}: ${escapeHtml(title)}</figcaption><div class="report-figure-body">Rendered chart content for ${escapeHtml(title)}</div></figure>`).join('')}
+        ${figures.map((title, i) => `<figure class="report-figure"><figcaption class="report-item-label">Figure ${i + 1}: ${escapeHtml(title)}</figcaption><div class="report-figure-body">Rendered chart content for ${escapeHtml(title)}</div></figure>`).join('')}
       </div>
     </section>`;
 
@@ -91,8 +91,8 @@ export function renderReportHtml(model, options = {}) {
   );
 
   return `
-    <article id="report-document" class="report-document report-print-document" aria-label="Printable report">
-      <header id="report-header" class="report-header report-print-section report-print-section--cover-meta">
+    <article id="report-document" class="report-document" aria-label="Report">
+      <header id="report-header" class="report-header">
         <h1>Winch Analyzer Report</h1>
         <p><strong>Generated:</strong> ${generatedAt.toLocaleString()}</p>
       </header>
@@ -100,15 +100,15 @@ export function renderReportHtml(model, options = {}) {
       ${figuresSection}
       ${electricLayerTable}
       ${hydraulicLayerTable}
-      <section id="report-equations" class="report-block report-section-equations report-print-section report-print-section--appendices">
+      <section id="report-equations" class="report-block report-section-equations">
         <h3>Equations summary</h3>
         <ul class="report-equation-list">
-          ${equations.map((item) => `<li class="report-equation-card report-print-keep-with-content"><div class="report-item-label">Equation</div><span data-latex="${escapeHtml(item.latex)}">${escapeHtml(item.text)}</span></li>`).join('')}
+          ${equations.map((item) => `<li class="report-equation-card"><div class="report-item-label">Equation</div><span data-latex="${escapeHtml(item.latex)}">${escapeHtml(item.text)}</span></li>`).join('')}
         </ul>
       </section>
-      <section id="report-appendix" class="report-block report-section-appendix report-print-section report-print-section--appendices">
+      <section id="report-appendix" class="report-block report-section-appendix">
         <h3>Appendix</h3>
-        <p class="report-print-keep-with-content">Generated report metadata and derivation notes are included for audit and handoff workflows.</p>
+        <p>Generated report metadata and derivation notes are included for audit and handoff workflows.</p>
       </section>
     </article>`;
 }
