@@ -408,6 +408,68 @@ const CSV_BUTTON_SPECS = {
 
 const SYSTEM_TYPE_SELECT_ID = 'system_type_select';
 const DEFAULT_SYSTEM_TYPE = 'electric';
+const PLOT_DISPLAY_SETTING_IDS = [
+  'wave_scenario',
+  'wave_tmin',
+  'wave_tmax',
+  'wave_vmin',
+  'wave_vmax',
+  'wave_tmin_height',
+  'wave_tmax_height',
+  'wave_hmin',
+  'wave_hmax',
+  'depth_xmin',
+  'depth_xmax',
+  'depth_speed_ymin',
+  'depth_speed_ymax',
+  'depth_xmin_power',
+  'depth_xmax_power',
+  'depth_speed_ymin_power',
+  'depth_speed_ymax_power',
+  'depth_xmin_tension',
+  'depth_xmax_tension',
+  'depth_tension_ymin',
+  'depth_tension_ymax',
+  'hyd_torque_xmin',
+  'hyd_torque_xmax',
+  'hyd_rpm_ymin',
+  'hyd_rpm_ymax'
+];
+
+function readElementStateValue(el) {
+  if (!el) return undefined;
+  if (el.tagName === 'INPUT') {
+    const input = /** @type {HTMLInputElement} */ (el);
+    if (input.type === 'checkbox') return input.checked;
+    if (input.type === 'radio') return input.checked ? input.value : undefined;
+    return input.value;
+  }
+  if (el.tagName === 'SELECT') {
+    const select = /** @type {HTMLSelectElement} */ (el);
+    if (select.multiple) {
+      return Array.from(select.options)
+        .filter(opt => opt.selected)
+        .map(opt => opt.value);
+    }
+    return select.value;
+  }
+  if (el.tagName === 'TEXTAREA') {
+    return /** @type {HTMLTextAreaElement} */ (el).value;
+  }
+  return undefined;
+}
+
+function collectProjectState() {
+  const state = collectInputState();
+  PLOT_DISPLAY_SETTING_IDS.forEach(id => {
+    const el = document.getElementById(id);
+    const value = readElementStateValue(el);
+    if (value !== undefined) {
+      state[id] = value;
+    }
+  });
+  return state;
+}
 
 function applyProjectState(state) {
   if (!state || typeof state !== 'object') return;
@@ -566,7 +628,7 @@ async function setupProjectManager() {
     const payload = {
       ...(selectedId ? { id: selectedId } : {}),
       name,
-      state: collectInputState()
+      state: collectProjectState()
     };
 
     try {
