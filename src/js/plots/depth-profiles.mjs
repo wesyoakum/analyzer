@@ -796,11 +796,11 @@ function removeTrailingZeros(text) {
 // ---------- Tension vs Depth ----------
 function drawTensionProfile(svg, segments, depthMin, depthMax, tensionMin, tensionMax, payload_kg, cable_w_kgpm, accentColor) {
   if (svg && svg._depthTensionHandlers) {
-    const { move, leave, click, contextmenu, dblclick } = svg._depthTensionHandlers;
+    const { move, leave, pointerup, contextmenu, dblclick } = svg._depthTensionHandlers;
     svg.removeEventListener('pointermove', move);
     svg.removeEventListener('pointerleave', leave);
     svg.removeEventListener('pointerenter', move);
-    if (click) svg.removeEventListener('click', click);
+    if (pointerup) svg.removeEventListener('pointerup', pointerup);
     if (contextmenu) svg.removeEventListener('contextmenu', contextmenu);
     if (dblclick) svg.removeEventListener('dblclick', dblclick);
     delete svg._depthTensionHandlers;
@@ -1123,7 +1123,7 @@ function drawTensionProfile(svg, segments, depthMin, depthMax, tensionMin, tensi
     return bestIdx;
   };
 
-  const clickHandler = evt => {
+  const pointerUpHandler = evt => {
     const { x: localX, y: localY } = toViewBoxPoint(evt);
     if (localX < ML || localX > W - MR || localY < MT || localY > H - MB) return;
     const depthVal = depthMin + ((clamp(localX, ML, W - MR) - ML) / Math.max(innerW, 1e-9)) * depthSpan;
@@ -1158,14 +1158,14 @@ function drawTensionProfile(svg, segments, depthMin, depthMax, tensionMin, tensi
     drawTensionProfile(svg, segments, depthMin, depthMax, tensionMin, tensionMax, payload_kg, cable_w_kgpm, accentColor);
   };
 
-  svg.addEventListener('click', clickHandler);
+  svg.addEventListener('pointerup', pointerUpHandler);
   svg.addEventListener('contextmenu', contextMenuHandler);
   svg.addEventListener('dblclick', clearPinsHandler);
 
   svg._depthTensionHandlers = {
     move: updateHover,
     leave: hideHover,
-    click: clickHandler,
+    pointerup: pointerUpHandler,
     contextmenu: contextMenuHandler,
     dblclick: clearPinsHandler
   };
