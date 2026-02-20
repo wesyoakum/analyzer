@@ -974,6 +974,7 @@ const watchedInputs = new Set();
 const CREATE_NEW_VALUE = '__component_create_new__';
 const EXPORT_PRESET_VALUE = '__component_export_preset__';
 const EXPORT_PRESET_LABEL = 'Export Preset';
+const EXPORT_ALL_PRESETS_BUTTON_ID = 'export-all-presets-btn';
 const COMPONENT_STORAGE_PREFIX = 'analyzer.components.';
 /** @type {Map<string, ComponentOption[]>} */
 const memoryCustomOptions = new Map();
@@ -1000,6 +1001,68 @@ function formatPresetFilename(baseName, type) {
   const timestamp = new Date().toISOString().replace(/[:.]/g, '-');
   const stem = normalized.length ? normalized : 'preset';
   return `${stem}-${timestamp}.json`;
+}
+
+function downloadJsonFile(content, filename) {
+  const blob = new Blob([content], { type: 'application/json' });
+  const url = URL.createObjectURL(blob);
+  try {
+    const link = document.createElement('a');
+    link.href = url;
+    link.download = filename;
+    link.rel = 'noopener';
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+  } finally {
+    setTimeout(() => URL.revokeObjectURL(url), 0);
+  }
+}
+
+function formatPresetCatalogFilename() {
+  const timestamp = new Date().toISOString().replace(/[:.]/g, '-');
+  return `presets-export-${timestamp}.json`;
+}
+
+function setupExportAllPresetsButton() {
+  const button = /** @type {HTMLButtonElement|null} */ (document.getElementById(EXPORT_ALL_PRESETS_BUTTON_ID));
+  if (!button) {
+    return;
+  }
+  if (button.dataset.boundExportAllPresets === '1') {
+    return;
+  }
+
+  button.dataset.boundExportAllPresets = '1';
+  button.addEventListener('click', async () => {
+    const previousLabel = button.textContent || 'Export All Presets';
+    const wasDisabled = button.disabled;
+    button.disabled = true;
+    button.textContent = 'Exporting…';
+
+    try {
+      const response = await fetch('/api/presets');
+      if (!response.ok) {
+        window.alert('Failed to export presets from server.');
+        return;
+      }
+
+      const body = await response.json();
+      if (!Array.isArray(body?.presets)) {
+        window.alert('Server returned an unexpected presets export format.');
+        return;
+      }
+
+      const payload = JSON.stringify(body.presets, null, 2);
+      downloadJsonFile(payload, formatPresetCatalogFilename());
+    } catch (err) {
+      console.warn('Unable to export all presets:', err);
+      window.alert('Unable to export all presets right now. Please try again.');
+    } finally {
+      button.disabled = wasDisabled;
+      button.textContent = previousLabel;
+    }
+  });
 }
 
 function mergePresetMetadata(...sources) {
@@ -1723,19 +1786,7 @@ export function setupComponentSelectors() {
       updatePresetActionState();
 
       try {
-        const blob = new Blob([exportPayload], { type: 'application/json' });
-        const url = URL.createObjectURL(blob);
-        try {
-          const link = document.createElement('a');
-          link.href = url;
-          link.download = filename;
-          link.rel = 'noopener';
-          document.body.appendChild(link);
-          link.click();
-          document.body.removeChild(link);
-        } finally {
-          setTimeout(() => URL.revokeObjectURL(url), 0);
-        }
+        downloadJsonFile(exportPayload, filename);
       } finally {
         isExportingPreset = false;
         selectEl.disabled = wasSelectDisabled;
@@ -1791,6 +1842,7 @@ export function setupComponentSelectors() {
     updatePresetActionState();
   });
 
+  setupExportAllPresetsButton();
   void fetchAndApplyServerPresets();
 }
 
