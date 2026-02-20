@@ -983,47 +983,194 @@ function setupTabs() {
 
 function setupUnitConverter() {
   const inputValueEl = /** @type {HTMLInputElement|null} */ (document.getElementById('unit-converter-input-value'));
+  const categoryEl = /** @type {HTMLSelectElement|null} */ (document.getElementById('unit-converter-category'));
   const inputUnitEl = /** @type {HTMLSelectElement|null} */ (document.getElementById('unit-converter-input-unit'));
   const outputUnitEl = /** @type {HTMLSelectElement|null} */ (document.getElementById('unit-converter-output-unit'));
   const outputValueEl = /** @type {HTMLOutputElement|null} */ (document.getElementById('unit-converter-output-value'));
 
-  if (!inputValueEl || !inputUnitEl || !outputUnitEl || !outputValueEl) return;
+  if (!inputValueEl || !categoryEl || !inputUnitEl || !outputUnitEl || !outputValueEl) return;
 
-  const TO_KG_PER_M = {
-    kg_per_m: 1,
-    kg_per_km: 0.001,
-    lb_per_ft: 1.48816394357
+  const categories = {
+    force: {
+      label: 'Force',
+      base: 'N',
+      units: { kgf: 9.80665, N: 1, lb: 4.4482216153, Te: 9806.65, short_ton: 8896.4432305, kN: 1000 }
+    },
+    torque: { label: 'Torque', base: 'N_m', units: { N_m: 1, lb_ft: 1.3558179483, in_lb: 0.112984829 } },
+    power: { label: 'Power', base: 'W', units: { W: 1, kW: 1000, hp: 745.69987158 } },
+    speed: {
+      label: 'Speed',
+      base: 'm_per_s',
+      units: { ft_per_s: 0.3048, ft_per_min: 0.00508, m_per_s: 1, m_per_min: 1 / 60, knots: 0.5144444444, mph: 0.44704, km_per_hr: 0.2777777778 }
+    },
+    length: { label: 'Length', base: 'm', units: { m: 1, km: 1000, ft: 0.3048, in: 0.0254 } },
+    pressure: { label: 'Pressure', base: 'Pa', units: { psi: 6894.757293, ksi: 6894757.293, kPa: 1000, bar: 100000 } },
+    flow: { label: 'Flow', base: 'm3_per_s', units: { gpm: 0.0000630901964, L_per_min: 1 / 60000, cc_per_min: 1 / 60000000 } },
+    volume: { label: 'Volume', base: 'm3', units: { gal: 0.003785411784, cc: 1e-6, L: 0.001 } },
+    linear_mass: { label: 'Linear mass', base: 'kg_per_m', units: { kg_per_m: 1, kg_per_km: 0.001, lb_per_ft: 1.48816394357 } }
   };
 
-  const refresh = () => {
-    const inputVal = Number.parseFloat(inputValueEl.value);
-    const inputUnit = inputUnitEl.value;
-    const outputUnit = outputUnitEl.value;
+  const unitLabels = {
+    kgf: 'kgf', N: 'N', lb: 'lb', Te: 'Tonne (Te)', short_ton: 'Ton (short ton)', kN: 'kN',
+    N_m: 'N·m', lb_ft: 'lb·ft', in_lb: 'in·lb', W: 'W', kW: 'kW', hp: 'hp',
+    ft_per_s: 'ft/s', ft_per_min: 'ft/min', m_per_s: 'm/s', m_per_min: 'm/min', knots: 'nauts', mph: 'mph', km_per_hr: 'km/hr',
+    m: 'm', km: 'km', ft: 'ft', in: 'in', psi: 'psi', ksi: 'ksi', kPa: 'kPa', bar: 'bar',
+    gpm: 'gpm', L_per_min: 'L/min', cc_per_min: 'cc/min', gal: 'gal', cc: 'cc', L: 'L',
+    kg_per_m: 'kg/m', kg_per_km: 'kg/km', lb_per_ft: 'lb/ft'
+  };
 
-    const inputFactor = TO_KG_PER_M[inputUnit];
-    const outputFactor = TO_KG_PER_M[outputUnit];
+  const formatValue = (value, digits = 6) => value.toLocaleString(undefined, { maximumFractionDigits: digits });
 
-    if (!Number.isFinite(inputVal) || !inputFactor || !outputFactor) {
-      outputValueEl.textContent = '—';
-      return;
-    }
-
-    const asKgPerM = inputVal * inputFactor;
-    const converted = asKgPerM / outputFactor;
-    const rounded = converted.toLocaleString(undefined, {
-      maximumFractionDigits: 6
+  const populateSelect = (selectEl, unitKeys, preferred = null) => {
+    selectEl.innerHTML = '';
+    unitKeys.forEach(key => {
+      const option = document.createElement('option');
+      option.value = key;
+      option.textContent = unitLabels[key] || key;
+      selectEl.appendChild(option);
     });
-
-    outputValueEl.textContent = rounded;
+    const fallback = preferred && unitKeys.includes(preferred) ? preferred : unitKeys[0];
+    selectEl.value = fallback;
   };
 
-  ['input', 'change'].forEach(eventName => {
-    inputValueEl.addEventListener(eventName, refresh);
-    inputUnitEl.addEventListener(eventName, refresh);
-    outputUnitEl.addEventListener(eventName, refresh);
+  Object.entries(categories).forEach(([key, spec]) => {
+    const option = document.createElement('option');
+    option.value = key;
+    option.textContent = spec.label;
+    categoryEl.appendChild(option);
   });
 
-  refresh();
+  const syncCategoryUnits = () => {
+    const spec = categories[categoryEl.value] || categories.linear_mass;
+    const unitKeys = Object.keys(spec.units);
+    const prevIn = inputUnitEl.value;
+    const prevOut = outputUnitEl.value;
+    populateSelect(inputUnitEl, unitKeys, unitKeys.includes(prevIn) ? prevIn : unitKeys[0]);
+    populateSelect(outputUnitEl, unitKeys, unitKeys.includes(prevOut) ? prevOut : unitKeys[Math.min(1, unitKeys.length - 1)]);
+  };
+
+  const convert = (value, fromUnit, toUnit, category) => {
+    const spec = categories[category];
+    if (!spec) return null;
+    const fromFactor = spec.units[fromUnit];
+    const toFactor = spec.units[toUnit];
+    if (!Number.isFinite(value) || !fromFactor || !toFactor) return null;
+    return value * fromFactor / toFactor;
+  };
+
+  const readEfficiency = el => {
+    const raw = Number.parseFloat(el.value);
+    if (!Number.isFinite(raw) || raw <= 0) return null;
+    return raw > 1 ? raw / 100 : raw;
+  };
+
+  const refreshConverter = () => {
+    const converted = convert(Number.parseFloat(inputValueEl.value), inputUnitEl.value, outputUnitEl.value, categoryEl.value);
+    outputValueEl.textContent = Number.isFinite(converted) ? formatValue(converted) : '—';
+  };
+
+  const bindEvents = (elements, fn) => {
+    ['input', 'change'].forEach(eventName => elements.forEach(el => el?.addEventListener(eventName, fn)));
+  };
+
+  // Weight in air -> weight in water
+  const airValueEl = /** @type {HTMLInputElement|null} */ (document.getElementById('air-water-air-value'));
+  const airUnitEl = /** @type {HTMLSelectElement|null} */ (document.getElementById('air-water-air-unit'));
+  const sgEl = /** @type {HTMLInputElement|null} */ (document.getElementById('air-water-sg'));
+  const fluidDensityEl = /** @type {HTMLInputElement|null} */ (document.getElementById('air-water-fluid-density'));
+  const airOutEl = /** @type {HTMLOutputElement|null} */ (document.getElementById('air-water-output'));
+  const airOutUnitEl = /** @type {HTMLSelectElement|null} */ (document.getElementById('air-water-output-unit'));
+
+  if (airUnitEl && airOutUnitEl) {
+    populateSelect(airUnitEl, Object.keys(categories.force.units), 'kgf');
+    populateSelect(airOutUnitEl, Object.keys(categories.force.units), 'kgf');
+  }
+
+  const refreshAirWater = () => {
+    if (!airValueEl || !airUnitEl || !sgEl || !fluidDensityEl || !airOutEl || !airOutUnitEl) return;
+    const airForceN = convert(Number.parseFloat(airValueEl.value), airUnitEl.value, 'N', 'force');
+    const sg = Number.parseFloat(sgEl.value);
+    const fluidDensity = Number.parseFloat(fluidDensityEl.value);
+    if (!Number.isFinite(airForceN) || !Number.isFinite(sg) || !Number.isFinite(fluidDensity) || sg <= 0 || fluidDensity < 0) {
+      airOutEl.textContent = '—';
+      return;
+    }
+    const fluidSg = fluidDensity / 1000;
+    const waterForceN = airForceN * (1 - fluidSg / sg);
+    const converted = convert(waterForceN, 'N', airOutUnitEl.value, 'force');
+    airOutEl.textContent = Number.isFinite(converted) ? formatValue(converted) : '—';
+  };
+
+  // Mechanical power
+  const mechForceValEl = /** @type {HTMLInputElement|null} */ (document.getElementById('mech-power-force-value'));
+  const mechForceUnitEl = /** @type {HTMLSelectElement|null} */ (document.getElementById('mech-power-force-unit'));
+  const mechSpeedValEl = /** @type {HTMLInputElement|null} */ (document.getElementById('mech-power-speed-value'));
+  const mechSpeedUnitEl = /** @type {HTMLSelectElement|null} */ (document.getElementById('mech-power-speed-unit'));
+  const mechEffEl = /** @type {HTMLInputElement|null} */ (document.getElementById('mech-power-efficiency'));
+  const mechOutEl = /** @type {HTMLOutputElement|null} */ (document.getElementById('mech-power-output'));
+  const mechOutUnitEl = /** @type {HTMLSelectElement|null} */ (document.getElementById('mech-power-output-unit'));
+
+  if (mechForceUnitEl) populateSelect(mechForceUnitEl, Object.keys(categories.force.units), 'kgf');
+  if (mechSpeedUnitEl) populateSelect(mechSpeedUnitEl, Object.keys(categories.speed.units), 'm_per_s');
+  if (mechOutUnitEl) populateSelect(mechOutUnitEl, Object.keys(categories.power.units), 'kW');
+
+  const refreshMechanicalPower = () => {
+    if (!mechForceValEl || !mechForceUnitEl || !mechSpeedValEl || !mechSpeedUnitEl || !mechEffEl || !mechOutEl || !mechOutUnitEl) return;
+    const forceN = convert(Number.parseFloat(mechForceValEl.value), mechForceUnitEl.value, 'N', 'force');
+    const speedMps = convert(Number.parseFloat(mechSpeedValEl.value), mechSpeedUnitEl.value, 'm_per_s', 'speed');
+    const eff = readEfficiency(mechEffEl);
+    if (!Number.isFinite(forceN) || !Number.isFinite(speedMps) || !Number.isFinite(eff)) {
+      mechOutEl.textContent = '—';
+      return;
+    }
+    const powerW = forceN * speedMps * eff;
+    const converted = convert(powerW, 'W', mechOutUnitEl.value, 'power');
+    mechOutEl.textContent = Number.isFinite(converted) ? formatValue(converted) : '—';
+  };
+
+  // Hydraulic power
+  const hydPressureValEl = /** @type {HTMLInputElement|null} */ (document.getElementById('hyd-power-pressure-value'));
+  const hydPressureUnitEl = /** @type {HTMLSelectElement|null} */ (document.getElementById('hyd-power-pressure-unit'));
+  const hydFlowValEl = /** @type {HTMLInputElement|null} */ (document.getElementById('hyd-power-flow-value'));
+  const hydFlowUnitEl = /** @type {HTMLSelectElement|null} */ (document.getElementById('hyd-power-flow-unit'));
+  const hydEffEl = /** @type {HTMLInputElement|null} */ (document.getElementById('hyd-power-efficiency'));
+  const hydOutEl = /** @type {HTMLOutputElement|null} */ (document.getElementById('hyd-power-output'));
+  const hydOutUnitEl = /** @type {HTMLSelectElement|null} */ (document.getElementById('hyd-power-output-unit'));
+
+  if (hydPressureUnitEl) populateSelect(hydPressureUnitEl, Object.keys(categories.pressure.units), 'psi');
+  if (hydFlowUnitEl) populateSelect(hydFlowUnitEl, Object.keys(categories.flow.units), 'gpm');
+  if (hydOutUnitEl) populateSelect(hydOutUnitEl, Object.keys(categories.power.units), 'kW');
+
+  const refreshHydraulicPower = () => {
+    if (!hydPressureValEl || !hydPressureUnitEl || !hydFlowValEl || !hydFlowUnitEl || !hydEffEl || !hydOutEl || !hydOutUnitEl) return;
+    const pressurePa = convert(Number.parseFloat(hydPressureValEl.value), hydPressureUnitEl.value, 'Pa', 'pressure');
+    const flowM3S = convert(Number.parseFloat(hydFlowValEl.value), hydFlowUnitEl.value, 'm3_per_s', 'flow');
+    const eff = readEfficiency(hydEffEl);
+    if (!Number.isFinite(pressurePa) || !Number.isFinite(flowM3S) || !Number.isFinite(eff)) {
+      hydOutEl.textContent = '—';
+      return;
+    }
+    const powerW = pressurePa * flowM3S * eff;
+    const converted = convert(powerW, 'W', hydOutUnitEl.value, 'power');
+    hydOutEl.textContent = Number.isFinite(converted) ? formatValue(converted) : '—';
+  };
+
+  categoryEl.value = 'linear_mass';
+  syncCategoryUnits();
+  bindEvents([inputValueEl, inputUnitEl, outputUnitEl], refreshConverter);
+  categoryEl.addEventListener('change', () => {
+    syncCategoryUnits();
+    refreshConverter();
+  });
+
+  bindEvents([airValueEl, airUnitEl, sgEl, fluidDensityEl, airOutUnitEl], refreshAirWater);
+  bindEvents([mechForceValEl, mechForceUnitEl, mechSpeedValEl, mechSpeedUnitEl, mechEffEl, mechOutUnitEl], refreshMechanicalPower);
+  bindEvents([hydPressureValEl, hydPressureUnitEl, hydFlowValEl, hydFlowUnitEl, hydEffEl, hydOutUnitEl], refreshHydraulicPower);
+
+  refreshConverter();
+  refreshAirWater();
+  refreshMechanicalPower();
+  refreshHydraulicPower();
 }
 
 function setupCsvDownloads() {
