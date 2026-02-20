@@ -202,8 +202,28 @@
                     <td class="value"><input id="c_w_kgpm" type="number" step="0.1" value="3.8"></td>
                     <td class="units">kg/m</td>
                   </tr>
+                  <tr>
+                    <th scope="row">
+                      <label class="param-label" for="mbl_kgf" data-code="mbl_kgf">Minimum Breaking Load <span class="symbol" aria-hidden="true" data-latex="MBL">MBL</span></label>
+                    </th>
+                    <td class="value"><input id="mbl_kgf" type="number" step="100" min="0" value="80000"></td>
+                    <td class="units">kgf</td>
+                  </tr>
+                  <tr>
+                    <th scope="row">
+                      <label class="param-label" for="safety_factor" data-code="safety_factor">Safety Factor <span class="symbol" aria-hidden="true" data-latex="SF">SF</span></label>
+                    </th>
+                    <td class="value"><input id="safety_factor" type="number" step="0.1" min="0" value="5"></td>
+                    <td class="units">–</td>
+                  </tr>
+                  <tr>
+                    <th scope="row">Strength-Only Max Length</th>
+                    <td class="value"><span id="max_length_strength_m" class="output-field">–</span></td>
+                    <td class="units">m</td>
+                  </tr>
                 </tbody>
               </table>
+              <p class="note">Strength-only basis: <span class="math" data-latex="L_{\max}=\dfrac{(MBL/SF)-W_{\mathrm{pay,sub}}}{w_{c,\mathrm{sub}}}"></span>.</p>
             </section>
     
             <section class="input-subsection">

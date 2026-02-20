@@ -1830,6 +1830,25 @@ function clearMinimumSystemHp() {
   if (output) output.textContent = '–';
 }
 
+function updateStrengthOnlyMaxLength(payloadKgf, cableWeightKgfPerM, mblKgf, safetyFactor) {
+  const output = /** @type {HTMLElement|null} */ (document.getElementById('max_length_strength_m'));
+  if (!output) return;
+
+  const validPayload = Number.isFinite(payloadKgf) && payloadKgf >= 0;
+  const validCableWeight = Number.isFinite(cableWeightKgfPerM) && cableWeightKgfPerM > 0;
+  const validMbl = Number.isFinite(mblKgf) && mblKgf > 0;
+  const validSf = Number.isFinite(safetyFactor) && safetyFactor > 0;
+  if (!validPayload || !validCableWeight || !validMbl || !validSf) {
+    output.textContent = '–';
+    return;
+  }
+
+  const allowableTensionKgf = mblKgf / safetyFactor;
+  const maxLengthM = (allowableTensionKgf - payloadKgf) / cableWeightKgfPerM;
+  const boundedLengthM = Math.max(0, maxLengthM);
+  output.textContent = Number.isFinite(boundedLengthM) ? boundedLengthM.toFixed(1) : '–';
+}
+
 function setupDriveModeControls() {
   const select = /** @type {HTMLSelectElement|null} */ (document.getElementById(SYSTEM_TYPE_SELECT_ID));
   if (select) {
@@ -1920,6 +1939,12 @@ function computeAll() {
     const system_efficiency = read('system_efficiency');
     updateMinimumSystemHp(rated_speed_mpm, rated_swl_kgf, system_efficiency);
 
+    const payload_kg = read('payload_kg');
+    const cable_w_kgpm = read('c_w_kgpm');
+    const mbl_kgf = read('mbl_kgf');
+    const safety_factor = read('safety_factor');
+    updateStrengthOnlyMaxLength(payload_kg, cable_w_kgpm, mbl_kgf, safety_factor);
+
     const electricEnabled = driveModeEnabled('electric');
     const hydraulicEnabled = driveModeEnabled('hydraulic');
 
@@ -1933,8 +1958,10 @@ function computeAll() {
       lebus_thk_in: read('lebus_in'),
       packing_factor: read('pack'),
       wraps_per_layer_override,
-      payload_kg: read('payload_kg'),
-      cable_w_kgpm: read('c_w_kgpm'),
+      payload_kg,
+      cable_w_kgpm,
+      mbl_kgf,
+      safety_factor,
       gr1: read('gr1'),
       gr2: read('gr2'),
       motors: read('motors'),
