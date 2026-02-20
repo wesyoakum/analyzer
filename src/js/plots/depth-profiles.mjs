@@ -1166,9 +1166,6 @@ function wrapsToDepthSegments(wraps, speedField, tensionField, deadEnd = 0, scen
     const filteredCandidates = [];
     const seenKeys = new Set();
     for (const candidate of candidateSpeedsMs) {
-      if (speedMs !== null && Math.abs(candidate.value_ms - speedMs) <= 1e-6) {
-        continue;
-      }
       const key = `${candidate.kind}:${candidate.value_ms.toFixed(6)}`;
       if (seenKeys.has(key)) continue;
       seenKeys.add(key);
