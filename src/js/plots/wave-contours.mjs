@@ -27,12 +27,15 @@ function renderWavePlot(svg, {
   elLayers = [],
   hyLayers = []
 } = {}, mode = 'speed') {
-  if (svg._waveHoverHandlers) {
-    const { move, leave } = svg._waveHoverHandlers;
+  if (svg._waveHandlers) {
+    const { move, leave, pointerup, contextmenu, dblclick } = svg._waveHandlers;
     svg.removeEventListener('pointermove', move);
     svg.removeEventListener('pointerleave', leave);
     svg.removeEventListener('pointerenter', move);
-    delete svg._waveHoverHandlers;
+    if (pointerup) svg.removeEventListener('pointerup', pointerup);
+    if (contextmenu) svg.removeEventListener('contextmenu', contextmenu);
+    if (dblclick) svg.removeEventListener('dblclick', dblclick);
+    delete svg._waveHandlers;
   }
 
   while (svg.firstChild) svg.removeChild(svg.firstChild);
@@ -118,7 +121,7 @@ function renderWavePlot(svg, {
   xt.forEach(tx => {
     const X = sx(tx);
     svg.appendChild(svgEl('line', { x1: X, y1: MT, x2: X, y2: H - MB, stroke: '#eee' }));
-    const t = svgEl('text', { x: X, y: H - 8, 'text-anchor': 'middle', 'font-size': '12', fill: '#444' });
+    const t = svgEl('text', { x: X, y: H - MB + 18, 'text-anchor': 'middle', 'font-size': '12', fill: '#444' });
     t.textContent = (Math.round(tx * 100) / 100).toString();
     svg.appendChild(t);
   });
@@ -131,7 +134,7 @@ function renderWavePlot(svg, {
   });
 
   // axis labels
-  svg.appendChild(svgEl('text', { x: ML + innerW / 2, y: H - 4, 'text-anchor': 'middle', 'font-size': '12', fill: '#444' }))
+  svg.appendChild(svgEl('text', { x: ML + innerW / 2, y: H - 8, 'text-anchor': 'middle', 'font-size': '12', fill: '#444' }))
      .textContent = 'Period T (s)';
   const yLabel = mode === 'speed' ? 'Speed (m/s)' : 'Wave Height (m)';
   svg.appendChild(svgEl('text', {
@@ -149,7 +152,6 @@ function renderWavePlot(svg, {
     return '#2c56a3';
   })();
 
-  let hoverLayer = null;
 
   if (mode === 'speed') {
     let contourId = 0;
@@ -217,115 +219,6 @@ function renderWavePlot(svg, {
       svg.appendChild(contourLabelLayer);
     }
 
-    hoverLayer = svgEl('g', { 'pointer-events': 'none' });
-    const hoverLine = svgEl('line', {
-      x1: ML,
-      x2: ML,
-      y1: MT,
-      y2: H - MB,
-      stroke: accentColor,
-      'stroke-width': 1.5,
-      'stroke-dasharray': '6 4',
-      opacity: 0
-    });
-    const hoverHLine = svgEl('line', {
-      x1: ML,
-      x2: W - MR,
-      y1: MT,
-      y2: MT,
-      stroke: accentColor,
-      'stroke-width': 1.5,
-      'stroke-dasharray': '6 4',
-      opacity: 0
-    });
-    const hoverLabel = svgEl('text', {
-      x: ML,
-      y: H - MB + 20,
-      'text-anchor': 'middle',
-      'font-size': '12',
-      fill: accentColor,
-      opacity: 0
-    });
-    const hoverYLabel = svgEl('text', {
-      x: ML - 8,
-      y: MT,
-      'text-anchor': 'end',
-      'font-size': '12',
-      fill: accentColor,
-      opacity: 0
-    });
-    hoverLayer.appendChild(hoverLine);
-    hoverLayer.appendChild(hoverHLine);
-    hoverLayer.appendChild(hoverLabel);
-    hoverLayer.appendChild(hoverYLabel);
-    svg.appendChild(hoverLayer);
-
-    const clamp = (val, min, max) => Math.min(Math.max(val, min), max);
-    const toViewBoxPoint = evt => {
-      if (typeof DOMPoint === 'function' && svg.getScreenCTM) {
-        const ctm = svg.getScreenCTM();
-        if (ctm && typeof ctm.inverse === 'function') {
-          const point = new DOMPoint(evt.clientX, evt.clientY);
-          const svgPoint = point.matrixTransform(ctm.inverse());
-          return { x: svgPoint.x, y: svgPoint.y };
-        }
-      }
-
-      const rect = svg.getBoundingClientRect();
-      const vb = svg.viewBox.baseVal;
-      const vbWidth = vb && vb.width ? vb.width : rect.width;
-      const vbHeight = vb && vb.height ? vb.height : rect.height;
-      const offsetX = vb && vb.x ? vb.x : 0;
-      const offsetY = vb && vb.y ? vb.y : 0;
-      const scaleX = rect.width ? vbWidth / rect.width : 1;
-      const scaleY = rect.height ? vbHeight / rect.height : 1;
-      return {
-        x: offsetX + (evt.clientX - rect.left) * scaleX,
-        y: offsetY + (evt.clientY - rect.top) * scaleY
-      };
-    };
-    const updateHover = evt => {
-      const { x: localX, y: localY } = toViewBoxPoint(evt);
-      if (localX < ML || localX > W - MR || localY < MT || localY > H - MB) {
-        hoverLine.setAttribute('opacity', '0');
-        hoverLabel.setAttribute('opacity', '0');
-        hoverHLine.setAttribute('opacity', '0');
-        hoverYLabel.setAttribute('opacity', '0');
-        return;
-      }
-
-      const clampedX = clamp(localX, ML, W - MR);
-      const clampedY = clamp(localY, MT, H - MB);
-      const T = Tmin + ((clampedX - ML) / Math.max(innerW, 1e-9)) * (Tmax - Tmin);
-      const yValue = yMax - ((clampedY - MT) / Math.max(innerH, 1e-9)) * (yMax - yMin);
-      hoverLine.setAttribute('x1', clampedX);
-      hoverLine.setAttribute('x2', clampedX);
-      hoverLine.setAttribute('opacity', '1');
-      hoverHLine.setAttribute('y1', clampedY);
-      hoverHLine.setAttribute('y2', clampedY);
-      hoverHLine.setAttribute('opacity', '1');
-
-      const displayT = Math.round(T * 10) / 10;
-      const displayY = Math.round(yValue * 10) / 10;
-      hoverLabel.setAttribute('x', clampedX);
-      hoverLabel.textContent = `${displayT.toFixed(1)} sec`;
-      hoverLabel.setAttribute('opacity', '1');
-      hoverYLabel.setAttribute('y', clampedY + 4);
-      hoverYLabel.textContent = `${displayY.toFixed(1)} ${mode === 'speed' ? 'm/s' : 'm'}`;
-      hoverYLabel.setAttribute('opacity', '1');
-    };
-
-    const hideHover = () => {
-      hoverLine.setAttribute('opacity', '0');
-      hoverLabel.setAttribute('opacity', '0');
-      hoverHLine.setAttribute('opacity', '0');
-      hoverYLabel.setAttribute('opacity', '0');
-    };
-
-    svg.addEventListener('pointermove', updateHover);
-    svg.addEventListener('pointerenter', updateHover);
-    svg.addEventListener('pointerleave', hideHover);
-    svg._waveHoverHandlers = { move: updateHover, leave: hideHover };
   } else {
     // iso-speed contour lines (H = v·T / π) for integer and half-integer speeds
     const speedStep = 0.5;
@@ -408,9 +301,160 @@ function renderWavePlot(svg, {
     });
   }
 
+  const hoverLayer = svgEl('g', { 'pointer-events': 'none' });
+  const hoverLine = svgEl('line', { x1: ML, x2: ML, y1: MT, y2: H - MB, stroke: accentColor, 'stroke-width': 1.5, 'stroke-dasharray': '6 4', opacity: 0 });
+  const hoverHLine = svgEl('line', { x1: ML, x2: W - MR, y1: MT, y2: MT, stroke: accentColor, 'stroke-width': 1.5, 'stroke-dasharray': '6 4', opacity: 0 });
+  const hoverLabel = svgEl('text', { x: ML, y: H - MB + 20, 'text-anchor': 'middle', 'font-size': '12', fill: accentColor, opacity: 0 });
+  const hoverYLabel = svgEl('text', { x: ML - 8, y: MT, 'text-anchor': 'end', 'font-size': '12', fill: accentColor, opacity: 0 });
+  hoverLayer.appendChild(hoverLine);
+  hoverLayer.appendChild(hoverHLine);
+  hoverLayer.appendChild(hoverLabel);
+  hoverLayer.appendChild(hoverYLabel);
+  svg.appendChild(hoverLayer);
+
+  const getPins = () => {
+    if (!Array.isArray(svg._wavePins)) svg._wavePins = [];
+    return svg._wavePins;
+  };
+  const clamp = (val, min, max) => Math.min(Math.max(val, min), max);
+  const toViewBoxPoint = evt => {
+    if (typeof DOMPoint === 'function' && svg.getScreenCTM) {
+      const ctm = svg.getScreenCTM();
+      if (ctm && typeof ctm.inverse === 'function') {
+        const point = new DOMPoint(evt.clientX, evt.clientY);
+        const svgPoint = point.matrixTransform(ctm.inverse());
+        return { x: svgPoint.x, y: svgPoint.y };
+      }
+    }
+    const rect = svg.getBoundingClientRect();
+    const vb = svg.viewBox.baseVal;
+    const vbWidth = vb && vb.width ? vb.width : rect.width;
+    const vbHeight = vb && vb.height ? vb.height : rect.height;
+    const offsetX = vb && vb.x ? vb.x : 0;
+    const offsetY = vb && vb.y ? vb.y : 0;
+    const scaleX = rect.width ? vbWidth / rect.width : 1;
+    const scaleY = rect.height ? vbHeight / rect.height : 1;
+    return { x: offsetX + (evt.clientX - rect.left) * scaleX, y: offsetY + (evt.clientY - rect.top) * scaleY };
+  };
+
+  const updateHover = evt => {
+    const { x: localX, y: localY } = toViewBoxPoint(evt);
+    if (localX < ML || localX > W - MR || localY < MT || localY > H - MB) {
+      hoverLine.setAttribute('opacity', '0');
+      hoverLabel.setAttribute('opacity', '0');
+      hoverHLine.setAttribute('opacity', '0');
+      hoverYLabel.setAttribute('opacity', '0');
+      return;
+    }
+    const clampedX = clamp(localX, ML, W - MR);
+    const clampedY = clamp(localY, MT, H - MB);
+    const xVal = Tmin + ((clampedX - ML) / Math.max(innerW, 1e-9)) * (Tmax - Tmin);
+    const yVal = yMax - ((clampedY - MT) / Math.max(innerH, 1e-9)) * (yMax - yMin);
+    hoverLine.setAttribute('x1', clampedX);
+    hoverLine.setAttribute('x2', clampedX);
+    hoverLine.setAttribute('opacity', '1');
+    hoverHLine.setAttribute('y1', clampedY);
+    hoverHLine.setAttribute('y2', clampedY);
+    hoverHLine.setAttribute('opacity', '1');
+    hoverLabel.setAttribute('x', clampedX);
+    hoverLabel.textContent = `${(Math.round(xVal * 10) / 10).toFixed(1)} sec`;
+    hoverLabel.setAttribute('opacity', '1');
+    hoverYLabel.setAttribute('y', clampedY + 4);
+    hoverYLabel.textContent = `${(Math.round(yVal * 10) / 10).toFixed(1)} ${mode === 'speed' ? 'm/s' : 'm'}`;
+    hoverYLabel.setAttribute('opacity', '1');
+  };
+
+  const hideHover = () => {
+    hoverLine.setAttribute('opacity', '0');
+    hoverLabel.setAttribute('opacity', '0');
+    hoverHLine.setAttribute('opacity', '0');
+    hoverYLabel.setAttribute('opacity', '0');
+  };
+
+  const pins = getPins()
+    .filter(pin => Number.isFinite(pin.x) && Number.isFinite(pin.y))
+    .map((pin, idx) => ({
+      ...pin,
+      x: clamp(pin.x, Tmin, Tmax),
+      y: clamp(pin.y, yMin, yMax),
+      label: pin.label || `P${idx + 1}`
+    }));
+  pins.forEach((pin, idx) => { pin.label = `P${idx + 1}`; });
+  svg._wavePins = pins;
+
+  pins.forEach(pin => {
+    const x = sx(pin.x);
+    const y = sy(pin.y);
+    svg.appendChild(svgEl('circle', { cx: x, cy: y, r: 5, fill: accentColor, stroke: '#fff', 'stroke-width': 1.5 }));
+    const lbl = svgEl('text', { x: x + 8, y: y - 8, 'font-size': '11', fill: accentColor, style: 'paint-order: stroke; stroke: #fff; stroke-width: 2px;' });
+    lbl.textContent = `${pin.label} (${(Math.round(pin.x * 10) / 10).toFixed(1)} s, ${(Math.round(pin.y * 10) / 10).toFixed(1)} ${mode === 'speed' ? 'm/s' : 'm'})`;
+    svg.appendChild(lbl);
+  });
+
+  const nearestPinIndex = (xVal, yVal) => {
+    const tolX = Math.max(0.1, (Tmax - Tmin) * 0.015);
+    const tolY = Math.max(0.05, (yMax - yMin) * 0.02);
+    let bestIdx = -1;
+    let bestScore = Infinity;
+    getPins().forEach((pin, idx) => {
+      const dx = Math.abs(pin.x - xVal);
+      const dy = Math.abs(pin.y - yVal);
+      if (dx <= tolX && dy <= tolY) {
+        const score = dx / tolX + dy / tolY;
+        if (score < bestScore) { bestScore = score; bestIdx = idx; }
+      }
+    });
+    return bestIdx;
+  };
+
+  const pointerUpHandler = evt => {
+    const { x: localX, y: localY } = toViewBoxPoint(evt);
+    if (localX < ML || localX > W - MR || localY < MT || localY > H - MB) return;
+    const xVal = Tmin + ((clamp(localX, ML, W - MR) - ML) / Math.max(innerW, 1e-9)) * (Tmax - Tmin);
+    const yVal = yMax - ((clamp(localY, MT, H - MB) - MT) / Math.max(innerH, 1e-9)) * (yMax - yMin);
+    const roundedX = Math.round(xVal * 10) / 10;
+    const roundedY = Math.round(yVal * 10) / 10;
+    if (nearestPinIndex(roundedX, roundedY) === -1) {
+      svg._wavePins = [...getPins(), { x: roundedX, y: roundedY, label: '' }]
+        .map((pin, idx) => ({ ...pin, label: `P${idx + 1}` }));
+    }
+    renderWavePlot(svg, { scenario, Tmin, Tmax, Hmin, Hmax, speedMin, speedMax, elLayers, hyLayers }, mode);
+  };
+
+  const contextMenuHandler = evt => {
+    evt.preventDefault();
+    const { x: localX, y: localY } = toViewBoxPoint(evt);
+    if (localX < ML || localX > W - MR || localY < MT || localY > H - MB) return;
+    const xVal = Tmin + ((clamp(localX, ML, W - MR) - ML) / Math.max(innerW, 1e-9)) * (Tmax - Tmin);
+    const yVal = yMax - ((clamp(localY, MT, H - MB) - MT) / Math.max(innerH, 1e-9)) * (yMax - yMin);
+    const idx = nearestPinIndex(xVal, yVal);
+    if (idx === -1) return;
+    svg._wavePins = getPins().filter((_, pinIdx) => pinIdx !== idx).map((pin, order) => ({ ...pin, label: `P${order + 1}` }));
+    renderWavePlot(svg, { scenario, Tmin, Tmax, Hmin, Hmax, speedMin, speedMax, elLayers, hyLayers }, mode);
+  };
+
+  const clearPinsHandler = () => {
+    svg._wavePins = [];
+    renderWavePlot(svg, { scenario, Tmin, Tmax, Hmin, Hmax, speedMin, speedMax, elLayers, hyLayers }, mode);
+  };
+
+  svg.addEventListener('pointermove', updateHover);
+  svg.addEventListener('pointerenter', updateHover);
+  svg.addEventListener('pointerleave', hideHover);
+  svg.addEventListener('pointerup', pointerUpHandler);
+  svg.addEventListener('contextmenu', contextMenuHandler);
+  svg.addEventListener('dblclick', clearPinsHandler);
+
+  svg._waveHandlers = {
+    move: updateHover,
+    leave: hideHover,
+    pointerup: pointerUpHandler,
+    contextmenu: contextMenuHandler,
+    dblclick: clearPinsHandler
+  };
+
   // zero line
   if (yMin <= 0 && yMax >= 0) {
     svg.appendChild(svgEl('line', { x1: ML, y1: sy(0), x2: W - MR, y2: sy(0), stroke: '#bbb', 'stroke-dasharray': '4 4' }));
   }
-  if (hoverLayer) svg.appendChild(hoverLayer);
 }

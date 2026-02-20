@@ -25,6 +25,16 @@ export function drawHydraulicRpmTorque(
   { wraps = [], torqueMin = 0, torqueMax = null, rpmMin = 0, rpmMax = null } = {}
 ) {
   if (!svg) return;
+  if (svg._rpmTorqueHandlers) {
+    const { move, leave, pointerup, contextmenu, dblclick } = svg._rpmTorqueHandlers;
+    svg.removeEventListener('pointermove', move);
+    svg.removeEventListener('pointerleave', leave);
+    svg.removeEventListener('pointerenter', move);
+    if (pointerup) svg.removeEventListener('pointerup', pointerup);
+    if (contextmenu) svg.removeEventListener('contextmenu', contextmenu);
+    if (dblclick) svg.removeEventListener('dblclick', dblclick);
+    delete svg._rpmTorqueHandlers;
+  }
   while (svg.firstChild) svg.removeChild(svg.firstChild);
 
   const data = (Array.isArray(wraps) ? wraps : [])
@@ -153,6 +163,170 @@ export function drawHydraulicRpmTorque(
       'stroke-width': 2
     }));
   }
+
+  let pins = [];
+  const getPins = () => {
+    if (!Array.isArray(svg._rpmTorquePins)) svg._rpmTorquePins = [];
+    return svg._rpmTorquePins;
+  };
+
+  pins = getPins()
+    .filter(pin => Number.isFinite(pin.torque) && Number.isFinite(pin.rpm))
+    .map((pin, idx) => ({
+      ...pin,
+      torque: Math.min(Math.max(pin.torque, torqueMinVal), torqueMaxVal),
+      rpm: Math.min(Math.max(pin.rpm, rpmMinVal), rpmMaxVal),
+      label: pin.label || `P${idx + 1}`
+    }));
+  pins.forEach((pin, idx) => { pin.label = `P${idx + 1}`; });
+  svg._rpmTorquePins = pins;
+
+  pins.forEach(pin => {
+    const x = sx(pin.torque);
+    const y = sy(pin.rpm);
+    svg.appendChild(svgEl('circle', { cx: x, cy: y, r: 5, fill: accent, stroke: '#fff', 'stroke-width': 1.5 }));
+    const label = svgEl('text', {
+      x: x + 8,
+      y: y - 8,
+      'font-size': '11',
+      fill: accent,
+      style: 'paint-order: stroke; stroke: #fff; stroke-width: 2px;'
+    });
+    label.textContent = `${pin.label} (${formatNumber(pin.torque, 0)} N·m, ${formatNumber(pin.rpm, 1)} rpm)`;
+    svg.appendChild(label);
+  });
+
+  const hoverLayer = svgEl('g', { 'pointer-events': 'none' });
+  const hoverVLine = svgEl('line', { x1: ML, x2: ML, y1: MT, y2: H - MB, stroke: accent, 'stroke-width': 1.5, 'stroke-dasharray': '6 4', opacity: 0 });
+  const hoverHLine = svgEl('line', { x1: ML, x2: W - MR, y1: MT, y2: MT, stroke: accent, 'stroke-width': 1.5, 'stroke-dasharray': '6 4', opacity: 0 });
+  const hoverXLabel = svgEl('text', { x: ML, y: H - MB + 20, 'text-anchor': 'middle', 'font-size': '12', fill: accent, opacity: 0 });
+  const hoverYLabel = svgEl('text', { x: ML - 8, y: MT, 'text-anchor': 'end', 'font-size': '12', fill: accent, opacity: 0 });
+  hoverLayer.appendChild(hoverVLine);
+  hoverLayer.appendChild(hoverHLine);
+  hoverLayer.appendChild(hoverXLabel);
+  hoverLayer.appendChild(hoverYLabel);
+  svg.appendChild(hoverLayer);
+
+  const clamp = (val, min, max) => Math.min(Math.max(val, min), max);
+  const toViewBoxPoint = evt => {
+    if (typeof DOMPoint === 'function' && svg.getScreenCTM) {
+      const ctm = svg.getScreenCTM();
+      if (ctm && typeof ctm.inverse === 'function') {
+        const point = new DOMPoint(evt.clientX, evt.clientY);
+        const svgPoint = point.matrixTransform(ctm.inverse());
+        return { x: svgPoint.x, y: svgPoint.y };
+      }
+    }
+    const rect = svg.getBoundingClientRect();
+    const vb = svg.viewBox.baseVal;
+    const vbWidth = vb && vb.width ? vb.width : rect.width;
+    const vbHeight = vb && vb.height ? vb.height : rect.height;
+    const offsetX = vb && vb.x ? vb.x : 0;
+    const offsetY = vb && vb.y ? vb.y : 0;
+    const scaleX = rect.width ? vbWidth / rect.width : 1;
+    const scaleY = rect.height ? vbHeight / rect.height : 1;
+    return { x: offsetX + (evt.clientX - rect.left) * scaleX, y: offsetY + (evt.clientY - rect.top) * scaleY };
+  };
+
+  const updateHover = evt => {
+    const { x: localX, y: localY } = toViewBoxPoint(evt);
+    if (localX < ML || localX > W - MR || localY < MT || localY > H - MB) {
+      hoverVLine.setAttribute('opacity', '0');
+      hoverHLine.setAttribute('opacity', '0');
+      hoverXLabel.setAttribute('opacity', '0');
+      hoverYLabel.setAttribute('opacity', '0');
+      return;
+    }
+    const clampedX = clamp(localX, ML, W - MR);
+    const clampedY = clamp(localY, MT, H - MB);
+    const torqueVal = torqueMinVal + ((clampedX - ML) / Math.max(innerW, 1e-9)) * (torqueMaxVal - torqueMinVal);
+    const rpmVal = rpmMaxVal - ((clampedY - MT) / Math.max(innerH, 1e-9)) * (rpmMaxVal - rpmMinVal);
+    hoverVLine.setAttribute('x1', clampedX);
+    hoverVLine.setAttribute('x2', clampedX);
+    hoverVLine.setAttribute('opacity', '1');
+    hoverHLine.setAttribute('y1', clampedY);
+    hoverHLine.setAttribute('y2', clampedY);
+    hoverHLine.setAttribute('opacity', '1');
+    hoverXLabel.setAttribute('x', clampedX);
+    hoverXLabel.textContent = `${formatNumber(torqueVal, 0)} N·m`;
+    hoverXLabel.setAttribute('opacity', '1');
+    hoverYLabel.setAttribute('y', clampedY + 4);
+    hoverYLabel.textContent = `${formatNumber(rpmVal, 1)} rpm`;
+    hoverYLabel.setAttribute('opacity', '1');
+  };
+
+  const hideHover = () => {
+    hoverVLine.setAttribute('opacity', '0');
+    hoverHLine.setAttribute('opacity', '0');
+    hoverXLabel.setAttribute('opacity', '0');
+    hoverYLabel.setAttribute('opacity', '0');
+  };
+
+  svg.addEventListener('pointermove', updateHover);
+  svg.addEventListener('pointerenter', updateHover);
+  svg.addEventListener('pointerleave', hideHover);
+
+  const nearestPinIndex = (torqueVal, rpmVal) => {
+    const tolTorque = Math.max(5, (torqueMaxVal - torqueMinVal) * 0.015);
+    const tolRpm = Math.max(2, (rpmMaxVal - rpmMinVal) * 0.02);
+    let bestIdx = -1;
+    let bestScore = Infinity;
+    getPins().forEach((pin, idx) => {
+      const dTorque = Math.abs(pin.torque - torqueVal);
+      const dRpm = Math.abs(pin.rpm - rpmVal);
+      if (dTorque <= tolTorque && dRpm <= tolRpm) {
+        const score = dTorque / tolTorque + dRpm / tolRpm;
+        if (score < bestScore) {
+          bestScore = score;
+          bestIdx = idx;
+        }
+      }
+    });
+    return bestIdx;
+  };
+
+  const pointerUpHandler = evt => {
+    const { x: localX, y: localY } = toViewBoxPoint(evt);
+    if (localX < ML || localX > W - MR || localY < MT || localY > H - MB) return;
+    const torqueVal = torqueMinVal + ((clamp(localX, ML, W - MR) - ML) / Math.max(innerW, 1e-9)) * (torqueMaxVal - torqueMinVal);
+    const rpmVal = rpmMaxVal - ((clamp(localY, MT, H - MB) - MT) / Math.max(innerH, 1e-9)) * (rpmMaxVal - rpmMinVal);
+    const roundedTorque = Math.round(torqueVal);
+    const roundedRpm = Math.round(rpmVal * 10) / 10;
+    if (nearestPinIndex(roundedTorque, roundedRpm) === -1) {
+      svg._rpmTorquePins = [...getPins(), { torque: roundedTorque, rpm: roundedRpm, label: '' }]
+        .map((pin, idx) => ({ ...pin, label: `P${idx + 1}` }));
+    }
+    drawHydraulicRpmTorque(svg, { wraps, torqueMin: torqueMinVal, torqueMax: torqueMaxVal, rpmMin: rpmMinVal, rpmMax: rpmMaxVal });
+  };
+
+  const contextMenuHandler = evt => {
+    evt.preventDefault();
+    const { x: localX, y: localY } = toViewBoxPoint(evt);
+    if (localX < ML || localX > W - MR || localY < MT || localY > H - MB) return;
+    const torqueVal = torqueMinVal + ((clamp(localX, ML, W - MR) - ML) / Math.max(innerW, 1e-9)) * (torqueMaxVal - torqueMinVal);
+    const rpmVal = rpmMaxVal - ((clamp(localY, MT, H - MB) - MT) / Math.max(innerH, 1e-9)) * (rpmMaxVal - rpmMinVal);
+    const idx = nearestPinIndex(torqueVal, rpmVal);
+    if (idx === -1) return;
+    svg._rpmTorquePins = getPins().filter((_, pinIdx) => pinIdx !== idx).map((pin, order) => ({ ...pin, label: `P${order + 1}` }));
+    drawHydraulicRpmTorque(svg, { wraps, torqueMin: torqueMinVal, torqueMax: torqueMaxVal, rpmMin: rpmMinVal, rpmMax: rpmMaxVal });
+  };
+
+  const clearPinsHandler = () => {
+    svg._rpmTorquePins = [];
+    drawHydraulicRpmTorque(svg, { wraps, torqueMin: torqueMinVal, torqueMax: torqueMaxVal, rpmMin: rpmMinVal, rpmMax: rpmMaxVal });
+  };
+
+  svg.addEventListener('pointerup', pointerUpHandler);
+  svg.addEventListener('contextmenu', contextMenuHandler);
+  svg.addEventListener('dblclick', clearPinsHandler);
+
+  svg._rpmTorqueHandlers = {
+    move: updateHover,
+    leave: hideHover,
+    pointerup: pointerUpHandler,
+    contextmenu: contextMenuHandler,
+    dblclick: clearPinsHandler
+  };
 }
 
 function toNumber(val) {

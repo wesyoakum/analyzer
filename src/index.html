@@ -682,6 +682,7 @@
             <div class="legend legend--panel">
               <div class="legitem"><span class="swatch accent"></span><span>Layer speed</span></div>
             </div>
+            <p class="dim">Interactive: move mouse for crosshairs, click to pin a point, right-click a pin to remove it, double-click to clear all pins.</p>
           </div>
           <div class="plot-panel plot-panel--compact plot-panel--performance">
             <div class="plot-panel__heading">
@@ -699,6 +700,7 @@
               <div class="legitem"><span class="swatch"></span><span>H = integer m</span></div>
               <div class="legitem"><span class="swatch dashed"></span><span>H = 0.5 m offsets</span></div>
             </div>
+            <p class="dim">Interactive: move mouse for crosshairs, click to pin a point, right-click a pin to remove it, double-click to clear all pins.</p>
           </div>
         </div>
       </section>
@@ -736,18 +738,7 @@
                 </span>
               </div>
             </div>
-          </div>
-          <div class="plot-panel plot-panel--compact plot-panel--performance">
-            <div class="plot-panel__heading">
-              <div>
-                <div class="plot-title">Available Speed vs Depth by Payload</div>
-                <div class="dim">Lines show the available speed profile for the entered payload and each 1,000&nbsp;kg decrement down to zero.</div>
-              </div>
-              <button type="button" class="plot-settings-btn" data-plot-settings-target="plot-settings-depth-speed-power" aria-label="Open axis settings for available speed vs depth by payload plot">⚙</button>
-            </div>
-            <div class="plotwrap">
-              <svg id="depth_speed_power_svg" viewBox="0 0 1000 540"></svg>
-            </div>
+            <p class="dim">Interactive: move mouse for crosshairs, click to pin a point, right-click a pin to remove it, double-click to clear all pins.</p>
           </div>
           <div class="plot-panel plot-panel--compact plot-panel--performance">
             <div class="plot-panel__heading">
@@ -769,6 +760,7 @@
                 <span>Available tension (normal / exceeded)</span>
               </div>
             </div>
+            <p class="dim">Interactive: move mouse for crosshairs, click to pin a point, right-click a pin to remove it, double-click to clear all pins.</p>
           </div>
         </div>
       </section>
@@ -795,6 +787,7 @@
               <div class="legitem"><span class="swatch flow"></span><span>Flow-limited RPM</span></div>
               <div class="legitem"><span class="swatch power"></span><span>Power-limited RPM</span></div>
             </div>
+            <p class="dim">Interactive: move mouse for crosshairs, click to pin a point, right-click a pin to remove it, double-click to clear all pins.</p>
           </div>
         </div>
       </section>
@@ -815,43 +808,39 @@
           <h2 class="section-title">Hs vs Tp (Interactive)</h2>
         </div>
         <div class="sea-state-grid">
-          <div>
-            <div class="sea-state-controls">
-              <label><input id="sea-toggle-regions" type="checkbox" checked> Sea state regions (SS 3–7)</label>
-              <label><input id="sea-toggle-grid" type="checkbox" checked> Grid</label>
-              <label><input id="sea-toggle-snap" type="checkbox"> Snap 0.1 m / 0.1 s</label>
-              <label><input id="sea-toggle-breaking" type="checkbox" checked> Breaking limit (deep-water steepness ≈ 1/7)</label>
-              <label><input id="sea-toggle-pm" type="checkbox" checked> Pierson–Moskowitz fully developed sea</label>
-              <button id="sea-clear-pins" type="button">Clear pinned</button>
-            </div>
-            <canvas id="sea-state-canvas" class="sea-state-canvas" width="1200" height="560" aria-label="Interactive Hs vs Tp chart"></canvas>
-            <p class="dim sea-state-hint">
-              Move mouse for crosshairs + tooltip + speed iso-line. Click to pin (persists). Right-click a pinned point to remove it.
-              Tooltip speed is maximum vertical surface speed for a sinusoid: <span class="mono">v<sub>z,max</sub> = π·H/T</span> (using H = Hs).
-            </p>
+          <div class="sea-state-controls">
+            <label><input id="sea-toggle-regions" type="checkbox" checked> Sea state regions (SS 3–7)</label>
+            <label><input id="sea-toggle-grid" type="checkbox" checked> Grid</label>
+            <label><input id="sea-toggle-snap" type="checkbox"> Snap 0.1 m / 0.1 s</label>
+            <label><input id="sea-toggle-breaking" type="checkbox" checked> Breaking limit (deep-water steepness ≈ 1/7)</label>
+            <label><input id="sea-toggle-pm" type="checkbox" checked> Pierson–Moskowitz fully developed sea</label>
+            <button id="sea-clear-pins" type="button">Clear pinned</button>
           </div>
-          <div>
-            <p class="dim sea-state-notes">
-              (1) Douglas sea state is defined by <strong>Hs</strong> only; Tp bands are representative.
-              (2) “Breaking limit” uses the deep-water steepness threshold <span class="mono">H/L ≈ 1/7</span> with <span class="mono">L = gT²/(2π)</span>.
-              (3) PM “fully developed” line uses <span class="mono">Hs = 0.21·U10²/g</span> and <span class="mono">Tp = 7.54·U10/g</span>, so <span class="mono">Hs(Tp) = 0.21·g·Tp²/7.54²</span>.
-            </p>
-            <div class="legend legend--panel" id="sea-state-legend"></div>
-            <h3 class="sea-state-pinned-title">Pinned points</h3>
-            <table class="sea-state-table">
-              <thead>
-                <tr>
-                  <th>Label</th>
-                  <th>Tp (s)</th>
-                  <th>Hs (m)</th>
-                  <th>Speed iso-line</th>
-                  <th>v<sub>z,max</sub> (m/s)</th>
-                  <th>v<sub>z,max</sub> (kn)</th>
-                </tr>
-              </thead>
-              <tbody id="sea-pins-body"></tbody>
-            </table>
-          </div>
+          <canvas id="sea-state-canvas" class="sea-state-canvas" width="1200" height="560" aria-label="Interactive Hs vs Tp chart"></canvas>
+          <p class="dim sea-state-hint">
+            Move mouse for crosshairs + tooltip + speed iso-line. Click to pin (persists). Right-click a pinned point to remove it.
+            Tooltip speed is maximum vertical surface speed for a sinusoid: <span class="mono">v<sub>z,max</sub> = π·H/T</span> (using H = Hs).
+          </p>
+          <p class="dim sea-state-notes">
+            (1) Douglas sea state is defined by <strong>Hs</strong> only; Tp bands are representative.
+            (2) “Breaking limit” uses the deep-water steepness threshold <span class="mono">H/L ≈ 1/7</span> with <span class="mono">L = gT²/(2π)</span>.
+            (3) PM “fully developed” line uses <span class="mono">Hs = 0.21·U10²/g</span> and <span class="mono">Tp = 7.54·U10/g</span>, so <span class="mono">Hs(Tp) = 0.21·g·Tp²/7.54²</span>.
+          </p>
+          <div class="legend legend--panel" id="sea-state-legend"></div>
+          <h3 class="sea-state-pinned-title">Pinned points</h3>
+          <table class="sea-state-table">
+            <thead>
+              <tr>
+                <th>Label</th>
+                <th>Tp (s)</th>
+                <th>Hs (m)</th>
+                <th>Speed iso-line</th>
+                <th>v<sub>z,max</sub> (m/s)</th>
+                <th>v<sub>z,max</sub> (kn)</th>
+              </tr>
+            </thead>
+            <tbody id="sea-pins-body"></tbody>
+          </table>
         </div>
       </section>
     </div>
@@ -1636,18 +1625,6 @@
         </form>
       </dialog>
 
-      <dialog id="plot-settings-depth-speed-power" class="plot-settings-dialog">
-        <form method="dialog" class="plot-settings-dialog__card">
-          <h3>Power-Limited Speed Axis Settings</h3>
-          <label>Depth Min (m)<input id="depth_xmin_power" type="number" step="100" min="0" value="0"></label>
-          <label>Depth Max (m)<input id="depth_xmax_power" type="number" step="100" min="0" placeholder="auto"></label>
-          <label>Speed Min (m/s)<input id="depth_speed_ymin_power" type="number" step="0.5" min="0" value="0"></label>
-          <label>Speed Max (m/s)<input id="depth_speed_ymax_power" type="number" step="0.5" min="0" placeholder="auto"></label>
-          <menu>
-            <button type="submit">Done</button>
-          </menu>
-        </form>
-      </dialog>
 
       <dialog id="plot-settings-hyd-rpm" class="plot-settings-dialog">
         <form method="dialog" class="plot-settings-dialog__card">
