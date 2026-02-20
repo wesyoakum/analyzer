@@ -682,6 +682,7 @@
             <div class="legend legend--panel">
               <div class="legitem"><span class="swatch accent"></span><span>Layer speed</span></div>
             </div>
+            <p class="dim">Interactive: move mouse for crosshairs, click to pin a point, right-click a pin to remove it, double-click to clear all pins.</p>
           </div>
           <div class="plot-panel plot-panel--compact plot-panel--performance">
             <div class="plot-panel__heading">
@@ -699,6 +700,7 @@
               <div class="legitem"><span class="swatch"></span><span>H = integer m</span></div>
               <div class="legitem"><span class="swatch dashed"></span><span>H = 0.5 m offsets</span></div>
             </div>
+            <p class="dim">Interactive: move mouse for crosshairs, click to pin a point, right-click a pin to remove it, double-click to clear all pins.</p>
           </div>
         </div>
       </section>
@@ -736,18 +738,7 @@
                 </span>
               </div>
             </div>
-          </div>
-          <div class="plot-panel plot-panel--compact plot-panel--performance">
-            <div class="plot-panel__heading">
-              <div>
-                <div class="plot-title">Available Speed vs Depth by Payload</div>
-                <div class="dim">Lines show the available speed profile for the entered payload and each 1,000&nbsp;kg decrement down to zero.</div>
-              </div>
-              <button type="button" class="plot-settings-btn" data-plot-settings-target="plot-settings-depth-speed-power" aria-label="Open axis settings for available speed vs depth by payload plot">⚙</button>
-            </div>
-            <div class="plotwrap">
-              <svg id="depth_speed_power_svg" viewBox="0 0 1000 540"></svg>
-            </div>
+            <p class="dim">Interactive: move mouse for crosshairs, click to pin a point, right-click a pin to remove it, double-click to clear all pins.</p>
           </div>
           <div class="plot-panel plot-panel--compact plot-panel--performance">
             <div class="plot-panel__heading">
@@ -769,6 +760,7 @@
                 <span>Available tension (normal / exceeded)</span>
               </div>
             </div>
+            <p class="dim">Interactive: move mouse for crosshairs, click to pin a point, right-click a pin to remove it, double-click to clear all pins.</p>
           </div>
         </div>
       </section>
@@ -795,6 +787,7 @@
               <div class="legitem"><span class="swatch flow"></span><span>Flow-limited RPM</span></div>
               <div class="legitem"><span class="swatch power"></span><span>Power-limited RPM</span></div>
             </div>
+            <p class="dim">Interactive: move mouse for crosshairs, click to pin a point, right-click a pin to remove it, double-click to clear all pins.</p>
           </div>
         </div>
       </section>
@@ -1636,18 +1629,6 @@
         </form>
       </dialog>
 
-      <dialog id="plot-settings-depth-speed-power" class="plot-settings-dialog">
-        <form method="dialog" class="plot-settings-dialog__card">
-          <h3>Power-Limited Speed Axis Settings</h3>
-          <label>Depth Min (m)<input id="depth_xmin_power" type="number" step="100" min="0" value="0"></label>
-          <label>Depth Max (m)<input id="depth_xmax_power" type="number" step="100" min="0" placeholder="auto"></label>
-          <label>Speed Min (m/s)<input id="depth_speed_ymin_power" type="number" step="0.5" min="0" value="0"></label>
-          <label>Speed Max (m/s)<input id="depth_speed_ymax_power" type="number" step="0.5" min="0" placeholder="auto"></label>
-          <menu>
-            <button type="submit">Done</button>
-          </menu>
-        </form>
-      </dialog>
 
       <dialog id="plot-settings-hyd-rpm" class="plot-settings-dialog">
         <form method="dialog" class="plot-settings-dialog__card">
