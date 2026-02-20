@@ -1092,6 +1092,8 @@ th[title] {
   background-color: #FFFFFF;
   box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.6);
   display: block;
+  max-width: 100%;
+  height: auto;
 }
 
 .plot-panel {
