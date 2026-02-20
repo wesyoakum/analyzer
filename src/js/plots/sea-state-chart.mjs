@@ -248,10 +248,43 @@ export function setupSeaStateChart() {
     }
   }
 
-  function drawCrosshairAt(Tp, Hs, style = 'rgba(20,20,20,.65)', dash = [6, 6]) {
+  function drawSpeedIsoLineAt(Tp, Hs, style = 'rgba(20,20,20,.35)', dash = [10, 5]) {
+    const v = verticalSpeedMax(Hs, Tp);
+    if (!Number.isFinite(v) || v <= 0) return;
+
+    const N = 400;
+    ctx.save();
+    ctx.strokeStyle = style;
+    ctx.lineWidth = 1;
+    if (dash) ctx.setLineDash(dash);
+    ctx.beginPath();
+    let started = false;
+    for (let i = 0; i <= N; i += 1) {
+      const T = X_MIN + (X_MAX - X_MIN) * (i / N);
+      const H = (v / Math.PI) * T;
+      if (!Number.isFinite(H) || H < Y_MIN || H > Y_MAX) {
+        started = false;
+        continue;
+      }
+      const x = xToPx(T);
+      const y = yToPx(H);
+      if (!started) {
+        ctx.moveTo(x, y);
+        started = true;
+      } else {
+        ctx.lineTo(x, y);
+      }
+    }
+    ctx.stroke();
+    ctx.restore();
+  }
+
+  function drawCrosshairAt(Tp, Hs, style = 'rgba(20,20,20,.65)', dash = [6, 6], isoStyle = 'rgba(20,20,20,.35)', isoDash = [10, 5]) {
     const a = plotArea();
     const x = xToPx(Tp);
     const y = yToPx(Hs);
+
+    drawSpeedIsoLineAt(Tp, Hs, isoStyle, isoDash);
     drawLine(x, a.y0, x, a.y1, style, 1, dash);
     drawLine(a.x0, y, a.x1, y, style, 1, dash);
 
@@ -265,7 +298,7 @@ export function setupSeaStateChart() {
 
   function drawPins() {
     pins.forEach(p => {
-      drawCrosshairAt(p.Tp, p.Hs, 'rgba(20,20,20,.55)', [4, 6]);
+      drawCrosshairAt(p.Tp, p.Hs, 'rgba(20,20,20,.55)', [4, 6], 'rgba(20,20,20,.25)', [8, 6]);
       drawText(p.label, xToPx(p.Tp) + cssPxToCanvas(8), yToPx(p.Hs) - cssPxToCanvas(8), 'left', 'alphabetic', 'rgba(20,20,20,.9)', 12);
     });
   }
@@ -278,7 +311,7 @@ export function setupSeaStateChart() {
     drawOverlays();
     drawPins();
     if (mouse.inside && mouse.Tp != null && mouse.Hs != null) {
-      drawCrosshairAt(mouse.Tp, mouse.Hs, 'rgba(0,0,0,.65)', [7, 6]);
+      drawCrosshairAt(mouse.Tp, mouse.Hs, 'rgba(0,0,0,.65)', [7, 6], 'rgba(0,0,0,.40)', [11, 6]);
     }
   }
 
