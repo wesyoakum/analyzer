@@ -609,12 +609,20 @@
             >Section 3: Layer &amp; Wrap Tables</button>
             <button
               class="tab-btn"
+              id="tab-converter"
+              type="button"
+              role="tab"
+              aria-selected="false"
+              aria-controls="panel-converter"
+            >Section 4: Unit Converter</button>
+            <button
+              class="tab-btn"
               id="tab-instructions"
               type="button"
               role="tab"
               aria-selected="false"
               aria-controls="panel-instructions"
-            >Section 4: Instructions</button>
+            >Section 5: Instructions</button>
           </nav>
         </div>
       
@@ -1033,6 +1041,48 @@
           </table>
         </div>
       </details>
+    </div>
+    <div class="pdf-page-break" aria-hidden="true"></div>
+
+    <div
+      id="panel-converter"
+      class="panel"
+      role="tabpanel"
+      aria-labelledby="tab-converter"
+      tabindex="0"
+      hidden
+      aria-hidden="true"
+    >
+      <section class="card info-card unit-converter-card" aria-labelledby="unit-converter-title">
+        <h2 class="section-title" id="unit-converter-title">Section 4: Linear Mass Converter</h2>
+        <p class="dim">Convert linear mass values between kg/m, kg/km, and lb/ft.</p>
+        <div class="unit-converter" id="unit-converter">
+          <div class="unit-converter__row">
+            <label for="unit-converter-input-value">Input value</label>
+            <input id="unit-converter-input-value" type="number" step="any" value="1" inputmode="decimal" />
+          </div>
+          <div class="unit-converter__row">
+            <label for="unit-converter-input-unit">From unit</label>
+            <select id="unit-converter-input-unit">
+              <option value="kg_per_m">kg/m</option>
+              <option value="kg_per_km">kg/km</option>
+              <option value="lb_per_ft">lb/ft</option>
+            </select>
+          </div>
+          <div class="unit-converter__row">
+            <label for="unit-converter-output-unit">To unit</label>
+            <select id="unit-converter-output-unit">
+              <option value="kg_per_m">kg/m</option>
+              <option value="kg_per_km" selected>kg/km</option>
+              <option value="lb_per_ft">lb/ft</option>
+            </select>
+          </div>
+          <div class="unit-converter__result" aria-live="polite">
+            <span class="unit-converter__result-label">Converted value</span>
+            <output id="unit-converter-output-value">1000 kg/km</output>
+          </div>
+        </div>
+      </section>
     </div>
     <div class="pdf-page-break" aria-hidden="true"></div>
 
