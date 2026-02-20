@@ -773,6 +773,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
   setupTabs();
 
+  setupUnitConverter();
 
   renderDocumentMath();
 
@@ -978,6 +979,57 @@ function setupTabs() {
     .find(tab => tab.classList.contains('active') || tab.getAttribute('aria-selected') === 'true');
 
   activate(initialTab || tabEntries[0].tab);
+}
+
+function setupUnitConverter() {
+  const inputValueEl = /** @type {HTMLInputElement|null} */ (document.getElementById('unit-converter-input-value'));
+  const inputUnitEl = /** @type {HTMLSelectElement|null} */ (document.getElementById('unit-converter-input-unit'));
+  const outputUnitEl = /** @type {HTMLSelectElement|null} */ (document.getElementById('unit-converter-output-unit'));
+  const outputValueEl = /** @type {HTMLOutputElement|null} */ (document.getElementById('unit-converter-output-value'));
+
+  if (!inputValueEl || !inputUnitEl || !outputUnitEl || !outputValueEl) return;
+
+  const UNIT_LABELS = {
+    kg_per_m: 'kg/m',
+    kg_per_km: 'kg/km',
+    lb_per_ft: 'lb/ft'
+  };
+
+  const TO_KG_PER_M = {
+    kg_per_m: 1,
+    kg_per_km: 0.001,
+    lb_per_ft: 1.48816394357
+  };
+
+  const refresh = () => {
+    const inputVal = Number.parseFloat(inputValueEl.value);
+    const inputUnit = inputUnitEl.value;
+    const outputUnit = outputUnitEl.value;
+
+    const inputFactor = TO_KG_PER_M[inputUnit];
+    const outputFactor = TO_KG_PER_M[outputUnit];
+
+    if (!Number.isFinite(inputVal) || !inputFactor || !outputFactor) {
+      outputValueEl.textContent = `— ${UNIT_LABELS[outputUnit] || ''}`.trim();
+      return;
+    }
+
+    const asKgPerM = inputVal * inputFactor;
+    const converted = asKgPerM / outputFactor;
+    const rounded = converted.toLocaleString(undefined, {
+      maximumFractionDigits: 6
+    });
+
+    outputValueEl.textContent = `${rounded} ${UNIT_LABELS[outputUnit]}`;
+  };
+
+  ['input', 'change'].forEach(eventName => {
+    inputValueEl.addEventListener(eventName, refresh);
+    inputUnitEl.addEventListener(eventName, refresh);
+    outputUnitEl.addEventListener(eventName, refresh);
+  });
+
+  refresh();
 }
 
 function setupCsvDownloads() {
