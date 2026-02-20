@@ -341,13 +341,11 @@ export function setupSeaStateChart() {
     pinsBody.innerHTML = '';
     pins.forEach(p => {
       const vz = verticalSpeedMax(p.Hs, p.Tp);
-      const isoLine = speedIsoLineText(vz);
       const tr = document.createElement('tr');
       tr.innerHTML = `
         <td>${p.label}</td>
         <td class="mono">${p.Tp.toFixed(2)}</td>
         <td class="mono">${p.Hs.toFixed(2)}</td>
-        <td class="mono">${isoLine}</td>
         <td class="mono">${vz.toFixed(2)}</td>
         <td class="mono">${mpsToKnots(vz).toFixed(2)}</td>`;
       pinsBody.appendChild(tr);
