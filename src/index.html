@@ -1057,29 +1057,27 @@
         <h2 class="section-title" id="unit-converter-title">Section 4: Linear Mass Converter</h2>
         <p class="dim">Convert linear mass values between kg/m, kg/km, and lb/ft.</p>
         <div class="unit-converter" id="unit-converter">
-          <div class="unit-converter__row">
-            <label for="unit-converter-input-value">Input value</label>
-            <input id="unit-converter-input-value" type="number" step="any" value="1" inputmode="decimal" />
-          </div>
-          <div class="unit-converter__row">
-            <label for="unit-converter-input-unit">From unit</label>
+          <div class="unit-converter__inline" role="group" aria-label="Linear mass conversion">
+            <input
+              id="unit-converter-input-value"
+              type="number"
+              step="any"
+              value="1"
+              inputmode="decimal"
+              aria-label="Input value"
+            />
             <select id="unit-converter-input-unit">
               <option value="kg_per_m">kg/m</option>
               <option value="kg_per_km">kg/km</option>
               <option value="lb_per_ft">lb/ft</option>
             </select>
-          </div>
-          <div class="unit-converter__row">
-            <label for="unit-converter-output-unit">To unit</label>
+            <span class="unit-converter__arrow" aria-hidden="true">→</span>
+            <output id="unit-converter-output-value" aria-live="polite">1000</output>
             <select id="unit-converter-output-unit">
               <option value="kg_per_m">kg/m</option>
               <option value="kg_per_km" selected>kg/km</option>
               <option value="lb_per_ft">lb/ft</option>
             </select>
-          </div>
-          <div class="unit-converter__result" aria-live="polite">
-            <span class="unit-converter__result-label">Converted value</span>
-            <output id="unit-converter-output-value">1000 kg/km</output>
           </div>
         </div>
       </section>
