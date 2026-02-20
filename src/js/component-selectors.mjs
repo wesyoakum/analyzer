@@ -62,7 +62,7 @@
  */
 
 /** @type {ComponentOption[]} */
-export const CABLE_OPTIONS = [
+const BASE_CABLE_OPTIONS = [
   {
     pn: '.681 Umbilical',
     description: '0.681 in diameter umbilical',
@@ -89,6 +89,89 @@ export const CABLE_OPTIONS = [
     c_mm: 39
   }
 ];
+
+const VEROTOP_CABLE_SPECS = [
+  { c_mm: 8, mass_kgpm: 0.313, mbl_t_1960: 6.2, mbl_t_2060: 6.4 },
+  { c_mm: 9, mass_kgpm: 0.397, mbl_t_1960: 7.9, mbl_t_2060: 8.1 },
+  { c_mm: 10, mass_kgpm: 0.490, mbl_t_1960: 9.7, mbl_t_2060: 10.0 },
+  { c_mm: 11, mass_kgpm: 0.593, mbl_t_1960: 11.8, mbl_t_2060: 12.1 },
+  { c_mm: 12, mass_kgpm: 0.705, mbl_t_1960: 14.0, mbl_t_2060: 14.4 },
+  { c_mm: 12.7, mass_kgpm: 0.790, mbl_t_1960: 15.7, mbl_t_2060: 16.1 },
+  { c_mm: 13, mass_kgpm: 0.828, mbl_t_1960: 16.4, mbl_t_2060: 16.9 },
+  { c_mm: 14, mass_kgpm: 0.960, mbl_t_1960: 19.1, mbl_t_2060: 19.6 },
+  { c_mm: 15, mass_kgpm: 1.102, mbl_t_1960: 21.9, mbl_t_2060: 22.5 },
+  { c_mm: 16, mass_kgpm: 1.254, mbl_t_1960: 24.9, mbl_t_2060: 25.6 },
+  { c_mm: 17, mass_kgpm: 1.415, mbl_t_1960: 28.1, mbl_t_2060: 28.9 },
+  { c_mm: 18, mass_kgpm: 1.587, mbl_t_1960: 31.5, mbl_t_2060: 32.4 },
+  { c_mm: 19, mass_kgpm: 1.768, mbl_t_1960: 35.1, mbl_t_2060: 36.1 },
+  { c_mm: 20, mass_kgpm: 1.959, mbl_t_1960: 38.9, mbl_t_2060: 40.0 },
+  { c_mm: 21, mass_kgpm: 2.160, mbl_t_1960: 42.9, mbl_t_2060: 44.1 },
+  { c_mm: 22, mass_kgpm: 2.371, mbl_t_1960: 47.1, mbl_t_2060: 48.4 },
+  { c_mm: 22.4, mass_kgpm: 2.458, mbl_t_1960: 48.8, mbl_t_2060: 50.1 },
+  { c_mm: 23, mass_kgpm: 2.591, mbl_t_1960: 51.4, mbl_t_2060: 52.9 },
+  { c_mm: 24, mass_kgpm: 2.821, mbl_t_1960: 56.0, mbl_t_2060: 57.5 },
+  { c_mm: 25, mass_kgpm: 3.061, mbl_t_1960: 60.8, mbl_t_2060: 62.4 },
+  { c_mm: 25.4, mass_kgpm: 3.160, mbl_t_1960: 62.7, mbl_t_2060: 64.5 },
+  { c_mm: 26, mass_kgpm: 3.311, mbl_t_1960: 65.7, mbl_t_2060: 67.5 },
+  { c_mm: 27, mass_kgpm: 3.571, mbl_t_1960: 70.9, mbl_t_2060: 72.8 },
+  { c_mm: 28, mass_kgpm: 3.840, mbl_t_1960: 76.2, mbl_t_2060: 78.3 },
+  { c_mm: 28.6, mass_kgpm: 4.006, mbl_t_1960: 79.5, mbl_t_2060: 81.7 },
+  { c_mm: 29, mass_kgpm: 4.119, mbl_t_1960: 81.8, mbl_t_2060: 84.0 },
+  { c_mm: 30, mass_kgpm: 4.408, mbl_t_1960: 87.5, mbl_t_2060: 89.9 },
+  { c_mm: 31, mass_kgpm: 4.707, mbl_t_1960: 93.4, mbl_t_2060: 96.0 },
+  { c_mm: 32, mass_kgpm: 5.015, mbl_t_1960: 99.6, mbl_t_2060: 102.3 },
+  { c_mm: 33, mass_kgpm: 5.334, mbl_t_1960: 105.9, mbl_t_2060: 108.8 },
+  { c_mm: 34, mass_kgpm: 5.662, mbl_t_1960: 112.4, mbl_t_2060: 115.5 },
+  { c_mm: 35, mass_kgpm: 6.000, mbl_t_1960: 119.1, mbl_t_2060: 122.4 },
+  { c_mm: 36, mass_kgpm: 6.348, mbl_t_1960: 126.0, mbl_t_2060: 129.5 },
+  { c_mm: 38, mass_kgpm: 7.072, mbl_t_1960: 140.4, mbl_t_2060: 144.3 },
+  { c_mm: 40, mass_kgpm: 7.837, mbl_t_1960: 155.6, mbl_t_2060: 159.8 },
+  { c_mm: 41, mass_kgpm: 8.233, mbl_t_1960: 163.5, mbl_t_2060: 167.9 },
+  { c_mm: 43, mass_kgpm: 9.056, mbl_t_1960: 179.8, mbl_t_2060: 184.7 },
+  { c_mm: 44, mass_kgpm: 9.482, mbl_t_1960: 188.3, mbl_t_2060: 193.4 },
+  { c_mm: 45, mass_kgpm: 9.918, mbl_t_1960: 196.9, mbl_t_2060: 202.3 },
+  { c_mm: 46, mass_kgpm: 10.364, mbl_t_1960: 205.8, mbl_t_2060: 211.4 },
+  { c_mm: 48, mass_kgpm: 11.285, mbl_t_1960: 224.0, mbl_t_2060: 230.2 },
+  { c_mm: 50, mass_kgpm: 12.245, mbl_t_1960: 243.1, mbl_t_2060: 249.8 },
+  { c_mm: 52, mass_kgpm: 13.244, mbl_t_1960: 262.9, mbl_t_2060: 270.1 },
+  { c_mm: 54, mass_kgpm: 14.282, mbl_t_1960: 283.6 },
+  { c_mm: 56, mass_kgpm: 15.360, mbl_t_1960: 305.0 },
+  { c_mm: 58, mass_kgpm: 17.01, mbl_t_1960: 315.91, mbl_t_2060: 332.22 },
+  { c_mm: 60, mass_kgpm: 18.20, mbl_t_1960: 339.87, mbl_t_2060: 357.41 },
+  { c_mm: 62, mass_kgpm: 19.44, mbl_t_1960: 358.63, mbl_t_2060: 377.09 },
+  { c_mm: 64, mass_kgpm: 20.71, mbl_t_1960: 384.94, mbl_t_2060: 404.73 },
+  { c_mm: 66, mass_kgpm: 21.37, mbl_t_1960: 405.03, mbl_t_2060: 417.47 },
+  { c_mm: 68, mass_kgpm: 23.38, mbl_t_1960: 433.48, mbl_t_2060: 455.81 },
+  { c_mm: 70, mass_kgpm: 24.78, mbl_t_1960: 462.44, mbl_t_2060: 486.3 },
+  { c_mm: 72, mass_kgpm: 26.21, mbl_t_1960: 490.38, mbl_t_2060: 515.67 }
+];
+
+const VEROTOP_CABLE_OPTIONS = VEROTOP_CABLE_SPECS.flatMap((spec) => {
+  const options = [
+    {
+      pn: `Verotop ${spec.c_mm} mm (1960)`,
+      description: `Verotop ${spec.c_mm} mm rope grade 1960 — ${spec.mass_kgpm} kg/m, MBL ${spec.mbl_t_1960} t`,
+      c_mm: spec.c_mm,
+      c_w_kgpm: spec.mass_kgpm,
+      mbl_kgf: spec.mbl_t_1960 * 1000
+    }
+  ];
+
+  if (Number.isFinite(spec.mbl_t_2060)) {
+    options.push({
+      pn: `Verotop ${spec.c_mm} mm (2060)`,
+      description: `Verotop ${spec.c_mm} mm rope grade 2060 — ${spec.mass_kgpm} kg/m, MBL ${spec.mbl_t_2060} t`,
+      c_mm: spec.c_mm,
+      c_w_kgpm: spec.mass_kgpm,
+      mbl_kgf: spec.mbl_t_2060 * 1000
+    });
+  }
+
+  return options;
+});
+
+/** @type {ComponentOption[]} */
+export const CABLE_OPTIONS = [...BASE_CABLE_OPTIONS, ...VEROTOP_CABLE_OPTIONS];
 
 /** @type {ComponentOption[]} */
 export const DRUM_OPTIONS = [
@@ -738,7 +821,8 @@ export const FIELD_MAPS = {
     c_mm: 'c_mm',
     depth_m: 'depth_m',
     dead_m: 'dead_m',
-    c_w_kgpm: 'c_w_kgpm'
+    c_w_kgpm: 'c_w_kgpm',
+    mbl_kgf: 'mbl_kgf'
   }),
   drum: /** @type {SelectConfig['fieldMap']} */ ({
     core_in: 'core_in',
