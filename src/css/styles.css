@@ -893,6 +893,11 @@ nav.tabs {
   margin-top: 0;
 }
 
+#panel-results .card,
+#panel-converter .card {
+  background: transparent;
+}
+
 .unit-converter {
   max-width: 900px;
 }
@@ -1092,6 +1097,8 @@ th[title] {
   background-color: #FFFFFF;
   box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.6);
   display: block;
+  max-width: 100%;
+  height: auto;
 }
 
 .plot-panel {
@@ -1386,7 +1393,7 @@ th[title] {
 
 .sea-state-grid {
   display: grid;
-  grid-template-columns: minmax(0, 1fr) 360px;
+  grid-template-columns: minmax(0, 1fr);
   gap: 14px;
 }
 
@@ -1447,12 +1454,6 @@ th[title] {
 
 .sea-state-tooltip .k {
   opacity: 0.78;
-}
-
-@media (max-width: 1100px) {
-  .sea-state-grid {
-    grid-template-columns: 1fr;
-  }
 }
 
 @media (max-width: 720px) {
