@@ -123,6 +123,11 @@ export function setupSeaStateChart() {
   }
 
   const mpsToKnots = v => v * 1.9438444924406;
+  const mpsToMpm = v => v * 60;
+
+  function speedIsoLineText(v) {
+    return `H = (${v.toFixed(2)}/π)·T`;
+  }
 
   function seaStateForHs(Hs) {
     if (Hs === 0) return '0';
@@ -280,6 +285,7 @@ export function setupSeaStateChart() {
   function tooltipHtml(Tp, Hs) {
     const vz = verticalSpeedMax(Hs, Tp);
     const kn = mpsToKnots(vz);
+    const mpm = mpsToMpm(vz);
     const ss = seaStateForHs(Hs);
     const Hb = H_break(Tp);
     const Hpm = Hs_PM_fullyDeveloped(Tp);
@@ -290,6 +296,8 @@ export function setupSeaStateChart() {
       <div><span class="k">Sea state (by Hs only)</span> <span class="mono">${ss}</span></div>
       <div style="margin-top:6px;"><span class="k">Max vertical surface speed (sinusoid; using H = Hs)</span></div>
       <div><span class="k">v<sub>z,max</sub></span> <span class="mono">${vz.toFixed(2)} m/s</span> <span class="k">(${kn.toFixed(2)} kn)</span></div>
+      <div><span class="k">Speed iso-line</span> <span class="mono">${speedIsoLineText(vz)}</span></div>
+      <div><span class="k">Equivalent speed</span> <span class="mono">${mpm.toFixed(1)} m/min</span></div>
       <div><span class="k">Formula</span> <span class="mono">v<sub>z,max</sub> = π·H/T</span></div>
       <div style="margin-top:6px;"><span class="k">Overlay values at this Tp</span></div>
       <div><span class="k">Breaking limit H<sub>break</sub></span> <span class="mono">${Hb.toFixed(2)} m</span></div>
@@ -300,11 +308,13 @@ export function setupSeaStateChart() {
     pinsBody.innerHTML = '';
     pins.forEach(p => {
       const vz = verticalSpeedMax(p.Hs, p.Tp);
+      const isoLine = speedIsoLineText(vz);
       const tr = document.createElement('tr');
       tr.innerHTML = `
         <td>${p.label}</td>
         <td class="mono">${p.Tp.toFixed(2)}</td>
         <td class="mono">${p.Hs.toFixed(2)}</td>
+        <td class="mono">${isoLine}</td>
         <td class="mono">${vz.toFixed(2)}</td>
         <td class="mono">${mpsToKnots(vz).toFixed(2)}</td>`;
       pinsBody.appendChild(tr);
