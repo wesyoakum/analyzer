@@ -989,12 +989,6 @@ function setupUnitConverter() {
 
   if (!inputValueEl || !inputUnitEl || !outputUnitEl || !outputValueEl) return;
 
-  const UNIT_LABELS = {
-    kg_per_m: 'kg/m',
-    kg_per_km: 'kg/km',
-    lb_per_ft: 'lb/ft'
-  };
-
   const TO_KG_PER_M = {
     kg_per_m: 1,
     kg_per_km: 0.001,
@@ -1010,7 +1004,7 @@ function setupUnitConverter() {
     const outputFactor = TO_KG_PER_M[outputUnit];
 
     if (!Number.isFinite(inputVal) || !inputFactor || !outputFactor) {
-      outputValueEl.textContent = `— ${UNIT_LABELS[outputUnit] || ''}`.trim();
+      outputValueEl.textContent = '—';
       return;
     }
 
@@ -1020,7 +1014,7 @@ function setupUnitConverter() {
       maximumFractionDigits: 6
     });
 
-    outputValueEl.textContent = `${rounded} ${UNIT_LABELS[outputUnit]}`;
+    outputValueEl.textContent = rounded;
   };
 
   ['input', 'change'].forEach(eventName => {
