@@ -19,6 +19,7 @@ import { renderHydraulicTables } from './hydraulic.mjs';
 import { drawWaveContours, drawWaveHeightContours } from './plots/wave-contours.mjs';
 import { drawDepthProfiles, drawStandaloneSpeedProfiles } from './plots/depth-profiles.mjs';
 import { drawHydraulicRpmTorque } from './plots/rpm-torque.mjs';
+import { setupSeaStateChart } from './plots/sea-state-chart.mjs';
 import { setupComponentSelectors } from './component-selectors.mjs';
 import { renderDrumVisualization, clearDrumVisualization } from './drum-visual.mjs';
 import { renderLatexFragments } from './katex-renderer.mjs';
@@ -772,6 +773,8 @@ document.addEventListener('DOMContentLoaded', () => {
 
 
   setupTabs();
+
+  setupSeaStateChart();
 
   setupUnitConverter();
 
