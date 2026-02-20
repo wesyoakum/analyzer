@@ -123,6 +123,11 @@ export function setupSeaStateChart() {
   }
 
   const mpsToKnots = v => v * 1.9438444924406;
+  const mpsToMpm = v => v * 60;
+
+  function speedIsoLineText(v) {
+    return `H = (${v.toFixed(2)}/π)·T`;
+  }
 
   function seaStateForHs(Hs) {
     if (Hs === 0) return '0';
@@ -243,10 +248,43 @@ export function setupSeaStateChart() {
     }
   }
 
-  function drawCrosshairAt(Tp, Hs, style = 'rgba(20,20,20,.65)', dash = [6, 6]) {
+  function drawSpeedIsoLineAt(Tp, Hs, style = 'rgba(20,20,20,.35)', dash = [10, 5]) {
+    const v = verticalSpeedMax(Hs, Tp);
+    if (!Number.isFinite(v) || v <= 0) return;
+
+    const N = 400;
+    ctx.save();
+    ctx.strokeStyle = style;
+    ctx.lineWidth = 1;
+    if (dash) ctx.setLineDash(dash);
+    ctx.beginPath();
+    let started = false;
+    for (let i = 0; i <= N; i += 1) {
+      const T = X_MIN + (X_MAX - X_MIN) * (i / N);
+      const H = (v / Math.PI) * T;
+      if (!Number.isFinite(H) || H < Y_MIN || H > Y_MAX) {
+        started = false;
+        continue;
+      }
+      const x = xToPx(T);
+      const y = yToPx(H);
+      if (!started) {
+        ctx.moveTo(x, y);
+        started = true;
+      } else {
+        ctx.lineTo(x, y);
+      }
+    }
+    ctx.stroke();
+    ctx.restore();
+  }
+
+  function drawCrosshairAt(Tp, Hs, style = 'rgba(20,20,20,.65)', dash = [6, 6], isoStyle = 'rgba(20,20,20,.35)', isoDash = [10, 5]) {
     const a = plotArea();
     const x = xToPx(Tp);
     const y = yToPx(Hs);
+
+    drawSpeedIsoLineAt(Tp, Hs, isoStyle, isoDash);
     drawLine(x, a.y0, x, a.y1, style, 1, dash);
     drawLine(a.x0, y, a.x1, y, style, 1, dash);
 
@@ -260,7 +298,7 @@ export function setupSeaStateChart() {
 
   function drawPins() {
     pins.forEach(p => {
-      drawCrosshairAt(p.Tp, p.Hs, 'rgba(20,20,20,.55)', [4, 6]);
+      drawCrosshairAt(p.Tp, p.Hs, 'rgba(20,20,20,.55)', [4, 6], 'rgba(20,20,20,.25)', [8, 6]);
       drawText(p.label, xToPx(p.Tp) + cssPxToCanvas(8), yToPx(p.Hs) - cssPxToCanvas(8), 'left', 'alphabetic', 'rgba(20,20,20,.9)', 12);
     });
   }
@@ -273,13 +311,14 @@ export function setupSeaStateChart() {
     drawOverlays();
     drawPins();
     if (mouse.inside && mouse.Tp != null && mouse.Hs != null) {
-      drawCrosshairAt(mouse.Tp, mouse.Hs, 'rgba(0,0,0,.65)', [7, 6]);
+      drawCrosshairAt(mouse.Tp, mouse.Hs, 'rgba(0,0,0,.65)', [7, 6], 'rgba(0,0,0,.40)', [11, 6]);
     }
   }
 
   function tooltipHtml(Tp, Hs) {
     const vz = verticalSpeedMax(Hs, Tp);
     const kn = mpsToKnots(vz);
+    const mpm = mpsToMpm(vz);
     const ss = seaStateForHs(Hs);
     const Hb = H_break(Tp);
     const Hpm = Hs_PM_fullyDeveloped(Tp);
@@ -290,6 +329,8 @@ export function setupSeaStateChart() {
       <div><span class="k">Sea state (by Hs only)</span> <span class="mono">${ss}</span></div>
       <div style="margin-top:6px;"><span class="k">Max vertical surface speed (sinusoid; using H = Hs)</span></div>
       <div><span class="k">v<sub>z,max</sub></span> <span class="mono">${vz.toFixed(2)} m/s</span> <span class="k">(${kn.toFixed(2)} kn)</span></div>
+      <div><span class="k">Speed iso-line</span> <span class="mono">${speedIsoLineText(vz)}</span></div>
+      <div><span class="k">Equivalent speed</span> <span class="mono">${mpm.toFixed(1)} m/min</span></div>
       <div><span class="k">Formula</span> <span class="mono">v<sub>z,max</sub> = π·H/T</span></div>
       <div style="margin-top:6px;"><span class="k">Overlay values at this Tp</span></div>
       <div><span class="k">Breaking limit H<sub>break</sub></span> <span class="mono">${Hb.toFixed(2)} m</span></div>
@@ -300,11 +341,13 @@ export function setupSeaStateChart() {
     pinsBody.innerHTML = '';
     pins.forEach(p => {
       const vz = verticalSpeedMax(p.Hs, p.Tp);
+      const isoLine = speedIsoLineText(vz);
       const tr = document.createElement('tr');
       tr.innerHTML = `
         <td>${p.label}</td>
         <td class="mono">${p.Tp.toFixed(2)}</td>
         <td class="mono">${p.Hs.toFixed(2)}</td>
+        <td class="mono">${isoLine}</td>
         <td class="mono">${vz.toFixed(2)}</td>
         <td class="mono">${mpsToKnots(vz).toFixed(2)}</td>`;
       pinsBody.appendChild(tr);
