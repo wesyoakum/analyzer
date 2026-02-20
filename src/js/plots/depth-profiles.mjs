@@ -795,12 +795,15 @@ function removeTrailingZeros(text) {
 
 // ---------- Tension vs Depth ----------
 function drawTensionProfile(svg, segments, depthMin, depthMax, tensionMin, tensionMax, payload_kg, cable_w_kgpm, accentColor) {
-  if (svg && svg._depthTensionHoverHandlers) {
-    const { move, leave } = svg._depthTensionHoverHandlers;
+  if (svg && svg._depthTensionHandlers) {
+    const { move, leave, click, contextmenu, dblclick } = svg._depthTensionHandlers;
     svg.removeEventListener('pointermove', move);
     svg.removeEventListener('pointerleave', leave);
     svg.removeEventListener('pointerenter', move);
-    delete svg._depthTensionHoverHandlers;
+    if (click) svg.removeEventListener('click', click);
+    if (contextmenu) svg.removeEventListener('contextmenu', contextmenu);
+    if (dblclick) svg.removeEventListener('dblclick', dblclick);
+    delete svg._depthTensionHandlers;
   }
 
   while (svg.firstChild) svg.removeChild(svg.firstChild);
@@ -949,6 +952,47 @@ function drawTensionProfile(svg, segments, depthMin, depthMax, tensionMin, tensi
     svg.appendChild(svgEl('line', { x1: ML, y1: sy(0), x2: W - MR, y2: sy(0), stroke: '#bbb', 'stroke-dasharray': '4 4' }));
   }
 
+  let pins = [];
+  const getPins = () => {
+    if (!Array.isArray(svg._depthTensionPins)) svg._depthTensionPins = [];
+    return svg._depthTensionPins;
+  };
+
+  pins = getPins()
+    .filter(pin => Number.isFinite(pin.depth) && Number.isFinite(pin.tension))
+    .map((pin, idx) => ({
+      ...pin,
+      depth: clampDepth(pin.depth),
+      tension: clampTension(pin.tension),
+      label: pin.label || `P${idx + 1}`
+    }));
+  pins.forEach((pin, idx) => {
+    pin.label = `P${idx + 1}`;
+  });
+  svg._depthTensionPins = pins;
+
+  pins.forEach(pin => {
+    const x = sx(pin.depth);
+    const y = sy(pin.tension);
+    svg.appendChild(svgEl('circle', {
+      cx: x,
+      cy: y,
+      r: 5,
+      fill: accentColor,
+      stroke: '#fff',
+      'stroke-width': 1.5
+    }));
+    const pinLabel = svgEl('text', {
+      x: x + 8,
+      y: y - 8,
+      'font-size': '11',
+      fill: accentColor,
+      style: 'paint-order: stroke; stroke: #fff; stroke-width: 2px;'
+    });
+    pinLabel.textContent = `${pin.label} (${formatDepthLabel(pin.depth)} m, ${removeTrailingZeros((Math.round(pin.tension * 10) / 10).toFixed(1))} kgf)`;
+    svg.appendChild(pinLabel);
+  });
+
   const hoverLayer = svgEl('g', { 'pointer-events': 'none' });
   const hoverVLine = svgEl('line', {
     x1: ML,
@@ -1059,7 +1103,72 @@ function drawTensionProfile(svg, segments, depthMin, depthMax, tensionMin, tensi
   svg.addEventListener('pointermove', updateHover);
   svg.addEventListener('pointerenter', updateHover);
   svg.addEventListener('pointerleave', hideHover);
-  svg._depthTensionHoverHandlers = { move: updateHover, leave: hideHover };
+
+  const nearestPinIndex = (depthVal, tensionVal) => {
+    const tolDepth = Math.max(0.25, depthSpan * 0.015);
+    const tolTension = Math.max(5, tensionSpan * 0.02);
+    let bestIdx = -1;
+    let bestScore = Infinity;
+    getPins().forEach((pin, idx) => {
+      const dDepth = Math.abs(pin.depth - depthVal);
+      const dTension = Math.abs(pin.tension - tensionVal);
+      if (dDepth <= tolDepth && dTension <= tolTension) {
+        const score = dDepth / tolDepth + dTension / tolTension;
+        if (score < bestScore) {
+          bestScore = score;
+          bestIdx = idx;
+        }
+      }
+    });
+    return bestIdx;
+  };
+
+  const clickHandler = evt => {
+    const { x: localX, y: localY } = toViewBoxPoint(evt);
+    if (localX < ML || localX > W - MR || localY < MT || localY > H - MB) return;
+    const depthVal = depthMin + ((clamp(localX, ML, W - MR) - ML) / Math.max(innerW, 1e-9)) * depthSpan;
+    const tensionVal = tensionMax - ((clamp(localY, MT, H - MB) - MT) / Math.max(innerH, 1e-9)) * tensionSpan;
+    const roundedDepth = Math.round(depthVal * 10) / 10;
+    const roundedTension = Math.round(tensionVal * 10) / 10;
+    const existingIdx = nearestPinIndex(roundedDepth, roundedTension);
+    if (existingIdx === -1) {
+      const nextPins = [...getPins(), { depth: roundedDepth, tension: roundedTension, label: '' }]
+        .map((pin, idx) => ({ ...pin, label: `P${idx + 1}` }));
+      svg._depthTensionPins = nextPins;
+    }
+    drawTensionProfile(svg, segments, depthMin, depthMax, tensionMin, tensionMax, payload_kg, cable_w_kgpm, accentColor);
+  };
+
+  const contextMenuHandler = evt => {
+    evt.preventDefault();
+    const { x: localX, y: localY } = toViewBoxPoint(evt);
+    if (localX < ML || localX > W - MR || localY < MT || localY > H - MB) return;
+    const depthVal = depthMin + ((clamp(localX, ML, W - MR) - ML) / Math.max(innerW, 1e-9)) * depthSpan;
+    const tensionVal = tensionMax - ((clamp(localY, MT, H - MB) - MT) / Math.max(innerH, 1e-9)) * tensionSpan;
+    const idx = nearestPinIndex(depthVal, tensionVal);
+    if (idx === -1) return;
+    const nextPins = getPins().filter((_, pinIdx) => pinIdx !== idx)
+      .map((pin, order) => ({ ...pin, label: `P${order + 1}` }));
+    svg._depthTensionPins = nextPins;
+    drawTensionProfile(svg, segments, depthMin, depthMax, tensionMin, tensionMax, payload_kg, cable_w_kgpm, accentColor);
+  };
+
+  const clearPinsHandler = () => {
+    svg._depthTensionPins = [];
+    drawTensionProfile(svg, segments, depthMin, depthMax, tensionMin, tensionMax, payload_kg, cable_w_kgpm, accentColor);
+  };
+
+  svg.addEventListener('click', clickHandler);
+  svg.addEventListener('contextmenu', contextMenuHandler);
+  svg.addEventListener('dblclick', clearPinsHandler);
+
+  svg._depthTensionHandlers = {
+    move: updateHover,
+    leave: hideHover,
+    click: clickHandler,
+    contextmenu: contextMenuHandler,
+    dblclick: clearPinsHandler
+  };
 
   function pathFrom(pts) {
     if (!pts.length) return '';
