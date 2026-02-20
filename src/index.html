@@ -1054,31 +1054,55 @@
       aria-hidden="true"
     >
       <section class="card info-card unit-converter-card" aria-labelledby="unit-converter-title">
-        <h2 class="section-title" id="unit-converter-title">Section 4: Linear Mass Converter</h2>
-        <p class="dim">Convert linear mass values between kg/m, kg/km, and lb/ft.</p>
+        <h2 class="section-title" id="unit-converter-title">Section 4: Unit Converter &amp; Quick Calculators</h2>
+        <p class="dim">Convert engineering units and estimate immersed weight and power.</p>
+
+        <h3>Unit converter</h3>
         <div class="unit-converter" id="unit-converter">
-          <div class="unit-converter__inline" role="group" aria-label="Linear mass conversion">
-            <input
-              id="unit-converter-input-value"
-              type="number"
-              step="any"
-              value="1"
-              inputmode="decimal"
-              aria-label="Input value"
-            />
-            <select id="unit-converter-input-unit">
-              <option value="kg_per_m">kg/m</option>
-              <option value="kg_per_km">kg/km</option>
-              <option value="lb_per_ft">lb/ft</option>
-            </select>
+          <div class="unit-converter__inline" role="group" aria-label="Unit conversion">
+            <select id="unit-converter-category" aria-label="Unit category"></select>
+            <input id="unit-converter-input-value" type="number" step="any" value="1" inputmode="decimal" aria-label="Input value" />
+            <select id="unit-converter-input-unit"></select>
             <span class="unit-converter__arrow" aria-hidden="true">→</span>
-            <output id="unit-converter-output-value" aria-live="polite">1000</output>
-            <select id="unit-converter-output-unit">
-              <option value="kg_per_m">kg/m</option>
-              <option value="kg_per_km" selected>kg/km</option>
-              <option value="lb_per_ft">lb/ft</option>
-            </select>
+            <output id="unit-converter-output-value" aria-live="polite">—</output>
+            <select id="unit-converter-output-unit"></select>
           </div>
+        </div>
+
+        <h3>Weight in air → weight in water</h3>
+        <div class="unit-calculator-grid" role="group" aria-label="Weight in air to weight in water calculator">
+          <input id="air-water-air-value" type="number" step="any" value="1000" aria-label="Weight in air" />
+          <select id="air-water-air-unit" aria-label="Weight in air unit"></select>
+          <input id="air-water-sg" type="number" step="any" value="7.85" aria-label="Material specific gravity" />
+          <label for="air-water-sg" class="dim">Material SG</label>
+          <input id="air-water-fluid-density" type="number" step="any" value="1025" aria-label="Fluid density in kg per cubic meter" />
+          <label for="air-water-fluid-density" class="dim">Fluid density (kg/m³)</label>
+          <output id="air-water-output" aria-live="polite">—</output>
+          <select id="air-water-output-unit" aria-label="Weight in water output unit"></select>
+        </div>
+
+        <h3>Power = Force × Speed × Efficiency</h3>
+        <div class="unit-calculator-grid" role="group" aria-label="Mechanical power calculator">
+          <input id="mech-power-force-value" type="number" step="any" value="1000" aria-label="Force" />
+          <select id="mech-power-force-unit" aria-label="Force unit"></select>
+          <input id="mech-power-speed-value" type="number" step="any" value="1" aria-label="Speed" />
+          <select id="mech-power-speed-unit" aria-label="Speed unit"></select>
+          <input id="mech-power-efficiency" type="number" step="any" value="0.9" aria-label="Efficiency" />
+          <label for="mech-power-efficiency" class="dim">Efficiency (0-1 or %)</label>
+          <output id="mech-power-output" aria-live="polite">—</output>
+          <select id="mech-power-output-unit" aria-label="Power output unit"></select>
+        </div>
+
+        <h3>Power = Pressure × Flow × Efficiency</h3>
+        <div class="unit-calculator-grid" role="group" aria-label="Hydraulic power calculator">
+          <input id="hyd-power-pressure-value" type="number" step="any" value="3000" aria-label="Pressure" />
+          <select id="hyd-power-pressure-unit" aria-label="Pressure unit"></select>
+          <input id="hyd-power-flow-value" type="number" step="any" value="60" aria-label="Flow" />
+          <select id="hyd-power-flow-unit" aria-label="Flow unit"></select>
+          <input id="hyd-power-efficiency" type="number" step="any" value="0.9" aria-label="Efficiency" />
+          <label for="hyd-power-efficiency" class="dim">Efficiency (0-1 or %)</label>
+          <output id="hyd-power-output" aria-live="polite">—</output>
+          <select id="hyd-power-output-unit" aria-label="Power output unit"></select>
         </div>
       </section>
     </div>
