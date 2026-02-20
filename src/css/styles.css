@@ -893,6 +893,11 @@ nav.tabs {
   margin-top: 0;
 }
 
+#panel-results .card,
+#panel-converter .card {
+  background: transparent;
+}
+
 .unit-converter {
   max-width: 900px;
 }
