@@ -115,9 +115,16 @@ body {
 .project-controls {
   margin-top: 8px;
   display: flex;
-  align-items: center;
+  flex-direction: column;
+  align-items: stretch;
   gap: 8px;
+}
+
+.project-controls__row {
+  display: flex;
+  align-items: center;
   flex-wrap: wrap;
+  gap: 8px;
 }
 
 .project-controls input,
@@ -132,10 +139,31 @@ body {
 
 .project-controls input {
   min-width: 170px;
+  flex: 1 1 220px;
 }
 
 .project-controls select {
-  min-width: 190px;
+  min-width: 230px;
+  flex: 1 1 260px;
+}
+
+.project-controls__status {
+  margin: 0;
+  font-size: 12px;
+  color: rgba(20, 34, 56, 0.7);
+  min-height: 16px;
+}
+
+.sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border: 0;
 }
 
 .app-sidebar__action {

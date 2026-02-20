@@ -477,12 +477,19 @@ function applyProjectState(state) {
 async function setupProjectManager() {
   const nameInput = /** @type {HTMLInputElement|null} */ (document.getElementById('project_name'));
   const select = /** @type {HTMLSelectElement|null} */ (document.getElementById('project_select'));
+  const saveNewBtn = document.getElementById('save_project_new');
   const saveBtn = document.getElementById('save_project');
+  const renameBtn = document.getElementById('rename_project');
   const loadBtn = document.getElementById('load_project');
   const deleteBtn = document.getElementById('delete_project');
-  if (!nameInput || !select || !saveBtn || !loadBtn || !deleteBtn) return;
+  const statusEl = document.getElementById('project_status');
+  if (!nameInput || !select || !saveNewBtn || !saveBtn || !renameBtn || !loadBtn || !deleteBtn || !statusEl) return;
 
   const LOCAL_PROJECTS_KEY = 'analyzer.projects.v1';
+
+  const setStatus = (message) => {
+    statusEl.textContent = message || '';
+  };
 
   const getProjectStorage = () => {
     if (typeof window === 'undefined' || !window.localStorage) return null;
@@ -589,8 +596,22 @@ async function setupProjectManager() {
     }
   };
 
-  saveBtn.addEventListener('click', async () => {
-    const selectedId = select.value || undefined;
+  const getProjectById = async (projectId) => {
+    if (!projectId) return null;
+    try {
+      const response = await fetch(`/api/projects/${encodeURIComponent(projectId)}`);
+      if (response.ok) {
+        const body = await response.json();
+        return body?.project || null;
+      }
+    } catch (err) {
+      // Fallback to local storage below.
+    }
+    return readLocalProjects().find(project => project.id === projectId) || null;
+  };
+
+  const saveProject = async ({ useSelectedId }) => {
+    const selectedId = useSelectedId ? select.value || undefined : undefined;
     const name = nameInput.value.trim();
     if (!name) {
       window.alert('Enter a project name before saving.');
@@ -615,6 +636,7 @@ async function setupProjectManager() {
         await loadProjects();
         select.value = saved.id;
         nameInput.value = saved.name || name;
+        setStatus(selectedId ? 'Updated locally (server unavailable).' : 'Saved locally (server unavailable).');
         return;
       }
 
@@ -628,11 +650,77 @@ async function setupProjectManager() {
       await loadProjects();
       select.value = project.id;
       nameInput.value = project.name || name;
+      setStatus(selectedId ? 'Project updated.' : 'Project saved.');
     } catch (err) {
       const saved = saveLocalProject(payload);
       await loadProjects();
       select.value = saved.id;
       nameInput.value = saved.name || name;
+      setStatus(selectedId ? 'Updated locally (offline mode).' : 'Saved locally (offline mode).');
+    }
+  };
+
+  saveNewBtn.addEventListener('click', async () => {
+    await saveProject({ useSelectedId: false });
+  });
+
+  saveBtn.addEventListener('click', async () => {
+    if (!select.value) {
+      window.alert('Select a saved project to update, or use Save new.');
+      return;
+    }
+    await saveProject({ useSelectedId: true });
+  });
+
+  renameBtn.addEventListener('click', async () => {
+    const selectedId = select.value;
+    if (!selectedId) {
+      window.alert('Select a saved project to rename.');
+      return;
+    }
+
+    const nextName = nameInput.value.trim();
+    if (!nextName) {
+      window.alert('Enter a new project name first.');
+      return;
+    }
+
+    const current = await getProjectById(selectedId);
+    if (!current || typeof current.state !== 'object' || current.state === null) {
+      window.alert('Unable to rename: project data could not be loaded.');
+      return;
+    }
+
+    const payload = {
+      id: selectedId,
+      name: nextName,
+      state: current.state
+    };
+
+    try {
+      const response = await fetch('/api/projects', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(payload)
+      });
+
+      if (!response.ok) {
+        saveLocalProject(payload);
+        await loadProjects();
+        select.value = selectedId;
+        setStatus('Renamed locally (server unavailable).');
+        return;
+      }
+
+      await loadProjects();
+      select.value = selectedId;
+      nameInput.value = nextName;
+      setStatus('Project renamed.');
+    } catch (err) {
+      saveLocalProject(payload);
+      await loadProjects();
+      select.value = selectedId;
+      setStatus('Renamed locally (offline mode).');
     }
   });
 
@@ -654,6 +742,7 @@ async function setupProjectManager() {
         applyProjectState(localProject.state);
         nameInput.value = localProject.name || '';
         computeAll();
+        setStatus('Project loaded (local cache).');
         return;
       }
       const body = await response.json();
@@ -665,6 +754,7 @@ async function setupProjectManager() {
       applyProjectState(project.state);
       nameInput.value = project.name || '';
       computeAll();
+      setStatus('Project loaded.');
     } catch (err) {
       const localProject = readLocalProjects().find(project => project.id === selectedId);
       if (!localProject || typeof localProject.state !== 'object' || localProject.state === null) {
@@ -674,6 +764,7 @@ async function setupProjectManager() {
       applyProjectState(localProject.state);
       nameInput.value = localProject.name || '';
       computeAll();
+      setStatus('Project loaded (offline mode).');
     }
   });
 
@@ -696,15 +787,18 @@ async function setupProjectManager() {
         writeLocalProjects(projects);
         await loadProjects();
         nameInput.value = '';
+        setStatus('Deleted from local cache (server unavailable).');
         return;
       }
       await loadProjects();
       nameInput.value = '';
+      setStatus('Project deleted.');
     } catch (err) {
       const projects = readLocalProjects().filter(project => project.id !== selectedId);
       writeLocalProjects(projects);
       await loadProjects();
       nameInput.value = '';
+      setStatus('Deleted from local cache (offline mode).');
     }
   });
 
@@ -712,11 +806,17 @@ async function setupProjectManager() {
     const option = select.selectedOptions?.[0];
     if (option?.value) {
       nameInput.value = option.textContent || '';
+      setStatus('');
+      return;
     }
+    nameInput.value = '';
+    setStatus('');
   });
 
   await loadProjects();
+  setStatus('');
 }
+
 
 // ---- Wire up events once DOM is ready ----
 document.addEventListener('DOMContentLoaded', () => {

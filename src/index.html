@@ -26,13 +26,22 @@
         <div>
           <h2 class="app-sidebar__title">Winch configuration</h2>
           <div class="project-controls" aria-label="Project controls">
-            <input id="project_name" type="text" placeholder="Project name" aria-label="Project name">
-            <select id="project_select" aria-label="Saved projects">
-              <option value="">Saved projects</option>
-            </select>
-            <button id="save_project" class="app-sidebar__action app-sidebar__action--button" type="button">Save</button>
-            <button id="load_project" class="app-sidebar__action app-sidebar__action--button" type="button">Load</button>
-            <button id="delete_project" class="app-sidebar__action app-sidebar__action--button" type="button">Delete</button>
+            <div class="project-controls__row">
+              <label class="sr-only" for="project_select">Saved projects</label>
+              <select id="project_select" aria-label="Saved projects">
+                <option value="">Saved projects</option>
+              </select>
+              <button id="load_project" class="app-sidebar__action app-sidebar__action--button" type="button">Load</button>
+              <button id="delete_project" class="app-sidebar__action app-sidebar__action--button" type="button">Delete</button>
+            </div>
+            <div class="project-controls__row">
+              <label class="sr-only" for="project_name">Project name</label>
+              <input id="project_name" type="text" placeholder="Project name" aria-label="Project name">
+              <button id="save_project_new" class="app-sidebar__action app-sidebar__action--button" type="button">Save new</button>
+              <button id="save_project" class="app-sidebar__action app-sidebar__action--button" type="button">Update</button>
+              <button id="rename_project" class="app-sidebar__action app-sidebar__action--button" type="button">Rename</button>
+            </div>
+            <p id="project_status" class="project-controls__status" role="status" aria-live="polite"></p>
           </div>
         </div>
         <button id="clear_inputs" class="app-sidebar__action" type="button">clear all inputs</button>
