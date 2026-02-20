@@ -121,7 +121,7 @@ function renderWavePlot(svg, {
   xt.forEach(tx => {
     const X = sx(tx);
     svg.appendChild(svgEl('line', { x1: X, y1: MT, x2: X, y2: H - MB, stroke: '#eee' }));
-    const t = svgEl('text', { x: X, y: H - 8, 'text-anchor': 'middle', 'font-size': '12', fill: '#444' });
+    const t = svgEl('text', { x: X, y: H - MB + 18, 'text-anchor': 'middle', 'font-size': '12', fill: '#444' });
     t.textContent = (Math.round(tx * 100) / 100).toString();
     svg.appendChild(t);
   });
@@ -134,7 +134,7 @@ function renderWavePlot(svg, {
   });
 
   // axis labels
-  svg.appendChild(svgEl('text', { x: ML + innerW / 2, y: H - 4, 'text-anchor': 'middle', 'font-size': '12', fill: '#444' }))
+  svg.appendChild(svgEl('text', { x: ML + innerW / 2, y: H - 8, 'text-anchor': 'middle', 'font-size': '12', fill: '#444' }))
      .textContent = 'Period T (s)';
   const yLabel = mode === 'speed' ? 'Speed (m/s)' : 'Wave Height (m)';
   svg.appendChild(svgEl('text', {

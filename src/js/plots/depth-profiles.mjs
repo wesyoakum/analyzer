@@ -245,7 +245,7 @@ function drawSpeedProfile(svg, segments, depthMin, depthMax, speedMin, speedMax,
     if (dx < depthMin - 1e-9 || dx > depthMax + 1e-9) return;
     const X = sx(dx);
     svg.appendChild(svgEl('line', { x1: X, y1: MT, x2: X, y2: H - MB, stroke: '#eee' }));
-    const t = svgEl('text', { x: X, y: H - 8, 'text-anchor': 'middle', 'font-size': '12', fill: '#444' });
+    const t = svgEl('text', { x: X, y: H - MB + 18, 'text-anchor': 'middle', 'font-size': '12', fill: '#444' });
     t.textContent = formatDepthLabel(dx);
     svg.appendChild(t);
   });
@@ -258,7 +258,7 @@ function drawSpeedProfile(svg, segments, depthMin, depthMax, speedMin, speedMax,
     svg.appendChild(t);
   });
 
-  svg.appendChild(svgEl('text', { x: ML + innerW / 2, y: H - 4, 'text-anchor': 'middle', 'font-size': '12', fill: '#444' }))
+  svg.appendChild(svgEl('text', { x: ML + innerW / 2, y: H - 8, 'text-anchor': 'middle', 'font-size': '12', fill: '#444' }))
     .textContent = 'Depth (m)';
   svg.appendChild(svgEl('text', {
     x: 18, y: MT + innerH / 2, transform: `rotate(-90,18,${MT + innerH / 2})`,
@@ -827,7 +827,7 @@ function drawTensionProfile(svg, segments, depthMin, depthMax, tensionMin, tensi
     if (dx < depthMin - 1e-9 || dx > depthMax + 1e-9) return;
     const X = sx(dx);
     svg.appendChild(svgEl('line', { x1: X, y1: MT, x2: X, y2: H - MB, stroke: '#eee' }));
-    const t = svgEl('text', { x: X, y: H - 8, 'text-anchor': 'middle', 'font-size': '12', fill: '#444' });
+    const t = svgEl('text', { x: X, y: H - MB + 18, 'text-anchor': 'middle', 'font-size': '12', fill: '#444' });
     t.textContent = formatDepthLabel(dx);
     svg.appendChild(t);
   });
@@ -840,7 +840,7 @@ function drawTensionProfile(svg, segments, depthMin, depthMax, tensionMin, tensi
     svg.appendChild(t);
   });
 
-  svg.appendChild(svgEl('text', { x: ML + innerW / 2, y: H - 4, 'text-anchor': 'middle', 'font-size': '12', fill: '#444' }))
+  svg.appendChild(svgEl('text', { x: ML + innerW / 2, y: H - 8, 'text-anchor': 'middle', 'font-size': '12', fill: '#444' }))
     .textContent = 'Depth (m)';
   svg.appendChild(svgEl('text', {
     x: 18, y: MT + innerH / 2, transform: `rotate(-90,18,${MT + innerH / 2})`,
