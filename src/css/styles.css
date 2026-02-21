@@ -1171,6 +1171,28 @@ th[title] {
 }
 
 
+
+.plot-panel__actions {
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+}
+
+.plot-panel__checkbox {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 12px;
+  color: var(--ink-700);
+  user-select: none;
+}
+
+.plot-panel__checkbox input {
+  margin: 0;
+}
+
 .plot-settings-btn {
   border: 1px solid var(--paper-line-strong);
   background: var(--paper);
@@ -1356,6 +1378,24 @@ th[title] {
 
 .swatch.red {
   border-top-color: #c65353;
+}
+
+.swatch.sea-state {
+  height: 10px;
+  border-top: none;
+  border-radius: 2px;
+  background: rgba(80,120,255,0.35);
+  box-shadow: inset 0 0 0 1px rgba(98, 109, 132, 0.35);
+}
+
+
+.swatch.break-limit {
+  border-top-color: #b42318;
+  border-top-style: dashed;
+}
+
+.swatch.pm-curve {
+  border-top-color: #175cd3;
 }
 
 .swatch.flow {
