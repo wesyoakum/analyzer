@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
   <meta charset="utf-8" />
-  <title>Winch Analyzer</title>
+  <title>Winch Analysis</title>
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <link rel="stylesheet" href="css/styles.css" />
   <!-- KaTeX setup -->
@@ -40,11 +40,11 @@
               <button id="save_project_new" class="app-sidebar__action app-sidebar__action--button" type="button">Save new</button>
               <button id="save_project" class="app-sidebar__action app-sidebar__action--button" type="button">Update</button>
               <button id="rename_project" class="app-sidebar__action app-sidebar__action--button" type="button">Rename</button>
+              <button id="clear_inputs" class="app-sidebar__action app-sidebar__action--button" type="button">Clear inputs</button>
             </div>
             <p id="project_status" class="project-controls__status" role="status" aria-live="polite"></p>
           </div>
         </div>
-        <button id="clear_inputs" class="app-sidebar__action" type="button">clear all inputs</button>
       </div>
       <div class="report-toolbar" aria-label="Application status">
         <div class="report-toolbar__status">
@@ -52,12 +52,8 @@
         </div>
       </div>
       <div class="app-sidebar__content" id="sidebar-inputs">
-        <details class="card collapsible" data-summary-card open>
-          <summary class="collapsible-summary">
-            <h2 class="section-title">Section 1.1: System Inputs</h2>
-            <span class="collapsible-hint" aria-hidden="true"></span>
-          </summary>
-          <div class="collapsible-body">
+        <section class="card" data-summary-card>
+          <h2 class="section-title">Section 1.1: System Inputs</h2>
             <div class="input-sections">
               <section class="input-section">
                 <h3 class="input-section__title">System</h3>
@@ -411,7 +407,7 @@
           </section>
         </div>
       </div>
-    </details>
+    </section>
     
     
     
@@ -604,12 +600,15 @@
         </section>
       </div>
     </section>
+      <div class="btnbar app-sidebar__footer-actions">
+        <button id="export-all-presets-btn" type="button">Export All Presets</button>
+      </div>
         </div>
     </aside>
     <div class="sheet">
       <header class="page-header">
         <img src="assets/winch-header%20140px.png" alt="TekMarines winch diagram" class="page-header__image" />
-        <h1 class="page-title">Winch Analyzer</h1>
+        <h1 class="page-title">Winch Analysis</h1>
       </header>
       <div class="app-content">
         <div id="err"></div>
@@ -638,7 +637,7 @@
               role="tab"
               aria-selected="false"
               aria-controls="panel-results"
-            >Section 3: Layer &amp; Wrap Tables</button>
+            >Section 3: Layer Tables</button>
             <button
               class="tab-btn"
               id="tab-converter"
@@ -706,13 +705,13 @@
                 <div class="plot-title">Speed vs Period with Height Lines</div>
                 <div class="dim">How to evaluate AHC performance envelope.  The x-axis indicates wave period, the y-axis indicates peak vertical speed, and the contour set traces peak-to-trough wave heights for sinusoidal motion. The colored horizontal layer lines mark each winch layer’s available speed. Therefore, x-value of the intersection of a layer line with a contour indicates the shortest wave period for which the vertical motion can be fully compensated.</div>
               </div>
-              <div class="plot-panel__actions">
-                <label class="plot-panel__checkbox" title="Overlay representative Douglas sea-state bands">
-                  <input id="wave_speed_show_sea_states" type="checkbox">
-                  <span>Sea states</span>
-                </label>
-                <button type="button" class="plot-settings-btn" data-plot-settings-target="plot-settings-wave-speed" aria-label="Open axis settings for speed vs period plot">⚙</button>
-              </div>
+              <button type="button" class="plot-settings-btn" data-plot-settings-target="plot-settings-wave-speed" aria-label="Open axis settings for speed vs period plot">⚙</button>
+            </div>
+            <div class="plot-panel__toggles" aria-label="Wave speed overlays">
+              <label class="plot-panel__checkbox" title="Overlay representative Douglas sea-state bands">
+                <input id="wave_speed_show_sea_states" type="checkbox">
+                <span>Sea states</span>
+              </label>
             </div>
             <div class="plotwrap">
               <svg id="wave_svg" width="1000" height="540" viewBox="0 0 1000 540"></svg>
@@ -729,29 +728,29 @@
                 <div class="plot-title">Wave Height vs Period with Speed Lines</div>
                 <div class="dim">Evaluates the AHC operating envelope with wave period on the x-axis and wave height on the y-axis. Iso-lines track the available winch speed for each layer. Therefore, the area below and to the right of a line represents wave conditions for which, on the indicated layer, the winch can fully compensate for wave motion.</div>
               </div>
-              <div class="plot-panel__actions">
-                <label class="plot-panel__checkbox" title="Overlay representative Douglas sea-state bands">
-                  <input id="wave_show_sea_states" type="checkbox">
-                  <span>Sea states</span>
-                </label>
-                <label class="plot-panel__checkbox" title="Show deep-water breaking limit curve">
-                  <input id="wave_show_breaking_limit" type="checkbox">
-                  <span>Breaking limit</span>
-                </label>
-                <label class="plot-panel__checkbox" title="Show Pierson–Moskowitz fully developed sea curve">
-                  <input id="wave_show_pm_curve" type="checkbox">
-                  <span>PM sea</span>
-                </label>
-                <label class="plot-panel__checkbox" title="Show JONSWAP sea-state approximation (γ≈3.3)">
-                  <input id="wave_show_jonswap_curve" type="checkbox">
-                  <span>JONSWAP</span>
-                </label>
-                <label class="plot-panel__checkbox" title="Show Sverdrup–Munk–Bretschneider (SMB) sea-state approximation">
-                  <input id="wave_show_smb_curve" type="checkbox">
-                  <span>SMB</span>
-                </label>
-                <button type="button" class="plot-settings-btn" data-plot-settings-target="plot-settings-wave-height" aria-label="Open axis settings for wave height vs period plot">⚙</button>
-              </div>
+              <button type="button" class="plot-settings-btn" data-plot-settings-target="plot-settings-wave-height" aria-label="Open axis settings for wave height vs period plot">⚙</button>
+            </div>
+            <div class="plot-panel__toggles" aria-label="Wave height overlays">
+              <label class="plot-panel__checkbox" title="Overlay representative Douglas sea-state bands">
+                <input id="wave_show_sea_states" type="checkbox">
+                <span>Sea states</span>
+              </label>
+              <label class="plot-panel__checkbox" title="Show deep-water breaking limit curve">
+                <input id="wave_show_breaking_limit" type="checkbox">
+                <span>Breaking limit</span>
+              </label>
+              <label class="plot-panel__checkbox" title="Show Pierson–Moskowitz fully developed sea curve">
+                <input id="wave_show_pm_curve" type="checkbox">
+                <span>PM sea</span>
+              </label>
+              <label class="plot-panel__checkbox" title="Show JONSWAP sea-state approximation (γ≈3.3)">
+                <input id="wave_show_jonswap_curve" type="checkbox">
+                <span>JONSWAP</span>
+              </label>
+              <label class="plot-panel__checkbox" title="Show Sverdrup–Munk–Bretschneider (SMB) sea-state approximation">
+                <input id="wave_show_smb_curve" type="checkbox">
+                <span>SMB</span>
+              </label>
             </div>
             <div class="plotwrap">
               <svg id="wave_svg_height" width="1000" height="540" viewBox="0 0 1000 540"></svg>
@@ -922,7 +921,7 @@
     >
       <div class="card" id="drum_card">
         <div class="card-header">
-          <h2 class="section-title">Section 3.1: Drum Visualization</h2>
+          <h2 class="section-title">Section 3.1: Spooling Profile</h2>
           <div class="card-header-actions"></div>
         </div>
         <div class="drum-visual">
@@ -1290,11 +1289,11 @@
           The timestamps are generated at export time and can be left as-is. If you maintain presets in source control, treat each exported file as a ready-made JSON array that is compatible with <code>data/presets.json</code>.
         </p>
         <p>
-          Need to replace the server defaults in one step? Use the button below to download every stored preset as a
+          Need to replace the server defaults in one step? Use the Export All Presets button in the Inputs sidebar to download every stored preset as a
           single <code>data/presets.json</code>-compatible file.
         </p>
         <p>
-          <button id="export-all-presets-btn" type="button">Export All Presets</button>
+          <span class="dim">Use the Export All Presets button in the Inputs sidebar.</span>
         </p>
       </section>
 
