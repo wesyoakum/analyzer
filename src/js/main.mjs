@@ -431,6 +431,55 @@ function readElementStateValue(el) {
   return undefined;
 }
 
+const PROJECT_STATE_PINS_KEY = '__plotPins';
+
+function clonePinArray(value, requiredKeys = []) {
+  if (!Array.isArray(value)) return [];
+  return value
+    .filter(pin => pin && typeof pin === 'object' && requiredKeys.every(key => Number.isFinite(pin[key])))
+    .map((pin, idx) => ({ ...pin, label: typeof pin.label === 'string' && pin.label ? pin.label : `P${idx + 1}` }));
+}
+
+function collectProjectPlotPins() {
+  const waveSvg = /** @type {SVGSVGElement|null} */ (document.getElementById('wave_svg'));
+  const waveHeightSvg = /** @type {SVGSVGElement|null} */ (document.getElementById('wave_svg_height'));
+  const depthSpeedSvg = /** @type {SVGSVGElement|null} */ (document.getElementById('depth_speed_svg'));
+  const depthTensionSvg = /** @type {SVGSVGElement|null} */ (document.getElementById('depth_tension_svg'));
+  const rpmSvg = /** @type {SVGSVGElement|null} */ (document.getElementById('hyd_rpm_torque_svg'));
+  const seaCanvas = /** @type {HTMLCanvasElement|null} */ (document.getElementById('sea-state-canvas'));
+
+  return {
+    wave: clonePinArray(waveSvg?._wavePins, ['x', 'y']),
+    waveHeight: clonePinArray(waveHeightSvg?._wavePins, ['x', 'y']),
+    depthSpeed: clonePinArray(depthSpeedSvg?._depthSpeedPins, ['depth', 'speed']),
+    depthTension: clonePinArray(depthTensionSvg?._depthTensionPins, ['depth', 'tension']),
+    rpmTorque: clonePinArray(rpmSvg?._rpmTorquePins, ['torque', 'rpm']),
+    seaState: clonePinArray(seaCanvas?._seaStatePins, ['Tp', 'Hs'])
+  };
+}
+
+function applyProjectPlotPins(pinState) {
+  if (!pinState || typeof pinState !== 'object') return;
+  const waveSvg = /** @type {SVGSVGElement|null} */ (document.getElementById('wave_svg'));
+  const waveHeightSvg = /** @type {SVGSVGElement|null} */ (document.getElementById('wave_svg_height'));
+  const depthSpeedSvg = /** @type {SVGSVGElement|null} */ (document.getElementById('depth_speed_svg'));
+  const depthTensionSvg = /** @type {SVGSVGElement|null} */ (document.getElementById('depth_tension_svg'));
+  const rpmSvg = /** @type {SVGSVGElement|null} */ (document.getElementById('hyd_rpm_torque_svg'));
+  const seaCanvas = /** @type {HTMLCanvasElement|null} */ (document.getElementById('sea-state-canvas'));
+
+  if (waveSvg) waveSvg._wavePins = clonePinArray(pinState.wave, ['x', 'y']);
+  if (waveHeightSvg) waveHeightSvg._wavePins = clonePinArray(pinState.waveHeight, ['x', 'y']);
+  if (depthSpeedSvg) depthSpeedSvg._depthSpeedPins = clonePinArray(pinState.depthSpeed, ['depth', 'speed']);
+  if (depthTensionSvg) depthTensionSvg._depthTensionPins = clonePinArray(pinState.depthTension, ['depth', 'tension']);
+  if (rpmSvg) rpmSvg._rpmTorquePins = clonePinArray(pinState.rpmTorque, ['torque', 'rpm']);
+  if (seaCanvas) {
+    seaCanvas._seaStatePins = clonePinArray(pinState.seaState, ['Tp', 'Hs']);
+    if (typeof seaCanvas._seaStateRender === 'function') {
+      seaCanvas._seaStateRender();
+    }
+  }
+}
+
 function collectProjectState() {
   const state = collectInputState();
   PLOT_DISPLAY_SETTING_IDS.forEach(id => {
@@ -440,12 +489,14 @@ function collectProjectState() {
       state[id] = value;
     }
   });
+  state[PROJECT_STATE_PINS_KEY] = collectProjectPlotPins();
   return state;
 }
 
 function applyProjectState(state) {
   if (!state || typeof state !== 'object') return;
   Object.entries(state).forEach(([id, value]) => {
+    if (id === PROJECT_STATE_PINS_KEY) return;
     const el = document.getElementById(id);
     if (!el) return;
     if (el.tagName === 'INPUT') {
@@ -472,6 +523,7 @@ function applyProjectState(state) {
     }
     el.dispatchEvent(new Event('change', { bubbles: true }));
   });
+  applyProjectPlotPins(state[PROJECT_STATE_PINS_KEY]);
 }
 
 async function setupProjectManager() {
@@ -486,9 +538,26 @@ async function setupProjectManager() {
   if (!nameInput || !select || !saveNewBtn || !saveBtn || !renameBtn || !loadBtn || !deleteBtn || !statusEl) return;
 
   const LOCAL_PROJECTS_KEY = 'analyzer.projects.v1';
+  const PROJECT_PRESET_ID_PREFIX = 'project-snapshot:';
+  let cachedProjects = [];
 
   const setStatus = (message) => {
     statusEl.textContent = message || '';
+  };
+
+  const normalizeProject = (project) => {
+    if (!project || typeof project !== 'object' || Array.isArray(project)) return null;
+    if (typeof project.id !== 'string' || !project.id.trim()) return null;
+    if (typeof project.name !== 'string' || !project.name.trim()) return null;
+    if (!project.state || typeof project.state !== 'object' || Array.isArray(project.state)) return null;
+    return {
+      id: project.id,
+      name: project.name.trim(),
+      state: project.state,
+      ...(typeof project.createdAt === 'string' ? { createdAt: project.createdAt } : {}),
+      ...(typeof project.updatedAt === 'string' ? { updatedAt: project.updatedAt } : {}),
+      ...(project.origin ? { origin: project.origin } : {})
+    };
   };
 
   const getProjectStorage = () => {
@@ -512,7 +581,7 @@ async function setupProjectManager() {
       if (!raw) return [];
       const parsed = JSON.parse(raw);
       if (!Array.isArray(parsed)) return [];
-      return parsed.filter(project => project && typeof project === 'object' && project.id && project.name);
+      return parsed.map(normalizeProject).filter(Boolean);
     } catch (err) {
       console.warn('Unable to read local projects:', err);
       return [];
@@ -531,7 +600,7 @@ async function setupProjectManager() {
     }
   };
 
-  const saveLocalProject = ({ id, name, state }) => {
+  const upsertLocalProject = ({ id, name, state }) => {
     const timestamp = new Date().toISOString();
     const projects = readLocalProjects();
     const existingIndex = id ? projects.findIndex(project => project.id === id) : -1;
@@ -551,7 +620,7 @@ async function setupProjectManager() {
     }
 
     const created = {
-      id: `${Date.now()}-${Math.random().toString(16).slice(2, 10)}`,
+      id: id || `${Date.now()}-${Math.random().toString(16).slice(2, 10)}`,
       name,
       state,
       createdAt: timestamp,
@@ -562,13 +631,62 @@ async function setupProjectManager() {
     return created;
   };
 
+  const fetchPresetProjects = async () => {
+    try {
+      const response = await fetch('/api/presets');
+      if (!response.ok) return [];
+      const body = await response.json();
+      const presets = Array.isArray(body?.presets) ? body.presets : [];
+      return presets.map((preset) => {
+        if (!preset || typeof preset !== 'object' || Array.isArray(preset)) return null;
+        const metadata = preset.metadata;
+        if (!metadata || typeof metadata !== 'object' || Array.isArray(metadata)) return null;
+        if (metadata.type !== 'project') return null;
+        const state = metadata.projectState && typeof metadata.projectState === 'object' && !Array.isArray(metadata.projectState)
+          ? metadata.projectState
+          : null;
+        if (!state) return null;
+        const name = typeof metadata.projectName === 'string' && metadata.projectName.trim()
+          ? metadata.projectName.trim()
+          : (typeof preset.name === 'string' && preset.name.trim() ? preset.name.trim() : 'Preset Project');
+        const projectId = typeof metadata.projectId === 'string' && metadata.projectId.trim()
+          ? metadata.projectId.trim()
+          : (typeof preset.id === 'string' && preset.id.trim() ? preset.id.trim() : `${Date.now()}`);
+        return normalizeProject({
+          id: projectId,
+          name,
+          state,
+          createdAt: preset.createdAt,
+          updatedAt: preset.updatedAt,
+          origin: 'preset'
+        });
+      }).filter(Boolean);
+    } catch (err) {
+      return [];
+    }
+  };
+
+  const mergeProjects = (...lists) => {
+    const byId = new Map();
+    lists.flat().forEach((candidate) => {
+      const project = normalizeProject(candidate);
+      if (!project) return;
+      byId.set(project.id, project);
+    });
+    return Array.from(byId.values()).sort((a, b) => {
+      const aUpdated = typeof a.updatedAt === 'string' ? Date.parse(a.updatedAt) : 0;
+      const bUpdated = typeof b.updatedAt === 'string' ? Date.parse(b.updatedAt) : 0;
+      return bUpdated - aUpdated;
+    });
+  };
+
   const renderProjects = (projects) => {
+    cachedProjects = projects;
     const currentSelection = select.value;
     while (select.options.length > 1) {
       select.remove(1);
     }
     projects.forEach(project => {
-      if (!project || typeof project !== 'object' || !project.id || !project.name) return;
       const option = document.createElement('option');
       option.value = project.id;
       option.textContent = project.name;
@@ -578,36 +696,67 @@ async function setupProjectManager() {
   };
 
   const loadProjects = async () => {
+    const localProjects = readLocalProjects();
+    let remoteProjects = [];
     try {
       const response = await fetch('/api/projects');
-      if (!response.ok) {
-        const localProjects = readLocalProjects();
-        renderProjects(localProjects);
-        return localProjects;
+      if (response.ok) {
+        const body = await response.json();
+        remoteProjects = (Array.isArray(body?.projects) ? body.projects : []).map(normalizeProject).filter(Boolean);
       }
-      const body = await response.json();
-      const projects = Array.isArray(body?.projects) ? body.projects : [];
-      renderProjects(projects);
-      return projects;
     } catch (err) {
-      const localProjects = readLocalProjects();
-      renderProjects(localProjects);
-      return localProjects;
+      // local fallback stays active
     }
+
+    const presetProjects = await fetchPresetProjects();
+    const merged = mergeProjects(remoteProjects, presetProjects, localProjects);
+    renderProjects(merged);
+    return merged;
   };
 
   const getProjectById = async (projectId) => {
     if (!projectId) return null;
+    const cached = cachedProjects.find(project => project.id === projectId);
+    if (cached) return cached;
     try {
       const response = await fetch(`/api/projects/${encodeURIComponent(projectId)}`);
       if (response.ok) {
         const body = await response.json();
-        return body?.project || null;
+        return normalizeProject(body?.project);
       }
     } catch (err) {
-      // Fallback to local storage below.
+      // Fallback to local and preset-backed projects below.
     }
-    return readLocalProjects().find(project => project.id === projectId) || null;
+    const projects = await loadProjects();
+    return projects.find(project => project.id === projectId) || null;
+  };
+
+  const publishProjectSnapshotPreset = async (project) => {
+    if (!project || typeof project !== 'object') return false;
+    const payload = {
+      id: `${PROJECT_PRESET_ID_PREFIX}${project.id}`,
+      name: project.name,
+      description: 'Auto-generated snapshot of a saved project.',
+      data: project.state,
+      metadata: {
+        type: 'project',
+        label: 'Project Snapshot',
+        projectId: project.id,
+        projectName: project.name,
+        projectState: project.state
+      }
+    };
+
+    try {
+      const response = await fetch('/api/presets', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(payload)
+      });
+      return response.ok;
+    } catch (err) {
+      return false;
+    }
   };
 
   const saveProject = async ({ useSelectedId }) => {
@@ -624,6 +773,9 @@ async function setupProjectManager() {
       state: collectProjectState()
     };
 
+    let savedProject = null;
+    let savedRemotely = false;
+
     try {
       const response = await fetch('/api/projects', {
         method: 'POST',
@@ -631,33 +783,29 @@ async function setupProjectManager() {
         body: JSON.stringify(payload)
       });
 
-      if (!response.ok) {
-        const saved = saveLocalProject(payload);
-        await loadProjects();
-        select.value = saved.id;
-        nameInput.value = saved.name || name;
-        setStatus(selectedId ? 'Updated locally (server unavailable).' : 'Saved locally (server unavailable).');
-        return;
+      if (response.ok) {
+        const body = await response.json();
+        savedProject = normalizeProject(body?.project);
+        savedRemotely = Boolean(savedProject?.id);
       }
-
-      const body = await response.json();
-      const project = body?.project;
-      if (!project?.id) {
-        window.alert('Project saved but response was invalid.');
-        return;
-      }
-
-      await loadProjects();
-      select.value = project.id;
-      nameInput.value = project.name || name;
-      setStatus(selectedId ? 'Project updated.' : 'Project saved.');
     } catch (err) {
-      const saved = saveLocalProject(payload);
-      await loadProjects();
-      select.value = saved.id;
-      nameInput.value = saved.name || name;
-      setStatus(selectedId ? 'Updated locally (offline mode).' : 'Saved locally (offline mode).');
+      // local fallback below
     }
+
+    if (!savedProject) {
+      savedProject = upsertLocalProject(payload);
+    } else {
+      upsertLocalProject(savedProject);
+    }
+
+    if (savedRemotely) {
+      await publishProjectSnapshotPreset(savedProject);
+    }
+
+    await loadProjects();
+    select.value = savedProject.id;
+    nameInput.value = savedProject.name || name;
+    setStatus(savedRemotely ? (selectedId ? 'Project updated.' : 'Project saved.') : (selectedId ? 'Updated locally (offline/server unavailable).' : 'Saved locally (offline/server unavailable).'));
   };
 
   saveNewBtn.addEventListener('click', async () => {
@@ -691,37 +839,8 @@ async function setupProjectManager() {
       return;
     }
 
-    const payload = {
-      id: selectedId,
-      name: nextName,
-      state: current.state
-    };
-
-    try {
-      const response = await fetch('/api/projects', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(payload)
-      });
-
-      if (!response.ok) {
-        saveLocalProject(payload);
-        await loadProjects();
-        select.value = selectedId;
-        setStatus('Renamed locally (server unavailable).');
-        return;
-      }
-
-      await loadProjects();
-      select.value = selectedId;
-      nameInput.value = nextName;
-      setStatus('Project renamed.');
-    } catch (err) {
-      saveLocalProject(payload);
-      await loadProjects();
-      select.value = selectedId;
-      setStatus('Renamed locally (offline mode).');
-    }
+    await saveProject({ useSelectedId: true });
+    nameInput.value = nextName;
   });
 
   loadBtn.addEventListener('click', async () => {
@@ -731,41 +850,16 @@ async function setupProjectManager() {
       return;
     }
 
-    try {
-      const response = await fetch(`/api/projects/${encodeURIComponent(selectedId)}`);
-      if (!response.ok) {
-        const localProject = readLocalProjects().find(project => project.id === selectedId);
-        if (!localProject || typeof localProject.state !== 'object' || localProject.state === null) {
-          window.alert('Project not found.');
-          return;
-        }
-        applyProjectState(localProject.state);
-        nameInput.value = localProject.name || '';
-        computeAll();
-        setStatus('Project loaded (local cache).');
-        return;
-      }
-      const body = await response.json();
-      const project = body?.project;
-      if (!project || typeof project.state !== 'object' || project.state === null) {
-        window.alert('Saved project is malformed.');
-        return;
-      }
-      applyProjectState(project.state);
-      nameInput.value = project.name || '';
-      computeAll();
-      setStatus('Project loaded.');
-    } catch (err) {
-      const localProject = readLocalProjects().find(project => project.id === selectedId);
-      if (!localProject || typeof localProject.state !== 'object' || localProject.state === null) {
-        window.alert('Unable to load project.');
-        return;
-      }
-      applyProjectState(localProject.state);
-      nameInput.value = localProject.name || '';
-      computeAll();
-      setStatus('Project loaded (offline mode).');
+    const project = await getProjectById(selectedId);
+    if (!project || typeof project.state !== 'object' || project.state === null) {
+      window.alert('Unable to load project.');
+      return;
     }
+
+    applyProjectState(project.state);
+    nameInput.value = project.name || '';
+    computeAll();
+    setStatus(project.origin === 'preset' ? 'Project loaded from preset snapshot.' : 'Project loaded.');
   });
 
   deleteBtn.addEventListener('click', async () => {
@@ -779,27 +873,23 @@ async function setupProjectManager() {
     if (!window.confirm(`Delete ${selectedName}?`)) return;
 
     try {
-      const response = await fetch(`/api/projects/${encodeURIComponent(selectedId)}`, {
-        method: 'DELETE'
-      });
-      if (!response.ok && response.status !== 404) {
-        const projects = readLocalProjects().filter(project => project.id !== selectedId);
-        writeLocalProjects(projects);
-        await loadProjects();
-        nameInput.value = '';
-        setStatus('Deleted from local cache (server unavailable).');
-        return;
-      }
-      await loadProjects();
-      nameInput.value = '';
-      setStatus('Project deleted.');
+      await fetch(`/api/projects/${encodeURIComponent(selectedId)}`, { method: 'DELETE' });
     } catch (err) {
-      const projects = readLocalProjects().filter(project => project.id !== selectedId);
-      writeLocalProjects(projects);
-      await loadProjects();
-      nameInput.value = '';
-      setStatus('Deleted from local cache (offline mode).');
+      // ignore; local delete still applied
     }
+
+    const projects = readLocalProjects().filter(project => project.id !== selectedId);
+    writeLocalProjects(projects);
+
+    try {
+      await fetch(`/api/presets/${encodeURIComponent(`${PROJECT_PRESET_ID_PREFIX}${selectedId}`)}`, { method: 'DELETE' });
+    } catch (err) {
+      // ignore
+    }
+
+    await loadProjects();
+    nameInput.value = '';
+    setStatus('Project deleted.');
   });
 
   select.addEventListener('change', () => {

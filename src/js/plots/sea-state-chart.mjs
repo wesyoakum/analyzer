@@ -39,7 +39,11 @@ export function setupSeaStateChart() {
   const M = { l: 70, r: 18, t: 18, b: 52 };
 
   let mouse = { inside: false, Tp: null, Hs: null };
-  let pins = [];
+  let pins = Array.isArray(canvas._seaStatePins) ? canvas._seaStatePins.map(pin => ({ ...pin })) : [];
+
+  const syncPinsToCanvas = () => {
+    canvas._seaStatePins = pins.map((pin, idx) => ({ ...pin, label: pin.label || `P${idx + 1}` }));
+  };
 
   function resizeCanvasToCSS() {
     const rect = canvas.getBoundingClientRect();
@@ -338,6 +342,7 @@ export function setupSeaStateChart() {
   }
 
   function updatePinsTable() {
+    syncPinsToCanvas();
     pinsBody.innerHTML = '';
     pins.forEach(p => {
       const vz = verticalSpeedMax(p.Hs, p.Tp);
@@ -467,6 +472,7 @@ export function setupSeaStateChart() {
     const m = getMousePlotValues(evt);
     if (!m.inside) return;
     pins.push({ id: makeId(), Tp: m.Tp, Hs: m.Hs, label: nextLabel() });
+    syncPinsToCanvas();
     updatePinsTable();
     render();
   });
@@ -481,6 +487,7 @@ export function setupSeaStateChart() {
     pins.forEach((p, i) => {
       p.label = `P${i + 1}`;
     });
+    syncPinsToCanvas();
     updatePinsTable();
     render();
   });
@@ -491,13 +498,22 @@ export function setupSeaStateChart() {
 
   clearPinsBtn.addEventListener('click', () => {
     pins = [];
+    syncPinsToCanvas();
     updatePinsTable();
     render();
   });
 
   window.addEventListener('resize', render);
 
+  canvas._seaStateRender = () => {
+    pins = Array.isArray(canvas._seaStatePins) ? canvas._seaStatePins.map(pin => ({ ...pin })) : [];
+    pins.forEach((pin, idx) => { pin.label = pin.label || `P${idx + 1}`; });
+    updatePinsTable();
+    render();
+  };
+
   buildLegend();
+  syncPinsToCanvas();
   updatePinsTable();
   render();
 }
