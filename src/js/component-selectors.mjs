@@ -17,6 +17,7 @@
  * @property {number|string|boolean} [rated_speed_mpm]
  * @property {number|string|boolean} [dead_m]
  * @property {number|string|boolean} [depth_m]
+ * @property {number|string|boolean} [cable_len_m]
  * @property {number|string|boolean} [pump_disp_cc]
  * @property {number|string|boolean} [pump_max_psi]
  * @property {number|string|boolean} [hyd_motor_disp_cc]
@@ -153,7 +154,7 @@ const VEROTOP_CABLE_OPTIONS = VEROTOP_CABLE_SPECS.flatMap((spec) => {
       description: `Verotop ${spec.c_mm} mm rope grade 1960 — ${spec.mass_kgpm} kg/m, MBL ${spec.mbl_t_1960} t`,
       c_mm: spec.c_mm,
       c_w_kgpm: spec.mass_kgpm,
-      mbl_kgf: spec.mbl_t_1960 * 1000
+      mbl_kgf: Math.round(spec.mbl_t_1960 * 1000)
     }
   ];
 
@@ -163,7 +164,7 @@ const VEROTOP_CABLE_OPTIONS = VEROTOP_CABLE_SPECS.flatMap((spec) => {
       description: `Verotop ${spec.c_mm} mm rope grade 2060 — ${spec.mass_kgpm} kg/m, MBL ${spec.mbl_t_2060} t`,
       c_mm: spec.c_mm,
       c_w_kgpm: spec.mass_kgpm,
-      mbl_kgf: spec.mbl_t_2060 * 1000
+      mbl_kgf: Math.round(spec.mbl_t_2060 * 1000)
     });
   }
 
@@ -766,6 +767,7 @@ export const SYSTEM_OPTIONS = [
     hpu_motor_select: 'LAM75-18-365TC',
     rated_swl_kgf: 8000,
     rated_speed_mpm: 30,
+    cable_len_m: 3100,
     dead_m: 100,
     depth_m: 3000,
     core_in: 70.5,
@@ -796,6 +798,7 @@ export const SYSTEM_OPTIONS = [
     hpu_motor_select: 'LAM110-12-444TC',
     rated_swl_kgf: 12000,
     rated_speed_mpm: 25,
+    cable_len_m: 3620,
     dead_m: 120,
     depth_m: 3500,
     core_in: 82,
@@ -819,6 +822,7 @@ export const SYSTEM_OPTIONS = [
 export const FIELD_MAPS = {
   cable: /** @type {SelectConfig['fieldMap']} */ ({
     c_mm: 'c_mm',
+    cable_len_m: 'cable_len_m',
     depth_m: 'depth_m',
     dead_m: 'dead_m',
     c_w_kgpm: 'c_w_kgpm',
@@ -874,6 +878,7 @@ export const FIELD_MAPS = {
     payload_select: 'payload_select',
     rated_swl_kgf: 'rated_swl_kgf',
     rated_speed_mpm: 'rated_speed_mpm',
+    cable_len_m: 'cable_len_m',
     dead_m: 'dead_m',
     depth_m: 'depth_m',
     core_in: 'core_in',
@@ -1722,8 +1727,12 @@ function applySelection(config, pn, { skipEvents = false } = {}) {
   fieldEntries.forEach(([inputId, optionKey]) => {
     const inputEl = /** @type {HTMLElement|null} */ (document.getElementById(inputId));
     if (!inputEl) return;
-    const value = option[optionKey];
+    let value = option[optionKey];
     if (value == null) return;
+    if (inputId === 'mbl_kgf') {
+      const numeric = Number(value);
+      if (Number.isFinite(numeric)) value = Math.round(numeric);
+    }
     inputEl.dataset.componentSelect = config.selectId;
     inputEl.dataset.componentPn = option.pn;
     inputEl.dataset.componentSuppress = '1';
