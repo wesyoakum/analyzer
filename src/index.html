@@ -1201,17 +1201,18 @@
         <h2 class="section-title" id="preset-export-guide-title">Exporting component presets</h2>
         <p>
           Use the <strong>Export Preset</strong> option that now appears in every component selector to download the current
-          field values as a JSON file. The downloaded file can be appended to <code>data/presets.json</code> so the preset is
-          available to all users.
+          field values as a JSON file. The downloaded file is now in <code>data/presets.json</code>-compatible array format,
+          so it can replace that file directly or be merged with other exports.
         </p>
         <ol>
           <li>Select the component you want to export and adjust any inputs until they match the desired configuration.</li>
           <li>Choose <strong>Export Preset</strong> from the same dropdown. If no preset name or part number is available, you will be prompted to provide them.</li>
-          <li>Save the downloaded file and paste its contents into the array in <code>data/presets.json</code>. Keep entries comma-separated and formatted as valid JSON.</li>
+          <li>Save the downloaded file and either use it as <code>data/presets.json</code> directly (single-preset catalog) or merge its array entries with your existing preset catalog.</li>
           <li>Restart the analyzer server (or reload the page) so the new preset is picked up the next time selectors load.</li>
         </ol>
         <p>Each export shares a common shape:</p>
-        <pre><code>{
+        <pre><code>[
+  {
   "id": "uuid",
   "pn": "Human-friendly part number",
   "name": "Display name",
@@ -1225,7 +1226,8 @@
   },
   "createdAt": "2024-01-01T00:00:00.000Z",
   "updatedAt": "2024-01-01T00:00:00.000Z"
-}</code></pre>
+  }
+]</code></pre>
         <p>Component-specific <code>data</code> keys and <code>fieldMap</code> entries include:</p>
         <ul>
           <li><strong>Cable</strong> — <code>data</code>: <code>c_mm</code>, <code>depth_m</code>, <code>dead_m</code>, <code>c_w_kgpm</code>, <code>mbl_kgf</code>; <code>fieldMap</code> mirrors those keys.</li>
@@ -1248,7 +1250,7 @@
           </li>
         </ul>
         <p>
-          The timestamps are generated at export time and can be left as-is. If you maintain presets in source control, treat each exported file as a ready-made object to paste into the master list.
+          The timestamps are generated at export time and can be left as-is. If you maintain presets in source control, treat each exported file as a ready-made JSON array that is compatible with <code>data/presets.json</code>.
         </p>
         <p>
           Need to replace the server defaults in one step? Use the button below to download every stored preset as a
