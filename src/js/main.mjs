@@ -1329,9 +1329,6 @@ function setupCollapsibleToggles() {
   let collapseIdCounter = 0;
   const configs = [
     { selector: '#component-catalog-card', headerSelector: '.section-title', defaultExpanded: false },
-    { selector: '#sidebar-inputs .card[data-drive-scope]', headerSelector: '.section-title', defaultExpanded: true },
-    { selector: '#sidebar-inputs .input-section', headerSelector: '.input-section__title', defaultExpanded: true },
-    { selector: '#sidebar-inputs .input-subsection', headerSelector: '.input-subsection__title', defaultExpanded: true },
     { selector: '.plot-controls__group', headerSelector: '.plot-controls__group-title', defaultExpanded: false }
   ];
 
