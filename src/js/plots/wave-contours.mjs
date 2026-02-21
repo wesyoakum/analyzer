@@ -34,6 +34,8 @@ function renderWavePlot(svg, {
   showSeaStateOverlay = false,
   showBreakingLimit = false,
   showPmCurve = false,
+  showJonswapCurve = false,
+  showSmbCurve = false,
 
   elLayers = [],
   hyLayers = []
@@ -453,6 +455,20 @@ function renderWavePlot(svg, {
       drawReferenceCurve(
         T => (0.21 * 9.80665 * T * T) / (7.54 * 7.54),
         { stroke: '#175cd3', strokeWidth: 2.8, label: 'PM fully developed sea', labelT: Math.min(Tmax - 0.8, 12), labelOffsetY: 14 }
+      );
+    }
+
+    if (showJonswapCurve) {
+      drawReferenceCurve(
+        T => (0.174 * 9.80665 * T * T) / (7.54 * 7.54),
+        { stroke: '#0f766e', strokeWidth: 2.4, dash: '8 6', label: 'JONSWAP sea (γ≈3.3)', labelT: Math.min(Tmax - 1.2, 10), labelOffsetY: -12 }
+      );
+    }
+
+    if (showSmbCurve) {
+      drawReferenceCurve(
+        T => (0.24 * 9.80665 * T * T) / (8.1 * 8.1),
+        { stroke: '#7c3aed', strokeWidth: 2.4, dash: '4 6', label: 'SMB sea (fetch-limited)', labelT: Math.min(Tmax - 1.0, 9.5), labelOffsetY: 12 }
       );
     }
 
