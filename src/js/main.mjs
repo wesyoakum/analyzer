@@ -544,7 +544,6 @@ async function setupProjectManager() {
   if (!nameInput || !select || !saveNewBtn || !saveBtn || !renameBtn || !loadBtn || !deleteBtn || !statusEl) return;
 
   const LOCAL_PROJECTS_KEY = 'analyzer.projects.v1';
-  const PROJECT_PRESET_ID_PREFIX = 'project-snapshot:';
   let cachedProjects = [];
 
   const setStatus = (message) => {
@@ -637,41 +636,6 @@ async function setupProjectManager() {
     return created;
   };
 
-  const fetchPresetProjects = async () => {
-    try {
-      const response = await fetch('/api/presets');
-      if (!response.ok) return [];
-      const body = await response.json();
-      const presets = Array.isArray(body?.presets) ? body.presets : [];
-      return presets.map((preset) => {
-        if (!preset || typeof preset !== 'object' || Array.isArray(preset)) return null;
-        const metadata = preset.metadata;
-        if (!metadata || typeof metadata !== 'object' || Array.isArray(metadata)) return null;
-        if (metadata.type !== 'project') return null;
-        const state = metadata.projectState && typeof metadata.projectState === 'object' && !Array.isArray(metadata.projectState)
-          ? metadata.projectState
-          : null;
-        if (!state) return null;
-        const name = typeof metadata.projectName === 'string' && metadata.projectName.trim()
-          ? metadata.projectName.trim()
-          : (typeof preset.name === 'string' && preset.name.trim() ? preset.name.trim() : 'Preset Project');
-        const projectId = typeof metadata.projectId === 'string' && metadata.projectId.trim()
-          ? metadata.projectId.trim()
-          : (typeof preset.id === 'string' && preset.id.trim() ? preset.id.trim() : `${Date.now()}`);
-        return normalizeProject({
-          id: projectId,
-          name,
-          state,
-          createdAt: preset.createdAt,
-          updatedAt: preset.updatedAt,
-          origin: 'preset'
-        });
-      }).filter(Boolean);
-    } catch (err) {
-      return [];
-    }
-  };
-
   const mergeProjects = (...lists) => {
     const byId = new Map();
     lists.flat().forEach((candidate) => {
@@ -714,8 +678,7 @@ async function setupProjectManager() {
       // local fallback stays active
     }
 
-    const presetProjects = await fetchPresetProjects();
-    const merged = mergeProjects(remoteProjects, presetProjects, localProjects);
+    const merged = mergeProjects(remoteProjects, localProjects);
     renderProjects(merged);
     return merged;
   };
@@ -735,34 +698,6 @@ async function setupProjectManager() {
     }
     const projects = await loadProjects();
     return projects.find(project => project.id === projectId) || null;
-  };
-
-  const publishProjectSnapshotPreset = async (project) => {
-    if (!project || typeof project !== 'object') return false;
-    const payload = {
-      id: `${PROJECT_PRESET_ID_PREFIX}${project.id}`,
-      name: project.name,
-      description: 'Auto-generated snapshot of a saved project.',
-      data: project.state,
-      metadata: {
-        type: 'project',
-        label: 'Project Snapshot',
-        projectId: project.id,
-        projectName: project.name,
-        projectState: project.state
-      }
-    };
-
-    try {
-      const response = await fetch('/api/presets', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(payload)
-      });
-      return response.ok;
-    } catch (err) {
-      return false;
-    }
   };
 
   const saveProject = async ({ useSelectedId }) => {
@@ -804,9 +739,6 @@ async function setupProjectManager() {
       upsertLocalProject(savedProject);
     }
 
-    if (savedRemotely) {
-      await publishProjectSnapshotPreset(savedProject);
-    }
 
     await loadProjects();
     select.value = savedProject.id;
@@ -865,7 +797,7 @@ async function setupProjectManager() {
     applyProjectState(project.state);
     nameInput.value = project.name || '';
     computeAll();
-    setStatus(project.origin === 'preset' ? 'Project loaded from preset snapshot.' : 'Project loaded.');
+    setStatus('Project loaded.');
   });
 
   deleteBtn.addEventListener('click', async () => {
@@ -887,11 +819,6 @@ async function setupProjectManager() {
     const projects = readLocalProjects().filter(project => project.id !== selectedId);
     writeLocalProjects(projects);
 
-    try {
-      await fetch(`/api/presets/${encodeURIComponent(`${PROJECT_PRESET_ID_PREFIX}${selectedId}`)}`, { method: 'DELETE' });
-    } catch (err) {
-      // ignore
-    }
 
     await loadProjects();
     nameInput.value = '';

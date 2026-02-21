@@ -429,79 +429,12 @@ app.get('/api/presets/:id', async (req, res, next) => {
   }
 });
 
-app.post('/api/presets', async (req, res, next) => {
-  const payload = req.body;
-  const { valid, errors } = validatePresetPayload(payload);
-  if (!valid) {
-    return sendError(res, 400, 'Invalid preset payload.', errors);
-  }
-
-  const description =
-    typeof payload.description === 'string' && payload.description.trim().length > 0
-      ? payload.description.trim()
-      : undefined;
-
-  const timestamp = new Date().toISOString();
-  const presetToSave = {
-    id: payload.id && typeof payload.id === 'string' ? payload.id : generateId(),
-    name: payload.name.trim(),
-    ...(description ? { description } : {}),
-    data: payload.data,
-    ...(payload.metadata !== undefined ? { metadata: payload.metadata } : {}),
-    updatedAt: timestamp,
-  };
-
-  try {
-    const result = await withFileLock(async () => {
-      const presets = await readPresets();
-      const existingIndex = presets.findIndex((item) => item.id === presetToSave.id);
-      if (existingIndex >= 0) {
-        const existingPreset = presets[existingIndex];
-        const mergedPreset = {
-          ...existingPreset,
-          ...presetToSave,
-          createdAt: existingPreset.createdAt ?? timestamp,
-        };
-        presets[existingIndex] = mergedPreset;
-        await writePresets(presets);
-        return { preset: mergedPreset, isNew: false };
-      }
-
-      const presetToInsert = { ...presetToSave, createdAt: timestamp };
-      presets.push(presetToInsert);
-      await writePresets(presets);
-      return { preset: presetToInsert, isNew: true };
-    });
-
-    const status = result.isNew ? 201 : 200;
-    res.status(status).json({ preset: result.preset });
-  } catch (err) {
-    next(err);
-  }
+app.post('/api/presets', async (req, res) => {
+  return sendError(res, 405, 'Presets are hard-coded and read-only.');
 });
 
-app.delete('/api/presets/:id', async (req, res, next) => {
-  const presetId = req.params.id;
-  try {
-    const removed = await withFileLock(async () => {
-      const presets = await readPresets();
-      const index = presets.findIndex((item) => item.id === presetId);
-      if (index === -1) {
-        return false;
-      }
-      presets.splice(index, 1);
-      await writePresets(presets);
-      return true;
-    });
-
-    if (!removed) {
-      return sendError(res, 404, 'Preset not found.');
-    }
-
-    res.status(204).send();
-  } catch (err) {
-    next(err);
-  }
+app.delete('/api/presets/:id', async (req, res) => {
+  return sendError(res, 405, 'Presets are hard-coded and read-only.');
 });
 
 app.get('/api/projects', async (req, res, next) => {

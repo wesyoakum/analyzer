@@ -1497,11 +1497,6 @@ function populateSelectOptions(selectEl, config, { selectedValue } = {}) {
     selectEl.appendChild(opt);
   });
 
-  const createOpt = document.createElement('option');
-  createOpt.value = CREATE_NEW_VALUE;
-  createOpt.textContent = 'Create New';
-  selectEl.appendChild(createOpt);
-
   const exportOpt = document.createElement('option');
   exportOpt.value = EXPORT_PRESET_VALUE;
   exportOpt.textContent = EXPORT_PRESET_LABEL;
@@ -1509,7 +1504,7 @@ function populateSelectOptions(selectEl, config, { selectedValue } = {}) {
   exportOpt.disabled = true;
   selectEl.appendChild(exportOpt);
 
-  if (prior && prior !== CREATE_NEW_VALUE && prior !== EXPORT_PRESET_VALUE && findOption(config, prior)) {
+  if (prior && prior !== EXPORT_PRESET_VALUE && findOption(config, prior)) {
     selectEl.value = prior;
   } else if (prior === '') {
     selectEl.value = '';
@@ -1762,21 +1757,11 @@ function applySelection(config, pn, { skipEvents = false } = {}) {
 }
 
 export function setupComponentSelectors() {
-  const initializedTypes = new Set();
-  SELECT_CONFIGS.forEach(config => {
-    const type = config.type;
-    if (!type || initializedTypes.has(type)) return;
-    const loaded = loadCustomOptions(type);
-    rememberCustomOptions(type, loaded);
-    initializedTypes.add(type);
-  });
-
   SELECT_CONFIGS.forEach(config => {
     const selectEl = /** @type {HTMLSelectElement|null} */ (document.getElementById(config.selectId));
     if (!selectEl) return;
 
-    const customOptions = getRememberedCustomOptions(config.type);
-    config.customOptions = customOptions;
+    config.customOptions = [];
 
     const initialValue = selectEl.value;
     const { initialSkipEvents = true } = config;
@@ -1806,7 +1791,7 @@ export function setupComponentSelectors() {
 
     Object.keys(config.fieldMap).forEach(inputId => attachWatcher(inputId));
 
-    let previousValue = selectEl.value && selectEl.value !== CREATE_NEW_VALUE ? selectEl.value : '';
+    let previousValue = selectEl.value || '';
     let suppressNext = false;
 
     const ensureOptionApplied = (value, { skipEvents = false } = {}) => {
@@ -1818,7 +1803,7 @@ export function setupComponentSelectors() {
         return;
       }
 
-      const activeValue = previousValue && previousValue !== CREATE_NEW_VALUE ? previousValue : '';
+      const activeValue = previousValue || '';
       const option = activeValue ? findOption(config, activeValue) : undefined;
       const label = config.label || 'component';
 
@@ -1911,22 +1896,6 @@ export function setupComponentSelectors() {
         return;
       }
 
-      if (value === CREATE_NEW_VALUE) {
-        selectEl.value = previousValue;
-        const createdPn = await handleCreateNew(config, selectEl);
-        if (createdPn) {
-          previousValue = createdPn;
-          suppressNext = true;
-          selectEl.value = createdPn;
-          ensureOptionApplied(createdPn);
-          selectEl.dispatchEvent(new Event('change', { bubbles: true }));
-        } else {
-          ensureOptionApplied(previousValue);
-        }
-        updatePresetActionState();
-        return;
-      }
-
       previousValue = value;
       ensureOptionApplied(value);
       updatePresetActionState();
@@ -1941,7 +1910,6 @@ export function setupComponentSelectors() {
   });
 
   setupExportAllPresetsButton();
-  void fetchAndApplyServerPresets();
 }
 
 async function fetchAndApplyServerPresets() {
