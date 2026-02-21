@@ -1487,7 +1487,7 @@ function populateSelectOptions(selectEl, config, { selectedValue } = {}) {
   selectEl.innerHTML = '';
   const manualOpt = document.createElement('option');
   manualOpt.value = '';
-  manualOpt.textContent = 'Custom (manual input)';
+  manualOpt.textContent = '-';
   selectEl.appendChild(manualOpt);
 
   allOptions(config).forEach(option => {
