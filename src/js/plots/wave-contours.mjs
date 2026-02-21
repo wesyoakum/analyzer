@@ -340,27 +340,13 @@ function renderWavePlot(svg, {
             y: sy(hLabel) + labelOffsetY,
             'text-anchor': 'start',
             'font-size': '11',
-            fill: '#1f2a44'
+            fill: stroke
           });
           txt.textContent = label;
           svg.appendChild(txt);
         }
       }
     };
-
-    if (showBreakingLimit) {
-      drawReferenceCurve(
-        T => (9.80665 * T * T) / (14 * Math.PI),
-        { stroke: '#1f2a44', strokeWidth: 2.4, dash: '8 6', label: 'Breaking limit', labelT: Math.min(Tmax - 0.8, 12), labelOffsetY: -8 }
-      );
-    }
-
-    if (showPmCurve) {
-      drawReferenceCurve(
-        T => (0.21 * 9.80665 * T * T) / (7.54 * 7.54),
-        { stroke: '#1f2a44', strokeWidth: 2.2, label: 'PM fully developed sea', labelT: Math.min(Tmax - 0.8, 13), labelOffsetY: 14 }
-      );
-    }
 
     // contour lines for each layer speed (H = vÂ·T / Ï€)
     layerSpeeds.forEach(L => {
@@ -400,7 +386,23 @@ function renderWavePlot(svg, {
       }
     });
 
+
     drawSeaStateOverlay();
+
+    if (showBreakingLimit) {
+      drawReferenceCurve(
+        T => (9.80665 * T * T) / (14 * Math.PI),
+        { stroke: '#b42318', strokeWidth: 3, dash: '10 6', label: 'Breaking limit', labelT: Math.min(Tmax - 0.8, 11), labelOffsetY: -10 }
+      );
+    }
+
+    if (showPmCurve) {
+      drawReferenceCurve(
+        T => (0.21 * 9.80665 * T * T) / (7.54 * 7.54),
+        { stroke: '#175cd3', strokeWidth: 2.8, label: 'PM fully developed sea', labelT: Math.min(Tmax - 0.8, 12), labelOffsetY: 14 }
+      );
+    }
+
   }
 
   const hoverLayer = svgEl('g', { 'pointer-events': 'none' });
