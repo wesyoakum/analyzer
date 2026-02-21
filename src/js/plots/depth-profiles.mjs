@@ -182,7 +182,7 @@ export function drawDepthProfiles(svgSpeed, svgTension, {
     extraProfiles: Array.isArray(speed_extra_profiles) ? speed_extra_profiles : [],
     enablePins: true
   });
-  drawTensionProfile(svgTension, segments, tensionDepthMin, tensionDepthMax, tensionMin, tensionMax, payload_kg, cable_w_kgpm, accentColor);
+  drawTensionProfile(svgTension, segments, tensionDepthMin, tensionDepthMax, tensionMin, tensionMax, payload_kg, cable_w_kgpm, accentColor, ratedSwl);
 }
 
 // ---------- Speed vs Depth ----------
@@ -794,7 +794,7 @@ function removeTrailingZeros(text) {
 }
 
 // ---------- Tension vs Depth ----------
-function drawTensionProfile(svg, segments, depthMin, depthMax, tensionMin, tensionMax, payload_kg, cable_w_kgpm, accentColor) {
+function drawTensionProfile(svg, segments, depthMin, depthMax, tensionMin, tensionMax, payload_kg, cable_w_kgpm, accentColor, ratedSwl = null) {
   if (svg && svg._depthTensionHandlers) {
     const { move, leave, pointerup, contextmenu, dblclick } = svg._depthTensionHandlers;
     svg.removeEventListener('pointermove', move);
@@ -839,6 +839,27 @@ function drawTensionProfile(svg, segments, depthMin, depthMax, tensionMin, tensi
     t.textContent = String(Math.round(T));
     svg.appendChild(t);
   });
+
+  const ratedSwlValue = Number.isFinite(ratedSwl) ? Math.max(0, ratedSwl) : null;
+  if (Number.isFinite(ratedSwlValue)) {
+    const swlMarkers = [
+      { value: ratedSwlValue, dash: null },
+      { value: ratedSwlValue * 1.25, dash: '2 4' }
+    ];
+    swlMarkers.forEach(({ value, dash }) => {
+      if (value < tensionMin - 1e-9 || value > tensionMax + 1e-9) return;
+      const attrs = {
+        x1: ML,
+        y1: sy(value),
+        x2: W - MR,
+        y2: sy(value),
+        stroke: '#6b7280',
+        'stroke-width': 1
+      };
+      if (dash) attrs['stroke-dasharray'] = dash;
+      svg.appendChild(svgEl('line', attrs));
+    });
+  }
 
   svg.appendChild(svgEl('text', { x: ML + innerW / 2, y: H - 8, 'text-anchor': 'middle', 'font-size': '12', fill: '#444' }))
     .textContent = 'Depth (m)';
@@ -1136,7 +1157,7 @@ function drawTensionProfile(svg, segments, depthMin, depthMax, tensionMin, tensi
         .map((pin, idx) => ({ ...pin, label: `P${idx + 1}` }));
       svg._depthTensionPins = nextPins;
     }
-    drawTensionProfile(svg, segments, depthMin, depthMax, tensionMin, tensionMax, payload_kg, cable_w_kgpm, accentColor);
+    drawTensionProfile(svg, segments, depthMin, depthMax, tensionMin, tensionMax, payload_kg, cable_w_kgpm, accentColor, ratedSwl);
   };
 
   const contextMenuHandler = evt => {
@@ -1150,12 +1171,12 @@ function drawTensionProfile(svg, segments, depthMin, depthMax, tensionMin, tensi
     const nextPins = getPins().filter((_, pinIdx) => pinIdx !== idx)
       .map((pin, order) => ({ ...pin, label: `P${order + 1}` }));
     svg._depthTensionPins = nextPins;
-    drawTensionProfile(svg, segments, depthMin, depthMax, tensionMin, tensionMax, payload_kg, cable_w_kgpm, accentColor);
+    drawTensionProfile(svg, segments, depthMin, depthMax, tensionMin, tensionMax, payload_kg, cable_w_kgpm, accentColor, ratedSwl);
   };
 
   const clearPinsHandler = () => {
     svg._depthTensionPins = [];
-    drawTensionProfile(svg, segments, depthMin, depthMax, tensionMin, tensionMax, payload_kg, cable_w_kgpm, accentColor);
+    drawTensionProfile(svg, segments, depthMin, depthMax, tensionMin, tensionMax, payload_kg, cable_w_kgpm, accentColor, ratedSwl);
   };
 
   svg.addEventListener('pointerup', pointerUpHandler);
