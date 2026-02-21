@@ -1866,7 +1866,7 @@ export function setupComponentSelectors() {
         updatedAt: timestamp
       };
 
-      const exportPayload = JSON.stringify(preset, null, 2);
+      const exportPayload = JSON.stringify([preset], null, 2);
       const filename = formatPresetFilename(pn || name, config.type);
 
       isExportingPreset = true;
