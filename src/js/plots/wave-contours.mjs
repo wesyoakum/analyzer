@@ -165,6 +165,59 @@ function renderWavePlot(svg, {
 
 
   if (mode === 'speed') {
+    const drawSeaStateOverlaySpeed = () => {
+      if (!showSeaStateOverlay) return;
+      const overlay = svgEl('g', { 'pointer-events': 'none' });
+
+      SEA_STATE_REGIONS.forEach(region => {
+        const leftT = Math.max(Tmin, region.tp[0]);
+        const rightT = Math.min(Tmax, region.tp[1]);
+        const lowH = Math.max(Hmin, region.hs[0]);
+        const highH = Math.min(Hmax, region.hs[1]);
+        if (rightT <= leftT || highH <= lowH) return;
+
+        const pts = [];
+        const samples = 120;
+        for (let i = 0; i <= samples; i++) {
+          const T = leftT + (rightT - leftT) * (i / samples);
+          const highV = Math.PI * highH / Math.max(T, 1e-9);
+          pts.push([sx(T), sy(highV)]);
+        }
+        for (let i = samples; i >= 0; i--) {
+          const T = leftT + (rightT - leftT) * (i / samples);
+          const lowV = Math.PI * lowH / Math.max(T, 1e-9);
+          pts.push([sx(T), sy(lowV)]);
+        }
+
+        overlay.appendChild(svgEl('path', {
+          d: `${svgPathFromPoints(pts)} Z`,
+          fill: region.color,
+          stroke: 'rgba(70, 82, 107, 0.55)',
+          'stroke-width': 1.2
+        }));
+
+        const midT = (leftT + rightT) / 2;
+        const midV = Math.PI * ((lowH + highH) / 2) / Math.max(midT, 1e-9);
+        if (midV >= Vmin && midV <= Vmax) {
+          const label = svgEl('text', {
+            x: sx(midT),
+            y: sy(midV),
+            'text-anchor': 'middle',
+            'dominant-baseline': 'middle',
+            'font-size': '12',
+            'font-weight': '600',
+            fill: '#27324b'
+          });
+          label.textContent = `SS ${region.ss}`;
+          overlay.appendChild(label);
+        }
+      });
+
+      svg.appendChild(overlay);
+    };
+
+    drawSeaStateOverlaySpeed();
+
     let contourId = 0;
     const contourLabelLayer = svgEl('g', {
       'font-family': 'monospace',
