@@ -1651,7 +1651,14 @@ th[title] {
 
   .sheet table thead,
   .sheet table tbody {
-    width: max-content;
-    min-width: 100%;
+    width: 100%;
+    min-width: 0;
+  }
+
+  .sheet table th,
+  .sheet table td {
+    white-space: normal;
+    overflow-wrap: anywhere;
+    word-break: break-word;
   }
 }
