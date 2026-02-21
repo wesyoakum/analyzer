@@ -24,16 +24,36 @@ const execFileAsync = promisify(execFile);
 
 async function readLatestCommitTimestamp() {
   const repoRoot = path.resolve(__dirname, '..');
-  const { stdout } = await execFileAsync('git', ['log', '-1', '--format=%cI'], {
-    cwd: repoRoot,
-  });
+  try {
+    const { stdout } = await execFileAsync('git', ['log', '-1', '--format=%cI'], {
+      cwd: repoRoot,
+    });
 
-  const isoTimestamp = stdout.trim();
-  if (!isoTimestamp) {
-    throw new Error('Git returned an empty commit timestamp.');
+    const isoTimestamp = stdout.trim();
+    if (isoTimestamp) {
+      return isoTimestamp;
+    }
+  } catch {
+    // Fall through to non-git based timestamp providers.
   }
 
-  return isoTimestamp;
+  if (process.env.LATEST_COMMIT_AT) {
+    const envTimestamp = new Date(process.env.LATEST_COMMIT_AT);
+    if (!Number.isNaN(envTimestamp.getTime())) {
+      return envTimestamp.toISOString();
+    }
+  }
+
+  if (process.env.SOURCE_DATE_EPOCH) {
+    const epochSeconds = Number(process.env.SOURCE_DATE_EPOCH);
+    if (Number.isFinite(epochSeconds)) {
+      return new Date(epochSeconds * 1000).toISOString();
+    }
+  }
+
+  const packageJsonPath = path.join(repoRoot, 'package.json');
+  const packageStats = await fs.stat(packageJsonPath);
+  return packageStats.mtime.toISOString();
 }
 
 async function readLatestCommitHash() {
