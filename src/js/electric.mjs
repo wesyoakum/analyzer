@@ -114,6 +114,9 @@ export function projectElectricWraps(rows) {
     tau_avail_kNm: +(r.torque_Nm / 1000).toFixed(1),
     motor_torque_Nm: r.motor_torque_Nm,
     motor_rpm: r.motor_rpm,
+    vP: r.el_speed_power_mpm,
+    vGB: r.el_speed_gearbox_mpm,
+    vavail: r.el_speed_available_mpm,
     line_speed_mpm: r.line_speed_mpm,
     avail_tension_kgf: r.avail_tension_kgf
   }));

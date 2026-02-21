@@ -85,12 +85,27 @@ export function buildComputationModel(inputs) {
       let rpm_power_e = 0;
       if (P_per_motor_W > 0 && motorTorque_e > 0) rpm_power_e = (P_per_motor_W / motorTorque_e) * 60 / (2 * Math.PI);
       else if (P_per_motor_W > 0 && motorTorque_e === 0) rpm_power_e = Number.POSITIVE_INFINITY;
-      const rpm_capped_e = Math.min(Number.isFinite(motor_max_rpm) ? motor_max_rpm : Infinity, rpm_power_e);
+      const rpm_gearbox_e = Number.isFinite(motor_max_rpm) ? Math.max(0, motor_max_rpm) : Infinity;
+      const rpm_capped_e = Math.min(rpm_gearbox_e, rpm_power_e);
       r.motor_rpm = +((Number.isFinite(rpm_capped_e) ? rpm_capped_e : 0)).toFixed(1);
-      r.line_speed_mpm = +line_speed_mpm_from_motor_rpm(r.motor_rpm, gr1, gr2, r.layer_dia_in).toFixed(2);
+
+      const speed_power_e = Number.isFinite(rpm_power_e)
+        ? line_speed_mpm_from_motor_rpm(Math.max(0, rpm_power_e), gr1, gr2, r.layer_dia_in)
+        : 0;
+      const speed_gearbox_e = Number.isFinite(rpm_gearbox_e)
+        ? line_speed_mpm_from_motor_rpm(rpm_gearbox_e, gr1, gr2, r.layer_dia_in)
+        : Infinity;
+      let speed_available_e = Math.min(speed_power_e, speed_gearbox_e);
+      if (!Number.isFinite(speed_available_e) || speed_available_e < 0) speed_available_e = 0;
+
+      r.el_speed_power_mpm = +Math.max(0, speed_power_e).toFixed(2);
+      r.el_speed_gearbox_mpm = +(Number.isFinite(speed_gearbox_e) ? Math.max(0, speed_gearbox_e) : 0).toFixed(2);
+      r.el_speed_available_mpm = +speed_available_e.toFixed(2);
+      r.line_speed_mpm = r.el_speed_available_mpm;
       r.avail_tension_kgf = elec_available_tension_kgf(motor_tmax, gr1, gr2, motors, radius_m);
     } else {
       r.motor_torque_Nm = 0; r.motor_rpm = 0; r.line_speed_mpm = 0; r.avail_tension_kgf = 0;
+      r.el_speed_power_mpm = 0; r.el_speed_gearbox_mpm = 0; r.el_speed_available_mpm = 0;
     }
 
     if (hydraulicEnabled) {
