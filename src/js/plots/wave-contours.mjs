@@ -32,6 +32,8 @@ function renderWavePlot(svg, {
   speedMin = 0,
   speedMax = null,
   showSeaStateOverlay = false,
+  showBreakingLimit = false,
+  showPmCurve = false,
 
   elLayers = [],
   hyLayers = []
@@ -310,6 +312,56 @@ function renderWavePlot(svg, {
       }
     }
 
+
+    const drawReferenceCurve = (fn, { stroke, strokeWidth = 2, dash = null, label = '', labelT = null, labelOffsetY = -8 }) => {
+      const pts = [];
+      const samples = 400;
+      for (let i = 0; i <= samples; i++) {
+        const T = Tmin + (Tmax - Tmin) * (i / samples);
+        const hVal = fn(T);
+        if (!Number.isFinite(hVal) || hVal < Hmin || hVal > Hmax) continue;
+        pts.push([sx(T), sy(hVal)]);
+      }
+      if (pts.length < 2) return;
+      const attrs = {
+        d: svgPathFromPoints(pts),
+        fill: 'none',
+        stroke,
+        'stroke-width': strokeWidth
+      };
+      if (dash) attrs['stroke-dasharray'] = dash;
+      svg.appendChild(svgEl('path', attrs));
+
+      if (label && Number.isFinite(labelT)) {
+        const hLabel = fn(labelT);
+        if (Number.isFinite(hLabel) && hLabel >= Hmin && hLabel <= Hmax) {
+          const txt = svgEl('text', {
+            x: sx(labelT) + 6,
+            y: sy(hLabel) + labelOffsetY,
+            'text-anchor': 'start',
+            'font-size': '11',
+            fill: '#1f2a44'
+          });
+          txt.textContent = label;
+          svg.appendChild(txt);
+        }
+      }
+    };
+
+    if (showBreakingLimit) {
+      drawReferenceCurve(
+        T => (9.80665 * T * T) / (14 * Math.PI),
+        { stroke: '#1f2a44', strokeWidth: 2.4, dash: '8 6', label: 'Breaking limit', labelT: Math.min(Tmax - 0.8, 12), labelOffsetY: -8 }
+      );
+    }
+
+    if (showPmCurve) {
+      drawReferenceCurve(
+        T => (0.21 * 9.80665 * T * T) / (7.54 * 7.54),
+        { stroke: '#1f2a44', strokeWidth: 2.2, label: 'PM fully developed sea', labelT: Math.min(Tmax - 0.8, 13), labelOffsetY: 14 }
+      );
+    }
+
     // contour lines for each layer speed (H = vÂ·T / Ï€)
     layerSpeeds.forEach(L => {
       if (!Number.isFinite(L.v_ms) || L.v_ms <= 0) return;
@@ -468,7 +520,7 @@ function renderWavePlot(svg, {
       svg._wavePins = [...getPins(), { x: roundedX, y: roundedY, label: '' }]
         .map((pin, idx) => ({ ...pin, label: `P${idx + 1}` }));
     }
-    renderWavePlot(svg, { scenario, Tmin, Tmax, Hmin, Hmax, speedMin, speedMax, elLayers, hyLayers }, mode);
+    renderWavePlot(svg, { scenario, Tmin, Tmax, Hmin, Hmax, speedMin, speedMax, showSeaStateOverlay, showBreakingLimit, showPmCurve, elLayers, hyLayers }, mode);
   };
 
   const contextMenuHandler = evt => {
@@ -480,12 +532,12 @@ function renderWavePlot(svg, {
     const idx = nearestPinIndex(xVal, yVal);
     if (idx === -1) return;
     svg._wavePins = getPins().filter((_, pinIdx) => pinIdx !== idx).map((pin, order) => ({ ...pin, label: `P${order + 1}` }));
-    renderWavePlot(svg, { scenario, Tmin, Tmax, Hmin, Hmax, speedMin, speedMax, elLayers, hyLayers }, mode);
+    renderWavePlot(svg, { scenario, Tmin, Tmax, Hmin, Hmax, speedMin, speedMax, showSeaStateOverlay, showBreakingLimit, showPmCurve, elLayers, hyLayers }, mode);
   };
 
   const clearPinsHandler = () => {
     svg._wavePins = [];
-    renderWavePlot(svg, { scenario, Tmin, Tmax, Hmin, Hmax, speedMin, speedMax, elLayers, hyLayers }, mode);
+    renderWavePlot(svg, { scenario, Tmin, Tmax, Hmin, Hmax, speedMin, speedMax, showSeaStateOverlay, showBreakingLimit, showPmCurve, elLayers, hyLayers }, mode);
   };
 
   svg.addEventListener('pointermove', updateHover);

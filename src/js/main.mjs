@@ -395,6 +395,8 @@ const PLOT_DISPLAY_SETTING_IDS = [
   'wave_hmin',
   'wave_hmax',
   'wave_show_sea_states',
+  'wave_show_breaking_limit',
+  'wave_show_pm_curve',
   'depth_xmin',
   'depth_xmax',
   'depth_speed_ymin',
@@ -950,7 +952,7 @@ document.addEventListener('DOMContentLoaded', () => {
   });
 
   // Wave/depth/hydraulic plot controls
-  ['wave_scenario', 'wave_tmin', 'wave_tmax', 'wave_vmin', 'wave_vmax', 'wave_tmin_height', 'wave_tmax_height', 'wave_hmin', 'wave_hmax', 'wave_show_sea_states',
+  ['wave_scenario', 'wave_tmin', 'wave_tmax', 'wave_vmin', 'wave_vmax', 'wave_tmin_height', 'wave_tmax_height', 'wave_hmin', 'wave_hmax', 'wave_show_sea_states', 'wave_show_breaking_limit', 'wave_show_pm_curve',
     'depth_xmin', 'depth_xmax', 'depth_speed_ymin', 'depth_speed_ymax',
     'depth_xmin_tension', 'depth_xmax_tension', 'depth_tension_ymin', 'depth_tension_ymax',
     'hyd_torque_xmin', 'hyd_torque_xmax', 'hyd_rpm_ymin', 'hyd_rpm_ymax']
@@ -2174,6 +2176,8 @@ function redrawPlots() {
   const waveHminEl = /** @type {HTMLInputElement|null} */ (document.getElementById('wave_hmin'));
   const waveHmaxEl = /** @type {HTMLInputElement|null} */ (document.getElementById('wave_hmax'));
   const waveShowSeaStatesEl = /** @type {HTMLInputElement|null} */ (document.getElementById('wave_show_sea_states'));
+  const waveShowBreakingLimitEl = /** @type {HTMLInputElement|null} */ (document.getElementById('wave_show_breaking_limit'));
+  const waveShowPmCurveEl = /** @type {HTMLInputElement|null} */ (document.getElementById('wave_show_pm_curve'));
   const waveSvg = /** @type {SVGSVGElement|null} */ (document.getElementById('wave_svg'));
   const waveSvgHeight = /** @type {SVGSVGElement|null} */ (document.getElementById('wave_svg_height'));
 
@@ -2209,7 +2213,9 @@ function redrawPlots() {
       Tmax: Number.isFinite(heightTmaxVal) ? heightTmaxVal : 20,
       Hmin: Number.isFinite(HminVal) ? HminVal : undefined,
       Hmax: Number.isFinite(HmaxVal) ? HmaxVal : 6,
-      showSeaStateOverlay: Boolean(waveShowSeaStatesEl?.checked)
+      showSeaStateOverlay: Boolean(waveShowSeaStatesEl?.checked),
+      showBreakingLimit: Boolean(waveShowBreakingLimitEl?.checked),
+      showPmCurve: Boolean(waveShowPmCurveEl?.checked)
     });
   }
 

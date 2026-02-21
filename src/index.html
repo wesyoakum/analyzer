@@ -727,6 +727,14 @@
                   <input id="wave_show_sea_states" type="checkbox">
                   <span>Sea states</span>
                 </label>
+                <label class="plot-panel__checkbox" title="Show deep-water breaking limit curve">
+                  <input id="wave_show_breaking_limit" type="checkbox">
+                  <span>Breaking limit</span>
+                </label>
+                <label class="plot-panel__checkbox" title="Show Pierson–Moskowitz fully developed sea curve">
+                  <input id="wave_show_pm_curve" type="checkbox">
+                  <span>PM sea</span>
+                </label>
                 <button type="button" class="plot-settings-btn" data-plot-settings-target="plot-settings-wave-height" aria-label="Open axis settings for wave height vs period plot">⚙</button>
               </div>
             </div>
@@ -738,6 +746,8 @@
               <div class="legitem"><span class="swatch"></span><span>H = integer m</span></div>
               <div class="legitem"><span class="swatch dashed"></span><span>H = 0.5 m offsets</span></div>
               <div class="legitem"><span class="swatch sea-state"></span><span>Douglas sea-state bands (optional)</span></div>
+              <div class="legitem"><span class="swatch break-limit"></span><span>Breaking limit (optional)</span></div>
+              <div class="legitem"><span class="swatch pm-curve"></span><span>PM fully developed sea (optional)</span></div>
             </div>
             <p class="dim">Interactive: move mouse for crosshairs, click to pin a point, right-click a pin to remove it, double-click to clear all pins.</p>
           </div>

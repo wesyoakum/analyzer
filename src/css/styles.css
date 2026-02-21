@@ -1176,6 +1176,8 @@ th[title] {
   display: inline-flex;
   align-items: center;
   gap: 10px;
+  flex-wrap: wrap;
+  justify-content: flex-end;
 }
 
 .plot-panel__checkbox {
@@ -1384,6 +1386,16 @@ th[title] {
   border-radius: 2px;
   background: rgba(80,120,255,0.35);
   box-shadow: inset 0 0 0 1px rgba(98, 109, 132, 0.35);
+}
+
+
+.swatch.break-limit {
+  border-top-color: #1f2a44;
+  border-top-style: dashed;
+}
+
+.swatch.pm-curve {
+  border-top-color: #1f2a44;
 }
 
 .swatch.flow {
