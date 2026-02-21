@@ -960,7 +960,9 @@ document.addEventListener('DOMContentLoaded', () => {
     .forEach(id => {
       const el = document.getElementById(id);
       if (!el) return;
-      el.addEventListener('change', () => redrawPlots());
+      const rerender = () => redrawPlots();
+      el.addEventListener('change', rerender);
+      el.addEventListener('input', rerender);
     });
 
   // Initial compute
