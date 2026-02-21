@@ -3,6 +3,7 @@ import { niceTicks, svgEl } from '../utils.mjs';
 
 const CANDIDATE_POWER_COLOR = '#9249c6'; // purple
 const CANDIDATE_FLOW_COLOR = '#eed500'; // yellow
+const CANDIDATE_GEARBOX_COLOR = '#eed500'; // yellow
 const EXCEED_COLOR = '#c65353'; // red
 const TENSION_REQUIRED_COLOR = '#7f8c99'; // matches legend swatch
 const RATED_SPEED_COLOR = '#888888'; // gray
@@ -367,7 +368,9 @@ function drawSpeedProfile(svg, segments, depthMin, depthMax, speedMin, speedMax,
       const x0 = sx(depthEnd);
       const x1 = sx(depthStart);
       if (Math.abs(x1 - x0) < 1e-6) return;
-      const stroke = (candidate.kind === 'flow') ? CANDIDATE_FLOW_COLOR : CANDIDATE_POWER_COLOR;
+      const stroke = (candidate.kind === 'flow')
+        ? CANDIDATE_FLOW_COLOR
+        : (candidate.kind === 'gearbox' ? CANDIDATE_GEARBOX_COLOR : CANDIDATE_POWER_COLOR);
 
       svg.appendChild(svgEl('line', {
         x1: x0,
@@ -1281,8 +1284,11 @@ function wrapsToDepthSegments(wraps, speedField, tensionField, deadEnd = 0, scen
           { field: ['vP', 'vp', 'v_p', 'vp_mpm', 'hyd_speed_power_mpm'], kind: 'power' },
           { field: ['vQ', 'vq', 'v_q', 'vq_mpm', 'hyd_speed_flow_mpm'], kind: 'flow' }
         ]
-      : [];
-    /** @type {{kind: 'power'|'flow', value_ms: number}[]} */
+      : [
+          { field: ['vP', 'vp', 'v_p', 'vp_mpm', 'el_speed_power_mpm'], kind: 'power' },
+          { field: ['vGB', 'vgb', 'v_gb', 'vgb_mpm', 'el_speed_gearbox_mpm'], kind: 'gearbox' }
+        ];
+    /** @type {{kind: 'power'|'flow'|'gearbox', value_ms: number}[]} */
     const candidateSpeedsMs = [];
     for (const { field, kind } of candidateFields) {
       const val = coerceNumeric(wrap, field);
@@ -1292,7 +1298,7 @@ function wrapsToDepthSegments(wraps, speedField, tensionField, deadEnd = 0, scen
     }
 
     const speedMs = Number.isFinite(speedValMpm) ? speedValMpm / 60 : null;
-    /** @type {{kind: 'power'|'flow', value_ms: number}[]} */
+    /** @type {{kind: 'power'|'flow'|'gearbox', value_ms: number}[]} */
     const filteredCandidates = [];
     const seenKeys = new Set();
     for (const candidate of candidateSpeedsMs) {
