@@ -722,7 +722,21 @@
                 <div class="plot-title">Wave Height vs Period with Speed Lines</div>
                 <div class="dim">Evaluates the AHC operating envelope with wave period on the x-axis and wave height on the y-axis. Iso-lines track the available winch speed for each layer. Therefore, the area below and to the right of a line represents wave conditions for which, on the indicated layer, the winch can fully compensate for wave motion.</div>
               </div>
-              <button type="button" class="plot-settings-btn" data-plot-settings-target="plot-settings-wave-height" aria-label="Open axis settings for wave height vs period plot">⚙</button>
+              <div class="plot-panel__actions">
+                <label class="plot-panel__checkbox" title="Overlay representative Douglas sea-state bands">
+                  <input id="wave_show_sea_states" type="checkbox">
+                  <span>Sea states</span>
+                </label>
+                <label class="plot-panel__checkbox" title="Show deep-water breaking limit curve">
+                  <input id="wave_show_breaking_limit" type="checkbox">
+                  <span>Breaking limit</span>
+                </label>
+                <label class="plot-panel__checkbox" title="Show Pierson–Moskowitz fully developed sea curve">
+                  <input id="wave_show_pm_curve" type="checkbox">
+                  <span>PM sea</span>
+                </label>
+                <button type="button" class="plot-settings-btn" data-plot-settings-target="plot-settings-wave-height" aria-label="Open axis settings for wave height vs period plot">⚙</button>
+              </div>
             </div>
             <div class="plotwrap">
               <svg id="wave_svg_height" width="1000" height="540" viewBox="0 0 1000 540"></svg>
@@ -731,6 +745,9 @@
               <div class="legitem"><span class="swatch gray"></span><span>Layer speed iso-line</span></div>
               <div class="legitem"><span class="swatch"></span><span>H = integer m</span></div>
               <div class="legitem"><span class="swatch dashed"></span><span>H = 0.5 m offsets</span></div>
+              <div class="legitem"><span class="swatch sea-state"></span><span>Douglas sea-state bands (optional)</span></div>
+              <div class="legitem"><span class="swatch break-limit"></span><span>Breaking limit (optional)</span></div>
+              <div class="legitem"><span class="swatch pm-curve"></span><span>PM fully developed sea (optional)</span></div>
             </div>
             <p class="dim">Interactive: move mouse for crosshairs, click to pin a point, right-click a pin to remove it, double-click to clear all pins.</p>
           </div>
