@@ -394,6 +394,7 @@ const PLOT_DISPLAY_SETTING_IDS = [
   'wave_tmax_height',
   'wave_hmin',
   'wave_hmax',
+  'wave_speed_show_sea_states',
   'wave_show_sea_states',
   'wave_show_breaking_limit',
   'wave_show_pm_curve',
@@ -952,7 +953,7 @@ document.addEventListener('DOMContentLoaded', () => {
   });
 
   // Wave/depth/hydraulic plot controls
-  ['wave_scenario', 'wave_tmin', 'wave_tmax', 'wave_vmin', 'wave_vmax', 'wave_tmin_height', 'wave_tmax_height', 'wave_hmin', 'wave_hmax', 'wave_show_sea_states', 'wave_show_breaking_limit', 'wave_show_pm_curve',
+  ['wave_scenario', 'wave_tmin', 'wave_tmax', 'wave_vmin', 'wave_vmax', 'wave_tmin_height', 'wave_tmax_height', 'wave_hmin', 'wave_hmax', 'wave_speed_show_sea_states', 'wave_show_sea_states', 'wave_show_breaking_limit', 'wave_show_pm_curve',
     'depth_xmin', 'depth_xmax', 'depth_speed_ymin', 'depth_speed_ymax',
     'depth_xmin_tension', 'depth_xmax_tension', 'depth_tension_ymin', 'depth_tension_ymax',
     'hyd_torque_xmin', 'hyd_torque_xmax', 'hyd_rpm_ymin', 'hyd_rpm_ymax']
@@ -2175,6 +2176,7 @@ function redrawPlots() {
   const waveTmaxHeightEl = /** @type {HTMLInputElement|null} */ (document.getElementById('wave_tmax_height'));
   const waveHminEl = /** @type {HTMLInputElement|null} */ (document.getElementById('wave_hmin'));
   const waveHmaxEl = /** @type {HTMLInputElement|null} */ (document.getElementById('wave_hmax'));
+  const waveSpeedShowSeaStatesEl = /** @type {HTMLInputElement|null} */ (document.getElementById('wave_speed_show_sea_states'));
   const waveShowSeaStatesEl = /** @type {HTMLInputElement|null} */ (document.getElementById('wave_show_sea_states'));
   const waveShowBreakingLimitEl = /** @type {HTMLInputElement|null} */ (document.getElementById('wave_show_breaking_limit'));
   const waveShowPmCurveEl = /** @type {HTMLInputElement|null} */ (document.getElementById('wave_show_pm_curve'));
@@ -2205,7 +2207,8 @@ function redrawPlots() {
       Tmin: Number.isFinite(TminVal) ? TminVal : 4,
       Tmax: Number.isFinite(TmaxVal) ? TmaxVal : 20,
       speedMin: Number.isFinite(speedMinVal) ? speedMinVal : undefined,
-      speedMax: Number.isFinite(speedMaxVal) ? speedMaxVal : undefined
+      speedMax: Number.isFinite(speedMaxVal) ? speedMaxVal : undefined,
+      showSeaStateOverlay: Boolean(waveSpeedShowSeaStatesEl?.checked)
     });
     drawWaveHeightContours(waveSvgHeight, {
       ...baseWaveOpts,

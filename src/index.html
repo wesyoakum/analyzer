@@ -706,13 +706,20 @@
                 <div class="plot-title">Speed vs Period with Height Lines</div>
                 <div class="dim">How to evaluate AHC performance envelope.  The x-axis indicates wave period, the y-axis indicates peak vertical speed, and the contour set traces peak-to-trough wave heights for sinusoidal motion. The colored horizontal layer lines mark each winch layer’s available speed. Therefore, x-value of the intersection of a layer line with a contour indicates the shortest wave period for which the vertical motion can be fully compensated.</div>
               </div>
-              <button type="button" class="plot-settings-btn" data-plot-settings-target="plot-settings-wave-speed" aria-label="Open axis settings for speed vs period plot">⚙</button>
+              <div class="plot-panel__actions">
+                <label class="plot-panel__checkbox" title="Overlay representative Douglas sea-state bands">
+                  <input id="wave_speed_show_sea_states" type="checkbox">
+                  <span>Sea states</span>
+                </label>
+                <button type="button" class="plot-settings-btn" data-plot-settings-target="plot-settings-wave-speed" aria-label="Open axis settings for speed vs period plot">⚙</button>
+              </div>
             </div>
             <div class="plotwrap">
               <svg id="wave_svg" width="1000" height="540" viewBox="0 0 1000 540"></svg>
             </div>
             <div class="legend legend--panel">
               <div class="legitem"><span class="swatch accent"></span><span>Layer speed</span></div>
+              <div class="legitem"><span class="swatch sea-state"></span><span>Douglas sea-state bands (optional)</span></div>
             </div>
             <p class="dim">Interactive: move mouse for crosshairs, click to pin a point, right-click a pin to remove it, double-click to clear all pins.</p>
           </div>
