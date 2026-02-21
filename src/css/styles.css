@@ -1398,6 +1398,16 @@ th[title] {
   border-top-color: #175cd3;
 }
 
+.swatch.jonswap-curve {
+  border-top-color: #0f766e;
+  border-top-style: dashed;
+}
+
+.swatch.smb-curve {
+  border-top-color: #7c3aed;
+  border-top-style: dashed;
+}
+
 .swatch.flow {
   border-top-color: #eed500;
   border-top-style: dashed;

@@ -742,6 +742,14 @@
                   <input id="wave_show_pm_curve" type="checkbox">
                   <span>PM sea</span>
                 </label>
+                <label class="plot-panel__checkbox" title="Show JONSWAP sea-state approximation (γ≈3.3)">
+                  <input id="wave_show_jonswap_curve" type="checkbox">
+                  <span>JONSWAP</span>
+                </label>
+                <label class="plot-panel__checkbox" title="Show Sverdrup–Munk–Bretschneider (SMB) sea-state approximation">
+                  <input id="wave_show_smb_curve" type="checkbox">
+                  <span>SMB</span>
+                </label>
                 <button type="button" class="plot-settings-btn" data-plot-settings-target="plot-settings-wave-height" aria-label="Open axis settings for wave height vs period plot">⚙</button>
               </div>
             </div>
@@ -755,6 +763,8 @@
               <div class="legitem"><span class="swatch sea-state"></span><span>Douglas sea-state bands (optional)</span></div>
               <div class="legitem"><span class="swatch break-limit"></span><span>Breaking limit (optional)</span></div>
               <div class="legitem"><span class="swatch pm-curve"></span><span>PM fully developed sea (optional)</span></div>
+              <div class="legitem"><span class="swatch jonswap-curve"></span><span>JONSWAP sea (optional)</span></div>
+              <div class="legitem"><span class="swatch smb-curve"></span><span>SMB sea (optional)</span></div>
             </div>
             <p class="dim">Interactive: move mouse for crosshairs, click to pin a point, right-click a pin to remove it, double-click to clear all pins.</p>
           </div>
