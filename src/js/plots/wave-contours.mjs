@@ -2,11 +2,11 @@
 import { niceTicks, svgEl, svgPathFromPoints } from '../utils.mjs';
 
 const SEA_STATE_REGIONS = [
-  { ss: 3, tp: [3, 6], hs: [0.5, 1.25], color: 'rgba(80,120,255,0.22)' },
-  { ss: 4, tp: [5, 8], hs: [1.25, 2.5], color: 'rgba(255,160,80,0.22)' },
-  { ss: 5, tp: [6, 10], hs: [2.5, 4], color: 'rgba(120,220,140,0.22)' },
-  { ss: 6, tp: [8, 14], hs: [4, 6], color: 'rgba(255,90,110,0.2)' },
-  { ss: 7, tp: [10, 16], hs: [6, 9], color: 'rgba(170,120,255,0.2)' }
+  { ss: 3, tp: [3, 6], hs: [0.5, 1.25], color: 'rgba(80,120,255,0.32)' },
+  { ss: 4, tp: [5, 8], hs: [1.25, 2.5], color: 'rgba(255,160,80,0.32)' },
+  { ss: 5, tp: [6, 10], hs: [2.5, 4], color: 'rgba(120,220,140,0.32)' },
+  { ss: 6, tp: [8, 14], hs: [4, 6], color: 'rgba(255,90,110,0.3)' },
+  { ss: 7, tp: [10, 16], hs: [6, 9], color: 'rgba(170,120,255,0.3)' }
 ];
 
 /**
@@ -229,7 +229,9 @@ function renderWavePlot(svg, {
     }
 
   } else {
-    if (showSeaStateOverlay) {
+    const drawSeaStateOverlay = () => {
+      if (!showSeaStateOverlay) return;
+      const overlay = svgEl('g', { 'pointer-events': 'none' });
       SEA_STATE_REGIONS.forEach(region => {
         const leftT = Math.max(Tmin, region.tp[0]);
         const rightT = Math.min(Tmax, region.tp[1]);
@@ -241,14 +243,14 @@ function renderWavePlot(svg, {
         const x1 = sx(rightT);
         const yTop = sy(highH);
         const yBottom = sy(lowH);
-        svg.appendChild(svgEl('rect', {
+        overlay.appendChild(svgEl('rect', {
           x: x0,
           y: yTop,
           width: x1 - x0,
           height: yBottom - yTop,
           fill: region.color,
-          stroke: 'rgba(98, 109, 132, 0.3)',
-          'stroke-width': 1
+          stroke: 'rgba(70, 82, 107, 0.55)',
+          'stroke-width': 1.2
         }));
 
         const label = svgEl('text', {
@@ -257,12 +259,14 @@ function renderWavePlot(svg, {
           'text-anchor': 'middle',
           'dominant-baseline': 'middle',
           'font-size': '12',
-          fill: '#33405d'
+          'font-weight': '600',
+          fill: '#27324b'
         });
         label.textContent = `SS ${region.ss}`;
-        svg.appendChild(label);
+        overlay.appendChild(label);
       });
-    }
+      svg.appendChild(overlay);
+    };
 
     // iso-speed contour lines (H = v·T / π) for integer and half-integer speeds
     const speedStep = 0.5;
@@ -343,6 +347,8 @@ function renderWavePlot(svg, {
         svg.appendChild(lbl);
       }
     });
+
+    drawSeaStateOverlay();
   }
 
   const hoverLayer = svgEl('g', { 'pointer-events': 'none' });
