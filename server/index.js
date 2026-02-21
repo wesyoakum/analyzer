@@ -58,16 +58,29 @@ async function readLatestCommitTimestamp() {
 
 async function readLatestCommitHash() {
   const repoRoot = path.resolve(__dirname, '..');
-  const { stdout } = await execFileAsync('git', ['rev-parse', '--short', 'HEAD'], {
-    cwd: repoRoot,
-  });
 
-  const hash = stdout.trim();
-  if (!hash) {
-    throw new Error('Git returned an empty commit hash.');
+  try {
+    const { stdout } = await execFileAsync('git', ['rev-parse', '--short', 'HEAD'], {
+      cwd: repoRoot,
+    });
+
+    const hash = stdout.trim();
+    if (hash) {
+      return hash;
+    }
+  } catch {
+    // Fall through to non-git based version sources.
   }
 
-  return hash;
+  if (process.env.LATEST_COMMIT_HASH && process.env.LATEST_COMMIT_HASH.trim()) {
+    return process.env.LATEST_COMMIT_HASH.trim();
+  }
+
+  if (process.env.SOURCE_VERSION && process.env.SOURCE_VERSION.trim()) {
+    return process.env.SOURCE_VERSION.trim().slice(0, 12);
+  }
+
+  return 'unknown';
 }
 
 function generateId() {
@@ -502,8 +515,17 @@ app.get('/api/projects', async (req, res, next) => {
 
 app.get('/api/build-info', async (req, res, next) => {
   try {
-    const latestCommitAt = await readLatestCommitTimestamp();
-    res.json({ latestCommitAt });
+    const [latestCommitAt, latestCommitHash] = await Promise.all([
+      readLatestCommitTimestamp(),
+      readLatestCommitHash(),
+    ]);
+
+    res.set('Cache-Control', 'no-store, no-cache, must-revalidate, proxy-revalidate');
+    res.set('Pragma', 'no-cache');
+    res.set('Expires', '0');
+    res.set('Surrogate-Control', 'no-store');
+
+    res.json({ latestCommitAt, latestCommitHash });
   } catch (err) {
     next(err);
   }

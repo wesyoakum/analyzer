@@ -926,9 +926,9 @@ function updateBuildIndicator() {
   const indicator = /** @type {HTMLElement|null} */ (document.getElementById('build-info'));
   if (!indicator) return;
 
-  indicator.textContent = 'LATEST COMMIT TIME UNAVAILABLE';
+  indicator.textContent = 'LATEST COMMIT VERSION UNAVAILABLE';
 
-  fetch('/api/build-info')
+  fetch(`/api/build-info?ts=${Date.now()}`, { cache: 'no-store' })
     .then(response => {
       if (!response.ok) {
         throw new Error(`Build info request failed with status ${response.status}`);
@@ -937,21 +937,23 @@ function updateBuildIndicator() {
     })
     .then(payload => {
       const rawTimestamp = typeof payload?.latestCommitAt === 'string' ? payload.latestCommitAt : '';
-      if (!rawTimestamp) {
-        throw new Error('Build info response did not include latestCommitAt.');
+      const rawHash = typeof payload?.latestCommitHash === 'string' ? payload.latestCommitHash : '';
+      if (!rawTimestamp || !rawHash) {
+        throw new Error('Build info response did not include commit version details.');
       }
 
-      indicator.textContent = formatGeneratedStamp(new Date(rawTimestamp));
+      indicator.textContent = formatGeneratedStamp(new Date(rawTimestamp), rawHash);
     })
     .catch(() => {
-      indicator.textContent = 'LATEST COMMIT TIME UNAVAILABLE';
+      indicator.textContent = 'LATEST COMMIT VERSION UNAVAILABLE';
     });
 }
 
 /**
  * @param {Date} date
+ * @param {string} hash
  */
-function formatGeneratedStamp(date) {
+function formatGeneratedStamp(date, hash) {
   const parts = new Intl.DateTimeFormat('en-CA', {
     timeZone: 'America/Chicago',
     year: 'numeric',
@@ -966,7 +968,8 @@ function formatGeneratedStamp(date) {
 
   const map = Object.fromEntries(parts.map(({ type, value }) => [type, value]));
   const zone = (map.timeZoneName || 'CDT').toUpperCase();
-  return `LATEST COMMIT ${map.year}-${map.month}-${map.day}, ${map.hour}:${map.minute}:${map.second} ${zone}`;
+  const shortHash = hash.trim().slice(0, 12) || 'unknown';
+  return `LATEST COMMIT ${shortHash} @ ${map.year}-${map.month}-${map.day}, ${map.hour}:${map.minute}:${map.second} ${zone}`;
 }
 
 function setupTabs() {
