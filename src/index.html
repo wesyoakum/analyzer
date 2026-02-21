@@ -183,7 +183,14 @@
                   </tr>
                   <tr>
                     <th scope="row">
-                      <label class="param-label" for="depth_m" data-code="depth_m">Operating Depth <span class="symbol" aria-hidden="true" data-latex="L_{op}">L<sub>op</sub></span></label>
+                      <label class="param-label" for="cable_len_m" data-code="cable_len_m">Cable Length <span class="symbol" aria-hidden="true" data-latex="L_{c}">L<sub>c</sub></span></label>
+                    </th>
+                    <td class="value"><input id="cable_len_m" type="number" step="100" value="3100"></td>
+                    <td class="units">m</td>
+                  </tr>
+                  <tr>
+                    <th scope="row">
+                      <label class="param-label" for="depth_m" data-code="depth_m">Max Operating Depth <span class="symbol" aria-hidden="true" data-latex="L_{op,max}">L<sub>op,max</sub></span></label>
                     </th>
                     <td class="value"><input id="depth_m" type="number" step="100" value="3000"></td>
                     <td class="units">m</td>
@@ -192,7 +199,7 @@
                     <th scope="row">
                       <label class="param-label" for="dead_m" data-code="dead_m">Dead End Length <span class="symbol" aria-hidden="true" data-latex="L_{dead}">L<sub>dead</sub></span></label>
                     </th>
-                    <td class="value"><input id="dead_m" type="number" step="100" value="100"></td>
+                    <td class="value"><input id="dead_m" type="number" step="100" value="100" readonly></td>
                     <td class="units">m</td>
                   </tr>
                   <tr>
@@ -1230,7 +1237,7 @@
 ]</code></pre>
         <p>Component-specific <code>data</code> keys and <code>fieldMap</code> entries include:</p>
         <ul>
-          <li><strong>Cable</strong> — <code>data</code>: <code>c_mm</code>, <code>depth_m</code>, <code>dead_m</code>, <code>c_w_kgpm</code>, <code>mbl_kgf</code>; <code>fieldMap</code> mirrors those keys.</li>
+          <li><strong>Cable</strong> — <code>data</code>: <code>c_mm</code>, <code>cable_len_m</code>, <code>depth_m</code>, <code>dead_m</code>, <code>c_w_kgpm</code>, <code>mbl_kgf</code>; <code>fieldMap</code> mirrors those keys.</li>
           <li><strong>Drum</strong> — <code>data</code>: <code>core_in</code>, <code>flange_dia_in</code>, <code>ftf_in</code>, <code>lebus_in</code>, <code>pack</code>, <code>wraps_override</code>.</li>
           <li><strong>Payload</strong> — <code>data</code>: <code>payload_kg</code>.</li>
           <li><strong>Gearbox</strong> — <code>data</code>: <code>gear_ratio_stage1</code>, <code>gear_ratio_stage2</code>, <code>gearbox_max_torque_Nm</code>.</li>

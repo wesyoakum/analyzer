@@ -1923,6 +1923,25 @@ function clearMinimumSystemHp() {
   if (output) output.textContent = '–';
 }
 
+function syncDerivedCableLengths() {
+  const deadEndInput = /** @type {HTMLInputElement|null} */ (document.getElementById('dead_m'));
+
+  const cableLength = read('cable_len_m');
+  const maxOperatingDepth = read('depth_m');
+  const deadEndLength = Number.isFinite(cableLength) && Number.isFinite(maxOperatingDepth)
+    ? +(cableLength - maxOperatingDepth).toFixed(3)
+    : NaN;
+
+  if (deadEndInput) {
+    deadEndInput.value = Number.isFinite(deadEndLength) ? String(deadEndLength) : '';
+  }
+
+  return {
+    maxOperatingDepth: Number.isFinite(maxOperatingDepth) ? maxOperatingDepth : null,
+    deadEndLength: Number.isFinite(deadEndLength) ? deadEndLength : null
+  };
+}
+
 function updateStrengthOnlyMaxLength(payloadKgf, cableWeightKgfPerM, mblKgf, safetyFactor) {
   const output = /** @type {HTMLElement|null} */ (document.getElementById('max_length_strength_m'));
   if (!output) return;
@@ -2022,6 +2041,8 @@ function computeAll() {
   if (errBox) errBox.textContent = '';
 
   try {
+    const derivedCable = syncDerivedCableLengths();
+
     const wraps_override_input = read('wraps_override');
     const wraps_per_layer_override = (
       Number.isFinite(wraps_override_input) && wraps_override_input > 0
@@ -2043,8 +2064,8 @@ function computeAll() {
 
     const model = buildComputationModel({
       cable_dia_mm: read('c_mm'),
-      operating_depth_m: read('depth_m'),
-      dead_end_m: read('dead_m'),
+      operating_depth_m: derivedCable.maxOperatingDepth ?? read('depth_m'),
+      dead_end_m: derivedCable.deadEndLength ?? read('dead_m'),
       core_dia_in: read('core_in'),
       flange_dia_in: read('flange_dia_in'),
       flange_to_flange_in: read('ftf_in'),
