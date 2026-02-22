@@ -87,7 +87,7 @@ export function rowsToElectricLayer(rows, payload_kg, cable_w_kgpm, gr1, gr2, mo
       max_tension_theoretical_kgf: maxTheo_kgf,
       max_tension_required_kgf: maxReq_kgf,
       max_torque_Nm: maxT_Nm,
-      tau_avail_kNm: +(maxT_Nm / 1000).toFixed(1),
+      tau_req_drum_kNm: +(maxT_Nm / 1000).toFixed(1),
       max_motor_torque_Nm: maxMotorNm
     });
   }
@@ -111,7 +111,7 @@ export function projectElectricWraps(rows) {
     total_cable_len_m: r.total_cable_len_m,
     tension_required_kgf: r.tension_kgf,
     tension_theoretical_kgf: r.tension_theoretical_kgf,
-    tau_avail_kNm: +(r.torque_Nm / 1000).toFixed(1),
+    tau_req_drum_kNm: +(r.torque_Nm / 1000).toFixed(1),
     motor_torque_Nm: r.motor_torque_Nm,
     motor_rpm: r.motor_rpm,
     vP: r.el_speed_power_mpm,
@@ -129,7 +129,7 @@ export function projectElectricWraps(rows) {
  * @param {HTMLElement} tbodyLayer
  * @param {HTMLElement} tbodyWraps
  */
-export function renderElectricTables(elLayers, elWraps, tbodyLayer, tbodyWraps, gearboxMaxTorqueNm) {
+export function renderElectricTables(elLayers, elWraps, tbodyLayer, tbodyWraps, gearboxMaxTorqueNm, motorTmaxNm, summaryEl) {
   const hasGearboxMax = Number.isFinite(gearboxMaxTorqueNm) && gearboxMaxTorqueNm > 0;
   const formatCableOnDrumRange = (minValue, maxValue) => `${formatMeters(minValue)}-${formatMeters(maxValue)}`;
   const formatDepthRange = (maxValue, minValue) => `${formatMeters(maxValue)}-${formatMeters(minValue)}`;
@@ -150,7 +150,7 @@ export function renderElectricTables(elLayers, elWraps, tbodyLayer, tbodyWraps, 
       `<td>${formatCableOnDrumRange(r.pre_on_drum_m, r.post_on_drum_m)}</td>`,
       `<td>${formatDepthRange(r.pre_deployed_m, r.post_deployed_m)}</td>`,
       `<td>${formatKgf(r.max_tension_required_kgf)}</td>`,
-      `<td>${formatInteger(r.tau_avail_kNm)}</td>`,
+      `<td>${formatInteger(r.tau_req_drum_kNm)}</td>`,
       torqueCell(r.max_motor_torque_Nm),
       `<td>${formatRpm(r.motor_rpm_at_start ?? '')}</td>`,
       `<td>${formatSpeed(r.line_speed_at_start_mpm ?? '')}</td>`,
@@ -174,7 +174,7 @@ export function renderElectricTables(elLayers, elWraps, tbodyLayer, tbodyWraps, 
       `<td>${formatMeters(r.spooled_len_m)}</td>`,
       `<td>${formatMeters(r.deployed_len_m)}</td>`,
       `<td>${formatKgf(r.tension_required_kgf ?? '')}</td>`,
-      `<td>${formatInteger(r.tau_avail_kNm)}</td>`,
+      `<td>${formatInteger(r.tau_req_drum_kNm)}</td>`,
       torqueCell(r.motor_torque_Nm),
       `<td>${formatRpm(r.motor_rpm)}</td>`,
       `<td>${formatSpeed(r.line_speed_mpm)}</td>`,
@@ -182,5 +182,19 @@ export function renderElectricTables(elLayers, elWraps, tbodyLayer, tbodyWraps, 
     ];
     tr.innerHTML = cells.join('');
     tbodyWraps.appendChild(tr);
+  }
+
+  if (summaryEl) {
+    const tauMaxDrumNm = elLayers.reduce((maxValue, row) => {
+      const value = Number(row.max_torque_Nm);
+      return Number.isFinite(value) ? Math.max(maxValue, value) : maxValue;
+    }, 0);
+    const tauMaxGbNm = Number.isFinite(gearboxMaxTorqueNm) ? gearboxMaxTorqueNm : 0;
+    const tauMaxMtrNm = Number.isFinite(motorTmaxNm) ? motorTmaxNm : 0;
+    summaryEl.innerHTML = [
+      `<strong>τ<sub>max,drum</sub></strong>: ${formatMotorTorque(tauMaxDrumNm)} N·m`,
+      `<strong>τ<sub>max,gb</sub></strong>: ${formatMotorTorque(tauMaxGbNm)} N·m`,
+      `<strong>τ<sub>max,mtr</sub></strong>: ${formatMotorTorque(tauMaxMtrNm)} N·m`
+    ].join(' · ');
   }
 }
