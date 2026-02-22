@@ -129,7 +129,19 @@ export function projectElectricWraps(rows) {
  * @param {HTMLElement} tbodyLayer
  * @param {HTMLElement} tbodyWraps
  */
-export function renderElectricTables(elLayers, elWraps, tbodyLayer, tbodyWraps, gearboxMaxTorqueNm, motorTmaxNm, summaryEl) {
+export function renderElectricTables(
+  elLayers,
+  elWraps,
+  tbodyLayer,
+  tbodyWraps,
+  gearboxMaxTorqueNm,
+  motorTmaxNm,
+  summaryEl,
+  ratedSwlKgf,
+  fullDrumDiaIn,
+  driveMotorCount,
+  totalGearRatio
+) {
   const hasGearboxMax = Number.isFinite(gearboxMaxTorqueNm) && gearboxMaxTorqueNm > 0;
   const formatCableOnDrumRange = (minValue, maxValue) => `${formatMeters(minValue)}-${formatMeters(maxValue)}`;
   const formatDepthRange = (maxValue, minValue) => `${formatMeters(maxValue)}-${formatMeters(minValue)}`;
@@ -185,12 +197,14 @@ export function renderElectricTables(elLayers, elWraps, tbodyLayer, tbodyWraps, 
   }
 
   if (summaryEl) {
-    const tauMaxDrumNm = elLayers.reduce((maxValue, row) => {
-      const value = Number(row.max_torque_Nm);
-      return Number.isFinite(value) ? Math.max(maxValue, value) : maxValue;
-    }, 0);
-    const tauMaxGbNm = Number.isFinite(gearboxMaxTorqueNm) ? gearboxMaxTorqueNm : 0;
-    const tauMaxMtrNm = Number.isFinite(motorTmaxNm) ? motorTmaxNm : 0;
+    const swlSafe = Number.isFinite(ratedSwlKgf) ? Math.max(0, ratedSwlKgf) : 0;
+    const drumDiaM = Number.isFinite(fullDrumDiaIn) ? Math.max(0, fullDrumDiaIn) * M_PER_IN : 0;
+    const driveMotorsSafe = Number.isFinite(driveMotorCount) && driveMotorCount > 0 ? driveMotorCount : 0;
+    const totalGearRatioSafe = Number.isFinite(totalGearRatio) && totalGearRatio > 0 ? totalGearRatio : 0;
+
+    const tauMaxDrumNm = swlSafe * 1.25 * G * (drumDiaM / 2);
+    const tauMaxGbNm = driveMotorsSafe > 0 ? tauMaxDrumNm / driveMotorsSafe : 0;
+    const tauMaxMtrNm = totalGearRatioSafe > 0 ? tauMaxGbNm / totalGearRatioSafe : 0;
     summaryEl.innerHTML = [
       `<strong>τ<sub>max,drum</sub></strong>: ${formatMotorTorque(tauMaxDrumNm)} N·m`,
       `<strong>τ<sub>max,gb</sub></strong>: ${formatMotorTorque(tauMaxGbNm)} N·m`,
