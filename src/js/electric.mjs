@@ -208,8 +208,10 @@ export function renderElectricTables(
     const totalGearRatioSafe = Number.isFinite(totalGearRatio) && totalGearRatio > 0 ? totalGearRatio : 0;
 
     const tauMaxDrumNm = swlSafe * 1.25 * G * (drumDiaM / 2);
-    const tauMaxGbNm = driveMotorsSafe > 0 ? tauMaxDrumNm / driveMotorsSafe : 0;
-    const tauMaxMtrNm = totalGearRatioSafe > 0 ? tauMaxGbNm / totalGearRatioSafe : 0;
+    const tauMaxGbNm = tauMaxDrumNm;
+    const tauMaxMtrNm = (driveMotorsSafe > 0 && totalGearRatioSafe > 0)
+      ? tauMaxDrumNm / (driveMotorsSafe * totalGearRatioSafe)
+      : 0;
     const tau_test_max_gb = elLayers.reduce((maxVal, layer) => {
       const value = Number(layer?.max_gearbox_torque_Nm);
       return Number.isFinite(value) ? Math.max(maxVal, value) : maxVal;
