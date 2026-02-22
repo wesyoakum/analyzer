@@ -209,13 +209,14 @@ export function renderElectricTables(
     const tauMaxDrumNm = swlSafe * 1.25 * G * (drumDiaM / 2);
     const tauMaxGbNm = driveMotorsSafe > 0 ? tauMaxDrumNm / driveMotorsSafe : 0;
     const tauMaxMtrNm = totalGearRatioSafe > 0 ? tauMaxGbNm / totalGearRatioSafe : 0;
-    const maxLayerGearboxTorqueNm = elLayers.reduce((maxVal, layer) => {
+    const tau_test_max_gb = elLayers.reduce((maxVal, layer) => {
       const value = Number(layer?.max_gearbox_torque_Nm);
       return Number.isFinite(value) ? Math.max(maxVal, value) : maxVal;
     }, 0);
-    const exceedsGearboxMax = hasGearboxMax && maxLayerGearboxTorqueNm > gearboxMaxTorqueNm;
+    const tau_allow_max_gb = hasGearboxMax ? gearboxMaxTorqueNm : null;
+    const gearboxCheckPassed = Number.isFinite(tau_allow_max_gb) && tau_test_max_gb <= tau_allow_max_gb;
     const gearboxCheckText = hasGearboxMax
-      ? (exceedsGearboxMax ? 'Exceeded' : 'OK')
+      ? (gearboxCheckPassed ? 'OK' : 'Exceeded')
       : '–';
 
     summaryEl.innerHTML = [
