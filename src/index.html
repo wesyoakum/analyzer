@@ -610,67 +610,22 @@
         <img src="assets/winch-header%20140px.png" alt="TekMarines winch diagram" class="page-header__image" />
         <h1 class="page-title">Winch Analysis</h1>
       </header>
-      <div class="app-content">
+      <div class="app-content" id="page-top">
         <div id="err"></div>
         <div class="tab-bar">
-          <nav class="tabs" aria-label="App sections" role="tablist">
-            <button
-              class="tab-btn active"
-              id="tab-inputs"
-              type="button"
-              role="tab"
-              aria-selected="true"
-              aria-controls="panel-inputs"
-            >Section 1: Summary</button>
-            <button
-              class="tab-btn"
-              id="tab-performance"
-              type="button"
-              role="tab"
-              aria-selected="false"
-              aria-controls="panel-performance"
-            >Section 2: Performance Plots</button>
-            <button
-              class="tab-btn"
-              id="tab-results"
-              type="button"
-              role="tab"
-              aria-selected="false"
-              aria-controls="panel-results"
-            >Section 3: Layer Tables</button>
-            <button
-              class="tab-btn"
-              id="tab-converter"
-              type="button"
-              role="tab"
-              aria-selected="false"
-              aria-controls="panel-converter"
-            >Section 4: Unit Converter</button>
-            <button
-              class="tab-btn"
-              id="tab-instructions"
-              type="button"
-              role="tab"
-              aria-selected="false"
-              aria-controls="panel-instructions"
-            >Section 5: Instructions</button>
-            <button
-              class="tab-btn"
-              id="tab-sea-state"
-              type="button"
-              role="tab"
-              aria-selected="false"
-              aria-controls="panel-sea-state"
-            >Sea State Explorer</button>
+          <nav class="tabs" aria-label="App sections">
+            <a class="tab-btn" href="#panel-inputs">Section 1: Summary</a>
+            <a class="tab-btn" href="#panel-performance">Section 2: Performance Plots</a>
+            <a class="tab-btn" href="#panel-results">Section 3: Layer Tables</a>
+            <a class="tab-btn" href="#panel-converter">Section 4: Unit Converter</a>
+            <a class="tab-btn" href="#panel-instructions">Section 5: Instructions</a>
+            <a class="tab-btn" href="#panel-sea-state">Sea State Explorer</a>
           </nav>
         </div>
       
         <div
           id="panel-inputs"
-          class="panel active"
-          role="tabpanel"
-          tabindex="0"
-          aria-labelledby="tab-inputs"
+          class="panel"
         >
           <section class="card">
             <div class="card-header">
@@ -679,17 +634,13 @@
             <div id="input-summary-intro" class="summary-intro"></div>
             <div id="input-summary" class="input-summary"></div>
           </section>
+          <p class="section-back-to-top"><a href="#page-top">Back to top ↑</a></p>
         </div>
         <div class="pdf-page-break" aria-hidden="true"></div>
       
         <div
           id="panel-performance"
           class="panel panel--performance"
-          role="tabpanel"
-          aria-labelledby="tab-performance"
-          tabindex="0"
-          hidden
-          aria-hidden="true"
           aria-live="polite"
         >
       <section class="card card--performance card--performance-first wave-card">
@@ -856,17 +807,13 @@
           </div>
         </div>
       </section>
+      <p class="section-back-to-top"><a href="#page-top">Back to top ↑</a></p>
     </div>
     <div class="pdf-page-break" aria-hidden="true"></div>
 
     <div
       id="panel-sea-state"
       class="panel"
-      role="tabpanel"
-      aria-labelledby="tab-sea-state"
-      tabindex="0"
-      hidden
-      aria-hidden="true"
     >
       <section class="card sea-state-card">
         <div class="card-header">
@@ -907,16 +854,12 @@
           </table>
         </div>
       </section>
+      <p class="section-back-to-top"><a href="#page-top">Back to top ↑</a></p>
     </div>
 
     <div
       id="panel-results"
       class="panel"
-      role="tabpanel"
-      aria-labelledby="tab-results"
-      tabindex="0"
-      hidden
-      aria-hidden="true"
       aria-live="polite"
     >
       <div class="card" id="drum_card">
@@ -1157,17 +1100,13 @@
           </table>
         </div>
       </details>
+      <p class="section-back-to-top"><a href="#page-top">Back to top ↑</a></p>
     </div>
     <div class="pdf-page-break" aria-hidden="true"></div>
 
     <div
       id="panel-converter"
       class="panel"
-      role="tabpanel"
-      aria-labelledby="tab-converter"
-      tabindex="0"
-      hidden
-      aria-hidden="true"
     >
       <section class="card info-card unit-converter-card" aria-labelledby="unit-converter-title">
         <h2 class="section-title" id="unit-converter-title">Section 4: Unit Converter &amp; Quick Calculators</h2>
@@ -1221,17 +1160,13 @@
           <select id="hyd-power-output-unit" aria-label="Power output unit"></select>
         </div>
       </section>
+      <p class="section-back-to-top"><a href="#page-top">Back to top ↑</a></p>
     </div>
     <div class="pdf-page-break" aria-hidden="true"></div>
 
     <div
       id="panel-instructions"
       class="panel"
-      role="tabpanel"
-      aria-labelledby="tab-instructions"
-      tabindex="0"
-      hidden
-      aria-hidden="true"
     >
       <section class="card info-card" id="preset-export-guide" aria-labelledby="preset-export-guide-title">
         <h2 class="section-title" id="preset-export-guide-title">Exporting component presets</h2>
@@ -1660,7 +1595,8 @@
         </section>
       </div>
       </div>
-      </div>
+        <p class="section-back-to-top"><a href="#page-top">Back to top ↑</a></p>
+    </div>
 
       <dialog id="plot-settings-wave-speed" class="plot-settings-dialog">
         <form method="dialog" class="plot-settings-dialog__card">
