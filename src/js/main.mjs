@@ -1980,7 +1980,19 @@ function computeAll() {
       }
     });
 
-    renderElectricTables(lastElLayer, lastElWraps, q('tbody_el_layer'), q('tbody_el_wraps'), model.inputs.gearbox_max_torque_Nm, model.inputs.motor_tmax, q('el_tau_max_summary'));
+    renderElectricTables(
+      lastElLayer,
+      lastElWraps,
+      q('tbody_el_layer'),
+      q('tbody_el_wraps'),
+      model.inputs.gearbox_max_torque_Nm,
+      model.inputs.motor_tmax,
+      q('el_tau_max_summary'),
+      read('rated_swl_kgf'),
+      model.inputs.flange_dia_in,
+      model.inputs.motors,
+      model.inputs.gr1 * model.inputs.gr2
+    );
     renderHydraulicTables(lastHyLayer, lastHyWraps, q('tbody_hy_layer'), q('tbody_hy_wraps'));
 
     renderInputSummary();
