@@ -145,6 +145,7 @@ export function renderElectricTables(
   totalGearRatio
 ) {
   const hasGearboxMax = Number.isFinite(gearboxMaxTorqueNm) && gearboxMaxTorqueNm > 0;
+  const hasMotorMax = Number.isFinite(motorTmaxNm) && motorTmaxNm > 0;
   const formatCableOnDrumRange = (minValue, maxValue) => `${formatMeters(minValue)}-${formatMeters(maxValue)}`;
   const formatDepthRange = (maxValue, minValue) => `${formatMeters(maxValue)}-${formatMeters(minValue)}`;
   const torqueCell = (value) => {
@@ -213,18 +214,29 @@ export function renderElectricTables(
       const value = Number(layer?.max_gearbox_torque_Nm);
       return Number.isFinite(value) ? Math.max(maxVal, value) : maxVal;
     }, 0);
+    const tau_test_max_mtr = elLayers.reduce((maxVal, layer) => {
+      const value = Number(layer?.max_motor_torque_Nm);
+      return Number.isFinite(value) ? Math.max(maxVal, value) : maxVal;
+    }, 0);
     const tau_allow_max_gb = hasGearboxMax ? gearboxMaxTorqueNm : null;
+    const tau_allow_max_mtr = hasMotorMax ? motorTmaxNm : null;
     const gearboxCheckPassed = Number.isFinite(tau_allow_max_gb) && tau_test_max_gb <= tau_allow_max_gb;
+    const motorCheckPassed = Number.isFinite(tau_allow_max_mtr) && tau_test_max_mtr <= tau_allow_max_mtr;
     const gearboxCheckText = hasGearboxMax
       ? (gearboxCheckPassed ? 'OK' : 'Exceeded')
+      : '–';
+    const motorCheckText = hasMotorMax
+      ? (motorCheckPassed ? 'OK' : 'Exceeded')
       : '–';
 
     summaryEl.innerHTML = [
       `<strong>τ<sub>max,drum</sub></strong>: ${formatMotorTorque(tauMaxDrumNm)} N·m`,
       `<strong>τ<sub>max,gb</sub></strong>: ${formatMotorTorque(tauMaxGbNm)} N·m`,
-      `<strong>τ<sub>max,mtr</sub></strong>: ${formatMotorTorque(tauMaxMtrNm)} N·m`,
+      `<strong>τ<sub>max,m</sub></strong>: ${formatMotorTorque(tauMaxMtrNm)} N·m`,
       `<strong>τ<sub>g,max</sub></strong>: ${hasGearboxMax ? `${formatMotorTorque(gearboxMaxTorqueNm)} N·m` : '–'}`,
-      `<strong>Max τ<sub>g</sub> check</strong>: ${gearboxCheckText}`
+      `<strong>τ<sub>m,max</sub></strong>: ${hasMotorMax ? `${formatMotorTorque(motorTmaxNm)} N·m` : '–'}`,
+      `<strong>Max τ<sub>g</sub> check</strong>: ${gearboxCheckText}`,
+      `<strong>Max τ<sub>m</sub> check</strong>: ${motorCheckText}`
     ].join(' · ');
   }
 }
