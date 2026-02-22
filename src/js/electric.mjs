@@ -86,6 +86,7 @@ export function rowsToElectricLayer(rows, payload_kg, cable_w_kgpm, gr1, gr2, mo
       ...L,
       max_tension_theoretical_kgf: maxTheo_kgf,
       max_tension_required_kgf: maxReq_kgf,
+      max_gearbox_torque_Nm: maxT_Nm,
       max_torque_Nm: maxT_Nm,
       tau_req_drum_kNm: +(maxT_Nm / 1000).toFixed(1),
       max_motor_torque_Nm: maxMotorNm
@@ -112,6 +113,7 @@ export function projectElectricWraps(rows) {
     tension_required_kgf: r.tension_kgf,
     tension_theoretical_kgf: r.tension_theoretical_kgf,
     tau_req_drum_kNm: +(r.torque_Nm / 1000).toFixed(1),
+    gearbox_torque_Nm: r.gearbox_torque_Nm,
     motor_torque_Nm: r.motor_torque_Nm,
     motor_rpm: r.motor_rpm,
     vP: r.el_speed_power_mpm,
@@ -163,7 +165,8 @@ export function renderElectricTables(
       `<td>${formatDepthRange(r.pre_deployed_m, r.post_deployed_m)}</td>`,
       `<td>${formatKgf(r.max_tension_required_kgf)}</td>`,
       `<td>${formatInteger(r.tau_req_drum_kNm)}</td>`,
-      torqueCell(r.max_motor_torque_Nm),
+      torqueCell(r.max_gearbox_torque_Nm),
+      `<td>${formatMotorTorque(r.max_motor_torque_Nm)}</td>`,
       `<td>${formatRpm(r.motor_rpm_at_start ?? '')}</td>`,
       `<td>${formatSpeed(r.line_speed_at_start_mpm ?? '')}</td>`,
       `<td>${formatKgf(r.tension_required_start_kgf)}</td>`,
@@ -187,7 +190,8 @@ export function renderElectricTables(
       `<td>${formatMeters(r.deployed_len_m)}</td>`,
       `<td>${formatKgf(r.tension_required_kgf ?? '')}</td>`,
       `<td>${formatInteger(r.tau_req_drum_kNm)}</td>`,
-      torqueCell(r.motor_torque_Nm),
+      torqueCell(r.gearbox_torque_Nm),
+      `<td>${formatMotorTorque(r.motor_torque_Nm)}</td>`,
       `<td>${formatRpm(r.motor_rpm)}</td>`,
       `<td>${formatSpeed(r.line_speed_mpm)}</td>`,
       `<td>${formatKgf(r.avail_tension_kgf)}</td>`
@@ -205,10 +209,21 @@ export function renderElectricTables(
     const tauMaxDrumNm = swlSafe * 1.25 * G * (drumDiaM / 2);
     const tauMaxGbNm = driveMotorsSafe > 0 ? tauMaxDrumNm / driveMotorsSafe : 0;
     const tauMaxMtrNm = totalGearRatioSafe > 0 ? tauMaxGbNm / totalGearRatioSafe : 0;
+    const maxLayerGearboxTorqueNm = elLayers.reduce((maxVal, layer) => {
+      const value = Number(layer?.max_gearbox_torque_Nm);
+      return Number.isFinite(value) ? Math.max(maxVal, value) : maxVal;
+    }, 0);
+    const exceedsGearboxMax = hasGearboxMax && maxLayerGearboxTorqueNm > gearboxMaxTorqueNm;
+    const gearboxCheckText = hasGearboxMax
+      ? (exceedsGearboxMax ? 'Exceeded' : 'OK')
+      : '–';
+
     summaryEl.innerHTML = [
       `<strong>τ<sub>max,drum</sub></strong>: ${formatMotorTorque(tauMaxDrumNm)} N·m`,
       `<strong>τ<sub>max,gb</sub></strong>: ${formatMotorTorque(tauMaxGbNm)} N·m`,
-      `<strong>τ<sub>max,mtr</sub></strong>: ${formatMotorTorque(tauMaxMtrNm)} N·m`
+      `<strong>τ<sub>max,mtr</sub></strong>: ${formatMotorTorque(tauMaxMtrNm)} N·m`,
+      `<strong>τ<sub>g,max</sub></strong>: ${hasGearboxMax ? `${formatMotorTorque(gearboxMaxTorqueNm)} N·m` : '–'}`,
+      `<strong>Max τ<sub>g</sub> check</strong>: ${gearboxCheckText}`
     ].join(' · ');
   }
 }
