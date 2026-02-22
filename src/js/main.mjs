@@ -313,14 +313,14 @@ const CSV_BUTTON_SPECS = {
     columns: [
       'layer_no', 'layer_dia_in', 'pre_on_drum_m', 'pre_deployed_m',
       'post_on_drum_m', 'post_deployed_m', 'max_tension_theoretical_kgf',
-      'max_tension_required_kgf', 'tau_avail_kNm', 'max_motor_torque_Nm',
+      'max_tension_required_kgf', 'tau_req_drum_kNm', 'max_motor_torque_Nm',
       'motor_rpm_at_start', 'line_speed_at_start_mpm',
       'tension_theoretical_start_kgf', 'tension_required_start_kgf', 'avail_tension_kgf'
     ],
     header: [
       'layer_no', 'layer_dia_in', 'pre_on_drum_m', 'pre_deployed_m',
       'post_on_drum_m', 'post_deployed_m', 'max_tension_theoretical_kgf',
-      'max_tension_required_kgf', 'tau_avail_kNm', 'max_motor_torque_Nm',
+      'max_tension_required_kgf', 'tau_req_drum_kNm', 'max_motor_torque_Nm',
       'motor_rpm_at_start', 'line_speed_at_start_mpm',
       'tension_theoretical_start_kgf', 'tension_required_start_kgf', 'avail_tension_kgf'
     ],
@@ -331,13 +331,13 @@ const CSV_BUTTON_SPECS = {
     columns: [
       'wrap_no', 'layer_no', 'layer_dia_in', 'wrap_len_in', 'pre_spooled_len_m',
       'spooled_len_m', 'deployed_len_m', 'tension_theoretical_kgf',
-      'tension_required_kgf', 'tau_avail_kNm', 'motor_torque_Nm', 'motor_rpm',
+      'tension_required_kgf', 'tau_req_drum_kNm', 'motor_torque_Nm', 'motor_rpm',
       'line_speed_mpm', 'avail_tension_kgf'
     ],
     header: [
       'wrap_no', 'layer_no', 'layer_dia_in', 'wrap_len_in', 'pre_spooled_len_m',
       'spooled_len_m', 'deployed_len_m', 'tension_theoretical_kgf',
-      'tension_required_kgf', 'tau_avail_kNm', 'motor_torque_Nm', 'motor_rpm',
+      'tension_required_kgf', 'tau_req_drum_kNm', 'motor_torque_Nm', 'motor_rpm',
       'line_speed_mpm', 'avail_tension_kgf'
     ],
     getRows: () => lastElWraps
@@ -1980,7 +1980,7 @@ function computeAll() {
       }
     });
 
-    renderElectricTables(lastElLayer, lastElWraps, q('tbody_el_layer'), q('tbody_el_wraps'), model.inputs.gearbox_max_torque_Nm);
+    renderElectricTables(lastElLayer, lastElWraps, q('tbody_el_layer'), q('tbody_el_wraps'), model.inputs.gearbox_max_torque_Nm, model.inputs.motor_tmax, q('el_tau_max_summary'));
     renderHydraulicTables(lastHyLayer, lastHyWraps, q('tbody_hy_layer'), q('tbody_hy_wraps'));
 
     renderInputSummary();
