@@ -125,6 +125,7 @@ export function projectHydraulicWraps(rows) {
  * @param {HTMLElement} tbodyWraps
  */
 export function renderHydraulicTables(hyLayers, hyWraps, tbodyLayer, tbodyWraps) {
+  const formatCableOnDrumRange = (minValue, maxValue) => `${formatMeters(minValue)}-${formatMeters(maxValue)}`;
   // Layer table
   tbodyLayer.innerHTML = '';
   for (const r of hyLayers) {
@@ -132,9 +133,8 @@ export function renderHydraulicTables(hyLayers, hyWraps, tbodyLayer, tbodyWraps)
     const cells = [
       formatInteger(r.layer_no),
       formatInches(r.layer_dia_in),
-      formatMeters(r.pre_on_drum_m),
+      formatCableOnDrumRange(r.pre_on_drum_m, r.post_on_drum_m),
       formatMeters(r.pre_deployed_m),
-      formatMeters(r.post_on_drum_m),
       formatMeters(r.post_deployed_m),
       formatPsi(r.hyd_P_required_psi ?? ''),
       formatSpeed(r.hyd_speed_power_mpm ?? ''),
