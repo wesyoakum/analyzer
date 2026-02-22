@@ -1661,7 +1661,7 @@ th[title] {
   .sheet table th,
   .sheet table td {
     white-space: normal;
-    overflow-wrap: anywhere;
-    word-break: break-word;
+    overflow-wrap: normal;
+    word-break: normal;
   }
 }
