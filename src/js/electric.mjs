@@ -131,6 +131,7 @@ export function projectElectricWraps(rows) {
  */
 export function renderElectricTables(elLayers, elWraps, tbodyLayer, tbodyWraps, gearboxMaxTorqueNm) {
   const hasGearboxMax = Number.isFinite(gearboxMaxTorqueNm) && gearboxMaxTorqueNm > 0;
+  const formatCableOnDrumRange = (minValue, maxValue) => `${formatMeters(minValue)}-${formatMeters(maxValue)}`;
   const torqueCell = (value) => {
     const text = formatMotorTorque(value);
     const exceeds = hasGearboxMax && Number.isFinite(value) && value > gearboxMaxTorqueNm;
@@ -145,9 +146,8 @@ export function renderElectricTables(elLayers, elWraps, tbodyLayer, tbodyWraps, 
     const cells = [
       `<td>${formatInteger(r.layer_no)}</td>`,
       `<td>${formatInches(r.layer_dia_in)}</td>`,
-      `<td>${formatMeters(r.pre_on_drum_m)}</td>`,
+      `<td>${formatCableOnDrumRange(r.pre_on_drum_m, r.post_on_drum_m)}</td>`,
       `<td>${formatMeters(r.pre_deployed_m)}</td>`,
-      `<td>${formatMeters(r.post_on_drum_m)}</td>`,
       `<td>${formatMeters(r.post_deployed_m)}</td>`,
       `<td>${formatKgf(r.max_tension_required_kgf)}</td>`,
       `<td>${formatInteger(r.tau_avail_kNm)}</td>`,
