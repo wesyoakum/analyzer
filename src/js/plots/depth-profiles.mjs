@@ -11,6 +11,8 @@ const PITA_PINK = 'e056e8'; // pink
 const CLARS_BLUE = '#2163a5'; // blue
 
 const RATED_AVAILABLE_TOLERANCE = 1e-9;
+const W_PER_HP = 745.69987158;
+const G = 9.80665;
 
 function isRatedBelowAvailable(ratedSpeedMs, availableSpeedMs) {
   if (!Number.isFinite(ratedSpeedMs) || !Number.isFinite(availableSpeedMs)) return false;
@@ -70,7 +72,8 @@ export function drawDepthProfiles(svgSpeed, svgTension, {
   tension_ymin = 0,
   tension_ymax = null,
   speed_primary_label = null,
-  speed_extra_profiles = []
+  speed_extra_profiles = [],
+  hydraulic_hp_available = null
 } = {}) {
   const wraps = (scenario === 'electric') ? (elWraps || []) : (hyWraps || []);
   const speedField = (scenario === 'electric')
@@ -183,7 +186,19 @@ export function drawDepthProfiles(svgSpeed, svgTension, {
     extraProfiles: Array.isArray(speed_extra_profiles) ? speed_extra_profiles : [],
     enablePins: true
   });
-  drawTensionProfile(svgTension, segments, tensionDepthMin, tensionDepthMax, tensionMin, tensionMax, payload_kg, cable_w_kgpm, accentColor, ratedSwl);
+  drawTensionProfile(
+    svgTension,
+    segments,
+    tensionDepthMin,
+    tensionDepthMax,
+    tensionMin,
+    tensionMax,
+    payload_kg,
+    cable_w_kgpm,
+    accentColor,
+    ratedSwl,
+    scenario === 'hydraulic' ? hydraulic_hp_available : null
+  );
 }
 
 // ---------- Speed vs Depth ----------
@@ -797,7 +812,7 @@ function removeTrailingZeros(text) {
 }
 
 // ---------- Tension vs Depth ----------
-function drawTensionProfile(svg, segments, depthMin, depthMax, tensionMin, tensionMax, payload_kg, cable_w_kgpm, accentColor, ratedSwl = null) {
+function drawTensionProfile(svg, segments, depthMin, depthMax, tensionMin, tensionMax, payload_kg, cable_w_kgpm, accentColor, ratedSwl = null, hydraulicHpAvailable = null) {
   if (svg && svg._depthTensionHandlers) {
     const { move, leave, pointerup, contextmenu, dblclick } = svg._depthTensionHandlers;
     svg.removeEventListener('pointermove', move);
@@ -880,10 +895,12 @@ function drawTensionProfile(svg, segments, depthMin, depthMax, tensionMin, tensi
     return {
       depth_start: clampDepth(depthStartRaw),
       depth_end: clampDepth(depthEndRaw),
-      avail_tension_kgf: Number.isFinite(S.avail_tension_kgf) ? S.avail_tension_kgf : null
+      avail_tension_kgf: Number.isFinite(S.avail_tension_kgf) ? S.avail_tension_kgf : null,
+      speed_ms: Number.isFinite(S.speed_ms) ? S.speed_ms : null
     };
   }).filter(Boolean);
 
+  const hpAvailable = Number.isFinite(hydraulicHpAvailable) ? Math.max(0, hydraulicHpAvailable) : null;
   const safePayload = Number.isFinite(payload_kg) ? payload_kg : 0;
   const safeCableWeight = Number.isFinite(cable_w_kgpm) ? cable_w_kgpm : 0;
   const requirementIntercept = safePayload;
@@ -946,6 +963,41 @@ function drawTensionProfile(svg, segments, depthMin, depthMax, tensionMin, tensi
       y2: y,
       stroke: seg.color,
       'stroke-width': 2.4
+    }));
+  });
+
+  const hpLimitedPieces = [];
+  if (Number.isFinite(hpAvailable) && hpAvailable > 0) {
+    normalizedSegments.forEach(seg => {
+      const d0 = Math.min(seg.depth_start, seg.depth_end);
+      const d1 = Math.max(seg.depth_start, seg.depth_end);
+      if (d1 - d0 < 1e-9) return;
+      const speedMs = seg.speed_ms;
+      if (!Number.isFinite(speedMs) || speedMs <= 1e-9) return;
+      const hpLimitedTension = (hpAvailable * W_PER_HP) / (speedMs * G);
+      if (!Number.isFinite(hpLimitedTension)) return;
+      hpLimitedPieces.push({
+        d0,
+        d1,
+        tension: hpLimitedTension
+      });
+    });
+  }
+
+  hpLimitedPieces.forEach(seg => {
+    if (seg.tension < tensionMin - 1e-9 || seg.tension > tensionMax + 1e-9) return;
+    const x0 = sx(seg.d0);
+    const x1 = sx(seg.d1);
+    if (Math.abs(x1 - x0) < 1e-6) return;
+    const y = sy(seg.tension);
+    svg.appendChild(svgEl('line', {
+      x1: x0,
+      y1: y,
+      x2: x1,
+      y2: y,
+      stroke: CLARS_BLUE,
+      'stroke-width': 2.2,
+      'stroke-dasharray': '6 4'
     }));
   });
 

@@ -2232,6 +2232,10 @@ function redrawPlots() {
     const depthXmaxTensionVal = parseInput(depthXmaxTensionEl);
     const depthTensionMinVal = parseInput(depthTensionYminEl);
     const depthTensionMaxVal = parseInput(depthTensionYmaxEl);
+    const hydraulicHpAvailable = (activeScenario === 'hydraulic')
+      ? (read('h_emotor_hp') * read('h_pump_strings'))
+      : null;
+
     drawDepthProfiles(depthSpeedSvg, depthTensionSvg, {
       scenario: activeScenario,       // 'electric' | 'hydraulic'
       elWraps: lastElWraps,
@@ -2242,6 +2246,7 @@ function redrawPlots() {
       rated_speed_ms: ratedSpeedMs,
       operating_depth_m: operatingDepth,
       rated_swl_kgf: ratedSwl,
+      hydraulic_hp_available: Number.isFinite(hydraulicHpAvailable) ? hydraulicHpAvailable : null,
       depth_xmin: Number.isFinite(depthXminVal) ? depthXminVal : undefined,
       depth_xmax: Number.isFinite(depthXmaxVal) ? depthXmaxVal : undefined,
       speed_ymin: Number.isFinite(depthSpeedMinVal) ? depthSpeedMinVal : undefined,
