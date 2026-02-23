@@ -980,6 +980,8 @@ const CREATE_NEW_VALUE = '__component_create_new__';
 const EXPORT_PRESET_VALUE = '__component_export_preset__';
 const EXPORT_PRESET_LABEL = 'Export Preset';
 const EXPORT_ALL_PRESETS_BUTTON_ID = 'export-all-presets-btn';
+const IMPORT_PRESETS_BUTTON_ID = 'import-presets-btn';
+const IMPORT_PRESETS_FILE_INPUT_ID = 'import-presets-file';
 const COMPONENT_STORAGE_PREFIX = 'analyzer.components.';
 /** @type {Map<string, ComponentOption[]>} */
 const memoryCustomOptions = new Map();
@@ -1156,6 +1158,144 @@ function setupExportAllPresetsButton() {
       button.disabled = wasDisabled;
       button.textContent = previousLabel;
     }
+  });
+}
+
+
+function applyPresetCatalogToCustomOptions(rawPresets) {
+  const presets = Array.isArray(rawPresets)
+    ? rawPresets
+    : (Array.isArray(rawPresets?.presets) ? rawPresets.presets : []);
+
+  /** @type {Map<string, ComponentOption[]>} */
+  const grouped = new Map();
+  const knownTypes = new Set(SELECT_CONFIGS.map(config => config.type).filter(Boolean));
+  let skippedMissingType = 0;
+  let skippedUnknownType = 0;
+  let skippedInvalid = 0;
+
+  presets.forEach(preset => {
+    if (!preset || typeof preset !== 'object' || Array.isArray(preset)) {
+      skippedInvalid += 1;
+      return;
+    }
+
+    const metadata =
+      preset.metadata && typeof preset.metadata === 'object' && !Array.isArray(preset.metadata)
+        ? preset.metadata
+        : undefined;
+    const type = metadata && typeof metadata.type === 'string' ? metadata.type : undefined;
+    if (!type) {
+      skippedMissingType += 1;
+      return;
+    }
+    if (!knownTypes.has(type)) {
+      skippedUnknownType += 1;
+      return;
+    }
+
+    const option = normalizeStoredOption(preset, type);
+    if (!option) {
+      skippedInvalid += 1;
+      return;
+    }
+    if (metadata) {
+      option.metadata = { ...metadata, ...(option.metadata ?? {}) };
+    }
+    if (!option.metadata) {
+      option.metadata = {};
+    }
+    if (typeof option.metadata.pn !== 'string') {
+      option.metadata.pn = option.pn;
+    }
+    if (type && option.metadata.type !== type) {
+      option.metadata.type = type;
+    }
+    if (preset.data && typeof preset.data === 'object' && !Array.isArray(preset.data)) {
+      option.data = { ...preset.data };
+    }
+
+    const list = grouped.get(type) ?? [];
+    list.push(option);
+    grouped.set(type, list);
+  });
+
+  grouped.forEach((options, type) => {
+    if (!options.length) return;
+    const existing = getRememberedCustomOptions(type);
+    const merged = mergeCustomOptionLists(existing, options);
+    replaceCustomOptions(type, merged, { persist: true });
+  });
+
+  return {
+    imported: grouped.size ? Array.from(grouped.values()).reduce((sum, items) => sum + items.length, 0) : 0,
+    skippedMissingType,
+    skippedUnknownType,
+    skippedInvalid,
+    total: presets.length
+  };
+}
+
+function setupImportPresetsButton() {
+  const button = /** @type {HTMLButtonElement|null} */ (document.getElementById(IMPORT_PRESETS_BUTTON_ID));
+  const fileInput = /** @type {HTMLInputElement|null} */ (document.getElementById(IMPORT_PRESETS_FILE_INPUT_ID));
+  if (!button || !fileInput) {
+    return;
+  }
+  if (button.dataset.boundImportPresets === '1') {
+    return;
+  }
+
+  button.dataset.boundImportPresets = '1';
+
+  const handleImportFile = async (file) => {
+    if (!file) return;
+
+    const previousLabel = button.textContent || 'Import Presets';
+    const wasDisabled = button.disabled;
+    button.disabled = true;
+    button.textContent = 'Importing…';
+
+    try {
+      const raw = await file.text();
+      const parsed = JSON.parse(raw);
+      const summary = applyPresetCatalogToCustomOptions(parsed);
+      if (!summary.total) {
+        window.alert('No presets found in the selected file.');
+        return;
+      }
+
+      if (!summary.imported) {
+        window.alert('No compatible presets were imported. Ensure each preset has metadata.type matching a supported selector (for example system, gearbox, or electric-motor).');
+        return;
+      }
+
+      const details = [];
+      if (summary.skippedMissingType) details.push(`${summary.skippedMissingType} missing type`);
+      if (summary.skippedUnknownType) details.push(`${summary.skippedUnknownType} unknown type`);
+      if (summary.skippedInvalid) details.push(`${summary.skippedInvalid} invalid entry`);
+
+      const suffix = details.length ? `
+Skipped: ${details.join(', ')}.` : '';
+      window.alert(`Imported ${summary.imported} preset${summary.imported === 1 ? '' : 's'}.${suffix}`);
+    } catch (err) {
+      console.warn('Unable to import presets from file:', err);
+      window.alert('Unable to import presets. Please choose a valid JSON preset export file.');
+    } finally {
+      fileInput.value = '';
+      button.disabled = wasDisabled;
+      button.textContent = previousLabel;
+    }
+  };
+
+  button.addEventListener('click', () => {
+    if (button.disabled) return;
+    fileInput.click();
+  });
+
+  fileInput.addEventListener('change', () => {
+    const [file] = Array.from(fileInput.files ?? []);
+    void handleImportFile(file);
   });
 }
 
@@ -1910,6 +2050,7 @@ export function setupComponentSelectors() {
   });
 
   setupExportAllPresetsButton();
+  setupImportPresetsButton();
 }
 
 async function fetchAndApplyServerPresets() {
@@ -1938,56 +2079,8 @@ async function fetchAndApplyServerPresets() {
     return;
   }
 
-  const presets = Array.isArray(body?.presets) ? body.presets : [];
-  if (!presets.length) {
+  const summary = applyPresetCatalogToCustomOptions(body?.presets);
+  if (!summary.total) {
     return;
   }
-
-  /** @type {Map<string, ComponentOption[]>} */
-  const grouped = new Map();
-
-  presets.forEach(preset => {
-    if (!preset || typeof preset !== 'object' || Array.isArray(preset)) {
-      return;
-    }
-    const metadata =
-      preset.metadata && typeof preset.metadata === 'object' && !Array.isArray(preset.metadata)
-        ? preset.metadata
-        : undefined;
-    const type = metadata && typeof metadata.type === 'string' ? metadata.type : undefined;
-    if (!type) {
-      return;
-    }
-    const option = normalizeStoredOption(preset, type);
-    if (!option) {
-      return;
-    }
-    if (metadata) {
-      option.metadata = { ...metadata, ...(option.metadata ?? {}) };
-    }
-    if (!option.metadata) {
-      option.metadata = {};
-    }
-    if (typeof option.metadata.pn !== 'string') {
-      option.metadata.pn = option.pn;
-    }
-    if (type && option.metadata.type !== type) {
-      option.metadata.type = type;
-    }
-    if (preset.data && typeof preset.data === 'object' && !Array.isArray(preset.data)) {
-      option.data = { ...preset.data };
-    }
-    const list = grouped.get(type) ?? [];
-    list.push(option);
-    grouped.set(type, list);
-  });
-
-  grouped.forEach((options, type) => {
-    if (!options.length) {
-      return;
-    }
-    const existing = getRememberedCustomOptions(type);
-    const merged = mergeCustomOptionLists(existing, options);
-    replaceCustomOptions(type, merged, { persist: true });
-  });
 }
