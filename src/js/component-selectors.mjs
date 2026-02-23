@@ -1163,9 +1163,21 @@ function setupExportAllPresetsButton() {
 
 
 function applyPresetCatalogToCustomOptions(rawPresets) {
+  const hasPresetLikeShape =
+    rawPresets &&
+    typeof rawPresets === 'object' &&
+    !Array.isArray(rawPresets) &&
+    (
+      typeof rawPresets.pn === 'string' ||
+      typeof rawPresets.name === 'string' ||
+      (rawPresets.metadata && typeof rawPresets.metadata === 'object' && !Array.isArray(rawPresets.metadata))
+    );
+
   const presets = Array.isArray(rawPresets)
     ? rawPresets
-    : (Array.isArray(rawPresets?.presets) ? rawPresets.presets : []);
+    : (Array.isArray(rawPresets?.presets)
+      ? rawPresets.presets
+      : (hasPresetLikeShape ? [rawPresets] : []));
 
   /** @type {Map<string, ComponentOption[]>} */
   const grouped = new Map();
@@ -1280,7 +1292,7 @@ Skipped: ${details.join(', ')}.` : '';
       window.alert(`Imported ${summary.imported} preset${summary.imported === 1 ? '' : 's'}.${suffix}`);
     } catch (err) {
       console.warn('Unable to import presets from file:', err);
-      window.alert('Unable to import presets. Please choose a valid JSON preset export file.');
+      window.alert('Unable to import presets. Please choose a valid JSON preset file (single preset or preset catalog).');
     } finally {
       fileInput.value = '';
       button.disabled = wasDisabled;
