@@ -19,7 +19,6 @@ import { renderHydraulicTables } from './hydraulic.mjs';
 import { drawWaveContours, drawWaveHeightContours } from './plots/wave-contours.mjs';
 import { drawDepthProfiles } from './plots/depth-profiles.mjs';
 import { drawHydraulicRpmTorque } from './plots/rpm-torque.mjs';
-import { setupSeaStateChart } from './plots/sea-state-chart.mjs';
 import { setupComponentSelectors } from './component-selectors.mjs';
 import { renderDrumVisualization, clearDrumVisualization } from './drum-visual.mjs';
 import { renderLatexFragments } from './katex-renderer.mjs';
@@ -461,15 +460,13 @@ function collectProjectPlotPins() {
   const depthSpeedSvg = /** @type {SVGSVGElement|null} */ (document.getElementById('depth_speed_svg'));
   const depthTensionSvg = /** @type {SVGSVGElement|null} */ (document.getElementById('depth_tension_svg'));
   const rpmSvg = /** @type {SVGSVGElement|null} */ (document.getElementById('hyd_rpm_torque_svg'));
-  const seaCanvas = /** @type {HTMLCanvasElement|null} */ (document.getElementById('sea-state-canvas'));
 
   return {
     wave: clonePinArray(waveSvg?._wavePins, ['x', 'y']),
     waveHeight: clonePinArray(waveHeightSvg?._wavePins, ['x', 'y']),
     depthSpeed: clonePinArray(depthSpeedSvg?._depthSpeedPins, ['depth', 'speed']),
     depthTension: clonePinArray(depthTensionSvg?._depthTensionPins, ['depth', 'tension']),
-    rpmTorque: clonePinArray(rpmSvg?._rpmTorquePins, ['torque', 'rpm']),
-    seaState: clonePinArray(seaCanvas?._seaStatePins, ['Tp', 'Hs'])
+    rpmTorque: clonePinArray(rpmSvg?._rpmTorquePins, ['torque', 'rpm'])
   };
 }
 
@@ -480,19 +477,12 @@ function applyProjectPlotPins(pinState) {
   const depthSpeedSvg = /** @type {SVGSVGElement|null} */ (document.getElementById('depth_speed_svg'));
   const depthTensionSvg = /** @type {SVGSVGElement|null} */ (document.getElementById('depth_tension_svg'));
   const rpmSvg = /** @type {SVGSVGElement|null} */ (document.getElementById('hyd_rpm_torque_svg'));
-  const seaCanvas = /** @type {HTMLCanvasElement|null} */ (document.getElementById('sea-state-canvas'));
 
   if (waveSvg) waveSvg._wavePins = clonePinArray(pinState.wave, ['x', 'y']);
   if (waveHeightSvg) waveHeightSvg._wavePins = clonePinArray(pinState.waveHeight, ['x', 'y']);
   if (depthSpeedSvg) depthSpeedSvg._depthSpeedPins = clonePinArray(pinState.depthSpeed, ['depth', 'speed']);
   if (depthTensionSvg) depthTensionSvg._depthTensionPins = clonePinArray(pinState.depthTension, ['depth', 'tension']);
   if (rpmSvg) rpmSvg._rpmTorquePins = clonePinArray(pinState.rpmTorque, ['torque', 'rpm']);
-  if (seaCanvas) {
-    seaCanvas._seaStatePins = clonePinArray(pinState.seaState, ['Tp', 'Hs']);
-    if (typeof seaCanvas._seaStateRender === 'function') {
-      seaCanvas._seaStateRender();
-    }
-  }
 }
 
 function collectProjectState() {
@@ -971,7 +961,6 @@ document.addEventListener('DOMContentLoaded', () => {
   updateBuildIndicator();
 
 
-  setupSeaStateChart();
 
   setupUnitConverter();
 
