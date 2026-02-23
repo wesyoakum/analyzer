@@ -2094,7 +2094,7 @@ function computeAll() {
       model.inputs.motor_tmax,
       q('el_tau_max_summary'),
       read('rated_swl_kgf'),
-      model.inputs.flange_dia_in,
+      model.summary.full_drum_dia_in,
       model.inputs.motors,
       model.inputs.gr1 * model.inputs.gr2
     );
