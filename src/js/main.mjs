@@ -571,10 +571,12 @@ async function setupProjectManager() {
   const saveBtn = document.getElementById('save_project');
   const renameBtn = document.getElementById('rename_project');
   const loadBtn = document.getElementById('load_project');
+  const importBtn = document.getElementById('import_project');
+  const importFileInput = /** @type {HTMLInputElement|null} */ (document.getElementById('import_project_file'));
   const exportBtn = document.getElementById('export_project');
   const deleteBtn = document.getElementById('delete_project');
   const statusEl = document.getElementById('project_status');
-  if (!nameInput || !select || !saveNewBtn || !saveBtn || !renameBtn || !loadBtn || !exportBtn || !deleteBtn || !statusEl) return;
+  if (!nameInput || !select || !saveNewBtn || !saveBtn || !renameBtn || !loadBtn || !importBtn || !importFileInput || !exportBtn || !deleteBtn || !statusEl) return;
 
   const LOCAL_PROJECTS_KEY = 'analyzer.projects.v1';
   let cachedProjects = [];
@@ -596,6 +598,28 @@ async function setupProjectManager() {
       ...(typeof project.createdAt === 'string' ? { createdAt: project.createdAt } : {}),
       ...(typeof project.updatedAt === 'string' ? { updatedAt: project.updatedAt } : {}),
       ...(project.origin ? { origin: project.origin } : {})
+    };
+  };
+
+  const toImportedProject = (raw) => {
+    if (!raw || typeof raw !== 'object' || Array.isArray(raw)) return null;
+    const candidate = raw.project && typeof raw.project === 'object' && !Array.isArray(raw.project)
+      ? raw.project
+      : raw;
+
+    const fromSavedShape = normalizeProject(candidate);
+    if (fromSavedShape) {
+      return {
+        ...fromSavedShape,
+        id: `${Date.now()}-${Math.random().toString(16).slice(2, 10)}`
+      };
+    }
+
+    if (!candidate.state || typeof candidate.state !== 'object' || Array.isArray(candidate.state)) return null;
+    return {
+      id: `${Date.now()}-${Math.random().toString(16).slice(2, 10)}`,
+      name: typeof candidate.name === 'string' && candidate.name.trim() ? candidate.name.trim() : 'Imported project',
+      state: candidate.state
     };
   };
 
@@ -832,6 +856,36 @@ async function setupProjectManager() {
     nameInput.value = project.name || '';
     computeAll();
     setStatus('Project loaded.');
+  });
+
+  importBtn.addEventListener('click', () => {
+    importFileInput.click();
+  });
+
+  importFileInput.addEventListener('change', async () => {
+    const file = importFileInput.files?.[0];
+    importFileInput.value = '';
+    if (!file) return;
+
+    try {
+      const raw = JSON.parse(await file.text());
+      const imported = toImportedProject(raw);
+      if (!imported) {
+        window.alert('Selected file is not a valid project export.');
+        return;
+      }
+
+      applyProjectState(imported.state);
+      computeAll();
+      nameInput.value = imported.name;
+
+      const localImported = upsertLocalProject(imported);
+      await loadProjects();
+      select.value = localImported.id;
+      setStatus('Project imported from file and loaded.');
+    } catch (err) {
+      window.alert('Unable to import project file. Ensure it is valid JSON.');
+    }
   });
 
   exportBtn.addEventListener('click', async () => {
