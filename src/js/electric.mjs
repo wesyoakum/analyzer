@@ -229,11 +229,11 @@ export function renderElectricTables(
       `<strong>τ<sub>max,drum</sub></strong>: ${formatMotorTorque(tauMaxDrumNm)} N·m`,
       '',
       `<strong>τ<sub>max,gb</sub></strong>: ${formatMotorTorque(tauMaxGbNm)} N·m`,
-      `<strong>τ<sub>g,max</sub></strong>: ${hasGearboxMax ? `${formatMotorTorque(gearboxMaxTorqueNm)} N·m` : '–'}`,
+      `<strong>τ<sub>gb,rated</sub></strong>: ${hasGearboxMax ? `${formatMotorTorque(gearboxMaxTorqueNm)} N·m` : '–'}`,
       `<strong>Check</strong>: ${gearboxCheckText}`,
       '',
       `<strong>τ<sub>max,m</sub></strong>: ${formatMotorTorque(tauMaxMtrNm)} N·m`,
-      `<strong>τ<sub>m,max</sub></strong>: ${hasMotorMax ? `${formatMotorTorque(motorTmaxNm)} N·m` : '–'}`,
+      `<strong>τ<sub>m,rated</sub></strong>: ${hasMotorMax ? `${formatMotorTorque(motorTmaxNm)} N·m` : '–'}`,
       `<strong>Check</strong>: ${motorCheckText}`
     ].join('<br>');
   }
