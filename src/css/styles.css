@@ -823,6 +823,14 @@ button:focus {
   width: 100%;
 }
 
+.torque-check-message {
+  margin-top: 6px;
+  color: #b00020;
+  font-size: 0.85rem;
+  font-weight: 600;
+  min-height: 1.1em;
+}
+
 .worksheet .note td {
   background: #f6f8fd;
   font-style: italic;
