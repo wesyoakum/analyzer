@@ -164,11 +164,7 @@ export function renderElectricTables(
       `<td>${formatInches(r.layer_dia_in)}</td>`,
       `<td>${formatCableOnDrumRange(r.pre_on_drum_m, r.post_on_drum_m)}</td>`,
       `<td>${formatDepthRange(r.pre_deployed_m, r.post_deployed_m)}</td>`,
-      `<td>${formatKgf(r.max_tension_required_kgf)}</td>`,
-      `<td>${formatInteger(r.tau_req_drum_kNm)}</td>`,
       torqueCell(r.max_gearbox_torque_Nm),
-      `<td>${formatMotorTorque(r.max_motor_torque_Nm)}</td>`,
-      `<td>${formatRpm(r.motor_rpm_at_start ?? '')}</td>`,
       `<td>${formatSpeed(r.line_speed_at_start_mpm ?? '')}</td>`,
       `<td>${formatKgf(r.tension_required_start_kgf)}</td>`,
       `<td>${formatKgf(r.avail_tension_kgf)}</td>`
