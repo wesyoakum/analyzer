@@ -197,29 +197,30 @@ export function renderElectricTables(
     tbodyWraps.appendChild(tr);
   }
 
-  if (summaryEl) {
-    const swlSafe = Number.isFinite(ratedSwlKgf) ? Math.max(0, ratedSwlKgf) : 0;
-    const drumDiaM = Number.isFinite(fullDrumDiaIn) ? Math.max(0, fullDrumDiaIn) * M_PER_IN : 0;
-    const driveMotorsSafe = Number.isFinite(driveMotorCount) && driveMotorCount > 0 ? driveMotorCount : 0;
-    const totalGearRatioSafe = Number.isFinite(totalGearRatio) && totalGearRatio > 0 ? totalGearRatio : 0;
+  const swlSafe = Number.isFinite(ratedSwlKgf) ? Math.max(0, ratedSwlKgf) : 0;
+  const drumDiaM = Number.isFinite(fullDrumDiaIn) ? Math.max(0, fullDrumDiaIn) * M_PER_IN : 0;
+  const driveMotorsSafe = Number.isFinite(driveMotorCount) && driveMotorCount > 0 ? driveMotorCount : 0;
+  const totalGearRatioSafe = Number.isFinite(totalGearRatio) && totalGearRatio > 0 ? totalGearRatio : 0;
 
-    const tauMaxDrumNm = swlSafe * 1.25 * G * (drumDiaM / 2);
-    const tauMaxGbNm = driveMotorsSafe > 0
-      ? tauMaxDrumNm / driveMotorsSafe
-      : 0;
-    const tauMaxMtrNm = (driveMotorsSafe > 0 && totalGearRatioSafe > 0)
-      ? tauMaxGbNm / totalGearRatioSafe
-      : 0;
-    const tau_allow_max_gb = hasGearboxMax ? gearboxMaxTorqueNm : null;
-    const tau_allow_max_mtr = hasMotorMax ? motorTmaxNm : null;
-    const gearboxCheckPassed = Number.isFinite(tau_allow_max_gb) && tau_allow_max_gb >= tauMaxGbNm;
-    const motorCheckPassed = Number.isFinite(tau_allow_max_mtr) && tau_allow_max_mtr >= tauMaxMtrNm;
-    const gearboxCheckText = hasGearboxMax
-      ? (gearboxCheckPassed ? 'OK' : 'Exceeded')
-      : '–';
-    const motorCheckText = hasMotorMax
-      ? (motorCheckPassed ? 'OK' : 'Exceeded')
-      : '–';
+  const tauMaxDrumNm = swlSafe * 1.25 * G * (drumDiaM / 2);
+  const tauMaxGbNm = driveMotorsSafe > 0
+    ? tauMaxDrumNm / driveMotorsSafe
+    : 0;
+  const tauMaxMtrNm = (driveMotorsSafe > 0 && totalGearRatioSafe > 0)
+    ? tauMaxGbNm / totalGearRatioSafe
+    : 0;
+  const tau_allow_max_gb = hasGearboxMax ? gearboxMaxTorqueNm : null;
+  const tau_allow_max_mtr = hasMotorMax ? motorTmaxNm : null;
+  const gearboxCheckPassed = Number.isFinite(tau_allow_max_gb) && tau_allow_max_gb >= tauMaxGbNm;
+  const motorCheckPassed = Number.isFinite(tau_allow_max_mtr) && tau_allow_max_mtr >= tauMaxMtrNm;
+  const gearboxCheckText = hasGearboxMax
+    ? (gearboxCheckPassed ? 'OK' : 'Exceeded')
+    : '–';
+  const motorCheckText = hasMotorMax
+    ? (motorCheckPassed ? 'OK' : 'Exceeded')
+    : '–';
+
+  if (summaryEl) {
 
     summaryEl.innerHTML = [
       `<strong>τ<sub>max,drum</sub></strong>: ${formatMotorTorque(tauMaxDrumNm)} N·m`,
@@ -233,4 +234,9 @@ export function renderElectricTables(
       `<strong>Check</strong>: ${motorCheckText}`
     ].join('<br>');
   }
+
+  return {
+    gearboxCheckFailed: hasGearboxMax && !gearboxCheckPassed,
+    motorCheckFailed: hasMotorMax && !motorCheckPassed
+  };
 }

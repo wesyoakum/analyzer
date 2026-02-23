@@ -43,6 +43,17 @@ function readAccentColor() {
   return '#2c56a3';
 }
 
+function updateTorqueCheckMessages(gearboxFailed, motorFailed) {
+  const gearboxMsgEl = /** @type {HTMLElement|null} */ (q('gearbox_torque_check_msg'));
+  const motorMsgEl = /** @type {HTMLElement|null} */ (q('motor_torque_check_msg'));
+  if (gearboxMsgEl) {
+    gearboxMsgEl.textContent = gearboxFailed ? 'Gearbox torque check failed.' : '';
+  }
+  if (motorMsgEl) {
+    motorMsgEl.textContent = motorFailed ? 'Motor torque check failed.' : '';
+  }
+}
+
 /**
  * @typedef {Object} DepthProfileWrap
  * @property {number} wrap_no
@@ -1978,7 +1989,7 @@ function computeAll() {
       }
     });
 
-    renderElectricTables(
+    const torqueChecks = renderElectricTables(
       lastElLayer,
       lastElWraps,
       q('tbody_el_layer'),
@@ -1991,6 +2002,7 @@ function computeAll() {
       model.inputs.motors,
       model.inputs.gr1 * model.inputs.gr2
     );
+    updateTorqueCheckMessages(Boolean(torqueChecks?.gearboxCheckFailed), Boolean(torqueChecks?.motorCheckFailed));
     renderHydraulicTables(lastHyLayer, lastHyWraps, q('tbody_hy_layer'), q('tbody_hy_wraps'));
 
     renderInputSummary();
@@ -2008,6 +2020,7 @@ function computeAll() {
     lastComputedModel = null;
     clearDrumVisualization();
     clearPlots();
+    updateTorqueCheckMessages(false, false);
     updateCsvButtonStates();
     renderInputSummary();
     renderReport(document.getElementById('report-root'), null);
