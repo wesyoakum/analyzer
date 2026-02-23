@@ -541,6 +541,29 @@ function applyProjectState(state) {
   applyProjectPlotPins(state[PROJECT_STATE_PINS_KEY]);
 }
 
+function sanitizeProjectFilename(name) {
+  const trimmed = String(name || 'project').trim().toLowerCase();
+  const normalized = trimmed
+    .replace(/[^a-z0-9]+/g, '-')
+    .replace(/^-+|-+$/g, '')
+    .slice(0, 64);
+  return normalized || 'project';
+}
+
+function downloadProjectJson(project) {
+  const payload = JSON.stringify(project, null, 2);
+  const blob = new Blob([payload], { type: 'application/json' });
+  const url = URL.createObjectURL(blob);
+  const link = document.createElement('a');
+  const stamp = new Date().toISOString().replace(/[:.]/g, '-');
+  link.href = url;
+  link.download = `${sanitizeProjectFilename(project?.name)}-${stamp}.json`;
+  document.body.appendChild(link);
+  link.click();
+  link.remove();
+  setTimeout(() => URL.revokeObjectURL(url), 0);
+}
+
 async function setupProjectManager() {
   const nameInput = /** @type {HTMLInputElement|null} */ (document.getElementById('project_name'));
   const select = /** @type {HTMLSelectElement|null} */ (document.getElementById('project_select'));
@@ -548,9 +571,10 @@ async function setupProjectManager() {
   const saveBtn = document.getElementById('save_project');
   const renameBtn = document.getElementById('rename_project');
   const loadBtn = document.getElementById('load_project');
+  const exportBtn = document.getElementById('export_project');
   const deleteBtn = document.getElementById('delete_project');
   const statusEl = document.getElementById('project_status');
-  if (!nameInput || !select || !saveNewBtn || !saveBtn || !renameBtn || !loadBtn || !deleteBtn || !statusEl) return;
+  if (!nameInput || !select || !saveNewBtn || !saveBtn || !renameBtn || !loadBtn || !exportBtn || !deleteBtn || !statusEl) return;
 
   const LOCAL_PROJECTS_KEY = 'analyzer.projects.v1';
   let cachedProjects = [];
@@ -568,6 +592,7 @@ async function setupProjectManager() {
       id: project.id,
       name: project.name.trim(),
       state: project.state,
+      ...(typeof project.description === 'string' ? { description: project.description } : {}),
       ...(typeof project.createdAt === 'string' ? { createdAt: project.createdAt } : {}),
       ...(typeof project.updatedAt === 'string' ? { updatedAt: project.updatedAt } : {}),
       ...(project.origin ? { origin: project.origin } : {})
@@ -807,6 +832,23 @@ async function setupProjectManager() {
     nameInput.value = project.name || '';
     computeAll();
     setStatus('Project loaded.');
+  });
+
+  exportBtn.addEventListener('click', async () => {
+    const selectedId = select.value;
+    if (!selectedId) {
+      window.alert('Select a saved project to export.');
+      return;
+    }
+
+    const project = await getProjectById(selectedId);
+    if (!project || typeof project.state !== 'object' || project.state === null) {
+      window.alert('Unable to export project.');
+      return;
+    }
+
+    downloadProjectJson(project);
+    setStatus('Project exported to JSON file.');
   });
 
   deleteBtn.addEventListener('click', async () => {
