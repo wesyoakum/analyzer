@@ -203,10 +203,24 @@ async function readProjects() {
   const raw = await fs.readFile(PROJECT_STORE, 'utf8');
   try {
     const parsed = JSON.parse(raw);
-    if (!Array.isArray(parsed)) {
-      throw new Error('Project store is not an array');
+
+    // Accept both an array and a single project object so manually uploaded
+    // project exports continue to work without additional editing.
+    if (Array.isArray(parsed)) {
+      return parsed;
     }
-    return parsed;
+
+    if (parsed && typeof parsed === 'object' && !Array.isArray(parsed)) {
+      if (Array.isArray(parsed.projects)) {
+        return parsed.projects;
+      }
+
+      if (typeof parsed.id === 'string' && typeof parsed.name === 'string' && parsed.state && typeof parsed.state === 'object' && !Array.isArray(parsed.state)) {
+        return [parsed];
+      }
+    }
+
+    throw new Error('Project store is not an array');
   } catch (err) {
     throw new Error(`Unable to parse projects file: ${err.message}`);
   }
