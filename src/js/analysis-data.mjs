@@ -161,7 +161,7 @@ export function buildComputationModel(inputs) {
   }
 
   const elLayer = electricEnabled ? rowsToElectricLayer(rows, inputs.payload_kg, inputs.cable_w_kgpm, gr1, gr2, motors) : [];
-  const hyLayer = hydraulicEnabled ? rowsToHydraulicLayer(rows) : [];
+  const hyLayer = hydraulicEnabled ? rowsToHydraulicLayer(rows, inputs.payload_kg, inputs.cable_w_kgpm) : [];
   const elWraps = electricEnabled ? projectElectricWraps(rows) : [];
   const hyWraps = hydraulicEnabled ? projectHydraulicWraps(rows) : [];
 

@@ -1,6 +1,6 @@
 import {
   G, M_PER_IN,
-  tension_kgf, elec_available_tension_kgf,
+  tension_kgf,
 } from './utils.mjs';
 import {
   formatDecimal,
@@ -50,6 +50,7 @@ export function rowsToElectricLayer(rows, payload_kg, cable_w_kgpm, gr1, gr2, mo
         line_speed_at_start_mpm: null,
         tension_theoretical_start_kgf: null,
         tension_required_start_kgf: null,
+        tension_required_end_kgf: null,
         avail_tension_kgf: null
       });
     } else {
@@ -66,7 +67,7 @@ export function rowsToElectricLayer(rows, payload_kg, cable_w_kgpm, gr1, gr2, mo
       L.motor_rpm_at_start = r.motor_rpm ?? '';
       L.line_speed_at_start_mpm = r.line_speed_mpm ?? '';
       L.tension_theoretical_start_kgf = r.tension_theoretical_kgf ?? null;
-      L.tension_required_start_kgf = r.tension_kgf ?? null;
+      L.tension_required_start_kgf = +tension_kgf(L.pre_deployed_m, payload_kg, cable_w_kgpm).toFixed(1);
       L.avail_tension_kgf = r.avail_tension_kgf ?? null;
     }
   }
@@ -78,6 +79,7 @@ export function rowsToElectricLayer(rows, payload_kg, cable_w_kgpm, gr1, gr2, mo
   for (const L of [...byLayer.values()].sort((a, b) => a.layer_no - b.layer_no)) {
     const maxTheo_kgf = tension_kgf(L.pre_deployed_m, payload_kg, cable_w_kgpm);
     const maxReq_kgf = maxTheo_kgf;
+    const endReq_kgf = tension_kgf(L.post_deployed_m, payload_kg, cable_w_kgpm);
     const radius_m = (L.layer_dia_in * M_PER_IN) / 2;
     const maxT_Nm = +(maxReq_kgf * G * radius_m).toFixed(1);
     const maxMotorNm = +(maxT_Nm / denom).toFixed(1);
@@ -86,6 +88,7 @@ export function rowsToElectricLayer(rows, payload_kg, cable_w_kgpm, gr1, gr2, mo
       ...L,
       max_tension_theoretical_kgf: maxTheo_kgf,
       max_tension_required_kgf: maxReq_kgf,
+      tension_required_end_kgf: +endReq_kgf.toFixed(1),
       max_gearbox_torque_Nm: maxT_Nm,
       max_torque_Nm: maxT_Nm,
       tau_req_drum_kNm: +(maxT_Nm / 1000).toFixed(1),
@@ -166,7 +169,7 @@ export function renderElectricTables(
       `<td>${formatDepthRange(r.pre_deployed_m, r.post_deployed_m)}</td>`,
       torqueCell(r.max_gearbox_torque_Nm),
       `<td>${formatSpeed(r.line_speed_at_start_mpm ?? '')}</td>`,
-      `<td>${formatKgf(r.tension_required_start_kgf)}</td>`,
+      `<td>${formatKgf(r.tension_required_start_kgf)}-${formatKgf(r.tension_required_end_kgf)}</td>`,
       `<td>${formatKgf(r.avail_tension_kgf)}</td>`
     ];
     tr.innerHTML = cells.join('');

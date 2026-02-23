@@ -9,6 +9,7 @@ import {
   formatPsi,
   formatSpeed
 } from './table-formatters.mjs';
+import { tension_kgf } from './utils.mjs';
 
 /**
  * Convert per-wrap rows into per-layer rows for the Hydraulic table.
@@ -16,7 +17,7 @@ import {
  * @param {Array<Object>} rows
  * @returns {Array<Object>} sorted by layer_no ascending
  */
-export function rowsToHydraulicLayer(rows) {
+export function rowsToHydraulicLayer(rows, payload_kg, cable_w_kgpm) {
   const byLayer = new Map();
 
   // Geometry/depth pre/post
@@ -47,6 +48,7 @@ export function rowsToHydraulicLayer(rows) {
         max_gearbox_torque_Nm: null,
         hyd_tension_theoretical_start_kgf: null,
         hyd_tension_required_start_kgf: null,
+        hyd_tension_required_end_kgf: null,
         hyd_avail_tension_kgf: null
       });
     } else {
@@ -71,7 +73,7 @@ export function rowsToHydraulicLayer(rows) {
         ? +(L.hyd_tau_avail_Nm / 1000).toFixed(1)
         : null;
       L.hyd_tension_theoretical_start_kgf = r.tension_theoretical_kgf ?? null;
-      L.hyd_tension_required_start_kgf = r.tension_kgf ?? null;
+      L.hyd_tension_required_start_kgf = +tension_kgf(L.pre_deployed_m, payload_kg, cable_w_kgpm).toFixed(1);
       L.hyd_avail_tension_kgf = r.hyd_avail_tension_kgf ?? null;
     }
     if (L && Number.isFinite(r.gearbox_torque_Nm)) {
@@ -81,7 +83,11 @@ export function rowsToHydraulicLayer(rows) {
     }
   }
 
-  return [...byLayer.values()].sort((a, b) => a.layer_no - b.layer_no);
+  const out = [...byLayer.values()].sort((a, b) => a.layer_no - b.layer_no);
+  for (const L of out) {
+    L.hyd_tension_required_end_kgf = +tension_kgf(L.post_deployed_m, payload_kg, cable_w_kgpm).toFixed(1);
+  }
+  return out;
 }
 
 /**
@@ -144,7 +150,7 @@ export function renderHydraulicTables(hyLayers, hyWraps, tbodyLayer, tbodyWraps)
       formatHp(r.hyd_hp_sys ?? ''),
       formatInteger(r.hyd_tau_avail_kNm),
       formatInteger(r.max_gearbox_torque_Nm),
-      formatKgf(r.hyd_tension_required_start_kgf),
+      `${formatKgf(r.hyd_tension_required_start_kgf)}-${formatKgf(r.hyd_tension_required_end_kgf)}`,
       formatKgf(r.hyd_avail_tension_kgf)
     ];
     tr.innerHTML = cells.map(v => `<td>${v}</td>`).join('');
