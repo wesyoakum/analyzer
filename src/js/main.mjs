@@ -313,16 +313,14 @@ const CSV_BUTTON_SPECS = {
     columns: [
       'layer_no', 'layer_dia_in', 'pre_on_drum_m', 'pre_deployed_m',
       'post_on_drum_m', 'post_deployed_m', 'max_tension_theoretical_kgf',
-      'max_tension_required_kgf', 'tau_req_drum_kNm', 'max_motor_torque_Nm',
-      'motor_rpm_at_start', 'line_speed_at_start_mpm',
-      'tension_theoretical_start_kgf', 'tension_required_start_kgf', 'avail_tension_kgf'
+      'line_speed_at_start_mpm', 'tension_theoretical_start_kgf',
+      'tension_required_start_kgf', 'avail_tension_kgf'
     ],
     header: [
       'layer_no', 'layer_dia_in', 'pre_on_drum_m', 'pre_deployed_m',
       'post_on_drum_m', 'post_deployed_m', 'max_tension_theoretical_kgf',
-      'max_tension_required_kgf', 'tau_req_drum_kNm', 'max_motor_torque_Nm',
-      'motor_rpm_at_start', 'line_speed_at_start_mpm',
-      'tension_theoretical_start_kgf', 'tension_required_start_kgf', 'avail_tension_kgf'
+      'line_speed_at_start_mpm', 'tension_theoretical_start_kgf',
+      'tension_required_start_kgf', 'avail_tension_kgf'
     ],
     getRows: () => lastElLayer
   },
