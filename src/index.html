@@ -623,7 +623,6 @@
             <a class="tab-btn" href="#panel-results">Section 3: Layer Tables</a>
             <a class="tab-btn" href="#panel-converter">Section 4: Unit Converter</a>
             <a class="tab-btn" href="#panel-instructions">Section 5: Instructions</a>
-            <a class="tab-btn" href="#panel-sea-state">Sea State Explorer</a>
           </nav>
         </div>
       
@@ -815,52 +814,6 @@
       <p class="section-back-to-top"><a href="#page-top">Back to top ↑</a></p>
     </div>
     <div class="pdf-page-break" aria-hidden="true"></div>
-
-    <div
-      id="panel-sea-state"
-      class="panel"
-    >
-      <section class="card sea-state-card">
-        <div class="card-header">
-          <h2 class="section-title">Hs vs Tp (Interactive)</h2>
-        </div>
-        <div class="sea-state-grid">
-          <div class="sea-state-controls">
-            <label><input id="sea-toggle-regions" type="checkbox" checked> Sea state regions (SS 3–7)</label>
-            <label><input id="sea-toggle-grid" type="checkbox" checked> Grid</label>
-            <label><input id="sea-toggle-snap" type="checkbox"> Snap 0.1 m / 0.1 s</label>
-            <label><input id="sea-toggle-breaking" type="checkbox" checked> Breaking limit (deep-water steepness ≈ 1/7)</label>
-            <label><input id="sea-toggle-pm" type="checkbox" checked> Pierson–Moskowitz fully developed sea</label>
-            <button id="sea-clear-pins" type="button">Clear pinned</button>
-          </div>
-          <canvas id="sea-state-canvas" class="sea-state-canvas" width="1200" height="560" aria-label="Interactive Hs vs Tp chart"></canvas>
-          <p class="dim sea-state-hint">
-            Move mouse for crosshairs + tooltip + speed iso-line. Click to pin (persists). Right-click a pinned point to remove it.
-            Tooltip speed is maximum vertical surface speed for a sinusoid: <span class="mono">v<sub>z,max</sub> = π·H/T</span> (using H = Hs).
-          </p>
-          <p class="dim sea-state-notes">
-            (1) Douglas sea state is defined by <strong>Hs</strong> only; Tp bands are representative.
-            (2) “Breaking limit” uses the deep-water steepness threshold <span class="mono">H/L ≈ 1/7</span> with <span class="mono">L = gT²/(2π)</span>.
-            (3) PM “fully developed” line uses <span class="mono">Hs = 0.21·U10²/g</span> and <span class="mono">Tp = 7.54·U10/g</span>, so <span class="mono">Hs(Tp) = 0.21·g·Tp²/7.54²</span>.
-          </p>
-          <div class="legend legend--panel" id="sea-state-legend"></div>
-          <h3 class="sea-state-pinned-title">Pinned points</h3>
-          <table class="sea-state-table">
-            <thead>
-              <tr>
-                <th>Label</th>
-                <th>Tp (s)</th>
-                <th>Hs (m)</th>
-                <th>v<sub>z,max</sub> (m/s)</th>
-                <th>v<sub>z,max</sub> (kn)</th>
-              </tr>
-            </thead>
-            <tbody id="sea-pins-body"></tbody>
-          </table>
-        </div>
-      </section>
-      <p class="section-back-to-top"><a href="#page-top">Back to top ↑</a></p>
-    </div>
 
     <div
       id="panel-results"
@@ -1684,8 +1637,6 @@
         });
       </script>
       
-      <div class="sea-state-tooltip" id="sea-state-tooltip"></div>
-
       <div id="report-root" class="report-root" aria-hidden="true"></div>
 
       <!-- Main app script -->
