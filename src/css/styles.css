@@ -1441,6 +1441,11 @@ th[title] {
   border-top-style: dashed;
 }
 
+.swatch.hp-limit {
+  border-top-color: #2163a5;
+  border-top-style: dashed;
+}
+
 .swatch-group {
   display: inline-flex;
   gap: 4px;
