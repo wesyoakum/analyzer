@@ -208,22 +208,16 @@ export function renderElectricTables(
     const totalGearRatioSafe = Number.isFinite(totalGearRatio) && totalGearRatio > 0 ? totalGearRatio : 0;
 
     const tauMaxDrumNm = swlSafe * 1.25 * G * (drumDiaM / 2);
-    const tauMaxGbNm = tauMaxDrumNm;
-    const tauMaxMtrNm = (driveMotorsSafe > 0 && totalGearRatioSafe > 0)
-      ? tauMaxDrumNm / (driveMotorsSafe * totalGearRatioSafe)
+    const tauMaxGbNm = driveMotorsSafe > 0
+      ? tauMaxDrumNm / driveMotorsSafe
       : 0;
-    const tau_test_max_gb = elLayers.reduce((maxVal, layer) => {
-      const value = Number(layer?.max_gearbox_torque_Nm);
-      return Number.isFinite(value) ? Math.max(maxVal, value) : maxVal;
-    }, 0);
-    const tau_test_max_mtr = elLayers.reduce((maxVal, layer) => {
-      const value = Number(layer?.max_motor_torque_Nm);
-      return Number.isFinite(value) ? Math.max(maxVal, value) : maxVal;
-    }, 0);
+    const tauMaxMtrNm = (driveMotorsSafe > 0 && totalGearRatioSafe > 0)
+      ? tauMaxGbNm / totalGearRatioSafe
+      : 0;
     const tau_allow_max_gb = hasGearboxMax ? gearboxMaxTorqueNm : null;
     const tau_allow_max_mtr = hasMotorMax ? motorTmaxNm : null;
-    const gearboxCheckPassed = Number.isFinite(tau_allow_max_gb) && tau_test_max_gb <= tau_allow_max_gb;
-    const motorCheckPassed = Number.isFinite(tau_allow_max_mtr) && tau_test_max_mtr <= tau_allow_max_mtr;
+    const gearboxCheckPassed = Number.isFinite(tau_allow_max_gb) && tau_allow_max_gb >= tauMaxGbNm;
+    const motorCheckPassed = Number.isFinite(tau_allow_max_mtr) && tau_allow_max_mtr >= tauMaxMtrNm;
     const gearboxCheckText = hasGearboxMax
       ? (gearboxCheckPassed ? 'OK' : 'Exceeded')
       : '–';
@@ -233,12 +227,14 @@ export function renderElectricTables(
 
     summaryEl.innerHTML = [
       `<strong>τ<sub>max,drum</sub></strong>: ${formatMotorTorque(tauMaxDrumNm)} N·m`,
+      '',
       `<strong>τ<sub>max,gb</sub></strong>: ${formatMotorTorque(tauMaxGbNm)} N·m`,
-      `<strong>τ<sub>max,m</sub></strong>: ${formatMotorTorque(tauMaxMtrNm)} N·m`,
       `<strong>τ<sub>g,max</sub></strong>: ${hasGearboxMax ? `${formatMotorTorque(gearboxMaxTorqueNm)} N·m` : '–'}`,
+      `<strong>Check</strong>: ${gearboxCheckText}`,
+      '',
+      `<strong>τ<sub>max,m</sub></strong>: ${formatMotorTorque(tauMaxMtrNm)} N·m`,
       `<strong>τ<sub>m,max</sub></strong>: ${hasMotorMax ? `${formatMotorTorque(motorTmaxNm)} N·m` : '–'}`,
-      `<strong>Max τ<sub>g</sub> check</strong>: ${gearboxCheckText}`,
-      `<strong>Max τ<sub>m</sub> check</strong>: ${motorCheckText}`
-    ].join(' · ');
+      `<strong>Check</strong>: ${motorCheckText}`
+    ].join('<br>');
   }
 }
