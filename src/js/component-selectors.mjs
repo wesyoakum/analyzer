@@ -979,9 +979,6 @@ const SELECT_CONFIGS = [
 
 const watchedInputs = new Set();
 const CREATE_NEW_VALUE = '__component_create_new__';
-const EXPORT_PRESET_VALUE = '__component_export_preset__';
-const EXPORT_PRESET_LABEL = 'Export Preset';
-const EXPORT_ALL_PRESETS_BUTTON_ID = 'export-all-presets-btn';
 const IMPORT_PRESETS_BUTTON_ID = 'import-presets-btn';
 const IMPORT_PRESETS_FILE_INPUT_ID = 'import-presets-file';
 const COMPONENT_STORAGE_PREFIX = 'analyzer.components.';
@@ -1001,37 +998,6 @@ function generatePresetId() {
   return `preset-${Date.now()}-${randomPart}`;
 }
 
-function formatPresetFilename(baseName, type) {
-  const safeBase = String(baseName || type || 'preset')
-    .trim()
-    .toLowerCase()
-    .replace(/[^a-z0-9-_]+/g, '-');
-  const normalized = safeBase.replace(/-+/g, '-').replace(/^-|-$/g, '');
-  const timestamp = new Date().toISOString().replace(/[:.]/g, '-');
-  const stem = normalized.length ? normalized : 'preset';
-  return `${stem}-${timestamp}.json`;
-}
-
-function downloadJsonFile(content, filename) {
-  const blob = new Blob([content], { type: 'application/json' });
-  const url = URL.createObjectURL(blob);
-  try {
-    const link = document.createElement('a');
-    link.href = url;
-    link.download = filename;
-    link.rel = 'noopener';
-    document.body.appendChild(link);
-    link.click();
-    document.body.removeChild(link);
-  } finally {
-    setTimeout(() => URL.revokeObjectURL(url), 0);
-  }
-}
-
-function formatPresetCatalogFilename() {
-  const timestamp = new Date().toISOString().replace(/[:.]/g, '-');
-  return `presets-export-${timestamp}.json`;
-}
 
 
 function buildPresetDataFromOption(option, config, metadataFieldMap) {
@@ -1084,84 +1050,6 @@ function buildPresetFromOption(option, config) {
   };
 }
 
-function collectClientAvailablePresets() {
-  const seenTypes = new Set();
-  const byIdentity = new Map();
-
-  SELECT_CONFIGS.forEach(config => {
-    if (!config?.type || seenTypes.has(config.type)) {
-      return;
-    }
-    seenTypes.add(config.type);
-
-    allOptions(config).forEach(option => {
-      const preset = buildPresetFromOption(option, config);
-      if (!preset) return;
-      const identity = `${config.type}::${preset.pn.toLowerCase()}`;
-      byIdentity.set(identity, preset);
-    });
-  });
-
-  return Array.from(byIdentity.values());
-}
-
-function setupExportAllPresetsButton() {
-  const button = /** @type {HTMLButtonElement|null} */ (document.getElementById(EXPORT_ALL_PRESETS_BUTTON_ID));
-  if (!button) {
-    return;
-  }
-  if (button.dataset.boundExportAllPresets === '1') {
-    return;
-  }
-
-  button.dataset.boundExportAllPresets = '1';
-  button.addEventListener('click', async () => {
-    const previousLabel = button.textContent || 'Export All Presets';
-    const wasDisabled = button.disabled;
-    button.disabled = true;
-    button.textContent = 'Exporting…';
-
-    try {
-      let exportPresets = null;
-
-      if (typeof window.fetch === 'function') {
-        try {
-          const response = await fetch(apiUrl('/api/presets'), { headers: apiHeaders() });
-          if (response.ok) {
-            const body = await response.json();
-            if (Array.isArray(body?.presets)) {
-              exportPresets = body.presets;
-            } else {
-              console.warn('Server returned an unexpected presets export format. Falling back to client presets.');
-            }
-          } else {
-            console.warn(`Preset export API unavailable (${response.status}). Falling back to client presets.`);
-          }
-        } catch (err) {
-          console.warn('Unable to fetch presets from server for export. Falling back to client presets.', err);
-        }
-      }
-
-      if (!Array.isArray(exportPresets)) {
-        exportPresets = collectClientAvailablePresets();
-      }
-
-      if (!exportPresets.length) {
-        window.alert('No presets are available to export.');
-        return;
-      }
-
-      const payload = JSON.stringify(exportPresets, null, 2);
-      downloadJsonFile(payload, formatPresetCatalogFilename());
-    } catch (err) {
-      console.warn('Unable to export all presets:', err);
-      window.alert('Unable to export all presets right now. Please try again.');
-    } finally {
-      button.disabled = wasDisabled;
-      button.textContent = previousLabel;
-    }
-  });
-}
 
 
 function applyPresetCatalogToCustomOptions(rawPresets) {
@@ -1657,34 +1545,13 @@ function populateSelectOptions(selectEl, config, { selectedValue } = {}) {
   createNewOpt.dataset.componentPresetAction = '1';
   selectEl.appendChild(createNewOpt);
 
-  const exportOpt = document.createElement('option');
-  exportOpt.value = EXPORT_PRESET_VALUE;
-  exportOpt.textContent = EXPORT_PRESET_LABEL;
-  exportOpt.dataset.componentPresetExport = '1';
-  exportOpt.disabled = true;
-  selectEl.appendChild(exportOpt);
-
-  if (prior && prior !== EXPORT_PRESET_VALUE && prior !== CREATE_NEW_VALUE && findOption(config, prior)) {
+  if (prior && prior !== CREATE_NEW_VALUE && findOption(config, prior)) {
     selectEl.value = prior;
   } else if (prior === '') {
     selectEl.value = '';
   } else {
     selectEl.value = '';
   }
-}
-
-function ensureExportPresetOption(selectEl) {
-  /** @type {HTMLOptionElement|null} */
-  let option = selectEl.querySelector(`option[value="${EXPORT_PRESET_VALUE}"]`);
-  if (!option) {
-    option = document.createElement('option');
-    option.value = EXPORT_PRESET_VALUE;
-    option.textContent = EXPORT_PRESET_LABEL;
-    option.dataset.componentPresetExport = '1';
-    option.disabled = true;
-    selectEl.appendChild(option);
-  }
-  return option;
 }
 
 async function handleCreateNew(config, selectEl) {
@@ -1928,27 +1795,6 @@ export function setupComponentSelectors() {
 
     populateSelectOptions(selectEl, config, { selectedValue: initialValue });
 
-    let isExportingPreset = false;
-    let exportOption = ensureExportPresetOption(selectEl);
-    const updatePresetActionState = () => {
-      exportOption = ensureExportPresetOption(selectEl);
-      if (!exportOption) {
-        return;
-      }
-      if (isExportingPreset) {
-        exportOption.disabled = true;
-        exportOption.textContent = 'Preparing Export…';
-        return;
-      }
-      exportOption.textContent = EXPORT_PRESET_LABEL;
-      exportOption.disabled = selectEl.disabled;
-    };
-
-    selectEl.addEventListener('component:options-refreshed', () => {
-      exportOption = ensureExportPresetOption(selectEl);
-      updatePresetActionState();
-    });
-
     Object.keys(config.fieldMap).forEach(inputId => attachWatcher(inputId));
 
     let previousValue = selectEl.value || '';
@@ -1958,91 +1804,11 @@ export function setupComponentSelectors() {
       applySelection(config, value, { skipEvents });
     };
 
-    const performExportPreset = async () => {
-      if (isExportingPreset) {
-        return;
-      }
-
-      const activeValue = previousValue || '';
-      const option = activeValue ? findOption(config, activeValue) : undefined;
-      const label = config.label || 'component';
-
-      let pn = option && typeof option.pn === 'string' ? option.pn.trim() : '';
-      if (!pn) {
-        const pnInput = window.prompt(`Enter a part number for this ${label} preset:`);
-        if (pnInput == null) {
-          return;
-        }
-        pn = pnInput.trim();
-        if (!pn) {
-          window.alert('A part number is required to export a preset.');
-          return;
-        }
-      }
-
-      let name = option && typeof option.name === 'string' ? option.name.trim() : '';
-      if (!name) {
-        const nameInput = window.prompt(`Enter a name for the exported ${label} preset:`, pn);
-        if (nameInput == null) {
-          return;
-        }
-        name = nameInput.trim();
-        if (!name) {
-          window.alert('A name is required to export a preset.');
-          return;
-        }
-      }
-
-      const description = option && typeof option.description === 'string' ? option.description.trim() : '';
-      const metadataSource = option ? { ...option } : { pn };
-      const metadata = buildMetadataForConfig(metadataSource, config);
-      if (typeof metadata.pn !== 'string' || !metadata.pn) {
-        metadata.pn = pn;
-      }
-      if (config.type) {
-        metadata.type = config.type;
-      }
-      if (config.label) {
-        metadata.label = config.label;
-      }
-
-      const presetData = collectValuesForConfig(config);
-      const timestamp = new Date().toISOString();
-      const presetId = option && typeof option.id === 'string' && option.id ? option.id : generatePresetId();
-      const preset = {
-        id: presetId,
-        pn,
-        name,
-        ...(description ? { description } : {}),
-        data: presetData,
-        metadata,
-        createdAt: timestamp,
-        updatedAt: timestamp
-      };
-
-      const exportPayload = JSON.stringify([preset], null, 2);
-      const filename = formatPresetFilename(pn || name, config.type);
-
-      isExportingPreset = true;
-      const wasSelectDisabled = selectEl.disabled;
-      selectEl.disabled = true;
-      updatePresetActionState();
-
-      try {
-        downloadJsonFile(exportPayload, filename);
-      } finally {
-        isExportingPreset = false;
-        selectEl.disabled = wasSelectDisabled;
-        updatePresetActionState();
-      }
-    };
-
     selectEl.addEventListener('change', async () => {
       if (suppressNext) {
         suppressNext = false;
         previousValue = selectEl.value;
         ensureOptionApplied(selectEl.value);
-        updatePresetActionState();
         return;
       }
 
@@ -2054,29 +1820,17 @@ export function setupComponentSelectors() {
         await handleCreateNew(config, selectEl);
         return;
       }
-      if (value === EXPORT_PRESET_VALUE) {
-        const revertValue = previousValue || '';
-        selectEl.value = revertValue;
-        ensureOptionApplied(revertValue);
-        updatePresetActionState();
-        await performExportPreset();
-        return;
-      }
 
       previousValue = value;
       ensureOptionApplied(value);
-      updatePresetActionState();
     });
 
     // Apply persisted selection if present
     if (selectEl.value) {
       ensureOptionApplied(selectEl.value, { skipEvents: initialSkipEvents });
     }
-
-    updatePresetActionState();
   });
 
-  setupExportAllPresetsButton();
   setupImportPresetsButton();
 }
 
