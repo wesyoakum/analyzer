@@ -959,7 +959,6 @@ document.addEventListener('DOMContentLoaded', () => {
 
   setupAutoRecompute();
 
-  updateBuildIndicator();
 
 
 
@@ -1040,55 +1039,6 @@ function renderDocumentMath() {
   renderLatexFragments(document.body);
 }
 
-function updateBuildIndicator() {
-  const indicator = /** @type {HTMLElement|null} */ (document.getElementById('build-info'));
-  if (!indicator) return;
-
-  indicator.textContent = 'LATEST COMMIT VERSION UNAVAILABLE';
-
-  fetch(`/api/build-info?ts=${Date.now()}`, { cache: 'no-store' })
-    .then(response => {
-      if (!response.ok) {
-        throw new Error(`Build info request failed with status ${response.status}`);
-      }
-      return response.json();
-    })
-    .then(payload => {
-      const rawTimestamp = typeof payload?.latestCommitAt === 'string' ? payload.latestCommitAt : '';
-      const rawHash = typeof payload?.latestCommitHash === 'string' ? payload.latestCommitHash : '';
-      if (!rawTimestamp || !rawHash) {
-        throw new Error('Build info response did not include commit version details.');
-      }
-
-      indicator.textContent = formatGeneratedStamp(new Date(rawTimestamp), rawHash);
-    })
-    .catch(() => {
-      indicator.textContent = 'LATEST COMMIT VERSION UNAVAILABLE';
-    });
-}
-
-/**
- * @param {Date} date
- * @param {string} hash
- */
-function formatGeneratedStamp(date, hash) {
-  const parts = new Intl.DateTimeFormat('en-CA', {
-    timeZone: 'America/Chicago',
-    year: 'numeric',
-    month: '2-digit',
-    day: '2-digit',
-    hour: '2-digit',
-    minute: '2-digit',
-    second: '2-digit',
-    hour12: false,
-    timeZoneName: 'short'
-  }).formatToParts(date);
-
-  const map = Object.fromEntries(parts.map(({ type, value }) => [type, value]));
-  const zone = (map.timeZoneName || 'CDT').toUpperCase();
-  const shortHash = hash.trim().slice(0, 12) || 'unknown';
-  return `LATEST COMMIT ${shortHash} @ ${map.year}-${map.month}-${map.day}, ${map.hour}:${map.minute}:${map.second} ${zone}`;
-}
 
 function setupUnitConverter() {
   const inputValueEl = /** @type {HTMLInputElement|null} */ (document.getElementById('unit-converter-input-value'));
@@ -1568,9 +1518,9 @@ function renderInputSummaryIntro(introRoot) {
   const winchType = extractControlValue('winch_type_select');
   const selectedSystem = extractControlValue('system_select');
 
-  const modeText = selectedSystem === 'Custom (manual input)'
-    ? 'Custom parameter set'
-    : `Preset basis: ${selectedSystem}`;
+  const modeText = (!selectedSystem || selectedSystem === '-' || selectedSystem === 'Custom (manual input)')
+    ? 'New design'
+    : selectedSystem;
 
   introRoot.innerHTML = '';
 
