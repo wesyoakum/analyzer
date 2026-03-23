@@ -1515,7 +1515,8 @@ function renderInputSummaryIntro(introRoot) {
   if (!introRoot) return;
 
   const systemType = extractControlValue('system_type_select');
-  const winchType = extractControlValue('winch_type_select');
+  const rawWinchType = extractControlValue('winch_type_select');
+  const winchType = rawWinchType.toLowerCase() === 'conventional' ? 'Single Drum Winch' : rawWinchType;
   const selectedSystem = extractControlValue('system_select');
 
   const modeText = (!selectedSystem || selectedSystem === '-' || selectedSystem === 'Custom (manual input)')
