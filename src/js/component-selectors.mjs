@@ -1,5 +1,7 @@
 // ===== component-selectors.mjs — predefined component selections =====
 
+import { apiUrl, apiHeaders } from './api-config.mjs';
+
 /**
  * @typedef {Object} ComponentOption
  * @property {string} pn
@@ -1124,7 +1126,7 @@ function setupExportAllPresetsButton() {
 
       if (typeof window.fetch === 'function') {
         try {
-          const response = await fetch('/api/presets');
+          const response = await fetch(apiUrl('/api/presets'), { headers: apiHeaders() });
           if (response.ok) {
             const body = await response.json();
             if (Array.isArray(body?.presets)) {
@@ -1725,11 +1727,11 @@ async function handleCreateNew(config, selectEl) {
   const wasDisabled = selectEl.disabled;
   selectEl.disabled = true;
   try {
-    const response = await fetch('/api/presets', {
+    const response = await fetch(apiUrl('/api/presets'), {
       method: 'POST',
-      headers: {
+      headers: apiHeaders({
         'Content-Type': 'application/json'
-      },
+      }),
       body: JSON.stringify(payload)
     });
 
@@ -2072,7 +2074,7 @@ async function fetchAndApplyServerPresets() {
 
   let response;
   try {
-    response = await fetch('/api/presets');
+    response = await fetch(apiUrl('/api/presets'), { headers: apiHeaders() });
   } catch (err) {
     console.warn('Unable to fetch presets from server:', err);
     return;

@@ -10,6 +10,7 @@ import {
 } from './utils.mjs';
 
 import { collectInputState, setupInputPersistence } from './persist-inputs.mjs';
+import { apiUrl, apiHeaders } from './api-config.mjs';
 
 
 import { renderElectricTables } from './electric.mjs';
@@ -717,7 +718,7 @@ async function setupProjectManager() {
     const localProjects = readLocalProjects();
     let remoteProjects = [];
     try {
-      const response = await fetch('/api/projects');
+      const response = await fetch(apiUrl('/api/projects'), { headers: apiHeaders() });
       if (response.ok) {
         const body = await response.json();
         remoteProjects = (Array.isArray(body?.projects) ? body.projects : []).map(normalizeProject).filter(Boolean);
@@ -736,7 +737,7 @@ async function setupProjectManager() {
     const cached = cachedProjects.find(project => project.id === projectId);
     if (cached) return cached;
     try {
-      const response = await fetch(`/api/projects/${encodeURIComponent(projectId)}`);
+      const response = await fetch(apiUrl(`/api/projects/${encodeURIComponent(projectId)}`), { headers: apiHeaders() });
       if (response.ok) {
         const body = await response.json();
         return normalizeProject(body?.project);
@@ -766,9 +767,9 @@ async function setupProjectManager() {
     let savedRemotely = false;
 
     try {
-      const response = await fetch('/api/projects', {
+      const response = await fetch(apiUrl('/api/projects'), {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: apiHeaders({ 'Content-Type': 'application/json' }),
         body: JSON.stringify(payload)
       });
 
@@ -906,7 +907,7 @@ async function setupProjectManager() {
     if (!window.confirm(`Delete ${selectedName}?`)) return;
 
     try {
-      await fetch(`/api/projects/${encodeURIComponent(selectedId)}`, { method: 'DELETE' });
+      await fetch(apiUrl(`/api/projects/${encodeURIComponent(selectedId)}`), { method: 'DELETE', headers: apiHeaders() });
     } catch (err) {
       // ignore; local delete still applied
     }

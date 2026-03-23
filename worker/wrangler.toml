@@ -1,0 +1,14 @@
+name = "analyzer-api"
+main = "src/index.js"
+compatibility_date = "2025-12-01"
+
+[vars]
+# Set this to your GitHub Pages origin (e.g. "https://wesyoakum.github.io")
+ALLOWED_ORIGIN = "https://wesyoakum.github.io"
+
+# API_TOKEN is a secret — set it via:  npx wrangler secret put API_TOKEN
+# Never put the token value in this file.
+
+[[kv_namespaces]]
+binding = "DATA"
+id = "bcf543cc28b446b6a97daa0db1713979"
