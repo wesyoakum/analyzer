@@ -1651,6 +1651,12 @@ function populateSelectOptions(selectEl, config, { selectedValue } = {}) {
     selectEl.appendChild(opt);
   });
 
+  const createNewOpt = document.createElement('option');
+  createNewOpt.value = CREATE_NEW_VALUE;
+  createNewOpt.textContent = '— Create New —';
+  createNewOpt.dataset.componentPresetAction = '1';
+  selectEl.appendChild(createNewOpt);
+
   const exportOpt = document.createElement('option');
   exportOpt.value = EXPORT_PRESET_VALUE;
   exportOpt.textContent = EXPORT_PRESET_LABEL;
@@ -1658,7 +1664,7 @@ function populateSelectOptions(selectEl, config, { selectedValue } = {}) {
   exportOpt.disabled = true;
   selectEl.appendChild(exportOpt);
 
-  if (prior && prior !== EXPORT_PRESET_VALUE && findOption(config, prior)) {
+  if (prior && prior !== EXPORT_PRESET_VALUE && prior !== CREATE_NEW_VALUE && findOption(config, prior)) {
     selectEl.value = prior;
   } else if (prior === '') {
     selectEl.value = '';
@@ -2041,6 +2047,13 @@ export function setupComponentSelectors() {
       }
 
       const value = selectEl.value;
+      if (value === CREATE_NEW_VALUE) {
+        const revertValue = previousValue || '';
+        selectEl.value = revertValue;
+        ensureOptionApplied(revertValue);
+        await handleCreateNew(config, selectEl);
+        return;
+      }
       if (value === EXPORT_PRESET_VALUE) {
         const revertValue = previousValue || '';
         selectEl.value = revertValue;
