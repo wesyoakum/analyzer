@@ -1832,6 +1832,11 @@ export function setupComponentSelectors() {
   });
 
   setupImportPresetsButton();
+
+  // Fetch server-stored presets (cable, payload, etc.) and merge into dropdowns
+  fetchAndApplyServerPresets().catch(err => {
+    console.warn('Failed to load server presets:', err);
+  });
 }
 
 async function fetchAndApplyServerPresets() {
