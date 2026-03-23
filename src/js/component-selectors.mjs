@@ -839,7 +839,14 @@ export const FIELD_MAPS = {
     wraps_override: 'wraps_override'
   }),
   payload: /** @type {SelectConfig['fieldMap']} */ ({
-    payload_kg: 'payload_kg'
+    payload_kg: 'payload_kg',
+    payload_air_kg: 'payload_air_kg',
+    tms_air_kg: 'tms_air_kg',
+    vehicle_air_kg: 'vehicle_air_kg',
+    additional_air_kg: 'additional_air_kg',
+    tms_water_kg: 'tms_water_kg',
+    vehicle_water_kg: 'vehicle_water_kg',
+    additional_water_kg: 'additional_water_kg'
   }),
   gearbox: /** @type {SelectConfig['fieldMap']} */ ({
     gr1: 'gear_ratio_stage1',

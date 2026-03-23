@@ -1824,6 +1824,69 @@ function clearMinimumSystemHp() {
   if (output) output.textContent = '–';
 }
 
+/**
+ * Sync payload breakdown fields with payload totals.
+ * - If Payload in Air / Payload in Water have direct values, use those (dim components).
+ * - If blank, calculate from TMS + Vehicle + Additional sums (dim totals).
+ */
+function syncPayloadBreakdown() {
+  const airEl = /** @type {HTMLInputElement|null} */ (document.getElementById('payload_air_kg'));
+  const waterEl = /** @type {HTMLInputElement|null} */ (document.getElementById('payload_kg'));
+  const noteEl = document.getElementById('payload_mode_note');
+
+  const componentAirIds = ['tms_air_kg', 'vehicle_air_kg', 'additional_air_kg'];
+  const componentWaterIds = ['tms_water_kg', 'vehicle_water_kg', 'additional_water_kg'];
+
+  const readVal = (id) => {
+    const el = /** @type {HTMLInputElement|null} */ (document.getElementById(id));
+    if (!el || el.value.trim() === '') return NaN;
+    return parseFloat(el.value);
+  };
+
+  const hasDirectAir = airEl && airEl.value.trim() !== '';
+  const hasDirectWater = waterEl && waterEl.value.trim() !== '';
+
+  const componentAirVals = componentAirIds.map(readVal);
+  const componentWaterVals = componentWaterIds.map(readVal);
+  const hasAnyComponent = [...componentAirVals, ...componentWaterVals].some(v => Number.isFinite(v));
+
+  // Determine mode
+  let mode = 'none'; // no data entered
+  if (hasDirectAir || hasDirectWater) {
+    mode = 'direct';
+  } else if (hasAnyComponent) {
+    mode = 'component';
+  }
+
+  const allBreakdownRows = document.querySelectorAll('.payload-breakdown-row');
+  const totalFields = [airEl, waterEl].filter(Boolean);
+  const componentInputs = [...componentAirIds, ...componentWaterIds]
+    .map(id => document.getElementById(id))
+    .filter(Boolean);
+
+  if (mode === 'direct') {
+    // Dim component fields
+    componentInputs.forEach(el => el.classList.add('payload-dimmed'));
+    totalFields.forEach(el => el.classList.remove('payload-dimmed'));
+    if (noteEl) noteEl.textContent = 'Using direct payload input.';
+  } else if (mode === 'component') {
+    // Calculate sums and set totals
+    const sumAir = componentAirVals.reduce((s, v) => s + (Number.isFinite(v) ? v : 0), 0);
+    const sumWater = componentWaterVals.reduce((s, v) => s + (Number.isFinite(v) ? v : 0), 0);
+    if (airEl) airEl.value = sumAir > 0 ? String(sumAir) : '';
+    if (waterEl) waterEl.value = sumWater > 0 ? String(sumWater) : '';
+    // Dim total fields
+    totalFields.forEach(el => el.classList.add('payload-dimmed'));
+    componentInputs.forEach(el => el.classList.remove('payload-dimmed'));
+    if (noteEl) noteEl.textContent = 'Payload calculated from component weights.';
+  } else {
+    // No data — clear dimming
+    componentInputs.forEach(el => el.classList.remove('payload-dimmed'));
+    totalFields.forEach(el => el.classList.remove('payload-dimmed'));
+    if (noteEl) noteEl.textContent = 'T(kgf) = payload + cable weight \u00d7 deployed length (static).';
+  }
+}
+
 function syncDerivedCableLengths() {
   const deadEndInput = /** @type {HTMLInputElement|null} */ (document.getElementById('dead_m'));
 
@@ -1954,7 +2017,9 @@ function computeAll() {
     const system_efficiency = read('system_efficiency');
     updateMinimumSystemHp(rated_speed_mpm, rated_swl_kgf, system_efficiency);
 
+    syncPayloadBreakdown();
     const payload_kg = read('payload_kg');
+    const payload_air_kg = read('payload_air_kg');
     const cable_w_kgpm = read('c_w_kgpm');
     const mbl_kgf = read('mbl_kgf');
     const safety_factor = read('safety_factor');
@@ -2199,6 +2264,7 @@ function redrawPlots() {
       elWraps: lastElWraps,
       hyWraps: lastHyWraps,
       payload_kg: payloadRaw,
+      payload_air_kg: Number.isFinite(read('payload_air_kg')) ? read('payload_air_kg') : null,
       cable_w_kgpm: read('c_w_kgpm'),
       dead_end_m: read('dead_m'),
       rated_speed_ms: ratedSpeedMs,

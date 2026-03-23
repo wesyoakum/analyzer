@@ -1493,6 +1493,12 @@ th[title] {
   color: var(--ink-500);
 }
 
+/* Payload breakdown dimming */
+.payload-dimmed {
+  opacity: 0.4;
+  pointer-events: auto;
+}
+
 @media (max-width: 720px) {
   .sheet {
     padding: 0 30px;

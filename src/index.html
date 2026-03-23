@@ -135,7 +135,7 @@
                   <td class="value"><input id="system_efficiency" type="number" step="0.1" value="0.9"></td>
                   <td class="units">–</td>
                 </tr>
-                <tr data-summary-hide>
+                <tr data-summary-hide style="display:none;">
                   <th scope="row">Minimum System Horsepower</th>
                   <td class="value"><span id="system_min_hp" class="output-field">–</span></td>
                   <td class="units">hp</td>
@@ -323,13 +323,62 @@
                 </tr>
                 <tr>
                   <th scope="row">
+                    <label class="param-label" for="payload_air_kg" data-code="payload_air_kg">Payload in Air <span class="symbol" aria-hidden="true" data-latex="W_{\mathrm{air}}">W<sub>air</sub></span></label>
+                  </th>
+                  <td class="value"><input id="payload_air_kg" type="number" step="100" value=""></td>
+                  <td class="units">kg</td>
+                </tr>
+                <tr>
+                  <th scope="row">
                     <label class="param-label" for="payload_kg" data-code="payload_kg">Payload in Water <span class="symbol" aria-hidden="true" data-latex="W_{\mathrm{payload}}">W<sub>payload</sub></span></label>
                   </th>
                   <td class="value"><input id="payload_kg" type="number" step="100" value="8000"></td>
                   <td class="units">kg</td>
                 </tr>
-                <tr class="note">
-                  <td colspan="3" class="dim">T(kgf) = payload + cable weight × deployed length (static).</td>
+                <tr class="note payload-mode-note">
+                  <td colspan="3" class="dim" id="payload_mode_note">T(kgf) = payload + cable weight × deployed length (static).</td>
+                </tr>
+                <tr class="payload-breakdown-row">
+                  <th scope="row">
+                    <label class="param-label" for="tms_air_kg" data-code="tms_air_kg">TMS Weight in Air</label>
+                  </th>
+                  <td class="value"><input id="tms_air_kg" type="number" step="100" value=""></td>
+                  <td class="units">kg</td>
+                </tr>
+                <tr class="payload-breakdown-row">
+                  <th scope="row">
+                    <label class="param-label" for="vehicle_air_kg" data-code="vehicle_air_kg">Vehicle Weight in Air</label>
+                  </th>
+                  <td class="value"><input id="vehicle_air_kg" type="number" step="100" value=""></td>
+                  <td class="units">kg</td>
+                </tr>
+                <tr class="payload-breakdown-row">
+                  <th scope="row">
+                    <label class="param-label" for="additional_air_kg" data-code="additional_air_kg">Additional Weight in Air</label>
+                  </th>
+                  <td class="value"><input id="additional_air_kg" type="number" step="100" value=""></td>
+                  <td class="units">kg</td>
+                </tr>
+                <tr class="payload-breakdown-row">
+                  <th scope="row">
+                    <label class="param-label" for="tms_water_kg" data-code="tms_water_kg">TMS Weight in Water</label>
+                  </th>
+                  <td class="value"><input id="tms_water_kg" type="number" step="100" value=""></td>
+                  <td class="units">kg</td>
+                </tr>
+                <tr class="payload-breakdown-row">
+                  <th scope="row">
+                    <label class="param-label" for="vehicle_water_kg" data-code="vehicle_water_kg">Vehicle Weight in Water</label>
+                  </th>
+                  <td class="value"><input id="vehicle_water_kg" type="number" step="100" value=""></td>
+                  <td class="units">kg</td>
+                </tr>
+                <tr class="payload-breakdown-row">
+                  <th scope="row">
+                    <label class="param-label" for="additional_water_kg" data-code="additional_water_kg">Additional Weight in Water</label>
+                  </th>
+                  <td class="value"><input id="additional_water_kg" type="number" step="100" value=""></td>
+                  <td class="units">kg</td>
                 </tr>
               </tbody>
             </table>

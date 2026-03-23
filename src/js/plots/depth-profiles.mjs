@@ -56,6 +56,7 @@ export function drawDepthProfiles(svgSpeed, svgTension, {
   elWraps = [],
   hyWraps = [],
   payload_kg = 0,
+  payload_air_kg = null,
   cable_w_kgpm = 0,
   dead_end_m = 0,
   rated_speed_ms = null,
@@ -183,7 +184,7 @@ export function drawDepthProfiles(svgSpeed, svgTension, {
     extraProfiles: Array.isArray(speed_extra_profiles) ? speed_extra_profiles : [],
     enablePins: true
   });
-  drawTensionProfile(svgTension, segments, tensionDepthMin, tensionDepthMax, tensionMin, tensionMax, payload_kg, cable_w_kgpm, accentColor, ratedSwl);
+  drawTensionProfile(svgTension, segments, tensionDepthMin, tensionDepthMax, tensionMin, tensionMax, payload_kg, cable_w_kgpm, accentColor, ratedSwl, payload_air_kg);
 }
 
 // ---------- Speed vs Depth ----------
@@ -797,7 +798,7 @@ function removeTrailingZeros(text) {
 }
 
 // ---------- Tension vs Depth ----------
-function drawTensionProfile(svg, segments, depthMin, depthMax, tensionMin, tensionMax, payload_kg, cable_w_kgpm, accentColor, ratedSwl = null) {
+function drawTensionProfile(svg, segments, depthMin, depthMax, tensionMin, tensionMax, payload_kg, cable_w_kgpm, accentColor, ratedSwl = null, payload_air_kg = null) {
   if (svg && svg._depthTensionHandlers) {
     const { move, leave, pointerup, contextmenu, dblclick } = svg._depthTensionHandlers;
     svg.removeEventListener('pointermove', move);
@@ -870,6 +871,28 @@ function drawTensionProfile(svg, segments, depthMin, depthMax, tensionMin, tensi
     x: 18, y: MT + innerH / 2, transform: `rotate(-90,18,${MT + innerH / 2})`,
     'text-anchor': 'middle', 'font-size': '12', fill: '#444'
   })).textContent = 'Tension (kgf)';
+
+  // In-Air Tension bar at depth = 0
+  const airTension = Number.isFinite(payload_air_kg) && payload_air_kg > 0 ? payload_air_kg : null;
+  if (airTension !== null && depthMin <= 0 && airTension >= tensionMin && airTension <= tensionMax) {
+    const barX = sx(0);
+    const barYTop = sy(airTension);
+    const barYBottom = sy(tensionMin);
+    svg.appendChild(svgEl('line', {
+      x1: barX, y1: barYBottom, x2: barX, y2: barYTop,
+      stroke: '#9ca3af', 'stroke-width': 2
+    }));
+    svg.appendChild(svgEl('circle', {
+      cx: barX, cy: barYTop, r: 3,
+      fill: '#9ca3af', stroke: '#6b7280', 'stroke-width': 0.5
+    }));
+    const label = svgEl('text', {
+      x: barX + 6, y: barYTop + 4,
+      'font-size': '10', fill: '#6b7280', 'text-anchor': 'start'
+    });
+    label.textContent = `In-air: ${Math.round(airTension)} kgf`;
+    svg.appendChild(label);
+  }
 
   const normalizedSegments = segments.map(S => {
     const depthStartRaw = Math.max(S.depth_start, S.depth_end);
