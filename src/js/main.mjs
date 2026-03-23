@@ -1533,7 +1533,7 @@ function renderInputSummaryIntro(introRoot) {
   meta.className = 'summary-intro__meta';
   meta.innerHTML = `
     <p><strong>System:</strong> ${systemType} / ${winchType}</p>
-    <p><strong>Configuration Basis:</strong> ${modeText}</p>
+    <p>${modeText}</p>
   `;
 
   introRoot.append(intro, meta);
@@ -1647,6 +1647,16 @@ function buildSummaryTable(tableEl) {
 
   Array.from(tableEl.tBodies).forEach(srcBody => {
     Array.from(srcBody.rows).forEach(row => {
+      // Skip rows marked to always hide from summary
+      if (row.hasAttribute('data-summary-hide')) return;
+
+      // Skip rows marked to hide when their control is blank
+      const hideIfBlank = row.getAttribute('data-summary-hide-if-blank');
+      if (hideIfBlank) {
+        const val = extractControlValue(hideIfBlank);
+        if (!val || val === '–' || val === '-' || val === 'Custom (manual input)') return;
+      }
+
       const summaryRow = document.createElement('tr');
       summaryRow.className = row.className;
 
