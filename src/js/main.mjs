@@ -1745,6 +1745,54 @@ function renderInputSummaryIntro(introRoot) {
   introRoot.append(intro, meta);
 }
 
+function updateReportHeader(model) {
+  const titleEl = document.getElementById('report_project_name');
+  const descEl = document.getElementById('report_system_desc');
+  const dateEl = document.getElementById('report_date');
+
+  const projectName = document.getElementById('project_name');
+  const name = projectName?.value?.trim() || 'Untitled project';
+  if (titleEl) titleEl.textContent = name;
+
+  const systemType = extractControlValue('system_type_select');
+  const rawWinchType = extractControlValue('winch_type_select');
+  const winchType = rawWinchType.toLowerCase() === 'conventional' ? 'Single Drum Winch' : rawWinchType;
+  if (descEl) descEl.textContent = `${systemType} / ${winchType}`;
+
+  if (dateEl) dateEl.textContent = new Date().toLocaleDateString(undefined, { year: 'numeric', month: 'long', day: 'numeric' });
+}
+
+function updateExecutiveSummary(model, torqueChecks) {
+  const el = document.getElementById('exec_summary_text');
+  if (!el) return;
+
+  const summary = model?.summary || {};
+  const ratedSwl = read('rated_swl_kgf');
+  const ratedSpeed = read('rated_speed_mpm');
+  const depth = read('depth_m');
+  const layers = summary.total_layers;
+  const cableLen = summary.cable_len_m;
+
+  const systemType = extractControlValue('system_type_select');
+  const rawWinchType = extractControlValue('winch_type_select');
+  const winchType = rawWinchType.toLowerCase() === 'conventional' ? 'Single Drum Winch' : rawWinchType;
+
+  const gbOk = !torqueChecks?.gearboxCheckFailed;
+  const mtrOk = !torqueChecks?.motorCheckFailed;
+  const allChecksPass = gbOk && mtrOk;
+  const checkStatus = allChecksPass ? 'All torque checks pass.' : [
+    !gbOk ? 'Gearbox torque check FAILED' : '',
+    !mtrOk ? 'Motor torque check FAILED' : ''
+  ].filter(Boolean).join('. ') + '.';
+
+  const parts = [];
+  parts.push(`This ${systemType.toLowerCase()} ${winchType.toLowerCase()} system is rated for ${Number.isFinite(ratedSwl) ? ratedSwl.toLocaleString() : '–'} kgf SWL at ${Number.isFinite(ratedSpeed) ? ratedSpeed : '–'} m/min, with an operating depth of ${Number.isFinite(depth) ? depth.toLocaleString() : '–'} m.`);
+  parts.push(`The drum accommodates ${Number.isFinite(layers) ? layers : '–'} layers and ${Number.isFinite(cableLen) ? Math.round(cableLen).toLocaleString() : '–'} m of cable.`);
+  parts.push(checkStatus);
+
+  el.textContent = parts.join(' ');
+}
+
 /**
  * @param {string} id
  */
@@ -2355,6 +2403,8 @@ function computeAll() {
     renderHydraulicTables(lastHyLayer, lastHyWraps, q('tbody_hy_layer'), q('tbody_hy_wraps'));
 
     renderInputSummary();
+    updateReportHeader(model);
+    updateExecutiveSummary(model, torqueChecks);
     renderReport(document.getElementById('report-root'), { ...model, inputState: collectInputState() });
     renderLatexFragments(document.body);
     updateCsvButtonStates();

@@ -662,23 +662,34 @@
       </header>
       <div class="app-content" id="page-top">
         <div id="err"></div>
-        <div class="tab-bar">
-          <nav class="tabs" aria-label="App sections">
-            <a class="tab-btn" href="#panel-inputs">Section 1: Summary</a>
-            <a class="tab-btn" href="#panel-performance">Section 2: Performance Plots</a>
-            <a class="tab-btn" href="#panel-results">Section 3: Layer Tables</a>
-            <a class="tab-btn" href="#panel-converter">Section 4: Unit Converter</a>
-            <a class="tab-btn" href="#panel-instructions">Section 5: Instructions</a>
-          </nav>
+        <nav class="report-nav" id="report-nav" aria-label="Report sections">
+          <a class="report-nav__link" href="#panel-inputs">1 Summary</a>
+          <a class="report-nav__link" href="#panel-performance">2 Performance</a>
+          <a class="report-nav__link" href="#panel-results">3 Layer Tables</a>
+          <a class="report-nav__link" href="#panel-converter">4 Unit Converter</a>
+          <a class="report-nav__link" href="#panel-instructions">5 Reference</a>
+        </nav>
+        <div class="report-header" id="report-title-block">
+          <h1 class="report-header__title" id="report_title">Winch Analysis Report</h1>
+          <div class="report-header__meta">
+            <p id="report_project_name">Untitled project</p>
+            <p id="report_system_desc"></p>
+            <p id="report_date"></p>
+          </div>
         </div>
       
+        <section class="report-executive-summary card" id="executive-summary">
+          <h2 class="section-title">Executive Summary</h2>
+          <p id="exec_summary_text" class="exec-summary__body">–</p>
+        </section>
+
         <div
           id="panel-inputs"
           class="panel"
         >
           <section class="card">
             <div class="card-header">
-              <h2 class="section-title">Section 1: Summary</h2>
+              <h2 class="section-title">Section 1: Input Summary</h2>
             </div>
             <div id="input-summary-intro" class="summary-intro"></div>
             <div id="input-summary" class="input-summary"></div>
