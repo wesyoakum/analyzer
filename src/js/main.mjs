@@ -2326,8 +2326,8 @@ function computeAll() {
     let maxOpsDepth = 0;
     const deadEnd = model.cfg?.dead_end_m ?? read('dead_m') ?? 0;
     for (const r of model.rows) {
-      if (Number.isFinite(r.gearbox_torque_Nm) && r.gearbox_torque_Nm > maxOpsDrumTorque) {
-        maxOpsDrumTorque = r.gearbox_torque_Nm;
+      if (Number.isFinite(r.torque_Nm) && r.torque_Nm > maxOpsDrumTorque) {
+        maxOpsDrumTorque = r.torque_Nm;
         const deployed = Number.isFinite(r.deployed_len_m) ? r.deployed_len_m : 0;
         maxOpsDepth = Math.max(0, deployed - (Number.isFinite(deadEnd) ? deadEnd : 0));
       }

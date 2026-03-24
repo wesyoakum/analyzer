@@ -78,7 +78,7 @@ export function buildComputationModel(inputs) {
     const torque_per_hmotor_required = drum_T / (gear_product_safe * motors_safe);
     const drum_torque_required = torque_per_hmotor_required * gear_product_safe * motors_safe;
     r.torque_Nm = +drum_torque_required.toFixed(1);
-    r.gearbox_torque_Nm = r.torque_Nm;
+    r.gearbox_torque_Nm = +(drum_T / (motors_safe * gr2)).toFixed(1);
 
     if (electricEnabled) {
       const motorTorque_e = r.torque_Nm / (denom_mech || 1);

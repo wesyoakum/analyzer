@@ -45,6 +45,7 @@ export function rowsToHydraulicLayer(rows, payload_kg, cable_w_kgpm) {
         hyd_hp_sys: null,
         hyd_tau_avail_Nm: null,
         hyd_tau_avail_kNm: null,
+        max_drum_torque_Nm: null,
         max_gearbox_torque_Nm: null,
         hyd_tension_theoretical_start_kgf: null,
         hyd_tension_required_start_kgf: null,
@@ -80,6 +81,11 @@ export function rowsToHydraulicLayer(rows, payload_kg, cable_w_kgpm) {
       L.max_gearbox_torque_Nm = Number.isFinite(L.max_gearbox_torque_Nm)
         ? Math.max(L.max_gearbox_torque_Nm, r.gearbox_torque_Nm)
         : r.gearbox_torque_Nm;
+    }
+    if (L && Number.isFinite(r.torque_Nm)) {
+      L.max_drum_torque_Nm = Number.isFinite(L.max_drum_torque_Nm)
+        ? Math.max(L.max_drum_torque_Nm, r.torque_Nm)
+        : r.torque_Nm;
     }
   }
 

@@ -81,17 +81,21 @@ export function rowsToElectricLayer(rows, payload_kg, cable_w_kgpm, gr1, gr2, mo
     const maxReq_kgf = maxTheo_kgf;
     const endReq_kgf = tension_kgf(L.post_deployed_m, payload_kg, cable_w_kgpm);
     const radius_m = (L.layer_dia_in * M_PER_IN) / 2;
-    const maxT_Nm = +(maxReq_kgf * G * radius_m).toFixed(1);
-    const maxMotorNm = +(maxT_Nm / denom).toFixed(1);
+    const maxDrumT_Nm = +(maxReq_kgf * G * radius_m).toFixed(1);
+    const motorsSafe = Math.max(motors || 1, 1);
+    const gr2Safe = Math.max(gr2 || 1, 1e-9);
+    const maxGbT_Nm = +(maxDrumT_Nm / (motorsSafe * gr2Safe)).toFixed(1);
+    const maxMotorNm = +(maxGbT_Nm / (gr1 || 1)).toFixed(1);
 
     out.push({
       ...L,
       max_tension_theoretical_kgf: maxTheo_kgf,
       max_tension_required_kgf: maxReq_kgf,
       tension_required_end_kgf: +endReq_kgf.toFixed(1),
-      max_gearbox_torque_Nm: maxT_Nm,
-      max_torque_Nm: maxT_Nm,
-      tau_req_drum_kNm: +(maxT_Nm / 1000).toFixed(1),
+      max_drum_torque_Nm: maxDrumT_Nm,
+      max_gearbox_torque_Nm: maxGbT_Nm,
+      max_torque_Nm: maxDrumT_Nm,
+      tau_req_drum_kNm: +(maxDrumT_Nm / 1000).toFixed(1),
       max_motor_torque_Nm: maxMotorNm
     });
   }
@@ -210,7 +214,7 @@ export function renderElectricTables(
   const tauFatDrumNm = swlSafe * 1.25 * G * (drumDiaM / 2);
   // Actual peak drum torque from operating layers
   const tauOpsDrumNm = elLayers.reduce((max, L) =>
-    Number.isFinite(L.max_gearbox_torque_Nm) ? Math.max(max, L.max_gearbox_torque_Nm) : max, 0);
+    Number.isFinite(L.max_drum_torque_Nm) ? Math.max(max, L.max_drum_torque_Nm) : max, 0);
   // Worst case of the two
   const tauMaxDrumNm = Math.max(tauFatDrumNm, tauOpsDrumNm);
   // Torque path: gearbox = drum / (N_motors × GR2), motor = gearbox / GR1
