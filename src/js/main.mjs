@@ -43,7 +43,7 @@ function readAccentColor() {
   return '#2c56a3';
 }
 
-function updateTorqueCheckMessages(gearboxFailed, motorFailed, maxGearboxTorqueSeen, maxMotorTorqueSeen) {
+function updateTorqueCheckMessages(gearboxFailed, motorFailed, maxGearboxTorqueSeen, maxMotorTorqueSeen, condition = '') {
   const gearboxMsgEl = /** @type {HTMLElement|null} */ (q('gearbox_torque_check_msg'));
   const motorMsgEl = /** @type {HTMLElement|null} */ (q('motor_torque_check_msg'));
   const gearboxSeenEl = /** @type {HTMLElement|null} */ (q('gearbox_torque_seen_msg'));
@@ -54,16 +54,17 @@ function updateTorqueCheckMessages(gearboxFailed, motorFailed, maxGearboxTorqueS
   if (motorMsgEl) {
     motorMsgEl.textContent = motorFailed ? 'Motor torque check failed.' : '';
   }
+  const atLabel = condition ? ` at ${condition}` : '';
   if (gearboxSeenEl) {
     if (Number.isFinite(maxGearboxTorqueSeen) && maxGearboxTorqueSeen > 0) {
-      gearboxSeenEl.textContent = `Max torque seen: ${maxGearboxTorqueSeen.toFixed(1)} N\u00b7m`;
+      gearboxSeenEl.textContent = `Max torque seen: ${maxGearboxTorqueSeen.toFixed(1)} N\u00b7m${atLabel}`;
     } else {
       gearboxSeenEl.textContent = '';
     }
   }
   if (motorSeenEl) {
     if (Number.isFinite(maxMotorTorqueSeen) && maxMotorTorqueSeen > 0) {
-      motorSeenEl.textContent = `Max torque seen: ${maxMotorTorqueSeen.toFixed(1)} N\u00b7m`;
+      motorSeenEl.textContent = `Max torque seen: ${maxMotorTorqueSeen.toFixed(1)} N\u00b7m${atLabel}`;
     } else {
       motorSeenEl.textContent = '';
     }
@@ -2290,14 +2291,24 @@ function computeAll() {
       model.inputs.gr2
     );
     // Compute max torque seen: worst case of operating layers and FAT (SWL×1.25 at full drum)
-    const maxOpsDrumTorque = model.rows.reduce((max, r) =>
-      Number.isFinite(r.gearbox_torque_Nm) ? Math.max(max, r.gearbox_torque_Nm) : max, 0);
+    let maxOpsDrumTorque = 0;
+    let maxOpsDepth = 0;
+    const deadEnd = model.cfg?.dead_end_m ?? read('dead_m') ?? 0;
+    for (const r of model.rows) {
+      if (Number.isFinite(r.gearbox_torque_Nm) && r.gearbox_torque_Nm > maxOpsDrumTorque) {
+        maxOpsDrumTorque = r.gearbox_torque_Nm;
+        const deployed = Number.isFinite(r.deployed_len_m) ? r.deployed_len_m : 0;
+        maxOpsDepth = Math.max(0, deployed - (Number.isFinite(deadEnd) ? deadEnd : 0));
+      }
+    }
     const ratedSwlForSeen = read('rated_swl_kgf');
     const fullDrumRadius_m = (model.summary.full_drum_dia_in * M_PER_IN) / 2;
     const fatDrumTorque = (Number.isFinite(ratedSwlForSeen) && ratedSwlForSeen > 0)
       ? ratedSwlForSeen * 1.25 * G * fullDrumRadius_m
       : 0;
+    const isFatWorstCase = fatDrumTorque >= maxOpsDrumTorque;
     const maxDrumTorqueSeen = Math.max(maxOpsDrumTorque, fatDrumTorque);
+    const torqueCondition = isFatWorstCase ? 'FAT' : `${Math.round(maxOpsDepth)} m depth`;
     const gr2Val = model.inputs.gr2;
     const motorsVal = Math.max(model.inputs.motors || 1, 1);
     const maxGbTorqueSeen = (Number.isFinite(gr2Val) && gr2Val > 0)
@@ -2308,7 +2319,7 @@ function computeAll() {
       ? maxGbTorqueSeen / gr1Val
       : NaN;
 
-    updateTorqueCheckMessages(Boolean(torqueChecks?.gearboxCheckFailed), Boolean(torqueChecks?.motorCheckFailed), maxGbTorqueSeen, maxMotorTorqueSeen);
+    updateTorqueCheckMessages(Boolean(torqueChecks?.gearboxCheckFailed), Boolean(torqueChecks?.motorCheckFailed), maxGbTorqueSeen, maxMotorTorqueSeen, torqueCondition);
     updateGearRatioRanges(model);
     renderHydraulicTables(lastHyLayer, lastHyWraps, q('tbody_hy_layer'), q('tbody_hy_wraps'));
 
