@@ -1192,6 +1192,14 @@ document.addEventListener('DOMContentLoaded', () => {
       el.addEventListener('input', rerender);
     });
 
+  // AHC toggle — sets body class for conditional print
+  const ahcCheckbox = /** @type {HTMLInputElement|null} */ (document.getElementById('ahc_enabled'));
+  if (ahcCheckbox) {
+    const syncAhc = () => document.body.classList.toggle('ahc-enabled', ahcCheckbox.checked);
+    ahcCheckbox.addEventListener('change', syncAhc);
+    syncAhc();
+  }
+
   // Initial compute
   computeAll();
 });

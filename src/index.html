@@ -99,10 +99,19 @@
                       </td>
                       <td class="units">–</td>
                     </tr>
+                    <tr>
+                      <th scope="row">
+                        <label class="param-label" for="ahc_enabled" data-code="ahc_enabled">Active Heave Compensation</label>
+                      </th>
+                      <td class="value">
+                        <input id="ahc_enabled" type="checkbox">
+                      </td>
+                      <td class="units">–</td>
+                    </tr>
                   </tbody>
                 </table>
               </section>
-    
+
           <section class="input-section">
             <h3 class="input-section__title">Design</h3>
             <table class="worksheet">
@@ -754,7 +763,7 @@
           aria-live="polite"
         >
       <h2 class="section-title panel-section-title">Section 2: System Performance</h2>
-      <section class="card card--performance card--performance-first wave-card">
+      <section class="card card--performance card--performance-first wave-card" data-print-ahc-only>
         <div class="card-header">
           <h2 class="section-title">Section 2.1: Wave Contours</h2>
           <div class="card-header-actions"></div>
@@ -782,7 +791,7 @@
               <div class="legitem"><span class="swatch accent"></span><span>Layer speed</span></div>
               <div class="legitem"><span class="swatch sea-state"></span><span>Douglas sea-state bands (optional)</span></div>
             </div>
-            <p class="dim">Interactive: move mouse for crosshairs, click to pin a point, right-click a pin to remove it, double-click to clear all pins.</p>
+            <p class="dim interactive-hint">Interactive: move mouse for crosshairs, click to pin a point, right-click a pin to remove it, double-click to clear all pins.</p>
           </div>
           <div class="plot-panel plot-panel--compact plot-panel--performance">
             <div class="plot-panel__heading">
@@ -827,7 +836,7 @@
               <div class="legitem"><span class="swatch jonswap-curve"></span><span>JONSWAP sea (optional)</span></div>
               <div class="legitem"><span class="swatch smb-curve"></span><span>SMB sea (optional)</span></div>
             </div>
-            <p class="dim">Interactive: move mouse for crosshairs, click to pin a point, right-click a pin to remove it, double-click to clear all pins.</p>
+            <p class="dim interactive-hint">Interactive: move mouse for crosshairs, click to pin a point, right-click a pin to remove it, double-click to clear all pins.</p>
           </div>
         </div>
       </section>
@@ -865,7 +874,7 @@
                 </span>
               </div>
             </div>
-            <p class="dim">Interactive: move mouse for crosshairs, click to pin a point, right-click a pin to remove it, double-click to clear all pins.</p>
+            <p class="dim interactive-hint">Interactive: move mouse for crosshairs, click to pin a point, right-click a pin to remove it, double-click to clear all pins.</p>
           </div>
           <div class="plot-panel plot-panel--compact plot-panel--performance">
             <div class="plot-panel__heading">
@@ -887,7 +896,7 @@
                 <span>Available tension (normal / exceeded)</span>
               </div>
             </div>
-            <p class="dim">Interactive: move mouse for crosshairs, click to pin a point, right-click a pin to remove it, double-click to clear all pins.</p>
+            <p class="dim interactive-hint">Interactive: move mouse for crosshairs, click to pin a point, right-click a pin to remove it, double-click to clear all pins.</p>
           </div>
         </div>
         <p id="el_tau_max_summary" class="note" style="display:none;"></p>
@@ -915,7 +924,7 @@
               <div class="legitem"><span class="swatch flow"></span><span>Flow-limited RPM</span></div>
               <div class="legitem"><span class="swatch power"></span><span>Power-limited RPM</span></div>
             </div>
-            <p class="dim">Interactive: move mouse for crosshairs, click to pin a point, right-click a pin to remove it, double-click to clear all pins.</p>
+            <p class="dim interactive-hint">Interactive: move mouse for crosshairs, click to pin a point, right-click a pin to remove it, double-click to clear all pins.</p>
           </div>
         </div>
       </section>

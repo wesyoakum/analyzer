@@ -1748,7 +1748,7 @@ th[title] {
 
 /* ========== Print styles ========== */
 @media print {
-  /* Hide UI chrome */
+  /* Hide UI chrome and interactive elements */
   .app-sidebar,
   .report-nav,
   .report-toolbar,
@@ -1759,12 +1759,26 @@ th[title] {
   .section-back-to-top,
   .drum-visual__resize-handle,
   .card-header-actions,
-  #panel-converter,
   #panel-instructions,
   #err,
   .project-controls,
-  details > summary,
-  .tab-bar {
+  .tab-bar,
+  .interactive-hint {
+    display: none !important;
+  }
+
+  /* Hide wrap-level detail tables (layer tables have key info) */
+  details.collapsible {
+    display: none !important;
+  }
+
+  /* Hide wave contours when AHC is not enabled */
+  body:not(.ahc-enabled) [data-print-ahc-only] {
+    display: none !important;
+  }
+
+  /* Hide hydraulic-only sections when hydraulic is not active */
+  [data-drive-scope="hydraulic"].is-hidden {
     display: none !important;
   }
 
