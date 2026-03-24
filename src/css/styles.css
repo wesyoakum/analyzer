@@ -1144,10 +1144,10 @@ nav.tabs {
   position: absolute;
   right: 0;
   bottom: 0;
-  width: 16px;
-  height: 16px;
+  width: 8px;
+  height: 8px;
   cursor: nwse-resize;
-  opacity: 0.4;
+  opacity: 0.3;
   background: linear-gradient(135deg, transparent 50%, var(--ink-500) 50%);
   border-radius: 0 0 2px 0;
 }
@@ -1601,6 +1601,28 @@ th[title] {
 .gear-range-message.is-warning {
   color: #b00020;
   font-weight: 600;
+}
+
+/* Panel section titles */
+.panel-section-title {
+  margin: 8px 0 16px;
+}
+
+/* Symbols reference table */
+.symbols-table-wrap {
+  display: flex;
+  justify-content: center;
+}
+
+.symbols-table-wrap table {
+  width: auto;
+}
+
+.symbols-table-wrap th,
+.symbols-table-wrap td {
+  width: auto;
+  white-space: nowrap;
+  padding: 4px 16px;
 }
 
 /* Payload breakdown dimming */
