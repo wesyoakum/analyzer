@@ -431,21 +431,24 @@
                     <th scope="row">
                       <label class="param-label" for="gr1" data-code="gr1">Gear Ratio 1 <span class="symbol" aria-hidden="true" data-latex="G_{1}">G<sub>1</sub></span></label>
                     </th>
-                    <td class="value"><input id="gr1" type="number" step="1" value="20"></td>
+                    <td class="value"><input id="gr1" type="number" step="1" value="20"><div id="gr1_range_msg" class="gear-range-message" aria-live="polite"></div></td>
                     <td class="units">–</td>
                   </tr>
                   <tr>
                     <th scope="row">
                       <label class="param-label" for="gr2" data-code="gr2">Gear Ratio 2 <span class="symbol" aria-hidden="true" data-latex="G_{2}">G<sub>2</sub></span></label>
                     </th>
-                    <td class="value"><input id="gr2" type="number" step="1" value="5"></td>
+                    <td class="value"><input id="gr2" type="number" step="1" value="5"><div id="gr2_range_msg" class="gear-range-message" aria-live="polite"></div></td>
                     <td class="units">–</td>
+                  </tr>
+                  <tr class="note">
+                    <td colspan="3" class="dim" id="gr_total_range_msg"></td>
                   </tr>
                   <tr>
                     <th scope="row">
                       <label class="param-label" for="gearbox_max_torque_Nm" data-code="gearbox_max_torque_Nm">Gearbox Maximum Torque <span class="symbol" aria-hidden="true" data-latex="\tau_{gb,\mathrm{rated}}">τ<sub>gb,rated</sub></span></label>
                     </th>
-                    <td class="value"><input id="gearbox_max_torque_Nm" type="number" step="100" placeholder="enter"><div id="gearbox_torque_check_msg" class="torque-check-message" aria-live="polite"></div></td>
+                    <td class="value"><input id="gearbox_max_torque_Nm" type="number" step="100" placeholder="enter"><div id="gearbox_torque_seen_msg" class="gear-range-message" aria-live="polite"></div><div id="gearbox_torque_check_msg" class="torque-check-message" aria-live="polite"></div></td>
                     <td class="units">N·m</td>
                   </tr>
                 </tbody>

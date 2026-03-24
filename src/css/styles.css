@@ -1493,6 +1493,17 @@ th[title] {
   color: var(--ink-500);
 }
 
+/* Gear ratio range messages */
+.gear-range-message {
+  font-size: 0.8em;
+  color: var(--ink-500);
+  margin-top: 2px;
+  line-height: 1.3;
+}
+.gear-range-message.is-warning {
+  color: #b45309;
+}
+
 /* Payload breakdown dimming */
 .payload-dimmed {
   opacity: 0.4;
