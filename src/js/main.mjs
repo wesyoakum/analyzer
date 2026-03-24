@@ -1139,6 +1139,17 @@ document.addEventListener('DOMContentLoaded', () => {
 
   setupUnitConverter();
 
+  // Drum size slider
+  const drumSlider = /** @type {HTMLInputElement|null} */ (document.getElementById('drum_size_slider'));
+  const drumSvg = /** @type {SVGSVGElement|null} */ (document.getElementById('drum_visual_svg'));
+  if (drumSlider && drumSvg) {
+    const applySize = () => {
+      drumSvg.style.maxWidth = drumSlider.value + 'px';
+    };
+    applySize();
+    drumSlider.addEventListener('input', applySize);
+  }
+
   renderDocumentMath();
 
   document.querySelectorAll('.param-label').forEach(label => {

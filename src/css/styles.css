@@ -1051,6 +1051,19 @@ nav.tabs {
   display: block;
 }
 
+.drum-visual__size-control {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 6px;
+  font-size: 0.8em;
+  color: var(--ink-500);
+}
+
+.drum-visual__size-control input[type="range"] {
+  width: 120px;
+}
+
 .drum-visual__svg {
   display: block;
   width: 100%;
