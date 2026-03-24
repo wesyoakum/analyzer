@@ -145,7 +145,8 @@ export function renderElectricTables(
   ratedSwlKgf,
   fullDrumDiaIn,
   driveMotorCount,
-  totalGearRatio
+  totalGearRatio,
+  gr2 = null
 ) {
   const hasGearboxMax = Number.isFinite(gearboxMaxTorqueNm) && gearboxMaxTorqueNm > 0;
   const hasMotorMax = Number.isFinite(motorTmaxNm) && motorTmaxNm > 0;
@@ -206,11 +207,14 @@ export function renderElectricTables(
   const totalGearRatioSafe = Number.isFinite(totalGearRatio) && totalGearRatio > 0 ? totalGearRatio : 0;
 
   const tauMaxDrumNm = swlSafe * 1.25 * G * (drumDiaM / 2);
-  const tauMaxGbNm = driveMotorsSafe > 0
-    ? tauMaxDrumNm / driveMotorsSafe
+  // Torque path: gearbox = drum / (N_motors × GR2), motor = gearbox / GR1
+  const gr2Safe = Number.isFinite(gr2) && gr2 > 0 ? gr2 : 0;
+  const tauMaxGbNm = (driveMotorsSafe > 0 && gr2Safe > 0)
+    ? tauMaxDrumNm / (driveMotorsSafe * gr2Safe)
     : 0;
-  const tauMaxMtrNm = (driveMotorsSafe > 0 && totalGearRatioSafe > 0)
-    ? tauMaxGbNm / totalGearRatioSafe
+  const gr1Safe = (totalGearRatioSafe > 0 && gr2Safe > 0) ? totalGearRatioSafe / gr2Safe : 0;
+  const tauMaxMtrNm = gr1Safe > 0
+    ? tauMaxGbNm / gr1Safe
     : 0;
   const tau_allow_max_gb = hasGearboxMax ? gearboxMaxTorqueNm : null;
   const tau_allow_max_mtr = hasMotorMax ? motorTmaxNm : null;

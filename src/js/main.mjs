@@ -57,19 +57,15 @@ function updateTorqueCheckMessages(gearboxFailed, motorFailed, maxGearboxTorqueS
   if (gearboxSeenEl) {
     if (Number.isFinite(maxGearboxTorqueSeen) && maxGearboxTorqueSeen > 0) {
       gearboxSeenEl.textContent = `Max torque seen: ${maxGearboxTorqueSeen.toFixed(1)} N\u00b7m`;
-      gearboxSeenEl.classList.toggle('is-warning', gearboxFailed);
     } else {
       gearboxSeenEl.textContent = '';
-      gearboxSeenEl.classList.remove('is-warning');
     }
   }
   if (motorSeenEl) {
     if (Number.isFinite(maxMotorTorqueSeen) && maxMotorTorqueSeen > 0) {
       motorSeenEl.textContent = `Max torque seen: ${maxMotorTorqueSeen.toFixed(1)} N\u00b7m`;
-      motorSeenEl.classList.toggle('is-warning', motorFailed);
     } else {
       motorSeenEl.textContent = '';
-      motorSeenEl.classList.remove('is-warning');
     }
   }
 }
@@ -2290,7 +2286,8 @@ function computeAll() {
       read('rated_swl_kgf'),
       model.summary.full_drum_dia_in,
       model.inputs.motors,
-      model.inputs.gr1 * model.inputs.gr2
+      model.inputs.gr1 * model.inputs.gr2,
+      model.inputs.gr2
     );
     // Compute max gearbox torque seen: max(drum_torque) / (N_motors × GR2)
     const maxDrumTorqueSeen = model.rows.reduce((max, r) =>
