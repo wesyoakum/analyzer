@@ -157,7 +157,7 @@
                   </tr>
                 </thead>
                 <tbody>
-                  <tr>
+                  <tr data-summary-hide-if-blank="cable_select">
                     <th scope="row">
                       <label class="param-label" for="cable_select" data-code="cable_select">Cable Part Number</label>
                     </th>
@@ -210,14 +210,14 @@
                     <td class="value"><input id="mbl_kgf" type="number" step="100" min="0" value="80000"></td>
                     <td class="units">kgf</td>
                   </tr>
-                  <tr>
+                  <tr data-summary-hide>
                     <th scope="row">
                       <label class="param-label" for="safety_factor" data-code="safety_factor">Safety Factor <span class="symbol" aria-hidden="true" data-latex="SF">SF</span></label>
                     </th>
                     <td class="value"><input id="safety_factor" type="number" step="0.1" min="0" value="5"></td>
                     <td class="units">–</td>
                   </tr>
-                  <tr>
+                  <tr data-summary-hide>
                     <th scope="row">Strength-Only Max Length</th>
                     <td class="value"><span id="max_length_strength_m" class="output-field">–</span></td>
                     <td class="units">m</td>
@@ -238,7 +238,7 @@
                   </tr>
                 </thead>
                 <tbody>
-                  <tr>
+                  <tr data-summary-hide-if-blank="drum_select">
                     <th scope="row">
                       <label class="param-label" for="drum_select" data-code="drum_select">Drum Part Number</label>
                     </th>
@@ -310,7 +310,7 @@
                 </tr>
               </thead>
               <tbody>
-                <tr>
+                <tr data-summary-hide-if-blank="payload_select">
                   <th scope="row">
                     <label class="param-label" for="payload_select" data-code="payload_select">Payload Part Number</label>
                   </th>
@@ -416,7 +416,7 @@
                   </tr>
                 </thead>
                 <tbody>
-                  <tr>
+                  <tr data-summary-hide-if-blank="gearbox_select">
                     <th scope="row">
                       <label class="param-label" for="gearbox_select" data-code="gearbox_select">Gearbox Part Number</label>
                     </th>
@@ -446,7 +446,7 @@
                   </tr>
                   <tr>
                     <th scope="row">
-                      <label class="param-label" for="gearbox_max_torque_Nm" data-code="gearbox_max_torque_Nm">Gearbox Maximum Torque <span class="symbol" aria-hidden="true" data-latex="\tau_{gb,\mathrm{rated}}">τ<sub>gb,rated</sub></span></label>
+                      <label class="param-label" for="gearbox_max_torque_Nm" data-code="gearbox_max_torque_Nm">Gearbox Max Torque Rating <span class="symbol" aria-hidden="true" data-latex="\tau_{gb,\mathrm{rated}}">τ<sub>gb,rated</sub></span></label>
                     </th>
                     <td class="value"><input id="gearbox_max_torque_Nm" type="number" step="100" placeholder="enter"><div id="gearbox_torque_seen_msg" class="gear-range-message" aria-live="polite"></div><div id="gearbox_torque_check_msg" class="torque-check-message" aria-live="polite"></div></td>
                     <td class="units">N·m</td>
@@ -479,7 +479,7 @@
             <td class="value"><input id="motor_eff" type="number" step=".1" value="0.95"></td>
             <td class="units">–</td>
           </tr>
-          <tr>
+          <tr data-summary-hide-if-blank="electric_motor_select">
             <th scope="row">
               <label class="param-label" for="electric_motor_select" data-code="electric_motor_select">Electric Motor Part Number</label>
             </th>
@@ -506,7 +506,7 @@
           </tr>
           <tr>
             <th scope="row">
-              <label class="param-label" for="motor_tmax" data-code="motor_tmax">Motor Maximum Torque <span class="symbol" aria-hidden="true" data-latex="\tau_{m,\mathrm{rated}}">τ<sub>m,rated</sub></span></label>
+              <label class="param-label" for="motor_tmax" data-code="motor_tmax">Motor Max Torque Rating <span class="symbol" aria-hidden="true" data-latex="\tau_{m,\mathrm{rated}}">τ<sub>m,rated</sub></span></label>
             </th>
             <td class="value"><input id="motor_tmax" type="number" step="10" value="230"><div id="motor_torque_seen_msg" class="gear-range-message" aria-live="polite"></div><div id="motor_torque_check_msg" class="torque-check-message" aria-live="polite"></div></td>
             <td class="units">N·m</td>
@@ -536,7 +536,7 @@
                 <td class="value"><input id="h_emotor_eff" type="number" step="0.1" value="0.85"></td>
                 <td class="units">–</td>
               </tr>
-              <tr>
+              <tr data-summary-hide-if-blank="hydraulic_motor_select">
                 <th scope="row">
                   <label class="param-label" for="hydraulic_motor_select" data-code="hydraulic_motor_select">Hydraulic Motor Part Number</label>
                 </th>
@@ -576,7 +576,7 @@
               </tr>
             </thead>
             <tbody>
-              <tr>
+              <tr data-summary-hide-if-blank="hpu_select">
                 <th scope="row">
                   <label class="param-label" for="hpu_select" data-code="hpu_select">HPU Part Number</label>
                 </th>
@@ -594,7 +594,7 @@
                 <td class="value"><input id="h_pump_strings" type="number" step="1" value="2"></td>
                 <td class="units">count</td>
               </tr>
-              <tr>
+              <tr data-summary-hide-if-blank="hpu_motor_select">
                 <th scope="row">
                   <label class="param-label" for="hpu_motor_select" data-code="hpu_motor_select">HPU Motor Part Number</label>
                 </th>
@@ -619,7 +619,7 @@
                 <td class="value"><input id="h_emotor_rpm" type="number" step="100" value="1780"></td>
                 <td class="units">rpm</td>
               </tr>
-              <tr>
+              <tr data-summary-hide-if-blank="hydraulic_pump_select">
                 <th scope="row">
                   <label class="param-label" for="hydraulic_pump_select" data-code="hydraulic_pump_select">Hydraulic Pump Part Number</label>
                 </th>
@@ -649,6 +649,58 @@
         </section>
       </div>
     </section>
+      <section class="card" id="sidebar-unit-converter">
+        <h3 class="input-section__title">Unit Converter &amp; Calculators</h3>
+        <p class="dim" style="margin-bottom:8px;">Convert engineering units and estimate immersed weight and power.</p>
+
+        <h4 style="margin:12px 0 4px;font-size:0.85rem;">Unit converter</h4>
+        <div class="unit-converter" id="unit-converter">
+          <div class="unit-converter__inline" role="group" aria-label="Unit conversion">
+            <select id="unit-converter-category" aria-label="Unit category"></select>
+            <input id="unit-converter-input-value" type="number" step="any" value="1" inputmode="decimal" aria-label="Input value" />
+            <select id="unit-converter-input-unit"></select>
+            <span class="unit-converter__arrow" aria-hidden="true">→</span>
+            <output id="unit-converter-output-value" aria-live="polite">—</output>
+            <select id="unit-converter-output-unit"></select>
+          </div>
+        </div>
+
+        <h4 style="margin:12px 0 4px;font-size:0.85rem;">Weight in air → weight in water</h4>
+        <div class="unit-calculator-grid" role="group" aria-label="Weight in air to weight in water calculator">
+          <input id="air-water-air-value" type="number" step="any" value="1000" aria-label="Weight in air" />
+          <select id="air-water-air-unit" aria-label="Weight in air unit"></select>
+          <input id="air-water-sg" type="number" step="any" value="7.85" aria-label="Material specific gravity" />
+          <label for="air-water-sg" class="dim">Material SG</label>
+          <input id="air-water-fluid-density" type="number" step="any" value="1025" aria-label="Fluid density in kg per cubic meter" />
+          <label for="air-water-fluid-density" class="dim">Fluid density (kg/m³)</label>
+          <output id="air-water-output" aria-live="polite">—</output>
+          <select id="air-water-output-unit" aria-label="Weight in water output unit"></select>
+        </div>
+
+        <h4 style="margin:12px 0 4px;font-size:0.85rem;">Power = Force × Speed × Efficiency</h4>
+        <div class="unit-calculator-grid" role="group" aria-label="Mechanical power calculator">
+          <input id="mech-power-force-value" type="number" step="any" value="1000" aria-label="Force" />
+          <select id="mech-power-force-unit" aria-label="Force unit"></select>
+          <input id="mech-power-speed-value" type="number" step="any" value="1" aria-label="Speed" />
+          <select id="mech-power-speed-unit" aria-label="Speed unit"></select>
+          <input id="mech-power-efficiency" type="number" step="any" value="0.9" aria-label="Efficiency" />
+          <label for="mech-power-efficiency" class="dim">Efficiency (0-1 or %)</label>
+          <output id="mech-power-output" aria-live="polite">—</output>
+          <select id="mech-power-output-unit" aria-label="Power output unit"></select>
+        </div>
+
+        <h4 style="margin:12px 0 4px;font-size:0.85rem;">Power = Pressure × Flow × Efficiency</h4>
+        <div class="unit-calculator-grid" role="group" aria-label="Hydraulic power calculator">
+          <input id="hyd-power-pressure-value" type="number" step="any" value="3000" aria-label="Pressure" />
+          <select id="hyd-power-pressure-unit" aria-label="Pressure unit"></select>
+          <input id="hyd-power-flow-value" type="number" step="any" value="60" aria-label="Flow" />
+          <select id="hyd-power-flow-unit" aria-label="Flow unit"></select>
+          <input id="hyd-power-efficiency" type="number" step="any" value="0.9" aria-label="Efficiency" />
+          <label for="hyd-power-efficiency" class="dim">Efficiency (0-1 or %)</label>
+          <output id="hyd-power-output" aria-live="polite">—</output>
+          <select id="hyd-power-output-unit" aria-label="Power output unit"></select>
+        </div>
+      </section>
       <div class="btnbar app-sidebar__footer-actions">
         <button id="import-presets-btn" type="button">Import Presets</button>
         <input id="import-presets-file" type="file" accept="application/json,.json" class="sr-only" aria-hidden="true" tabindex="-1">
@@ -656,19 +708,17 @@
         </div>
     </aside>
     <div class="sheet">
+      <nav class="report-nav" id="report-nav" aria-label="Report sections">
+        <a class="report-nav__link" href="#panel-inputs">1 Summary</a>
+        <a class="report-nav__link" href="#panel-performance">2 Performance</a>
+        <a class="report-nav__link" href="#panel-results">3 Layer Tables</a>
+      </nav>
       <header class="page-header">
         <img src="assets/winch-header%20140px.png" alt="TekMarines winch diagram" class="page-header__image" />
         <h1 class="page-title">Winch Analysis</h1>
       </header>
       <div class="app-content" id="page-top">
         <div id="err"></div>
-        <nav class="report-nav" id="report-nav" aria-label="Report sections">
-          <a class="report-nav__link" href="#panel-inputs">1 Summary</a>
-          <a class="report-nav__link" href="#panel-performance">2 Performance</a>
-          <a class="report-nav__link" href="#panel-results">3 Layer Tables</a>
-          <a class="report-nav__link" href="#panel-converter">4 Unit Converter</a>
-          <a class="report-nav__link" href="#panel-instructions">5 Reference</a>
-        </nav>
         <div class="report-header" id="report-title-block">
           <h1 class="report-header__title" id="report_title">Winch Analysis Report</h1>
           <div class="report-header__meta">
@@ -839,7 +889,7 @@
             <p class="dim">Interactive: move mouse for crosshairs, click to pin a point, right-click a pin to remove it, double-click to clear all pins.</p>
           </div>
         </div>
-        <p id="el_tau_max_summary" class="note"></p>
+        <p id="el_tau_max_summary" class="note" style="display:none;"></p>
       </section>
 
       <section class="card card--performance" data-drive-scope="hydraulic">
@@ -1109,85 +1159,11 @@
     <div class="pdf-page-break" aria-hidden="true"></div>
 
     <div
-      id="panel-converter"
-      class="panel"
-    >
-      <section class="card info-card unit-converter-card" aria-labelledby="unit-converter-title">
-        <h2 class="section-title" id="unit-converter-title">Section 4: Unit Converter &amp; Quick Calculators</h2>
-        <p class="dim">Convert engineering units and estimate immersed weight and power.</p>
-
-        <h3>Unit converter</h3>
-        <div class="unit-converter" id="unit-converter">
-          <div class="unit-converter__inline" role="group" aria-label="Unit conversion">
-            <select id="unit-converter-category" aria-label="Unit category"></select>
-            <input id="unit-converter-input-value" type="number" step="any" value="1" inputmode="decimal" aria-label="Input value" />
-            <select id="unit-converter-input-unit"></select>
-            <span class="unit-converter__arrow" aria-hidden="true">→</span>
-            <output id="unit-converter-output-value" aria-live="polite">—</output>
-            <select id="unit-converter-output-unit"></select>
-          </div>
-        </div>
-
-        <h3>Weight in air → weight in water</h3>
-        <div class="unit-calculator-grid" role="group" aria-label="Weight in air to weight in water calculator">
-          <input id="air-water-air-value" type="number" step="any" value="1000" aria-label="Weight in air" />
-          <select id="air-water-air-unit" aria-label="Weight in air unit"></select>
-          <input id="air-water-sg" type="number" step="any" value="7.85" aria-label="Material specific gravity" />
-          <label for="air-water-sg" class="dim">Material SG</label>
-          <input id="air-water-fluid-density" type="number" step="any" value="1025" aria-label="Fluid density in kg per cubic meter" />
-          <label for="air-water-fluid-density" class="dim">Fluid density (kg/m³)</label>
-          <output id="air-water-output" aria-live="polite">—</output>
-          <select id="air-water-output-unit" aria-label="Weight in water output unit"></select>
-        </div>
-
-        <h3>Power = Force × Speed × Efficiency</h3>
-        <div class="unit-calculator-grid" role="group" aria-label="Mechanical power calculator">
-          <input id="mech-power-force-value" type="number" step="any" value="1000" aria-label="Force" />
-          <select id="mech-power-force-unit" aria-label="Force unit"></select>
-          <input id="mech-power-speed-value" type="number" step="any" value="1" aria-label="Speed" />
-          <select id="mech-power-speed-unit" aria-label="Speed unit"></select>
-          <input id="mech-power-efficiency" type="number" step="any" value="0.9" aria-label="Efficiency" />
-          <label for="mech-power-efficiency" class="dim">Efficiency (0-1 or %)</label>
-          <output id="mech-power-output" aria-live="polite">—</output>
-          <select id="mech-power-output-unit" aria-label="Power output unit"></select>
-        </div>
-
-        <h3>Power = Pressure × Flow × Efficiency</h3>
-        <div class="unit-calculator-grid" role="group" aria-label="Hydraulic power calculator">
-          <input id="hyd-power-pressure-value" type="number" step="any" value="3000" aria-label="Pressure" />
-          <select id="hyd-power-pressure-unit" aria-label="Pressure unit"></select>
-          <input id="hyd-power-flow-value" type="number" step="any" value="60" aria-label="Flow" />
-          <select id="hyd-power-flow-unit" aria-label="Flow unit"></select>
-          <input id="hyd-power-efficiency" type="number" step="any" value="0.9" aria-label="Efficiency" />
-          <label for="hyd-power-efficiency" class="dim">Efficiency (0-1 or %)</label>
-          <output id="hyd-power-output" aria-live="polite">—</output>
-          <select id="hyd-power-output-unit" aria-label="Power output unit"></select>
-        </div>
-      </section>
-      <p class="section-back-to-top"><a href="#page-top">Back to top ↑</a></p>
-    </div>
-    <div class="pdf-page-break" aria-hidden="true"></div>
-
-    <div
       id="panel-instructions"
       class="panel"
     >
-      <section class="card info-card" id="preset-guide" aria-labelledby="preset-guide-title">
-        <h2 class="section-title" id="preset-guide-title">Saving component presets</h2>
-        <p>
-          Use the <strong>— Create New —</strong> option in any component dropdown to save the current
-          field values as a reusable preset. Presets are stored in the cloud and available across all devices.
-        </p>
-        <ol>
-          <li>Adjust the component inputs until they match the desired configuration.</li>
-          <li>Choose <strong>— Create New —</strong> from the component dropdown.</li>
-          <li>Enter a part number and optional description when prompted.</li>
-          <li>The new preset appears immediately in the dropdown and syncs across devices.</li>
-        </ol>
-      </section>
-
       <section class="card info-card" id="hydraulic-core-equations" aria-labelledby="hydraulic-core-equations-title">
-        <h2 class="section-title" id="hydraulic-core-equations-title">Hydraulic Winch System — Core Equations (Unitless Form)</h2>
+        <h2 class="section-title" id="hydraulic-core-equations-title">Reference: Core Equations</h2>
 
         <h3>Symbols (reference units only)</h3>
         <div class="scrollable-table">
@@ -1520,36 +1496,7 @@
           Each equation isolates the dependent quantity on the left-hand side for quick substitution while preserving unit-consistent implementation across measurement systems. All efficiencies, ratios, and reductions are dimensionless. Power-, flow-, and tension-limited speeds follow directly from these relationships.
         </p>
       </section>
-      <section class="card info-card" id="component-catalog-card" aria-labelledby="component-catalog-instructions">
-        <h2 class="section-title" id="component-catalog-instructions">How to update component presets</h2>
-        <p>
-          The component dropdowns now read from dedicated catalogs in
-          <code>src/js/component-selectors.mjs</code>. Add or edit part numbers directly in the matching
-          array to make them available across the app.
-        </p>
-        <ol>
-          <li>
-            Open <code>src/js/component-selectors.mjs</code> and locate the array that matches the component
-            type you want to change (for example <code>GEARBOX_OPTIONS</code> or
-            <code>ELECTRIC_MOTOR_OPTIONS</code>).
-          </li>
-          <li>
-            Add a new object with the part number, description, and any field values that should autofill
-            when the part is selected. Follow the existing entries as a template.
-          </li>
-          <li>
-            Save the file and refresh the page. The new entry will appear under the corresponding dropdown
-            and auto-populate the linked form inputs.
-          </li>
-        </ol>
-        <p class="dim">
-          Tip: if you need to clear a selection after experimenting, change any populated value and the app
-          will revert the dropdown to <em>Custom (manual input)</em> automatically.
-        </p>
-        </section>
-      </div>
-      </div>
-        <p class="section-back-to-top"><a href="#page-top">Back to top ↑</a></p>
+      <p class="section-back-to-top"><a href="#page-top">Back to top ↑</a></p>
     </div>
 
       <dialog id="plot-settings-wave-speed" class="plot-settings-dialog">

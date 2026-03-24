@@ -1735,14 +1735,7 @@ function renderInputSummaryIntro(introRoot) {
   intro.className = 'summary-intro__body';
   intro.textContent = 'This section documents the exact options and numeric values used for the calculations, plots, and tabulated results in the remainder of this report.';
 
-  const meta = document.createElement('div');
-  meta.className = 'summary-intro__meta';
-  meta.innerHTML = `
-    <p><strong>System:</strong> ${systemType} / ${winchType}</p>
-    <p>${modeText}</p>
-  `;
-
-  introRoot.append(intro, meta);
+  introRoot.append(intro);
 }
 
 function updateReportHeader(model) {
@@ -2318,12 +2311,7 @@ function computeAll() {
 
     lastComputedModel = model;
 
-    const wrapsNoteEl = /** @type {HTMLTableCellElement|null} */ (document.getElementById('wraps_note'));
-    if (wrapsNoteEl) {
-      const calcWraps = model.meta && Number.isFinite(model.meta.wraps_per_layer_calc) ? model.meta.wraps_per_layer_calc : undefined;
-      const display = (typeof calcWraps === 'number') ? calcWraps.toFixed(1) : '–';
-      wrapsNoteEl.textContent = `Auto-calculated wraps per layer: ${display}.`;
-    }
+    // Wraps note removed from output per user request
 
     lastDrumState = { rows: model.rows, summary: model.summary, cfg: model.cfg, meta: model.meta };
     renderDrumVisualization(model.rows, model.summary, model.cfg, model.meta);
