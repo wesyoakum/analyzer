@@ -2289,9 +2289,15 @@ function computeAll() {
       model.inputs.gr1 * model.inputs.gr2,
       model.inputs.gr2
     );
-    // Compute max gearbox torque seen: max(drum_torque) / (N_motors × GR2)
-    const maxDrumTorqueSeen = model.rows.reduce((max, r) =>
+    // Compute max torque seen: worst case of operating layers and FAT (SWL×1.25 at full drum)
+    const maxOpsDrumTorque = model.rows.reduce((max, r) =>
       Number.isFinite(r.gearbox_torque_Nm) ? Math.max(max, r.gearbox_torque_Nm) : max, 0);
+    const ratedSwlForSeen = read('rated_swl_kgf');
+    const fullDrumRadius_m = (model.summary.full_drum_dia_in * M_PER_IN) / 2;
+    const fatDrumTorque = (Number.isFinite(ratedSwlForSeen) && ratedSwlForSeen > 0)
+      ? ratedSwlForSeen * 1.25 * G * fullDrumRadius_m
+      : 0;
+    const maxDrumTorqueSeen = Math.max(maxOpsDrumTorque, fatDrumTorque);
     const gr2Val = model.inputs.gr2;
     const motorsVal = Math.max(model.inputs.motors || 1, 1);
     const maxGbTorqueSeen = (Number.isFinite(gr2Val) && gr2Val > 0)
