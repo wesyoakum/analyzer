@@ -206,7 +206,13 @@ export function renderElectricTables(
   const driveMotorsSafe = Number.isFinite(driveMotorCount) && driveMotorCount > 0 ? driveMotorCount : 0;
   const totalGearRatioSafe = Number.isFinite(totalGearRatio) && totalGearRatio > 0 ? totalGearRatio : 0;
 
-  const tauMaxDrumNm = swlSafe * 1.25 * G * (drumDiaM / 2);
+  // Factory acceptance test: SWL × 1.25 at full drum
+  const tauFatDrumNm = swlSafe * 1.25 * G * (drumDiaM / 2);
+  // Actual peak drum torque from operating layers
+  const tauOpsDrumNm = elLayers.reduce((max, L) =>
+    Number.isFinite(L.max_gearbox_torque_Nm) ? Math.max(max, L.max_gearbox_torque_Nm) : max, 0);
+  // Worst case of the two
+  const tauMaxDrumNm = Math.max(tauFatDrumNm, tauOpsDrumNm);
   // Torque path: gearbox = drum / (N_motors × GR2), motor = gearbox / GR1
   const gr2Safe = Number.isFinite(gr2) && gr2 > 0 ? gr2 : 0;
   const tauMaxGbNm = (driveMotorsSafe > 0 && gr2Safe > 0)
