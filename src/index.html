@@ -871,23 +871,24 @@
           <h2 class="section-title">Section 3.1: Spooling Profile</h2>
           <div class="card-header-actions"></div>
         </div>
-        <div class="drum-visual">
-          <div class="drum-visual__size-control">
-            <label for="drum_size_slider">Size</label>
-            <input id="drum_size_slider" type="range" min="150" max="800" value="320" step="10" data-persist="off">
+        <div class="drum-visual" id="drum_visual_layout">
+          <div class="drum-visual__image" id="drum_visual_container">
+            <svg
+              id="drum_visual_svg"
+              class="drum-visual__svg"
+              viewBox="0 0 320 320"
+              role="img"
+              aria-labelledby="drum_visual_title"
+            >
+              <title id="drum_visual_title">Winch drum cross-section</title>
+            </svg>
+            <div class="drum-visual__resize-handle" id="drum_resize_handle" title="Drag to resize"></div>
+            <div id="drum_legend" class="legend legend--drum" hidden></div>
           </div>
-          <svg
-            id="drum_visual_svg"
-            class="drum-visual__svg"
-            viewBox="0 0 320 320"
-            role="img"
-            aria-labelledby="drum_visual_title"
-          >
-            <title id="drum_visual_title">Winch drum cross-section</title>
-          </svg>
-                    <div id="drum_legend" class="legend legend--drum" hidden></div>
+          <div class="drum-visual__info">
+            <p class="drum-summary" id="drum_summary"></p>
+          </div>
         </div>
-        <p class="drum-summary" id="drum_summary"></p>
       </div>
 
       <div class="card" data-drive-scope="electric">

@@ -1048,20 +1048,17 @@ nav.tabs {
 }
 
 .drum-visual {
-  display: block;
-}
-
-.drum-visual__size-control {
   display: flex;
-  align-items: center;
-  gap: 8px;
-  margin-bottom: 6px;
-  font-size: 0.8em;
-  color: var(--ink-500);
+  flex-wrap: wrap;
+  gap: 16px;
+  align-items: flex-start;
 }
 
-.drum-visual__size-control input[type="range"] {
-  width: 120px;
+.drum-visual__image {
+  position: relative;
+  width: 320px;
+  min-width: 150px;
+  flex-shrink: 0;
 }
 
 .drum-visual__svg {
@@ -1074,6 +1071,28 @@ nav.tabs {
   border: none;
   border-radius: 0;
   box-shadow: none;
+  cursor: default;
+}
+
+.drum-visual__resize-handle {
+  position: absolute;
+  right: 0;
+  bottom: 0;
+  width: 16px;
+  height: 16px;
+  cursor: nwse-resize;
+  opacity: 0.4;
+  background: linear-gradient(135deg, transparent 50%, var(--ink-500) 50%);
+  border-radius: 0 0 2px 0;
+}
+
+.drum-visual__resize-handle:hover {
+  opacity: 0.7;
+}
+
+.drum-visual__info {
+  flex: 1;
+  min-width: 200px;
 }
 
 #drum_visual_svg {

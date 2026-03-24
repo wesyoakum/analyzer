@@ -1139,15 +1139,35 @@ document.addEventListener('DOMContentLoaded', () => {
 
   setupUnitConverter();
 
-  // Drum size slider
-  const drumSlider = /** @type {HTMLInputElement|null} */ (document.getElementById('drum_size_slider'));
-  const drumSvg = /** @type {SVGSVGElement|null} */ (document.getElementById('drum_visual_svg'));
-  if (drumSlider && drumSvg) {
-    const applySize = () => {
-      drumSvg.style.maxWidth = drumSlider.value + 'px';
-    };
-    applySize();
-    drumSlider.addEventListener('input', applySize);
+  // Drum drag-to-resize
+  const drumContainer = document.getElementById('drum_visual_container');
+  const drumResizeHandle = document.getElementById('drum_resize_handle');
+  if (drumContainer && drumResizeHandle) {
+    let dragging = false;
+    let startX = 0;
+    let startWidth = 0;
+
+    drumResizeHandle.addEventListener('pointerdown', (e) => {
+      e.preventDefault();
+      dragging = true;
+      startX = e.clientX;
+      startWidth = drumContainer.offsetWidth;
+      drumResizeHandle.setPointerCapture(e.pointerId);
+      document.body.style.userSelect = 'none';
+    });
+
+    document.addEventListener('pointermove', (e) => {
+      if (!dragging) return;
+      const delta = e.clientX - startX;
+      const newWidth = Math.max(150, Math.min(800, startWidth + delta));
+      drumContainer.style.width = newWidth + 'px';
+    });
+
+    document.addEventListener('pointerup', () => {
+      if (!dragging) return;
+      dragging = false;
+      document.body.style.userSelect = '';
+    });
   }
 
   renderDocumentMath();
