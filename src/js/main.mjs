@@ -43,10 +43,11 @@ function readAccentColor() {
   return '#2c56a3';
 }
 
-function updateTorqueCheckMessages(gearboxFailed, motorFailed, maxGearboxTorqueSeen) {
+function updateTorqueCheckMessages(gearboxFailed, motorFailed, maxGearboxTorqueSeen, maxMotorTorqueSeen) {
   const gearboxMsgEl = /** @type {HTMLElement|null} */ (q('gearbox_torque_check_msg'));
   const motorMsgEl = /** @type {HTMLElement|null} */ (q('motor_torque_check_msg'));
   const gearboxSeenEl = /** @type {HTMLElement|null} */ (q('gearbox_torque_seen_msg'));
+  const motorSeenEl = /** @type {HTMLElement|null} */ (q('motor_torque_seen_msg'));
   if (gearboxMsgEl) {
     gearboxMsgEl.textContent = gearboxFailed ? 'Gearbox torque check failed.' : '';
   }
@@ -60,6 +61,15 @@ function updateTorqueCheckMessages(gearboxFailed, motorFailed, maxGearboxTorqueS
     } else {
       gearboxSeenEl.textContent = '';
       gearboxSeenEl.classList.remove('is-warning');
+    }
+  }
+  if (motorSeenEl) {
+    if (Number.isFinite(maxMotorTorqueSeen) && maxMotorTorqueSeen > 0) {
+      motorSeenEl.textContent = `Max torque seen: ${maxMotorTorqueSeen.toFixed(1)} N\u00b7m`;
+      motorSeenEl.classList.toggle('is-warning', motorFailed);
+    } else {
+      motorSeenEl.textContent = '';
+      motorSeenEl.classList.remove('is-warning');
     }
   }
 }
@@ -124,6 +134,12 @@ function updateGearRatioRanges(model) {
   let grTotalMin = NaN;
   if (hasMotorTorque && Number.isFinite(maxDrumTorque_Nm)) {
     grTotalMin = maxDrumTorque_Nm / (motors * motor_tmax);
+  }
+  // Gearbox constraint also sets a floor on GR2, which raises total GR min
+  // GR2 ≥ drum_torque / (N_motors × gearbox_max), and GR_total ≥ GR2_min (since GR1 ≥ 1)
+  if (hasGearboxMax && Number.isFinite(maxDrumTorque_Nm)) {
+    const grTotalMinGb = maxDrumTorque_Nm / (motors * gearbox_max_torque);
+    grTotalMin = Number.isFinite(grTotalMin) ? Math.max(grTotalMin, grTotalMinGb) : grTotalMinGb;
   }
 
   // Upper bound from speed: GR_total ≤ motor_max_RPM × π × min_layer_dia_m / rated_speed_mpm
@@ -209,13 +225,11 @@ function updateGearRatioRanges(model) {
 }
 
 function clearGearRatioRanges() {
-  const ids = ['gr1_range_msg', 'gr2_range_msg', 'gr_total_range_msg'];
+  const ids = ['gr1_range_msg', 'gr2_range_msg', 'gr_total_range_msg', 'gearbox_torque_seen_msg', 'motor_torque_seen_msg'];
   ids.forEach(id => {
     const el = q(id);
     if (el) { el.textContent = ''; el.classList.remove('is-warning'); }
   });
-  const seenEl = q('gearbox_torque_seen_msg');
-  if (seenEl) { seenEl.textContent = ''; seenEl.classList.remove('is-warning'); }
 }
 
 /**
@@ -2286,8 +2300,12 @@ function computeAll() {
     const maxGbTorqueSeen = (Number.isFinite(gr2Val) && gr2Val > 0)
       ? maxDrumTorqueSeen / (motorsVal * gr2Val)
       : NaN;
+    const gr1Val = model.inputs.gr1;
+    const maxMotorTorqueSeen = (Number.isFinite(gr1Val) && gr1Val > 0 && Number.isFinite(maxGbTorqueSeen))
+      ? maxGbTorqueSeen / gr1Val
+      : NaN;
 
-    updateTorqueCheckMessages(Boolean(torqueChecks?.gearboxCheckFailed), Boolean(torqueChecks?.motorCheckFailed), maxGbTorqueSeen);
+    updateTorqueCheckMessages(Boolean(torqueChecks?.gearboxCheckFailed), Boolean(torqueChecks?.motorCheckFailed), maxGbTorqueSeen, maxMotorTorqueSeen);
     updateGearRatioRanges(model);
     renderHydraulicTables(lastHyLayer, lastHyWraps, q('tbody_hy_layer'), q('tbody_hy_wraps'));
 
@@ -2306,7 +2324,7 @@ function computeAll() {
     lastComputedModel = null;
     clearDrumVisualization();
     clearPlots();
-    updateTorqueCheckMessages(false, false, NaN);
+    updateTorqueCheckMessages(false, false, NaN, NaN);
     clearGearRatioRanges();
     updateCsvButtonStates();
     renderInputSummary();
