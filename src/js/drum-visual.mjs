@@ -21,7 +21,7 @@ const FALLBACK_HEX = {
 };
 
 const SVG_BASE_HEIGHT = 360;
-const SVG_MARGIN = 28;
+const SVG_MARGIN = 52;
 
 /**
  * Parse a CSS color string into RGB components.
@@ -369,6 +369,114 @@ export function renderDrumVisualization(rows, summary, cfg, meta) {
     });
   }
 
+  // ---- Free flange (used by dimensions and summary) ----
+  const flangeRadius = (Number.isFinite(flange_dia_in) ? flange_dia_in : 0) / 2;
+  const outerLayerRadius = (Number.isFinite(full_drum_dia_in) ? full_drum_dia_in : 0) / 2;
+  const cableRadius = cable_dia_in / 2;
+  const freeFlange_in = flangeRadius - outerLayerRadius - cableRadius;
+  const minFreeFlange_in = cable_dia_in * 2.5;
+  const freeFlangeOk = Number.isFinite(freeFlange_in) && freeFlange_in >= minFreeFlange_in;
+
+  // ---- Dimension lines ----
+  const dimColor = rgbToCss(ink500Rgb, 0.6);
+  const dimTextColor = rgbToCss(ink700Rgb, 0.85);
+  const dimStroke = '0.5';
+  const dimFontSize = Math.max(6, Math.min(10, scale * 1.2)).toFixed(1);
+  const dimArrowSize = Math.max(2, Math.min(5, scale * 0.6));
+  const dimGap = 6; // px gap from geometry to dimension line
+
+  /**
+   * Draw a dimension line with arrows and centered label.
+   */
+  function drawDim(x1, y1, x2, y2, label, side = 'outside', offset = 14) {
+    const dx = x2 - x1, dy = y2 - y1;
+    const len = Math.sqrt(dx * dx + dy * dy);
+    if (len < 2) return;
+    const nx = -dy / len, ny = dx / len; // normal
+    const ox = nx * offset * (side === 'outside' ? 1 : -1);
+    const oy = ny * offset * (side === 'outside' ? 1 : -1);
+
+    // Extension lines
+    const extOvershoot = 4;
+    svg.appendChild(svgEl('line', {
+      x1: x1, y1: y1, x2: x1 + ox + nx * extOvershoot, y2: y1 + oy + ny * extOvershoot,
+      stroke: dimColor, 'stroke-width': dimStroke, 'vector-effect': 'non-scaling-stroke'
+    }));
+    svg.appendChild(svgEl('line', {
+      x1: x2, y1: y2, x2: x2 + ox + nx * extOvershoot, y2: y2 + oy + ny * extOvershoot,
+      stroke: dimColor, 'stroke-width': dimStroke, 'vector-effect': 'non-scaling-stroke'
+    }));
+
+    // Dimension line
+    const lx1 = x1 + ox, ly1 = y1 + oy;
+    const lx2 = x2 + ox, ly2 = y2 + oy;
+    svg.appendChild(svgEl('line', {
+      x1: lx1, y1: ly1, x2: lx2, y2: ly2,
+      stroke: dimColor, 'stroke-width': dimStroke, 'vector-effect': 'non-scaling-stroke'
+    }));
+
+    // Arrowheads
+    const adx = (x2 - x1) / len * dimArrowSize;
+    const ady = (y2 - y1) / len * dimArrowSize;
+    const anx = -ady * 0.5, any = adx * 0.5;
+    // Arrow at start (pointing inward)
+    svg.appendChild(svgEl('polygon', {
+      points: `${lx1},${ly1} ${lx1+adx+anx},${ly1+ady+any} ${lx1+adx-anx},${ly1+ady-any}`,
+      fill: dimColor
+    }));
+    // Arrow at end (pointing inward)
+    svg.appendChild(svgEl('polygon', {
+      points: `${lx2},${ly2} ${lx2-adx+anx},${ly2-ady+any} ${lx2-adx-anx},${ly2-ady-any}`,
+      fill: dimColor
+    }));
+
+    // Label
+    const mx = (lx1 + lx2) / 2, my = (ly1 + ly2) / 2;
+    const isVertical = Math.abs(dy) > Math.abs(dx);
+    const textEl = svgEl('text', {
+      x: mx, y: my,
+      'text-anchor': 'middle',
+      'dominant-baseline': 'central',
+      'font-size': dimFontSize,
+      fill: dimTextColor,
+      ...(isVertical ? { transform: `rotate(-90,${mx},${my})` } : {})
+    });
+    textEl.textContent = label;
+    svg.appendChild(textEl);
+  }
+
+  const flangeTopY = centerY - flangeHeightPx / 2;
+  const flangeBottomY = centerY + flangeHeightPx / 2;
+  const coreTopY = centerY - coreHeightPx / 2;
+  const coreBottomY = centerY + coreHeightPx / 2;
+  const cableOuterRadiusPx = maxCenterRadiusIn > 0 ? (maxCenterRadiusIn + (cable_dia_in > 0 ? cable_dia_in / 2 : 0)) * scale : 0;
+  const cableTopY = centerY - cableOuterRadiusPx;
+
+  // FTF — horizontal across top
+  if (coreWidthPx > 0) {
+    drawDim(spoolLeft, flangeTopY - dimGap, spoolRight, flangeTopY - dimGap,
+      `${fmt(flange_to_flange_in, 2)} in`, 'outside', 14);
+  }
+
+  // Flange diameter — vertical on right
+  if (flangeHeightPx > 0) {
+    drawDim(spoolRight + flangeWidthPx + dimGap, flangeTopY, spoolRight + flangeWidthPx + dimGap, flangeBottomY,
+      `Ø ${fmt(flange_dia_in, 2)} in`, 'outside', 14);
+  }
+
+  // Core diameter — vertical on left
+  if (coreHeightPx > 0) {
+    drawDim(spoolLeft - dimGap, coreTopY, spoolLeft - dimGap, coreBottomY,
+      `Ø ${fmt(core_dia_in, 2)} in`, 'outside', 14);
+  }
+
+  // Free flange — small vertical at top right
+  if (cableOuterRadiusPx > 0 && flangeHeightPx > 0 && freeFlange_in > 0.01) {
+    const freeFlangeLabel = `${fmt(freeFlange_in, 2)} in`;
+    const ffX = spoolRight - 20;
+    drawDim(ffX, flangeTopY, ffX, cableTopY, freeFlangeLabel, 'inside', -14);
+  }
+
   // Summary & accessibility copy
   const cableLenDigits = cable_len_m >= 1000 ? 0 : cable_len_m >= 10 ? 1 : 2;
   const cableDiaDigits = cable_dia_mm >= 50 ? 0 : cable_dia_mm >= 10 ? 1 : 2;
@@ -378,12 +486,6 @@ export function renderDrumVisualization(rows, summary, cfg, meta) {
   const wrapsPerLayer = meta && Number.isFinite(meta.wraps_per_layer_used)
     ? ` (≈${fmt(meta.wraps_per_layer_used, 1)} wraps per layer)`
     : '';
-  const flangeRadius = (Number.isFinite(flange_dia_in) ? flange_dia_in : 0) / 2;
-  const outerLayerRadius = (Number.isFinite(full_drum_dia_in) ? full_drum_dia_in : 0) / 2;
-  const cableRadius = cable_dia_in / 2;
-  const freeFlange_in = flangeRadius - outerLayerRadius - cableRadius;
-  const minFreeFlange_in = cable_dia_in * 2.5;
-  const freeFlangeOk = Number.isFinite(freeFlange_in) && freeFlange_in >= minFreeFlange_in;
   const freeFlangeText = Number.isFinite(freeFlange_in) ? `Free flange: ${fmt(freeFlange_in, 2)} in` : '';
 
   const geometryParts = [
