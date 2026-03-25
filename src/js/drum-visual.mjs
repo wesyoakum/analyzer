@@ -389,7 +389,7 @@ export function renderDrumVisualization(rows, summary, cfg, meta) {
   /**
    * Draw a dimension line with arrows and centered label.
    */
-  function drawDim(x1, y1, x2, y2, label, side = 'outside', offset = 14) {
+  function drawDim(x1, y1, x2, y2, label, side = 'outside', offset = 14, labelPos = 0.5) {
     const dx = x2 - x1, dy = y2 - y1;
     const len = Math.sqrt(dx * dx + dy * dy);
     if (len < 2) return;
@@ -431,9 +431,24 @@ export function renderDrumVisualization(rows, summary, cfg, meta) {
       fill: dimColor
     }));
 
-    // Label
-    const mx = (lx1 + lx2) / 2, my = (ly1 + ly2) / 2;
+    // Label with background knockout (labelPos: 0=start, 0.5=center, 1=end)
+    const mx = lx1 + (lx2 - lx1) * labelPos, my = ly1 + (ly2 - ly1) * labelPos;
     const isVertical = Math.abs(dy) > Math.abs(dx);
+
+    // Measure approximate text width/height for background rect
+    const charW = parseFloat(dimFontSize) * 0.58;
+    const textW = label.length * charW + 4;
+    const textH = parseFloat(dimFontSize) + 3;
+
+    // Background knockout rect (white rect behind text to break the line)
+    const bgAttrs = {
+      x: mx - textW / 2, y: my - textH / 2,
+      width: textW, height: textH,
+      fill: 'white',
+      ...(isVertical ? { transform: `rotate(-90,${mx},${my})` } : {})
+    };
+    svg.appendChild(svgEl('rect', bgAttrs));
+
     const textEl = svgEl('text', {
       x: mx, y: my,
       'text-anchor': 'middle',
@@ -475,7 +490,7 @@ export function renderDrumVisualization(rows, summary, cfg, meta) {
   if (cableOuterRadiusPx > 0 && flangeHeightPx > 0 && freeFlange_in > 0.01) {
     const freeFlangeLabel = `${fmt(freeFlange_in, 2)} in`;
     const ffX = spoolRight + flangeWidthPx;
-    drawDim(ffX, flangeTopY, ffX, cableTopY, freeFlangeLabel, 'inside', 8);
+    drawDim(ffX, flangeTopY, ffX, cableTopY, freeFlangeLabel, 'inside', 8, 0.65);
   }
 
   // Summary & accessibility copy
