@@ -150,6 +150,7 @@ export function renderDrumVisualization(rows, summary, cfg, meta) {
   if (!titleEl) return;
 
   const styles = getComputedStyle(document.documentElement);
+  const ink500Rgb = parseCssColor(cssVar(styles, '--ink-500', FALLBACK_HEX.ink500), FALLBACK_COLORS.ink500);
   const ink700Rgb = parseCssColor(cssVar(styles, '--ink-700', FALLBACK_HEX.ink700), FALLBACK_COLORS.ink700);
   const ink900Rgb = parseCssColor(cssVar(styles, '--ink-900', FALLBACK_HEX.ink900), FALLBACK_COLORS.ink900);
   const cableFillRgb = parseCssColor(cssVar(styles, '--paper-line-soft', '#dfe4ef'), FALLBACK_COLORS.accentLight);
