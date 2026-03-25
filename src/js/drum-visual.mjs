@@ -21,7 +21,7 @@ const FALLBACK_HEX = {
 };
 
 const SVG_BASE_HEIGHT = 360;
-const SVG_MARGIN = 62;
+const SVG_MARGIN = 78;
 
 /**
  * Parse a CSS color string into RGB components.
@@ -453,31 +453,32 @@ export function renderDrumVisualization(rows, summary, cfg, meta) {
   const cableOuterRadiusPx = maxCenterRadiusIn > 0 ? (maxCenterRadiusIn + (cable_dia_in > 0 ? cable_dia_in / 2 : 0)) * scale : 0;
   const cableTopY = centerY - cableOuterRadiusPx;
 
-  // FTF — horizontal across top
+  // FTF — horizontal above the flange top
   if (coreWidthPx > 0) {
     drawDim(spoolLeft, flangeTopY, spoolRight, flangeTopY,
-      `${fmt(flange_to_flange_in, 2)} in`, 'outside', 20);
+      `${fmt(flange_to_flange_in, 2)} in`, 'outside', 32);
   }
 
   // Flange diameter — vertical on right, well outside the flange
   if (flangeHeightPx > 0) {
     const flangeRightEdge = spoolRight + flangeWidthPx;
     drawDim(flangeRightEdge, flangeTopY, flangeRightEdge, flangeBottomY,
-      `Ø ${fmt(flange_dia_in, 2)} in`, 'outside', 22);
+      `Ø ${fmt(flange_dia_in, 2)} in`, 'outside', 36);
   }
 
   // Core diameter — vertical on left, outside the flange
   if (coreHeightPx > 0) {
     const flangeLeftEdge = spoolLeft - flangeWidthPx;
     drawDim(flangeLeftEdge, coreTopY, flangeLeftEdge, coreBottomY,
-      `Ø ${fmt(core_dia_in, 2)} in`, 'outside', 22);
+      `Ø ${fmt(core_dia_in, 2)} in`, 'outside', 36);
   }
 
-  // Free flange — small vertical at top right, offset further right to avoid FTF overlap
+  // Free flange — between flange Ø and FTF dimensions on the right
   if (cableOuterRadiusPx > 0 && flangeHeightPx > 0 && freeFlange_in > 0.01) {
     const freeFlangeLabel = `${fmt(freeFlange_in, 2)} in`;
-    const ffX = spoolRight + flangeWidthPx + 4;
-    drawDim(ffX, flangeTopY, ffX, cableTopY, freeFlangeLabel, 'outside', 6);
+    const flangeRightEdge = spoolRight + flangeWidthPx;
+    drawDim(flangeRightEdge, flangeTopY, flangeRightEdge, cableTopY,
+      freeFlangeLabel, 'outside', 14);
   }
 
   // Summary & accessibility copy
