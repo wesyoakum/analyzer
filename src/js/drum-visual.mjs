@@ -21,7 +21,7 @@ const FALLBACK_HEX = {
 };
 
 const SVG_BASE_HEIGHT = 360;
-const SVG_MARGIN = 62;
+const SVG_MARGIN = 52;
 
 /**
  * Parse a CSS color string into RGB components.
@@ -455,29 +455,27 @@ export function renderDrumVisualization(rows, summary, cfg, meta) {
 
   // FTF — horizontal across top
   if (coreWidthPx > 0) {
-    drawDim(spoolLeft, flangeTopY, spoolRight, flangeTopY,
-      `${fmt(flange_to_flange_in, 2)} in`, 'outside', 20);
+    drawDim(spoolLeft, flangeTopY - dimGap, spoolRight, flangeTopY - dimGap,
+      `${fmt(flange_to_flange_in, 2)} in`, 'outside', 14);
   }
 
-  // Flange diameter — vertical on right, well outside the flange
+  // Flange diameter — vertical on right
   if (flangeHeightPx > 0) {
-    const flangeRightEdge = spoolRight + flangeWidthPx;
-    drawDim(flangeRightEdge, flangeTopY, flangeRightEdge, flangeBottomY,
-      `Ø ${fmt(flange_dia_in, 2)} in`, 'outside', 22);
+    drawDim(spoolRight + flangeWidthPx + dimGap, flangeTopY, spoolRight + flangeWidthPx + dimGap, flangeBottomY,
+      `Ø ${fmt(flange_dia_in, 2)} in`, 'outside', 14);
   }
 
-  // Core diameter — vertical on left, outside the flange
+  // Core diameter — vertical on left
   if (coreHeightPx > 0) {
-    const flangeLeftEdge = spoolLeft - flangeWidthPx;
-    drawDim(flangeLeftEdge, coreTopY, flangeLeftEdge, coreBottomY,
-      `Ø ${fmt(core_dia_in, 2)} in`, 'outside', 22);
+    drawDim(spoolLeft - dimGap, coreTopY, spoolLeft - dimGap, coreBottomY,
+      `Ø ${fmt(core_dia_in, 2)} in`, 'outside', 14);
   }
 
-  // Free flange — small vertical at top right, offset further right to avoid FTF overlap
+  // Free flange — small vertical at top right
   if (cableOuterRadiusPx > 0 && flangeHeightPx > 0 && freeFlange_in > 0.01) {
     const freeFlangeLabel = `${fmt(freeFlange_in, 2)} in`;
-    const ffX = spoolRight + flangeWidthPx + 4;
-    drawDim(ffX, flangeTopY, ffX, cableTopY, freeFlangeLabel, 'outside', 6);
+    const ffX = spoolRight - 20;
+    drawDim(ffX, flangeTopY, ffX, cableTopY, freeFlangeLabel, 'inside', -14);
   }
 
   // Summary & accessibility copy
