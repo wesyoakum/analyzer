@@ -453,29 +453,29 @@ export function renderDrumVisualization(rows, summary, cfg, meta) {
   const cableOuterRadiusPx = maxCenterRadiusIn > 0 ? (maxCenterRadiusIn + (cable_dia_in > 0 ? cable_dia_in / 2 : 0)) * scale : 0;
   const cableTopY = centerY - cableOuterRadiusPx;
 
-  // FTF — horizontal across top
+  // FTF — horizontal above the drum ('inside' pushes up for left-to-right line)
   if (coreWidthPx > 0) {
-    drawDim(spoolLeft, flangeTopY - dimGap, spoolRight, flangeTopY - dimGap,
-      `${fmt(flange_to_flange_in, 2)} in`, 'outside', 14);
+    drawDim(spoolLeft, flangeTopY, spoolRight, flangeTopY,
+      `${fmt(flange_to_flange_in, 2)} in`, 'inside', 20);
   }
 
-  // Flange diameter — vertical on right
+  // Flange diameter — vertical on right ('inside' pushes right for top-to-bottom line)
   if (flangeHeightPx > 0) {
-    drawDim(spoolRight + flangeWidthPx + dimGap, flangeTopY, spoolRight + flangeWidthPx + dimGap, flangeBottomY,
-      `Ø ${fmt(flange_dia_in, 2)} in`, 'outside', 14);
+    drawDim(spoolRight + flangeWidthPx, flangeTopY, spoolRight + flangeWidthPx, flangeBottomY,
+      `Ø ${fmt(flange_dia_in, 2)} in`, 'inside', 22);
   }
 
-  // Core diameter — vertical on left
+  // Core diameter — vertical on left ('outside' pushes left for top-to-bottom line)
   if (coreHeightPx > 0) {
-    drawDim(spoolLeft - dimGap, coreTopY, spoolLeft - dimGap, coreBottomY,
-      `Ø ${fmt(core_dia_in, 2)} in`, 'outside', 14);
+    drawDim(spoolLeft - flangeWidthPx, coreTopY, spoolLeft - flangeWidthPx, coreBottomY,
+      `Ø ${fmt(core_dia_in, 2)} in`, 'outside', 22);
   }
 
-  // Free flange — small vertical at top right
+  // Free flange — small vertical at top right, between flange edge and cable outer edge
   if (cableOuterRadiusPx > 0 && flangeHeightPx > 0 && freeFlange_in > 0.01) {
     const freeFlangeLabel = `${fmt(freeFlange_in, 2)} in`;
-    const ffX = spoolRight - 20;
-    drawDim(ffX, flangeTopY, ffX, cableTopY, freeFlangeLabel, 'inside', -14);
+    const ffX = spoolRight + flangeWidthPx;
+    drawDim(ffX, flangeTopY, ffX, cableTopY, freeFlangeLabel, 'inside', 8);
   }
 
   // Summary & accessibility copy
