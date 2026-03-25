@@ -381,6 +381,8 @@ export function renderDrumVisualization(rows, summary, cfg, meta) {
   const outerLayerRadius = (Number.isFinite(full_drum_dia_in) ? full_drum_dia_in : 0) / 2;
   const cableRadius = cable_dia_in / 2;
   const freeFlange_in = flangeRadius - outerLayerRadius - cableRadius;
+  const minFreeFlange_in = cable_dia_in * 2.5;
+  const freeFlangeOk = Number.isFinite(freeFlange_in) && freeFlange_in >= minFreeFlange_in;
   const freeFlangeText = Number.isFinite(freeFlange_in) ? `Free flange: ${fmt(freeFlange_in, 2)} in` : '';
 
   const geometryParts = [
@@ -392,9 +394,12 @@ export function renderDrumVisualization(rows, summary, cfg, meta) {
   ];
   if (freeFlangeText) geometryParts.push(freeFlangeText);
   const geometryLine = `Drum geometry: ${geometryParts.join(', ')}.`;
+  const freeFlangeWarning = (Number.isFinite(freeFlange_in) && !freeFlangeOk)
+    ? `<br><span style="color:#b00020;font-weight:600;">Free flange ${fmt(freeFlange_in, 2)} in is below minimum ${fmt(minFreeFlange_in, 2)} in (2.5 × cable diameter).</span>`
+    : '';
   const summaryPlain = `${summaryLine}${wrapsPerLayer}. ${geometryLine}`;
 
-  summaryEl.innerHTML = `<strong>${summaryLine}${wrapsPerLayer}.</strong> ${geometryLine}`;
+  summaryEl.innerHTML = `<strong>${summaryLine}${wrapsPerLayer}.</strong> ${geometryLine}${freeFlangeWarning}`;
   titleEl.textContent = `Winch drum cross-section with ${fmt(total_layers, 0)} ${layerWord}`;
   svg.setAttribute('aria-label', summaryPlain);
 }
