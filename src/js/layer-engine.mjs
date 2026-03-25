@@ -122,9 +122,10 @@ export function calcLayers(cfg) {
       if (spooled_len_m + 1e-12 >= cable_len_m) break; // done
     }
 
-    // Next layer diameter grows by cable_dia_in * packing_factor
+    // Next layer: each cable layer adds one cable diameter (× packing) to the radius,
+    // so the diameter grows by 2 × cable_dia × packing per layer.
     layer_no++;
-    layer_dia_in += cable_dia_in * packing_factor;
+    layer_dia_in += 2 * cable_dia_in * packing_factor;
   }
 
   const total_layers = rows.length ? rows[rows.length - 1].layer_no : 0;

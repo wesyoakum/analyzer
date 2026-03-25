@@ -172,7 +172,7 @@ export function renderDrumVisualization(rows, summary, cfg, meta) {
 
   const layersForViz = uniqueLayers.map(layer => {
     const zeroBased = Math.max(0, layer.layer_no - 1);
-    const centerRadiusIn = baseRadiusIn + zeroBased * cable_dia_in * packingFactor / 2;
+    const centerRadiusIn = baseRadiusIn + zeroBased * cable_dia_in * packingFactor;
     return {
       layer_no: layer.layer_no,
       center_radius_in: centerRadiusIn,
