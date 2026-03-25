@@ -377,6 +377,12 @@ export function renderDrumVisualization(rows, summary, cfg, meta) {
   const wrapsPerLayer = meta && Number.isFinite(meta.wraps_per_layer_used)
     ? ` (≈${fmt(meta.wraps_per_layer_used, 1)} wraps per layer)`
     : '';
+  const flangeRadius = (Number.isFinite(flange_dia_in) ? flange_dia_in : 0) / 2;
+  const outerLayerRadius = (Number.isFinite(full_drum_dia_in) ? full_drum_dia_in : 0) / 2;
+  const cableRadius = cable_dia_in / 2;
+  const freeFlange_in = flangeRadius - outerLayerRadius - cableRadius;
+  const freeFlangeText = Number.isFinite(freeFlange_in) ? `Free flange: ${fmt(freeFlange_in, 2)} in` : '';
+
   const geometryParts = [
     `core Ø ${fmt(core_dia_in, 2)} in`,
     `flange-to-flange ${fmt(flange_to_flange_in, 2)} in`,
@@ -384,6 +390,7 @@ export function renderDrumVisualization(rows, summary, cfg, meta) {
     `Lebus liner ${fmt(lebus_thk_in, 3)} in`,
     `full drum Ø ${fmt(full_drum_dia_in, 2)} in`
   ];
+  if (freeFlangeText) geometryParts.push(freeFlangeText);
   const geometryLine = `Drum geometry: ${geometryParts.join(', ')}.`;
   const summaryPlain = `${summaryLine}${wrapsPerLayer}. ${geometryLine}`;
 
