@@ -2081,19 +2081,27 @@ function clearMinimumSystemHp() {
 
 /**
  * Sync payload totals from component weights (same pattern as GR2 teeth).
- * If any component weights are entered for a group, sum → set total.
- * Otherwise the total is direct input.
+ * If all three component weights are entered for a group, sum → set total.
+ * Otherwise the total is direct input. Reverts to previous value when
+ * components are removed.
  */
+/** @type {{ air: string, water: string }} */
+const _payloadStash = { air: '', water: '' };
+let _payloadCalcAir = false;
+let _payloadCalcWater = false;
+
 function syncPayloadBreakdown() {
   const airEl = /** @type {HTMLInputElement|null} */ (document.getElementById('payload_air_kg'));
   const waterEl = /** @type {HTMLInputElement|null} */ (document.getElementById('payload_kg'));
+  const airNoteEl = document.getElementById('payload_air_calc_note');
+  const waterNoteEl = document.getElementById('payload_water_calc_note');
 
   // Returns sum only if ALL fields have values (blank ≠ zero; 0 is a valid entry)
   const sumIfAllFilled = (ids) => {
     let total = 0;
     for (const id of ids) {
       const el = /** @type {HTMLInputElement|null} */ (document.getElementById(id));
-      if (!el || el.value.trim() === '') return null; // any blank → direct input
+      if (!el || el.value.trim() === '') return null;
       const v = parseFloat(el.value);
       if (!Number.isFinite(v)) return null;
       total += v;
@@ -2104,8 +2112,33 @@ function syncPayloadBreakdown() {
   const sumAir = sumIfAllFilled(['tms_air_kg', 'vehicle_air_kg', 'additional_air_kg']);
   const sumWater = sumIfAllFilled(['tms_water_kg', 'vehicle_water_kg', 'additional_water_kg']);
 
-  if (sumAir !== null && airEl) airEl.value = String(sumAir);
-  if (sumWater !== null && waterEl) waterEl.value = String(sumWater);
+  // --- Air ---
+  if (sumAir !== null && airEl) {
+    if (!_payloadCalcAir) _payloadStash.air = airEl.value; // stash before overwriting
+    airEl.value = String(sumAir);
+    _payloadCalcAir = true;
+    if (airNoteEl) airNoteEl.textContent = 'Calculated from component weights';
+  } else if (_payloadCalcAir && airEl) {
+    airEl.value = _payloadStash.air; // restore previous
+    _payloadCalcAir = false;
+    if (airNoteEl) airNoteEl.textContent = '';
+  } else {
+    if (airNoteEl) airNoteEl.textContent = '';
+  }
+
+  // --- Water ---
+  if (sumWater !== null && waterEl) {
+    if (!_payloadCalcWater) _payloadStash.water = waterEl.value;
+    waterEl.value = String(sumWater);
+    _payloadCalcWater = true;
+    if (waterNoteEl) waterNoteEl.textContent = 'Calculated from component weights';
+  } else if (_payloadCalcWater && waterEl) {
+    waterEl.value = _payloadStash.water;
+    _payloadCalcWater = false;
+    if (waterNoteEl) waterNoteEl.textContent = '';
+  } else {
+    if (waterNoteEl) waterNoteEl.textContent = '';
+  }
 }
 
 /**
