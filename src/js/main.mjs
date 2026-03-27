@@ -2080,64 +2080,30 @@ function clearMinimumSystemHp() {
 }
 
 /**
- * Sync payload breakdown fields with payload totals.
- * Each total (air / water) is handled independently, same pattern as GR2 teeth:
- * - If any component weights are entered for that group, sum them and dim the total.
- * - Otherwise the total is a direct input.
+ * Sync payload totals from component weights (same pattern as GR2 teeth).
+ * If any component weights are entered for a group, sum → set total.
+ * Otherwise the total is direct input.
  */
 function syncPayloadBreakdown() {
   const airEl = /** @type {HTMLInputElement|null} */ (document.getElementById('payload_air_kg'));
   const waterEl = /** @type {HTMLInputElement|null} */ (document.getElementById('payload_kg'));
-  const noteEl = document.getElementById('payload_mode_note');
 
-  const componentAirIds = ['tms_air_kg', 'vehicle_air_kg', 'additional_air_kg'];
-  const componentWaterIds = ['tms_water_kg', 'vehicle_water_kg', 'additional_water_kg'];
-
-  const readVal = (id) => {
-    const el = /** @type {HTMLInputElement|null} */ (document.getElementById(id));
-    if (!el || el.value.trim() === '') return NaN;
-    return parseFloat(el.value);
+  const sum = (ids) => {
+    let total = 0, any = false;
+    for (const id of ids) {
+      const el = /** @type {HTMLInputElement|null} */ (document.getElementById(id));
+      if (!el || el.value.trim() === '') continue;
+      const v = parseFloat(el.value);
+      if (Number.isFinite(v)) { total += v; any = true; }
+    }
+    return any ? total : null;
   };
 
-  // --- Payload in Air ---
-  const airComponentVals = componentAirIds.map(readVal);
-  const hasAirComponents = airComponentVals.some(v => Number.isFinite(v));
+  const sumAir = sum(['tms_air_kg', 'vehicle_air_kg', 'additional_air_kg']);
+  const sumWater = sum(['tms_water_kg', 'vehicle_water_kg', 'additional_water_kg']);
 
-  if (hasAirComponents) {
-    const sumAir = airComponentVals.reduce((s, v) => s + (Number.isFinite(v) ? v : 0), 0);
-    if (airEl) {
-      airEl.value = sumAir > 0 ? String(sumAir) : '';
-      airEl.classList.add('payload-dimmed');
-    }
-  } else {
-    if (airEl) airEl.classList.remove('payload-dimmed');
-  }
-
-  // --- Payload in Water ---
-  const waterComponentVals = componentWaterIds.map(readVal);
-  const hasWaterComponents = waterComponentVals.some(v => Number.isFinite(v));
-
-  if (hasWaterComponents) {
-    const sumWater = waterComponentVals.reduce((s, v) => s + (Number.isFinite(v) ? v : 0), 0);
-    if (waterEl) {
-      waterEl.value = sumWater > 0 ? String(sumWater) : '';
-      waterEl.classList.add('payload-dimmed');
-    }
-  } else {
-    if (waterEl) waterEl.classList.remove('payload-dimmed');
-  }
-
-  // Note text
-  if (noteEl) {
-    if (hasAirComponents || hasWaterComponents) {
-      const parts = [];
-      if (hasAirComponents) parts.push('air');
-      if (hasWaterComponents) parts.push('water');
-      noteEl.textContent = `Payload ${parts.join(' & ')} calculated from component weights.`;
-    } else {
-      noteEl.textContent = '';
-    }
-  }
+  if (sumAir !== null && airEl) airEl.value = String(sumAir);
+  if (sumWater !== null && waterEl) waterEl.value = String(sumWater);
 }
 
 /**
