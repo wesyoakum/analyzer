@@ -2081,8 +2081,9 @@ function clearMinimumSystemHp() {
 
 /**
  * Sync payload breakdown fields with payload totals.
- * - If Payload in Air / Payload in Water have direct values, use those (dim components).
- * - If blank, calculate from TMS + Vehicle + Additional sums (dim totals).
+ * Each total (air / water) is handled independently, same pattern as GR2 teeth:
+ * - If any component weights are entered for that group, sum them and dim the total.
+ * - Otherwise the total is a direct input.
  */
 function syncPayloadBreakdown() {
   const airEl = /** @type {HTMLInputElement|null} */ (document.getElementById('payload_air_kg'));
@@ -2098,47 +2099,44 @@ function syncPayloadBreakdown() {
     return parseFloat(el.value);
   };
 
-  const hasDirectAir = airEl && airEl.value.trim() !== '';
-  const hasDirectWater = waterEl && waterEl.value.trim() !== '';
+  // --- Payload in Air ---
+  const airComponentVals = componentAirIds.map(readVal);
+  const hasAirComponents = airComponentVals.some(v => Number.isFinite(v));
 
-  const componentAirVals = componentAirIds.map(readVal);
-  const componentWaterVals = componentWaterIds.map(readVal);
-  const hasAnyComponent = [...componentAirVals, ...componentWaterVals].some(v => Number.isFinite(v));
-
-  // Determine mode
-  let mode = 'none'; // no data entered
-  if (hasDirectAir || hasDirectWater) {
-    mode = 'direct';
-  } else if (hasAnyComponent) {
-    mode = 'component';
+  if (hasAirComponents) {
+    const sumAir = airComponentVals.reduce((s, v) => s + (Number.isFinite(v) ? v : 0), 0);
+    if (airEl) {
+      airEl.value = sumAir > 0 ? String(sumAir) : '';
+      airEl.classList.add('payload-dimmed');
+    }
+  } else {
+    if (airEl) airEl.classList.remove('payload-dimmed');
   }
 
-  const allBreakdownRows = document.querySelectorAll('.payload-breakdown-row');
-  const totalFields = [airEl, waterEl].filter(Boolean);
-  const componentInputs = [...componentAirIds, ...componentWaterIds]
-    .map(id => document.getElementById(id))
-    .filter(Boolean);
+  // --- Payload in Water ---
+  const waterComponentVals = componentWaterIds.map(readVal);
+  const hasWaterComponents = waterComponentVals.some(v => Number.isFinite(v));
 
-  if (mode === 'direct') {
-    // Dim component fields
-    componentInputs.forEach(el => el.classList.add('payload-dimmed'));
-    totalFields.forEach(el => el.classList.remove('payload-dimmed'));
-    if (noteEl) noteEl.textContent = 'Using direct payload input.';
-  } else if (mode === 'component') {
-    // Calculate sums and set totals
-    const sumAir = componentAirVals.reduce((s, v) => s + (Number.isFinite(v) ? v : 0), 0);
-    const sumWater = componentWaterVals.reduce((s, v) => s + (Number.isFinite(v) ? v : 0), 0);
-    if (airEl) airEl.value = sumAir > 0 ? String(sumAir) : '';
-    if (waterEl) waterEl.value = sumWater > 0 ? String(sumWater) : '';
-    // Dim total fields
-    totalFields.forEach(el => el.classList.add('payload-dimmed'));
-    componentInputs.forEach(el => el.classList.remove('payload-dimmed'));
-    if (noteEl) noteEl.textContent = 'Payload calculated from component weights.';
+  if (hasWaterComponents) {
+    const sumWater = waterComponentVals.reduce((s, v) => s + (Number.isFinite(v) ? v : 0), 0);
+    if (waterEl) {
+      waterEl.value = sumWater > 0 ? String(sumWater) : '';
+      waterEl.classList.add('payload-dimmed');
+    }
   } else {
-    // No data — clear dimming
-    componentInputs.forEach(el => el.classList.remove('payload-dimmed'));
-    totalFields.forEach(el => el.classList.remove('payload-dimmed'));
-    if (noteEl) noteEl.textContent = 'T(kgf) = payload + cable weight \u00d7 deployed length (static).';
+    if (waterEl) waterEl.classList.remove('payload-dimmed');
+  }
+
+  // Note text
+  if (noteEl) {
+    if (hasAirComponents || hasWaterComponents) {
+      const parts = [];
+      if (hasAirComponents) parts.push('air');
+      if (hasWaterComponents) parts.push('water');
+      noteEl.textContent = `Payload ${parts.join(' & ')} calculated from component weights.`;
+    } else {
+      noteEl.textContent = '';
+    }
   }
 }
 
