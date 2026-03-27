@@ -2142,6 +2142,33 @@ function syncPayloadBreakdown() {
   }
 }
 
+/**
+ * Sync GR2 from ring/pinion teeth when both are provided.
+ * If both tooth counts are entered, calculate GR2 and set it (dimming the direct input).
+ * Otherwise, use the direct GR2 input.
+ */
+function syncGR2FromTeeth() {
+  const gr2El = /** @type {HTMLInputElement|null} */ (document.getElementById('gr2'));
+  const noteEl = document.getElementById('gr2_calc_note');
+  const ringTeeth = read('ring_teeth');
+  const pinionTeeth = read('pinion_teeth');
+
+  const hasTeeth = Number.isFinite(ringTeeth) && ringTeeth > 0
+                && Number.isFinite(pinionTeeth) && pinionTeeth > 0;
+
+  if (hasTeeth) {
+    const calcGR2 = +(ringTeeth / pinionTeeth).toFixed(4);
+    if (gr2El) {
+      gr2El.value = String(calcGR2);
+      gr2El.classList.add('payload-dimmed');
+    }
+    if (noteEl) noteEl.textContent = `Calculated from ${ringTeeth}/${pinionTeeth} teeth`;
+  } else {
+    if (gr2El) gr2El.classList.remove('payload-dimmed');
+    if (noteEl) noteEl.textContent = '';
+  }
+}
+
 function syncDerivedCableLengths() {
   const deadEndInput = /** @type {HTMLInputElement|null} */ (document.getElementById('dead_m'));
 
@@ -2273,6 +2300,7 @@ function computeAll() {
     updateMinimumSystemHp(rated_speed_mpm, rated_swl_kgf, system_efficiency);
 
     syncPayloadBreakdown();
+    syncGR2FromTeeth();
     const payload_kg = read('payload_kg');
     const payload_air_kg = read('payload_air_kg');
     const cable_w_kgpm = read('c_w_kgpm');

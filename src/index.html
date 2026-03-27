@@ -445,9 +445,23 @@
                   </tr>
                   <tr>
                     <th scope="row">
+                      <label class="param-label" for="ring_teeth" data-code="ring_teeth">Ring Gear Teeth <span class="symbol" aria-hidden="true">Z<sub>r</sub></span></label>
+                    </th>
+                    <td class="value"><input id="ring_teeth" type="number" step="1" placeholder="enter"></td>
+                    <td class="units">–</td>
+                  </tr>
+                  <tr>
+                    <th scope="row">
+                      <label class="param-label" for="pinion_teeth" data-code="pinion_teeth">Pinion Teeth <span class="symbol" aria-hidden="true">Z<sub>p</sub></span></label>
+                    </th>
+                    <td class="value"><input id="pinion_teeth" type="number" step="1" placeholder="enter"></td>
+                    <td class="units">–</td>
+                  </tr>
+                  <tr>
+                    <th scope="row">
                       <label class="param-label" for="gr2" data-code="gr2">Gear Ratio 2 <span class="symbol" aria-hidden="true" data-latex="G_{2}">G<sub>2</sub></span></label>
                     </th>
-                    <td class="value"><input id="gr2" type="number" step="1" value="5"><div id="gr2_range_msg" class="gear-range-message" aria-live="polite"></div></td>
+                    <td class="value"><input id="gr2" type="number" step="0.001" value="5"><div id="gr2_calc_note" class="gear-range-message" aria-live="polite"></div><div id="gr2_range_msg" class="gear-range-message" aria-live="polite"></div></td>
                     <td class="units">–</td>
                   </tr>
                   <tr class="note">

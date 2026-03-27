@@ -850,6 +850,8 @@ export const FIELD_MAPS = {
   }),
   gearbox: /** @type {SelectConfig['fieldMap']} */ ({
     gr1: 'gear_ratio_stage1',
+    ring_teeth: 'ring_teeth',
+    pinion_teeth: 'pinion_teeth',
     gr2: 'gear_ratio_stage2',
     gearbox_max_torque_Nm: 'gearbox_max_torque_Nm'
   }),
@@ -901,6 +903,8 @@ export const FIELD_MAPS = {
     hpu_motor_select: 'hpu_motor_select',
     gearbox_select: 'gearbox_select',
     gr1: 'gear_ratio_stage1',
+    ring_teeth: 'ring_teeth',
+    pinion_teeth: 'pinion_teeth',
     gr2: 'gear_ratio_stage2',
     gearbox_max_torque_Nm: 'gearbox_max_torque_Nm',
     electric_motor_select: 'electric_motor_select',
