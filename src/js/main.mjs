@@ -2088,19 +2088,21 @@ function syncPayloadBreakdown() {
   const airEl = /** @type {HTMLInputElement|null} */ (document.getElementById('payload_air_kg'));
   const waterEl = /** @type {HTMLInputElement|null} */ (document.getElementById('payload_kg'));
 
-  const sum = (ids) => {
-    let total = 0, any = false;
+  // Returns sum only if ALL fields have values (blank ≠ zero; 0 is a valid entry)
+  const sumIfAllFilled = (ids) => {
+    let total = 0;
     for (const id of ids) {
       const el = /** @type {HTMLInputElement|null} */ (document.getElementById(id));
-      if (!el || el.value.trim() === '') continue;
+      if (!el || el.value.trim() === '') return null; // any blank → direct input
       const v = parseFloat(el.value);
-      if (Number.isFinite(v)) { total += v; any = true; }
+      if (!Number.isFinite(v)) return null;
+      total += v;
     }
-    return any ? total : null;
+    return total;
   };
 
-  const sumAir = sum(['tms_air_kg', 'vehicle_air_kg', 'additional_air_kg']);
-  const sumWater = sum(['tms_water_kg', 'vehicle_water_kg', 'additional_water_kg']);
+  const sumAir = sumIfAllFilled(['tms_air_kg', 'vehicle_air_kg', 'additional_air_kg']);
+  const sumWater = sumIfAllFilled(['tms_water_kg', 'vehicle_water_kg', 'additional_water_kg']);
 
   if (sumAir !== null && airEl) airEl.value = String(sumAir);
   if (sumWater !== null && waterEl) waterEl.value = String(sumWater);
