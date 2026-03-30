@@ -25,6 +25,7 @@ import { renderDrumVisualization, clearDrumVisualization } from './drum-visual.m
 import { renderLatexFragments } from './katex-renderer.mjs';
 import { buildComputationModel } from './analysis-data.mjs';
 import { renderReport } from './report-renderer.mjs';
+import { initUnitSelectors, syncPrevUnits, updateOutputHeaders, fromInternal, fromInternalForGroup, getGroupLabel } from './units.mjs';
 
 // ---- App state for plots/tables ----
 let lastElLayer = [], lastElWraps = [];
@@ -55,16 +56,19 @@ function updateTorqueCheckMessages(gearboxFailed, motorFailed, maxGearboxTorqueS
     motorMsgEl.textContent = motorFailed ? 'Motor torque check failed.' : '';
   }
   const atLabel = condition ? ` at ${condition}` : '';
+  const torqueUnit = getGroupLabel('torque_Nm');
   if (gearboxSeenEl) {
     if (Number.isFinite(maxGearboxTorqueSeen) && maxGearboxTorqueSeen > 0) {
-      gearboxSeenEl.textContent = `Max torque seen: ${maxGearboxTorqueSeen.toFixed(1)} N\u00b7m${atLabel}`;
+      const display = fromInternalForGroup('torque_Nm', maxGearboxTorqueSeen);
+      gearboxSeenEl.textContent = `Max torque seen: ${display.toFixed(1)} ${torqueUnit}${atLabel}`;
     } else {
       gearboxSeenEl.textContent = '';
     }
   }
   if (motorSeenEl) {
     if (Number.isFinite(maxMotorTorqueSeen) && maxMotorTorqueSeen > 0) {
-      motorSeenEl.textContent = `Max torque seen: ${maxMotorTorqueSeen.toFixed(1)} N\u00b7m${atLabel}`;
+      const display = fromInternalForGroup('torque_Nm', maxMotorTorqueSeen);
+      motorSeenEl.textContent = `Max torque seen: ${display.toFixed(1)} ${torqueUnit}${atLabel}`;
     } else {
       motorSeenEl.textContent = '';
     }
@@ -360,14 +364,18 @@ function buildDepthProfileContext({
 
 function formatPayloadLabel(payloadKg) {
   if (!Number.isFinite(payloadKg)) return '';
-  const rounded = Math.round(payloadKg);
-  return `Payload ${rounded.toLocaleString(undefined, { maximumFractionDigits: 0 })} kg`;
+  const display = fromInternalForGroup('mass_kg', payloadKg);
+  const rounded = Math.round(display);
+  const unit = getGroupLabel('mass_kg');
+  return `Payload ${rounded.toLocaleString(undefined, { maximumFractionDigits: 0 })} ${unit}`;
 }
 
 function formatPayloadInlineLabel(payloadKg) {
   if (!Number.isFinite(payloadKg)) return '';
-  const rounded = Math.round(payloadKg);
-  return `${rounded.toLocaleString(undefined, { maximumFractionDigits: 0 })} kg`;
+  const display = fromInternalForGroup('mass_kg', payloadKg);
+  const rounded = Math.round(display);
+  const unit = getGroupLabel('mass_kg');
+  return `${rounded.toLocaleString(undefined, { maximumFractionDigits: 0 })} ${unit}`;
 }
 
 function computeDepthSpeedSegmentsForPayload(payloadKg, context, options = {}) {
@@ -1019,6 +1027,7 @@ async function setupProjectManager() {
     }
 
     applyProjectState(project.state);
+    syncPrevUnits();
     nameInput.value = project.name || '';
     computeAll();
     setStatus('Project loaded.');
@@ -1042,6 +1051,7 @@ async function setupProjectManager() {
       }
 
       applyProjectState(imported.state);
+      syncPrevUnits();
       computeAll();
       nameInput.value = imported.name;
 
@@ -1114,7 +1124,13 @@ async function setupProjectManager() {
 
 // ---- Wire up events once DOM is ready ----
 document.addEventListener('DOMContentLoaded', () => {
+  // Create unit selector dropdowns before persistence restores values
+  initUnitSelectors(() => computeAll());
+
   setupInputPersistence();
+
+  // After persistence restores unit selector values, sync prevUnit tracking
+  syncPrevUnits();
 
   setupComponentSelectors();
 
@@ -2071,7 +2087,8 @@ function updateMinimumSystemHp(ratedSpeedMpm, ratedSwlKgf, efficiency) {
   const hp_with_eff = base_hp / eff;
   const min_hp = hp_with_eff * 1.2;
 
-  output.textContent = Number.isFinite(min_hp) ? min_hp.toFixed(1) : '–';
+  const displayHp = fromInternal('system_min_hp', min_hp);
+  output.textContent = Number.isFinite(displayHp) ? displayHp.toFixed(1) : '–';
 }
 
 function clearMinimumSystemHp() {
@@ -2178,7 +2195,9 @@ function syncDerivedCableLengths() {
     : NaN;
 
   if (deadEndInput) {
-    deadEndInput.value = Number.isFinite(deadEndLength) ? String(deadEndLength) : '';
+    // Convert internal (m) back to display units for the dead_m field
+    const displayDeadEnd = fromInternal('dead_m', deadEndLength);
+    deadEndInput.value = Number.isFinite(displayDeadEnd) ? String(+displayDeadEnd.toFixed(3)) : '';
   }
 
   return {
@@ -2203,7 +2222,8 @@ function updateStrengthOnlyMaxLength(payloadKgf, cableWeightKgfPerM, mblKgf, saf
   const allowableTensionKgf = mblKgf / safetyFactor;
   const maxLengthM = (allowableTensionKgf - payloadKgf) / cableWeightKgfPerM;
   const boundedLengthM = Math.max(0, maxLengthM);
-  output.textContent = Number.isFinite(boundedLengthM) ? boundedLengthM.toFixed(1) : '–';
+  const displayLen = fromInternal('max_length_strength_m', boundedLengthM);
+  output.textContent = Number.isFinite(displayLen) ? displayLen.toFixed(1) : '–';
 }
 
 function setupDriveModeControls() {
@@ -2430,6 +2450,7 @@ function computeAll() {
     updateExecutiveSummary(model, torqueChecks);
     renderReport(document.getElementById('report-root'), { ...model, inputState: collectInputState() });
     renderLatexFragments(document.body);
+    updateOutputHeaders();
     updateCsvButtonStates();
     redrawPlots();
   } catch (e) {

@@ -1,5 +1,7 @@
 // ===== utils.mjs — shared constants, unit helpers, math, and SVG helpers =====
 
+import { toInternal } from './units.mjs';
+
 // ---- Constants (SI-centric where possible) ----
 export const IN_PER_MM = 1 / 25.4;
 export const M_PER_IN  = 0.0254;
@@ -15,7 +17,12 @@ export const constants = {
 
 // ---- DOM helpers (kept tiny; only used by main & plot modules) ----
 export const q = (id) => /** @type {HTMLElement} */ (document.getElementById(id));
-export const read = (id) => parseFloat(q(id).value.replace(',', '.'));
+
+/** Read a numeric input field, converting from display units to internal units */
+export const read = (id) => {
+  const raw = parseFloat(q(id).value.replace(',', '.'));
+  return toInternal(id, raw);
+};
 
 // ---- Numeric helpers ----
 export const truncToHalf = (x) => Math.floor(x * 2) / 2;

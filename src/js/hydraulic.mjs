@@ -10,6 +10,18 @@ import {
   formatSpeed
 } from './table-formatters.mjs';
 import { tension_kgf } from './utils.mjs';
+import { fromInternalForGroup } from './units.mjs';
+
+// Unit conversion helpers for output values
+const cv = (group, v) => fromInternalForGroup(group, v);
+const fmtIn  = (v) => formatInches(cv('length_in', v));
+const fmtM   = (v) => formatMeters(cv('length_m', v));
+const fmtKgf = (v) => formatKgf(cv('force_kgf', v));
+const fmtSpd = (v) => formatSpeed(cv('speed_mpm', v));
+const fmtTrq = (v) => formatInteger(cv('torque_Nm', v));
+const fmtKnm = (v) => formatInteger(cv('torque_Nm', v));
+const fmtPsi = (v) => formatPsi(cv('pressure_psi', v));
+const fmtHp  = (v) => formatHp(cv('power_hp', v));
 
 /**
  * Convert per-wrap rows into per-layer rows for the Hydraulic table.
@@ -137,27 +149,27 @@ export function projectHydraulicWraps(rows) {
  * @param {HTMLElement} tbodyWraps
  */
 export function renderHydraulicTables(hyLayers, hyWraps, tbodyLayer, tbodyWraps) {
-  const formatCableOnDrumRange = (minValue, maxValue) => `${formatMeters(minValue)}-${formatMeters(maxValue)}`;
-  const formatDepthRange = (maxValue, minValue) => `${formatMeters(maxValue)}-${formatMeters(minValue)}`;
+  const formatCableOnDrumRange = (minValue, maxValue) => `${fmtM(minValue)}-${fmtM(maxValue)}`;
+  const formatDepthRange = (maxValue, minValue) => `${fmtM(maxValue)}-${fmtM(minValue)}`;
   // Layer table
   tbodyLayer.innerHTML = '';
   for (const r of hyLayers) {
     const tr = document.createElement('tr');
     const cells = [
       formatInteger(r.layer_no),
-      formatInches(r.layer_dia_in),
+      fmtIn(r.layer_dia_in),
       formatCableOnDrumRange(r.pre_on_drum_m, r.post_on_drum_m),
       formatDepthRange(r.pre_deployed_m, r.post_deployed_m),
-      formatPsi(r.hyd_P_required_psi ?? ''),
-      formatSpeed(r.hyd_speed_power_mpm ?? ''),
-      formatSpeed(r.hyd_speed_flow_mpm ?? ''),
-      formatSpeed(r.hyd_speed_available_mpm ?? ''),
-      formatHp(r.hyd_hp_req ?? ''),
-      formatHp(r.hyd_hp_sys ?? ''),
-      formatInteger(r.hyd_tau_avail_kNm),
-      formatInteger(r.max_gearbox_torque_Nm),
-      `${formatKgf(r.hyd_tension_required_start_kgf)}-${formatKgf(r.hyd_tension_required_end_kgf)}`,
-      formatKgf(r.hyd_avail_tension_kgf)
+      fmtPsi(r.hyd_P_required_psi ?? ''),
+      fmtSpd(r.hyd_speed_power_mpm ?? ''),
+      fmtSpd(r.hyd_speed_flow_mpm ?? ''),
+      fmtSpd(r.hyd_speed_available_mpm ?? ''),
+      fmtHp(r.hyd_hp_req ?? ''),
+      fmtHp(r.hyd_hp_sys ?? ''),
+      fmtKnm(r.hyd_tau_avail_kNm),
+      fmtTrq(r.max_gearbox_torque_Nm),
+      `${fmtKgf(r.hyd_tension_required_start_kgf)}-${fmtKgf(r.hyd_tension_required_end_kgf)}`,
+      fmtKgf(r.hyd_avail_tension_kgf)
     ];
     tr.innerHTML = cells.map(v => `<td>${v}</td>`).join('');
     tbodyLayer.appendChild(tr);
@@ -170,21 +182,21 @@ export function renderHydraulicTables(hyLayers, hyWraps, tbodyLayer, tbodyWraps)
     const cells = [
       formatInteger(r.wrap_no),
       formatInteger(r.layer_no),
-      formatInches(r.layer_dia_in),
-      formatInches(r.wrap_len_in),
-      formatMeters(r.pre_spooled_len_m),
-      formatMeters(r.spooled_len_m),
-      formatMeters(r.deployed_len_m),
-      formatKgf(r.tension_required_kgf ?? ''),
-      formatPsi(r.hyd_P_required_psi),
-      formatSpeed(r.hyd_speed_power_mpm),
-      formatSpeed(r.hyd_speed_flow_mpm),
-      formatSpeed(r.hyd_speed_available_mpm),
-      formatHp(r.hyd_hp_req),
-      formatHp(r.hyd_hp_sys),
-      formatInteger(r.hyd_tau_avail_kNm),
-      formatInteger(r.gearbox_torque_Nm),
-      formatKgf(r.hyd_avail_tension_kgf)
+      fmtIn(r.layer_dia_in),
+      fmtIn(r.wrap_len_in),
+      fmtM(r.pre_spooled_len_m),
+      fmtM(r.spooled_len_m),
+      fmtM(r.deployed_len_m),
+      fmtKgf(r.tension_required_kgf ?? ''),
+      fmtPsi(r.hyd_P_required_psi),
+      fmtSpd(r.hyd_speed_power_mpm),
+      fmtSpd(r.hyd_speed_flow_mpm),
+      fmtSpd(r.hyd_speed_available_mpm),
+      fmtHp(r.hyd_hp_req),
+      fmtHp(r.hyd_hp_sys),
+      fmtKnm(r.hyd_tau_avail_kNm),
+      fmtTrq(r.gearbox_torque_Nm),
+      fmtKgf(r.hyd_avail_tension_kgf)
     ];
     tr.innerHTML = cells.map(v => `<td>${v}</td>`).join('');
     tbodyWraps.appendChild(tr);

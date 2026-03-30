@@ -12,6 +12,17 @@ import {
   formatRpm,
   formatSpeed
 } from './table-formatters.mjs';
+import { fromInternalForGroup, getGroupLabel } from './units.mjs';
+
+// Unit conversion helpers for output values
+const cv = (group, v) => fromInternalForGroup(group, v);
+const fmtIn  = (v) => formatInches(cv('length_in', v));
+const fmtM   = (v) => formatMeters(cv('length_m', v));
+const fmtKgf = (v) => formatKgf(cv('force_kgf', v));
+const fmtSpd = (v) => formatSpeed(cv('speed_mpm', v));
+const fmtTrq = (v) => formatMotorTorque(cv('torque_Nm', v));
+// kN·m column: same conversion factor, applied to value already /1000
+const fmtKnm = (v) => formatInteger(cv('torque_Nm', v));
 
 /**
  * Convert per-wrap rows into per-layer rows for the Electric table.
@@ -154,10 +165,10 @@ export function renderElectricTables(
 ) {
   const hasGearboxMax = Number.isFinite(gearboxMaxTorqueNm) && gearboxMaxTorqueNm > 0;
   const hasMotorMax = Number.isFinite(motorTmaxNm) && motorTmaxNm > 0;
-  const formatCableOnDrumRange = (minValue, maxValue) => `${formatMeters(minValue)}-${formatMeters(maxValue)}`;
-  const formatDepthRange = (maxValue, minValue) => `${formatMeters(maxValue)}-${formatMeters(minValue)}`;
+  const formatCableOnDrumRange = (minValue, maxValue) => `${fmtM(minValue)}-${fmtM(maxValue)}`;
+  const formatDepthRange = (maxValue, minValue) => `${fmtM(maxValue)}-${fmtM(minValue)}`;
   const torqueCell = (value) => {
-    const text = formatMotorTorque(value);
+    const text = fmtTrq(value);
     const exceeds = hasGearboxMax && Number.isFinite(value) && value > gearboxMaxTorqueNm;
     const attrs = exceeds ? ' class="is-exceeded" title="Exceeds gearbox max torque"' : '';
     return `<td${attrs}>${text}</td>`;
@@ -169,13 +180,13 @@ export function renderElectricTables(
     const tr = document.createElement('tr');
     const cells = [
       `<td>${formatInteger(r.layer_no)}</td>`,
-      `<td>${formatInches(r.layer_dia_in)}</td>`,
+      `<td>${fmtIn(r.layer_dia_in)}</td>`,
       `<td>${formatCableOnDrumRange(r.pre_on_drum_m, r.post_on_drum_m)}</td>`,
       `<td>${formatDepthRange(r.pre_deployed_m, r.post_deployed_m)}</td>`,
       torqueCell(r.max_gearbox_torque_Nm),
-      `<td>${formatSpeed(r.line_speed_at_start_mpm ?? '')}</td>`,
-      `<td>${formatKgf(r.tension_required_start_kgf)}-${formatKgf(r.tension_required_end_kgf)}</td>`,
-      `<td>${formatKgf(r.avail_tension_kgf)}</td>`
+      `<td>${fmtSpd(r.line_speed_at_start_mpm ?? '')}</td>`,
+      `<td>${fmtKgf(r.tension_required_start_kgf)}-${fmtKgf(r.tension_required_end_kgf)}</td>`,
+      `<td>${fmtKgf(r.avail_tension_kgf)}</td>`
     ];
     tr.innerHTML = cells.join('');
     tbodyLayer.appendChild(tr);
@@ -188,18 +199,18 @@ export function renderElectricTables(
     const cells = [
       `<td>${formatInteger(r.wrap_no)}</td>`,
       `<td>${formatInteger(r.layer_no)}</td>`,
-      `<td>${formatInches(r.layer_dia_in)}</td>`,
-      `<td>${formatInches(r.wrap_len_in)}</td>`,
-      `<td>${formatMeters(r.pre_spooled_len_m)}</td>`,
-      `<td>${formatMeters(r.spooled_len_m)}</td>`,
-      `<td>${formatMeters(r.deployed_len_m)}</td>`,
-      `<td>${formatKgf(r.tension_required_kgf ?? '')}</td>`,
-      `<td>${formatInteger(r.tau_req_drum_kNm)}</td>`,
+      `<td>${fmtIn(r.layer_dia_in)}</td>`,
+      `<td>${fmtIn(r.wrap_len_in)}</td>`,
+      `<td>${fmtM(r.pre_spooled_len_m)}</td>`,
+      `<td>${fmtM(r.spooled_len_m)}</td>`,
+      `<td>${fmtM(r.deployed_len_m)}</td>`,
+      `<td>${fmtKgf(r.tension_required_kgf ?? '')}</td>`,
+      `<td>${fmtKnm(r.tau_req_drum_kNm)}</td>`,
       torqueCell(r.gearbox_torque_Nm),
-      `<td>${formatMotorTorque(r.motor_torque_Nm)}</td>`,
+      `<td>${fmtTrq(r.motor_torque_Nm)}</td>`,
       `<td>${formatRpm(r.motor_rpm)}</td>`,
-      `<td>${formatSpeed(r.line_speed_mpm)}</td>`,
-      `<td>${formatKgf(r.avail_tension_kgf)}</td>`
+      `<td>${fmtSpd(r.line_speed_mpm)}</td>`,
+      `<td>${fmtKgf(r.avail_tension_kgf)}</td>`
     ];
     tr.innerHTML = cells.join('');
     tbodyWraps.appendChild(tr);
@@ -238,16 +249,16 @@ export function renderElectricTables(
     : '–';
 
   if (summaryEl) {
-
+    const tU = getGroupLabel('torque_Nm');
     summaryEl.innerHTML = [
-      `<strong>τ<sub>max,drum</sub></strong>: ${formatMotorTorque(tauMaxDrumNm)} N·m`,
+      `<strong>τ<sub>max,drum</sub></strong>: ${fmtTrq(tauMaxDrumNm)} ${tU}`,
       '',
-      `<strong>τ<sub>max,gb</sub></strong>: ${formatMotorTorque(tauMaxGbNm)} N·m`,
-      `<strong>τ<sub>gb,rated</sub></strong>: ${hasGearboxMax ? `${formatMotorTorque(gearboxMaxTorqueNm)} N·m` : '–'}`,
+      `<strong>τ<sub>max,gb</sub></strong>: ${fmtTrq(tauMaxGbNm)} ${tU}`,
+      `<strong>τ<sub>gb,rated</sub></strong>: ${hasGearboxMax ? `${fmtTrq(gearboxMaxTorqueNm)} ${tU}` : '–'}`,
       `<strong>Check</strong>: ${gearboxCheckText}`,
       '',
-      `<strong>τ<sub>max,m</sub></strong>: ${formatMotorTorque(tauMaxMtrNm)} N·m`,
-      `<strong>τ<sub>m,rated</sub></strong>: ${hasMotorMax ? `${formatMotorTorque(motorTmaxNm)} N·m` : '–'}`,
+      `<strong>τ<sub>max,m</sub></strong>: ${fmtTrq(tauMaxMtrNm)} ${tU}`,
+      `<strong>τ<sub>m,rated</sub></strong>: ${hasMotorMax ? `${fmtTrq(motorTmaxNm)} ${tU}` : '–'}`,
       `<strong>Check</strong>: ${motorCheckText}`
     ].join('<br>');
   }

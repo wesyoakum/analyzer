@@ -809,6 +809,28 @@ button:focus {
   font-weight: 500;
 }
 
+.unit-select {
+  font-size: 0.82rem;
+  font-weight: 500;
+  padding: 1px 4px;
+  border: 1px solid var(--paper-line-soft);
+  border-radius: 3px;
+  background: var(--paper);
+  color: var(--accent);
+  cursor: pointer;
+  max-width: 100%;
+  text-align: center;
+  appearance: none;
+  -webkit-appearance: none;
+}
+.unit-select:hover {
+  border-color: var(--accent);
+}
+.unit-select:focus {
+  outline: 2px solid var(--accent);
+  outline-offset: 1px;
+}
+
 .worksheet td.value {
   width: 240px;
 }

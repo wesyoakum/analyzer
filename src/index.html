@@ -147,7 +147,7 @@
                 <tr data-summary-hide style="display:none;">
                   <th scope="row">Minimum System Horsepower</th>
                   <td class="value"><span id="system_min_hp" class="output-field">–</span></td>
-                  <td class="units">hp</td>
+                  <td class="units" data-unit-group="power_hp"><span class="th-unit">hp</span></td>
                 </tr>
               </tbody>
             </table>
@@ -229,7 +229,7 @@
                   <tr data-summary-hide>
                     <th scope="row">Strength-Only Max Length</th>
                     <td class="value"><span id="max_length_strength_m" class="output-field">–</span></td>
-                    <td class="units">m</td>
+                    <td class="units" data-unit-group="length_m"><span class="th-unit">m</span></td>
                   </tr>
                 </tbody>
               </table>
@@ -986,22 +986,22 @@
           <thead>
             <tr>
               <th title="layer_no">L#<br>(–)</th>
-              <th title="layer_dia_in">
-                <span data-latex="D_{layer}">D<sub>layer</sub></span><br>(in)
+              <th title="layer_dia_in" data-unit-group="length_in">
+                <span data-latex="D_{layer}">D<sub>layer</sub></span><br>(<span class="th-unit">in</span>)
               </th>
-              <th title="on_drum_range_m">Cable On Drum<br>(m)</th>
-              <th title="depth_range_m">Depth<br>(m)</th>
-              <th title="max_gearbox_torque_Nm">
-                <span data-latex="\tau_{g}">τ<sub>g</sub></span><br>(N·m)
+              <th title="on_drum_range_m" data-unit-group="length_m">Cable On Drum<br>(<span class="th-unit">m</span>)</th>
+              <th title="depth_range_m" data-unit-group="length_m">Depth<br>(<span class="th-unit">m</span>)</th>
+              <th title="max_gearbox_torque_Nm" data-unit-group="torque_Nm">
+                <span data-latex="\tau_{g}">τ<sub>g</sub></span><br>(<span class="th-unit">N·m</span>)
               </th>
-              <th title="line_speed_at_start_mpm">
-                <span data-latex="v_{\mathrm{line}}">v<sub>line</sub></span><br>(m/min)
+              <th title="line_speed_at_start_mpm" data-unit-group="speed_mpm">
+                <span data-latex="v_{\mathrm{line}}">v<sub>line</sub></span><br>(<span class="th-unit">m/min</span>)
               </th>
-              <th title="tension_required_start_kgf">
-                <span data-latex="T_{req}">T<sub>req</sub></span><br>(kgf)
+              <th title="tension_required_start_kgf" data-unit-group="force_kgf">
+                <span data-latex="T_{req}">T<sub>req</sub></span><br>(<span class="th-unit">kgf</span>)
               </th>
-              <th title="avail_tension_kgf">
-                <span data-latex="T_{avail}">T<sub>avail</sub></span><br>(kgf)
+              <th title="avail_tension_kgf" data-unit-group="force_kgf">
+                <span data-latex="T_{avail}">T<sub>avail</sub></span><br>(<span class="th-unit">kgf</span>)
               </th>
             </tr>
           </thead>
@@ -1028,35 +1028,35 @@
               <tr>
                 <th title="wrap_no">W#<br>(–)</th>
                 <th title="layer_no">L#<br>(–)</th>
-                <th title="layer_dia_in">
-                  <span data-latex="D_{layer}">D<sub>layer</sub></span><br>(in)
+                <th title="layer_dia_in" data-unit-group="length_in">
+                  <span data-latex="D_{layer}">D<sub>layer</sub></span><br>(<span class="th-unit">in</span>)
                 </th>
-                <th title="wrap_len_in">
-                  <span data-latex="L_{wrap}">L<sub>wrap</sub></span><br>(in)
+                <th title="wrap_len_in" data-unit-group="length_in">
+                  <span data-latex="L_{wrap}">L<sub>wrap</sub></span><br>(<span class="th-unit">in</span>)
                 </th>
-                <th title="pre_spooled_len_m">pre_spool<br>(m)</th>
-                <th title="spooled_len_m">on_drum<br>(m)</th>
-                <th title="deployed_len_m">dep<br>(m)</th>
-                <th title="tension_required_kgf">
-                  <span data-latex="T_{req}">T<sub>req</sub></span><br>(kgf)
+                <th title="pre_spooled_len_m" data-unit-group="length_m">pre_spool<br>(<span class="th-unit">m</span>)</th>
+                <th title="spooled_len_m" data-unit-group="length_m">on_drum<br>(<span class="th-unit">m</span>)</th>
+                <th title="deployed_len_m" data-unit-group="length_m">dep<br>(<span class="th-unit">m</span>)</th>
+                <th title="tension_required_kgf" data-unit-group="force_kgf">
+                  <span data-latex="T_{req}">T<sub>req</sub></span><br>(<span class="th-unit">kgf</span>)
                 </th>
-                <th title="tau_req_drum_kNm">
-                  <span data-latex="\tau_{req,drum}">τ<sub>req,drum</sub></span><br>(kN·m)
+                <th title="tau_req_drum_kNm" data-unit-group="torque_Nm" data-unit-prefix="k">
+                  <span data-latex="\tau_{req,drum}">τ<sub>req,drum</sub></span><br>(<span class="th-unit">kN·m</span>)
                 </th>
-                <th title="gearbox_torque_Nm">
-                  <span data-latex="\tau_{g}">τ<sub>g</sub></span><br>(N·m)
+                <th title="gearbox_torque_Nm" data-unit-group="torque_Nm">
+                  <span data-latex="\tau_{g}">τ<sub>g</sub></span><br>(<span class="th-unit">N·m</span>)
                 </th>
-                <th title="motor_torque_Nm">
-                  <span data-latex="\tau_{m}">τ<sub>m</sub></span><br>(N·m)
+                <th title="motor_torque_Nm" data-unit-group="torque_Nm">
+                  <span data-latex="\tau_{m}">τ<sub>m</sub></span><br>(<span class="th-unit">N·m</span>)
                 </th>
                 <th title="motor_rpm">
                   <span data-latex="n_{m}">n<sub>m</sub></span><br>(rpm)
                 </th>
-                <th title="line_speed_mpm">
-                  <span data-latex="v">v</span><br>(m/min)
+                <th title="line_speed_mpm" data-unit-group="speed_mpm">
+                  <span data-latex="v">v</span><br>(<span class="th-unit">m/min</span>)
                 </th>
-                <th title="avail_tension_kgf">
-                  <span data-latex="T_{avail}">T<sub>avail</sub></span><br>(kgf)
+                <th title="avail_tension_kgf" data-unit-group="force_kgf">
+                  <span data-latex="T_{avail}">T<sub>avail</sub></span><br>(<span class="th-unit">kgf</span>)
                 </th>
               </tr>
             </thead>
@@ -1074,40 +1074,40 @@
           <thead>
             <tr>
               <th title="layer_no">L#<br>(–)</th>
-              <th title="layer_dia_in">
-                <span data-latex="D_{layer}">D<sub>layer</sub></span><br>(in)
+              <th title="layer_dia_in" data-unit-group="length_in">
+                <span data-latex="D_{layer}">D<sub>layer</sub></span><br>(<span class="th-unit">in</span>)
               </th>
-              <th title="on_drum_range_m">Cable On Drum<br>(m)</th>
-              <th title="depth_range_m">Depth<br>(m)</th>
-              <th title="hyd_P_required_psi">
-                <span data-latex="P_{req}">P<sub>req</sub></span><br>(psi)
+              <th title="on_drum_range_m" data-unit-group="length_m">Cable On Drum<br>(<span class="th-unit">m</span>)</th>
+              <th title="depth_range_m" data-unit-group="length_m">Depth<br>(<span class="th-unit">m</span>)</th>
+              <th title="hyd_P_required_psi" data-unit-group="pressure_psi">
+                <span data-latex="P_{req}">P<sub>req</sub></span><br>(<span class="th-unit">psi</span>)
               </th>
-              <th title="hyd_speed_power_mpm">
-                <span data-latex="v_{P}">v<sub>P</sub></span><br>(m/min)
+              <th title="hyd_speed_power_mpm" data-unit-group="speed_mpm">
+                <span data-latex="v_{P}">v<sub>P</sub></span><br>(<span class="th-unit">m/min</span>)
               </th>
-              <th title="hyd_speed_flow_mpm">
-                <span data-latex="v_{Q}">v<sub>Q</sub></span><br>(m/min)
+              <th title="hyd_speed_flow_mpm" data-unit-group="speed_mpm">
+                <span data-latex="v_{Q}">v<sub>Q</sub></span><br>(<span class="th-unit">m/min</span>)
               </th>
-              <th title="hyd_speed_available_mpm">
-                <span data-latex="v_{avail}">v<sub>avail</sub></span><br>(m/min)
+              <th title="hyd_speed_available_mpm" data-unit-group="speed_mpm">
+                <span data-latex="v_{avail}">v<sub>avail</sub></span><br>(<span class="th-unit">m/min</span>)
               </th>
-              <th title="hyd_hp_req">
-                <span data-latex="hp_{req}">hp<sub>req</sub></span><br>(hp)
+              <th title="hyd_hp_req" data-unit-group="power_hp">
+                <span data-latex="hp_{req}">hp<sub>req</sub></span><br>(<span class="th-unit">hp</span>)
               </th>
-              <th title="hyd_hp_sys">
-                <span data-latex="hp_{sys}">hp<sub>sys</sub></span><br>(hp)
+              <th title="hyd_hp_sys" data-unit-group="power_hp">
+                <span data-latex="hp_{sys}">hp<sub>sys</sub></span><br>(<span class="th-unit">hp</span>)
               </th>
-              <th title="hyd_tau_avail_kNm">
-                <span data-latex="\tau_{avail}">τ<sub>avail</sub></span><br>(kN·m)
+              <th title="hyd_tau_avail_kNm" data-unit-group="torque_Nm" data-unit-prefix="k">
+                <span data-latex="\tau_{avail}">τ<sub>avail</sub></span><br>(<span class="th-unit">kN·m</span>)
               </th>
-              <th title="max_gearbox_torque_Nm">
-                <span data-latex="\tau_{g}">τ<sub>g</sub></span><br>(N·m)
+              <th title="max_gearbox_torque_Nm" data-unit-group="torque_Nm">
+                <span data-latex="\tau_{g}">τ<sub>g</sub></span><br>(<span class="th-unit">N·m</span>)
               </th>
-              <th title="hyd_tension_required_start_kgf">
-                <span data-latex="T_{req}">T<sub>req</sub></span><br>(kgf)
+              <th title="hyd_tension_required_start_kgf" data-unit-group="force_kgf">
+                <span data-latex="T_{req}">T<sub>req</sub></span><br>(<span class="th-unit">kgf</span>)
               </th>
-              <th title="hyd_avail_tension_kgf">
-                <span data-latex="T_{avail}">T<sub>avail</sub></span><br>(kgf)
+              <th title="hyd_avail_tension_kgf" data-unit-group="force_kgf">
+                <span data-latex="T_{avail}">T<sub>avail</sub></span><br>(<span class="th-unit">kgf</span>)
               </th>
             </tr>
           </thead>
@@ -1134,44 +1134,44 @@
               <tr>
                 <th title="wrap_no">W#<br>(–)</th>
                 <th title="layer_no">L#<br>(–)</th>
-                <th title="layer_dia_in">
-                  <span data-latex="D_{layer}">D<sub>layer</sub></span><br>(in)
+                <th title="layer_dia_in" data-unit-group="length_in">
+                  <span data-latex="D_{layer}">D<sub>layer</sub></span><br>(<span class="th-unit">in</span>)
                 </th>
-                <th title="wrap_len_in">
-                  <span data-latex="L_{wrap}">L<sub>wrap</sub></span><br>(in)
+                <th title="wrap_len_in" data-unit-group="length_in">
+                  <span data-latex="L_{wrap}">L<sub>wrap</sub></span><br>(<span class="th-unit">in</span>)
                 </th>
-                <th title="pre_spooled_len_m">pre_spool<br>(m)</th>
-                <th title="spooled_len_m">on_drum<br>(m)</th>
-                <th title="deployed_len_m">dep<br>(m)</th>
-                <th title="tension_required_kgf">
-                  <span data-latex="T_{req}">T<sub>req</sub></span><br>(kgf)
+                <th title="pre_spooled_len_m" data-unit-group="length_m">pre_spool<br>(<span class="th-unit">m</span>)</th>
+                <th title="spooled_len_m" data-unit-group="length_m">on_drum<br>(<span class="th-unit">m</span>)</th>
+                <th title="deployed_len_m" data-unit-group="length_m">dep<br>(<span class="th-unit">m</span>)</th>
+                <th title="tension_required_kgf" data-unit-group="force_kgf">
+                  <span data-latex="T_{req}">T<sub>req</sub></span><br>(<span class="th-unit">kgf</span>)
                 </th>
-                <th title="hyd_P_required_psi">
-                  <span data-latex="P_{req}">P<sub>req</sub></span><br>(psi)
+                <th title="hyd_P_required_psi" data-unit-group="pressure_psi">
+                  <span data-latex="P_{req}">P<sub>req</sub></span><br>(<span class="th-unit">psi</span>)
                 </th>
-                <th title="hyd_speed_power_mpm">
-                  <span data-latex="v_{P}">v<sub>P</sub></span><br>(m/min)
+                <th title="hyd_speed_power_mpm" data-unit-group="speed_mpm">
+                  <span data-latex="v_{P}">v<sub>P</sub></span><br>(<span class="th-unit">m/min</span>)
                 </th>
-                <th title="hyd_speed_flow_mpm">
-                  <span data-latex="v_{Q}">v<sub>Q</sub></span><br>(m/min)
+                <th title="hyd_speed_flow_mpm" data-unit-group="speed_mpm">
+                  <span data-latex="v_{Q}">v<sub>Q</sub></span><br>(<span class="th-unit">m/min</span>)
                 </th>
-                <th title="hyd_speed_available_mpm">
-                  <span data-latex="v_{avail}">v<sub>avail</sub></span><br>(m/min)
+                <th title="hyd_speed_available_mpm" data-unit-group="speed_mpm">
+                  <span data-latex="v_{avail}">v<sub>avail</sub></span><br>(<span class="th-unit">m/min</span>)
                 </th>
-                <th title="hyd_hp_req">
-                  <span data-latex="hp_{req}">hp<sub>req</sub></span><br>(hp)
+                <th title="hyd_hp_req" data-unit-group="power_hp">
+                  <span data-latex="hp_{req}">hp<sub>req</sub></span><br>(<span class="th-unit">hp</span>)
                 </th>
-                <th title="hyd_hp_sys">
-                  <span data-latex="hp_{sys}">hp<sub>sys</sub></span><br>(hp)
+                <th title="hyd_hp_sys" data-unit-group="power_hp">
+                  <span data-latex="hp_{sys}">hp<sub>sys</sub></span><br>(<span class="th-unit">hp</span>)
                 </th>
-                <th title="hyd_tau_avail_kNm">
-                  <span data-latex="\tau_{avail}">τ<sub>avail</sub></span><br>(kN·m)
+                <th title="hyd_tau_avail_kNm" data-unit-group="torque_Nm" data-unit-prefix="k">
+                  <span data-latex="\tau_{avail}">τ<sub>avail</sub></span><br>(<span class="th-unit">kN·m</span>)
                 </th>
-                <th title="gearbox_torque_Nm">
-                  <span data-latex="\tau_{g}">τ<sub>g</sub></span><br>(N·m)
+                <th title="gearbox_torque_Nm" data-unit-group="torque_Nm">
+                  <span data-latex="\tau_{g}">τ<sub>g</sub></span><br>(<span class="th-unit">N·m</span>)
                 </th>
-                <th title="hyd_avail_tension_kgf">
-                  <span data-latex="T_{avail}">T<sub>avail</sub></span><br>(kgf)
+                <th title="hyd_avail_tension_kgf" data-unit-group="force_kgf">
+                  <span data-latex="T_{avail}">T<sub>avail</sub></span><br>(<span class="th-unit">kgf</span>)
                 </th>
               </tr>
             </thead>
