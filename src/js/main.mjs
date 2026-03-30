@@ -1955,8 +1955,15 @@ function buildSummaryTable(tableEl) {
 
       const unitsCell = row.querySelector('td.units');
       if (unitsCell) {
-        const clonedUnits = unitsCell.cloneNode(true);
-        clonedUnits.textContent = normalizeText(unitsCell.textContent);
+        const clonedUnits = document.createElement('td');
+        clonedUnits.className = unitsCell.className;
+        const unitSelect = unitsCell.querySelector('select.unit-select');
+        if (unitSelect) {
+          const selectedOpt = unitSelect.options[unitSelect.selectedIndex];
+          clonedUnits.textContent = selectedOpt ? selectedOpt.textContent : unitSelect.value;
+        } else {
+          clonedUnits.textContent = normalizeText(unitsCell.textContent);
+        }
         summaryRow.appendChild(clonedUnits);
       }
 
