@@ -25,7 +25,7 @@ import { renderDrumVisualization, clearDrumVisualization } from './drum-visual.m
 import { renderLatexFragments } from './katex-renderer.mjs';
 import { buildComputationModel } from './analysis-data.mjs';
 import { renderReport } from './report-renderer.mjs';
-import { initUnitSelectors, syncPrevUnits, updateOutputHeaders, fromInternal, fromInternalForGroup, getGroupLabel } from './units.mjs';
+import { initUnitSelectors, initOutputHeaderSelectors, syncPrevUnits, updateOutputHeaders, fromInternal, fromInternalForGroup, getGroupLabel } from './units.mjs';
 
 // ---- App state for plots/tables ----
 let lastElLayer = [], lastElWraps = [];
@@ -1126,6 +1126,7 @@ async function setupProjectManager() {
 document.addEventListener('DOMContentLoaded', () => {
   // Create unit selector dropdowns before persistence restores values
   initUnitSelectors(() => computeAll());
+  initOutputHeaderSelectors();
 
   setupInputPersistence();
 

@@ -203,16 +203,105 @@ export function getGroupLabel(groupName) {
   return group?.units[unitKey]?.label ?? unitKey ?? '';
 }
 
-// ---- Update output table header unit labels ----
+// ---- Shared sync: switch an entire group to a new unit ----
 
-export function updateOutputHeaders() {
+/** @type {((groupName: string, newUnit: string) => void) | null} */
+let _onGroupChange = null;
+
+function switchGroup(groupName, newUnit, triggerSelect) {
+  const group = UNIT_GROUPS[groupName];
+  if (!group || !group.units[newUnit]) return;
+
+  // Sync all input field selectors in this group
+  for (const [fieldId, gn] of Object.entries(FIELD_UNITS)) {
+    if (gn !== groupName) continue;
+    const sel = document.getElementById(getUnitSelectId(fieldId));
+    if (!sel || sel === triggerSelect) continue;
+    if (sel.value === newUnit) continue;
+
+    const oldUnit = sel.dataset.prevUnit || sel.value;
+    const oldFactor = getFactor(groupName, oldUnit);
+    const newFactor = getFactor(groupName, newUnit);
+
+    sel.value = newUnit;
+    sel.dataset.prevUnit = newUnit;
+    convertInputValue(fieldId, oldFactor, newFactor);
+  }
+
+  // Sync all output header selectors in this group
+  document.querySelectorAll('select.th-unit-select').forEach(sel => {
+    if (sel === triggerSelect) return;
+    if (sel.dataset.unitGroup !== groupName) return;
+    sel.value = newUnit;
+  });
+
+  if (typeof _onGroupChange === 'function') {
+    _onGroupChange(groupName, newUnit);
+  }
+}
+
+// ---- Initialize output header unit selectors ----
+
+export function initOutputHeaderSelectors() {
   if (!isBrowser) return;
   document.querySelectorAll('[data-unit-group] .th-unit').forEach(span => {
     const parent = span.closest('[data-unit-group]');
     const groupName = parent.getAttribute('data-unit-group');
     const prefix = parent.getAttribute('data-unit-prefix') || '';
+    if (!groupName) return;
+
+    const group = UNIT_GROUPS[groupName];
+    if (!group) return;
+    const unitKeys = Object.keys(group.units);
+    if (unitKeys.length < 2) return;
+
+    const select = document.createElement('select');
+    select.className = 'th-unit-select';
+    select.dataset.unitGroup = groupName;
+    select.dataset.unitPrefix = prefix;
+    select.setAttribute('aria-label', `Unit for ${parent.getAttribute('title') || groupName}`);
+
+    for (const [key, def] of Object.entries(group.units)) {
+      const opt = document.createElement('option');
+      opt.value = key;
+      opt.textContent = prefix + def.label;
+      if (key === group.internal) opt.selected = true;
+      select.appendChild(opt);
+    }
+
+    select.addEventListener('change', () => {
+      const newUnit = select.value;
+      // Sync the triggering input field selector (so the group picks it up)
+      // Find any input selector in this group to update prevUnit
+      for (const [fieldId, gn] of Object.entries(FIELD_UNITS)) {
+        if (gn !== groupName) continue;
+        const inputSel = document.getElementById(getUnitSelectId(fieldId));
+        if (inputSel && inputSel.value !== newUnit) {
+          const oldUnit = inputSel.dataset.prevUnit || inputSel.value;
+          const oldFactor = getFactor(groupName, oldUnit);
+          const newFactor = getFactor(groupName, newUnit);
+          inputSel.value = newUnit;
+          inputSel.dataset.prevUnit = newUnit;
+          convertInputValue(fieldId, oldFactor, newFactor);
+        }
+      }
+      switchGroup(groupName, newUnit, select);
+    });
+
+    span.replaceWith(select);
+  });
+}
+
+export function updateOutputHeaders() {
+  if (!isBrowser) return;
+  // Update all output header selects to match current group unit
+  document.querySelectorAll('select.th-unit-select').forEach(select => {
+    const groupName = select.dataset.unitGroup;
     if (groupName) {
-      span.textContent = prefix + getGroupLabel(groupName);
+      const currentUnit = getGroupUnit(groupName);
+      if (currentUnit && select.value !== currentUnit) {
+        select.value = currentUnit;
+      }
     }
   });
 }
@@ -221,6 +310,8 @@ export function updateOutputHeaders() {
 
 export function initUnitSelectors(onGroupChange) {
   if (!isBrowser) return;
+  _onGroupChange = onGroupChange;
+
   for (const [fieldId, groupName] of Object.entries(FIELD_UNITS)) {
     const inputEl = document.getElementById(fieldId);
     if (!inputEl) continue;
@@ -232,10 +323,7 @@ export function initUnitSelectors(onGroupChange) {
     const group = UNIT_GROUPS[groupName];
     if (!group) continue;
     const unitKeys = Object.keys(group.units);
-    if (unitKeys.length < 2) {
-      // Only one unit, no need for a selector
-      continue;
-    }
+    if (unitKeys.length < 2) continue;
 
     const select = document.createElement('select');
     select.id = getUnitSelectId(fieldId);
@@ -250,7 +338,6 @@ export function initUnitSelectors(onGroupChange) {
       select.appendChild(opt);
     }
 
-    // Track previous unit for value conversion on change
     select.dataset.prevUnit = group.internal;
 
     unitCell.textContent = '';
@@ -260,35 +347,10 @@ export function initUnitSelectors(onGroupChange) {
       const newUnit = select.value;
       const oldUnit = select.dataset.prevUnit;
       select.dataset.prevUnit = newUnit;
-
       if (oldUnit === newUnit) return;
 
-      const oldFactor = getFactor(groupName, oldUnit);
-      const newFactor = getFactor(groupName, newUnit);
-
-      // Convert this field's value
-      convertInputValue(fieldId, oldFactor, newFactor);
-
-      // Sync all other fields in the same group to the new unit
-      for (const [otherFieldId, otherGroup] of Object.entries(FIELD_UNITS)) {
-        if (otherGroup !== groupName || otherFieldId === fieldId) continue;
-        const otherSelect = document.getElementById(getUnitSelectId(otherFieldId));
-        if (!otherSelect || otherSelect.value === newUnit) continue;
-
-        const otherOldUnit = otherSelect.dataset.prevUnit || otherSelect.value;
-        const otherOldFactor = getFactor(groupName, otherOldUnit);
-        const otherNewFactor = getFactor(groupName, newUnit);
-
-        otherSelect.value = newUnit;
-        otherSelect.dataset.prevUnit = newUnit;
-        convertInputValue(otherFieldId, otherOldFactor, otherNewFactor);
-      }
-
-      updateOutputHeaders();
-
-      if (typeof onGroupChange === 'function') {
-        onGroupChange(groupName, newUnit);
-      }
+      convertInputValue(fieldId, getFactor(groupName, oldUnit), getFactor(groupName, newUnit));
+      switchGroup(groupName, newUnit, select);
     });
   }
 }
@@ -302,6 +364,8 @@ export function syncPrevUnits() {
       select.dataset.prevUnit = select.value;
     }
   }
+  // Also sync output header selects
+  updateOutputHeaders();
 }
 
 function convertInputValue(fieldId, oldFactor, newFactor) {
