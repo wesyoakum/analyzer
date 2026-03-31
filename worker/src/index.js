@@ -3,7 +3,7 @@
 // Two KV keys: "presets" (JSON array) and "projects" (JSON array).
 // KV also stores "abb-spec-sheet-template" (binary PDF) for spec sheet generation.
 
-import { PDFDocument, PDFName } from 'pdf-lib';
+import { PDFDocument } from 'pdf-lib';
 
 // ---------------------------------------------------------------------------
 // Helpers
@@ -261,7 +261,7 @@ async function handleDeleteProject(env, id) {
 // ABB Spec Sheet PDF
 // ---------------------------------------------------------------------------
 
-function fillSpecSheetPdf(pdfDoc, { textFields, checkBoxes, checkWidgets }) {
+function fillSpecSheetPdf(pdfDoc, { textFields, checkBoxes }) {
   const form = pdfDoc.getForm();
 
   for (const [fieldName, value] of Object.entries(textFields || {})) {
@@ -279,25 +279,10 @@ function fillSpecSheetPdf(pdfDoc, { textFields, checkBoxes, checkWidgets }) {
       } catch { /* field not found — skip */ }
     }
   }
-
-  if (Array.isArray(checkWidgets)) {
-    for (const { field: fieldName, widget: widgetIndex } of checkWidgets) {
-      try {
-        const field = form.getCheckBox(fieldName);
-        const widgets = field.acroField.getWidgets();
-        const w = widgets[widgetIndex];
-        if (!w) continue;
-        const ap = w.getAppearances();
-        if (!ap?.normal) continue;
-        const onState = Object.keys(ap.normal).find(k => k !== 'Off');
-        if (onState) w.setAppearanceState(PDFName.of(onState));
-      } catch { /* field/widget not found — skip */ }
-    }
-  }
 }
 
 async function handleSpecSheetPdf(env, request) {
-  const { textFields, checkBoxes, checkWidgets } = await request.json();
+  const { textFields, checkBoxes } = await request.json();
   if (!textFields || typeof textFields !== 'object') {
     return errorResponse(400, 'Request body must contain a "textFields" object.');
   }
@@ -308,7 +293,7 @@ async function handleSpecSheetPdf(env, request) {
   }
 
   const pdfDoc = await PDFDocument.load(templateBytes);
-  fillSpecSheetPdf(pdfDoc, { textFields, checkBoxes, checkWidgets });
+  fillSpecSheetPdf(pdfDoc, { textFields, checkBoxes });
 
   const pdfBytes = await pdfDoc.save();
   const projectName = textFields['Customer Reference'] || 'winch';

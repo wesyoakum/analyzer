@@ -139,33 +139,21 @@ export function buildSpecSheetFields(model) {
     textFields['Small Gear Teeth teeth For gearing ratio calculations'] = `Ratio: ${fmt(gr2, 3)}`;
   }
 
-  // Simple checkboxes (unique field names — safe to check the whole field)
-  const checkBoxes = ['Check Box - Layer 0', 'Check Box LARS'];
-
-  // Widget-level checkboxes: { fieldName, widgetIndex }
-  // These fields share names across multiple form locations, so we must
-  // target individual widgets by index.
-  //
-  // "Check Box Motor Shaft" widgets: 0=Gearbox, 1=Ext Gearing, 2=Encoder
-  // "Check Box Drum Shaft"  widgets: 0=Gearbox, 1=Ext Gearing, 2=Encoder
-  // "Check Box Yes" widgets: 0=Change GB ratio, 1=Change Ext ratio,
-  //   2=Motor as brake, 3=Auto Haul, 4=AHC, 5=Clutch, 6=Ext Measure
-  // "Check Box No"  widgets: same order as Yes
-  const checkWidgets = [
-    { field: 'Check Box Motor Shaft', widget: 0 },  // Gearbox → Motor Shaft
-    { field: 'Check Box Drum Shaft',  widget: 1 },  // Ext Gearing → Drum Shaft
-    { field: 'Check Box Motor Shaft', widget: 2 },  // Encoder → Motor Shaft
-    { field: 'Check Box Yes', widget: 2 },           // Motor as brake → Yes
-    { field: 'Check Box No',  widget: 3 },           // Auto Haul → No
-    { field: 'Check Box No',  widget: 5 },           // Clutch → No
-    { field: 'Check Box No',  widget: 6 },           // Ext Measure Device → No
+  // Checkboxes — all fields now have unique names
+  const checkBoxes = [
+    'Check Box - Layer 0',
+    'Check Box LARS',
+    'CB Gearbox Motor Shaft',       // Gearbox location → Motor Shaft
+    'CB ExtGearing Drum Shaft',     // External gearing location → Drum Shaft
+    'CB Encoder Motor Shaft',       // Encoder location → Motor Shaft
+    'CB MotorBrake Yes',            // Motor used as brake → Yes
+    'CB AutoHaul No',               // Auto Haul & Payout → No
+    'CB AHC No',                    // AHC → No (default)
+    'CB Clutch No',                 // Clutch used → No
+    'CB ExtMeasure No',             // External measure device → No
   ];
 
-  // AHC: check Yes or No based on analyzer's AHC setting (if available)
-  // For now, default to No unless the analyzer indicates otherwise
-  checkWidgets.push({ field: 'Check Box No', widget: 4 }); // AHC → No
-
-  return { textFields, checkBoxes, checkWidgets, projectName, dated: today };
+  return { textFields, checkBoxes, projectName, dated: today };
 }
 
 /**
@@ -173,12 +161,12 @@ export function buildSpecSheetFields(model) {
  * @param {object|null} model - The last computed model
  */
 export async function downloadSpecSheetPDF(model) {
-  const { textFields, checkBoxes, checkWidgets, projectName, dated } = buildSpecSheetFields(model);
+  const { textFields, checkBoxes, projectName, dated } = buildSpecSheetFields(model);
 
   const res = await fetch(apiUrl('/api/spec-sheet/pdf'), {
     method: 'POST',
     headers: { ...apiHeaders(), 'Content-Type': 'application/json' },
-    body: JSON.stringify({ textFields, checkBoxes, checkWidgets }),
+    body: JSON.stringify({ textFields, checkBoxes }),
   });
 
   if (!res.ok) {
