@@ -173,7 +173,7 @@ export function buildSpecSheetFields(model) {
  * @param {object|null} model - The last computed model
  */
 export async function downloadSpecSheetPDF(model) {
-  const { textFields, checkBoxes, projectName, dated } = buildSpecSheetFields(model);
+  const { textFields, checkBoxes, checkWidgets, projectName, dated } = buildSpecSheetFields(model);
 
   const res = await fetch(apiUrl('/api/spec-sheet/pdf'), {
     method: 'POST',
