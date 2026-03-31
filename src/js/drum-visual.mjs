@@ -21,8 +21,8 @@ const FALLBACK_HEX = {
 };
 
 const SVG_BASE_HEIGHT = 360;
-const SVG_MARGIN_X = 20;
-const SVG_MARGIN_TOP = 20;
+const SVG_MARGIN_X = 50;
+const SVG_MARGIN_TOP = 50;
 const SVG_MARGIN_BOTTOM = 4;
 
 /**
