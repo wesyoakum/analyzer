@@ -295,7 +295,7 @@ async function handleSpecSheetPdf(env, request) {
   const pdfDoc = await PDFDocument.load(templateBytes);
   fillSpecSheetPdf(pdfDoc, { textFields, checkBoxes });
 
-  const pdfBytes = await pdfDoc.save();
+  const pdfBytes = await pdfDoc.save({ useObjectStreams: false });
   const projectName = textFields['Customer Reference'] || 'winch';
   const today = textFields['Dated'] || new Date().toISOString().slice(0, 10);
   const safeName = projectName.replace(/[^a-zA-Z0-9_-]/g, '_').replace(/_+/g, '_');
