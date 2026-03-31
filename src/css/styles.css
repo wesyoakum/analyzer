@@ -196,7 +196,7 @@ body {
   border-color: #d4a8a2;
 }
 .btn--danger:hover {
-  background: #b84233;
+  background: #1a7a5c;
   color: #fff;
   border-color: #b84233;
 }
@@ -459,7 +459,7 @@ body {
 
 /* Top-level "Inputs" header bar */
 .inputs-header {
-  background: #b84233;
+  background: #1a7a5c;
   color: #fff;
   display: flex;
   align-items: center;
@@ -502,7 +502,7 @@ body {
   z-index: 200;
   writing-mode: vertical-rl;
   text-orientation: mixed;
-  background: #b84233;
+  background: #1a7a5c;
   color: #fff;
   border: none;
   border-radius: 0 6px 6px 0;
@@ -940,23 +940,31 @@ button:focus {
   font: inherit;
   font-size: inherit;
   font-weight: inherit;
-  color: inherit;
+  color: var(--accent);
   background: transparent;
-  border: 1px dashed transparent;
+  border: none;
   border-radius: 3px;
-  padding: 0 2px;
+  padding: 0;
   margin: 0;
   cursor: pointer;
   text-align: center;
+  text-transform: none;
+  letter-spacing: normal;
 }
 .th-unit-select:hover {
-  color: var(--accent);
-  border-color: var(--accent);
+  color: var(--ink-900);
+  background: rgba(44, 86, 163, 0.08);
 }
 .th-unit-select:focus {
   outline: 2px solid var(--accent);
   outline-offset: 1px;
-  color: var(--accent);
+}
+
+/* Compact selectors inside table headers */
+th .th-unit-select {
+  font-size: 11px;
+  height: auto;
+  display: inline;
 }
 
 .worksheet td.value {
@@ -1144,22 +1152,6 @@ nav.tabs {
   background: transparent;
 }
 
-.section-back-to-top {
-  margin: 12px 0 0;
-  text-align: right;
-}
-
-.section-back-to-top a {
-  color: var(--accent);
-  font-weight: 600;
-  text-decoration: none;
-}
-
-.section-back-to-top a:hover,
-.section-back-to-top a:focus-visible {
-  text-decoration: underline;
-}
-
 .unit-converter {
   max-width: 900px;
 }
@@ -1273,7 +1265,7 @@ nav.tabs {
 
 .drum-visual__image {
   position: relative;
-  width: 50%;
+  width: 100%;
   min-width: 150px;
   max-width: 800px;
   flex-shrink: 0;
@@ -1908,7 +1900,6 @@ th[title] {
   .plot-settings-dialog,
   .plot-panel__toggles,
   .btnbar,
-  .section-back-to-top,
   .drum-visual__resize-handle,
   .card-header-actions,
   #panel-instructions,
