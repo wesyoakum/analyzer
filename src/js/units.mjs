@@ -240,6 +240,51 @@ function switchGroup(groupName, newUnit, triggerSelect) {
   }
 }
 
+/**
+ * Create a th-unit-select dropdown for a given unit group.
+ * Used by the input summary on the sheet to mirror sidebar unit selectors.
+ * Returns null if the group doesn't exist or has fewer than 2 units.
+ */
+export function createGroupSelector(groupName) {
+  const group = UNIT_GROUPS[groupName];
+  if (!group) return null;
+  const unitKeys = Object.keys(group.units);
+  if (unitKeys.length < 2) return null;
+
+  const select = document.createElement('select');
+  select.className = 'th-unit-select';
+  select.dataset.unitGroup = groupName;
+
+  const currentUnit = getGroupUnit(groupName);
+
+  for (const [key, def] of Object.entries(group.units)) {
+    const opt = document.createElement('option');
+    opt.value = key;
+    opt.textContent = def.label;
+    if (key === currentUnit) opt.selected = true;
+    select.appendChild(opt);
+  }
+
+  select.addEventListener('change', () => {
+    const newUnit = select.value;
+    for (const [fieldId, gn] of Object.entries(FIELD_UNITS)) {
+      if (gn !== groupName) continue;
+      const inputSel = document.getElementById(getUnitSelectId(fieldId));
+      if (inputSel && inputSel.value !== newUnit) {
+        const oldUnit = inputSel.dataset.prevUnit || inputSel.value;
+        const oldFactor = getFactor(groupName, oldUnit);
+        const newFactor = getFactor(groupName, newUnit);
+        inputSel.value = newUnit;
+        inputSel.dataset.prevUnit = newUnit;
+        convertInputValue(fieldId, oldFactor, newFactor);
+      }
+    }
+    switchGroup(groupName, newUnit, select);
+  });
+
+  return select;
+}
+
 // ---- Initialize output header unit selectors ----
 
 export function initOutputHeaderSelectors() {

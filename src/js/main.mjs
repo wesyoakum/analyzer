@@ -25,7 +25,7 @@ import { renderDrumVisualization, clearDrumVisualization } from './drum-visual.m
 import { renderLatexFragments } from './katex-renderer.mjs';
 import { buildComputationModel } from './analysis-data.mjs';
 import { renderReport } from './report-renderer.mjs';
-import { initUnitSelectors, initOutputHeaderSelectors, syncPrevUnits, updateOutputHeaders, fromInternal, fromInternalForGroup, getGroupLabel } from './units.mjs';
+import { initUnitSelectors, initOutputHeaderSelectors, syncPrevUnits, updateOutputHeaders, fromInternal, fromInternalForGroup, getGroupLabel, createGroupSelector, FIELD_UNITS } from './units.mjs';
 
 // ---- App state for plots/tables ----
 let lastElLayer = [], lastElWraps = [];
@@ -1960,8 +1960,16 @@ function buildSummaryTable(tableEl) {
         clonedUnits.className = unitsCell.className;
         const unitSelect = unitsCell.querySelector('select.unit-select');
         if (unitSelect) {
-          const selectedOpt = unitSelect.options[unitSelect.selectedIndex];
-          clonedUnits.textContent = selectedOpt ? selectedOpt.textContent : unitSelect.value;
+          // Find the unit group for this field from its select id (__unit_<fieldId>)
+          const fieldId = unitSelect.id.replace('__unit_', '');
+          const groupName = FIELD_UNITS[fieldId];
+          const groupSel = groupName ? createGroupSelector(groupName) : null;
+          if (groupSel) {
+            clonedUnits.appendChild(groupSel);
+          } else {
+            const selectedOpt = unitSelect.options[unitSelect.selectedIndex];
+            clonedUnits.textContent = selectedOpt ? selectedOpt.textContent : unitSelect.value;
+          }
         } else {
           clonedUnits.textContent = normalizeText(unitsCell.textContent);
         }
