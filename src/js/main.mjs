@@ -25,6 +25,7 @@ import { renderDrumVisualization, clearDrumVisualization } from './drum-visual.m
 import { renderLatexFragments } from './katex-renderer.mjs';
 import { buildComputationModel } from './analysis-data.mjs';
 import { downloadSpecSheetPDF } from './spec-sheet-export.mjs';
+import { downloadTextSummary } from './text-export.mjs';
 import { renderReport } from './report-renderer.mjs';
 import { initUnitSelectors, initOutputHeaderSelectors, syncPrevUnits, updateOutputHeaders, fromInternal, fromInternalForGroup, getGroupLabel, createGroupSelector, FIELD_UNITS } from './units.mjs';
 
@@ -1164,6 +1165,19 @@ document.addEventListener('DOMContentLoaded', () => {
       } finally {
         specSheetBtn.disabled = false;
         specSheetBtn.textContent = 'ABB Spec Sheet';
+      }
+    });
+  }
+
+  // Text summary export button
+  const textSummaryBtn = document.getElementById('export_text_summary');
+  if (textSummaryBtn) {
+    textSummaryBtn.addEventListener('click', () => {
+      try {
+        downloadTextSummary(lastComputedModel);
+      } catch (err) {
+        console.error('Text summary export failed:', err);
+        alert('Failed to generate summary: ' + (err.message || err));
       }
     });
   }
