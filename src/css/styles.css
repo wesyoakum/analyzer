@@ -438,7 +438,7 @@ body {
 
 /* Top-level "Inputs" header bar above the sidebar */
 .inputs-header {
-  background: #b84233;
+  background: #1a7a5c;
   color: #fff;
   font-size: 20px;
   font-weight: 700;
@@ -847,24 +847,23 @@ button:focus {
   outline-offset: 1px;
 }
 
-/* Output table header unit selectors — look like plain text until interacted */
+/* Output table header unit selectors — subtle but clearly interactive */
 .th-unit-select {
   font: inherit;
   font-size: inherit;
   font-weight: inherit;
   color: inherit;
   background: transparent;
-  border: none;
-  padding: 0;
+  border: 1px dashed transparent;
+  border-radius: 3px;
+  padding: 0 2px;
   margin: 0;
   cursor: pointer;
-  appearance: none;
-  -webkit-appearance: none;
   text-align: center;
 }
 .th-unit-select:hover {
   color: var(--accent);
-  text-decoration: underline;
+  border-color: var(--accent);
 }
 .th-unit-select:focus {
   outline: 2px solid var(--accent);
