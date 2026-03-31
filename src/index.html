@@ -21,33 +21,34 @@
 </head>
 <body>
   <div class="app-shell">
-    <aside class="app-sidebar">
-      <div class="inputs-header">Inputs</div>
+    <button class="sidebar-toggle sidebar-toggle--open" id="sidebar_open" type="button" aria-label="Show inputs" title="Show inputs">Inputs</button>
+    <aside class="app-sidebar" id="app_sidebar">
+      <div class="inputs-header">
+        <span class="inputs-header__title">Inputs</span>
+        <button class="inputs-header__close" id="sidebar_close" type="button" aria-label="Hide inputs" title="Hide inputs">&times;</button>
+      </div>
       <div class="app-sidebar__header">
-        <div>
-          <h2 class="app-sidebar__title">Winch configuration</h2>
-          <div class="project-controls" aria-label="Project controls">
-            <div class="project-controls__row">
-              <label class="sr-only" for="project_select">Saved projects</label>
-              <select id="project_select" aria-label="Saved projects">
-                <option value="">Saved projects</option>
-              </select>
-              <button id="load_project" class="app-sidebar__action app-sidebar__action--button" type="button">Load</button>
-              <button id="import_project" class="app-sidebar__action app-sidebar__action--button" type="button">Import</button>
-              <button id="export_project" class="app-sidebar__action app-sidebar__action--button" type="button">Export</button>
-              <button id="delete_project" class="app-sidebar__action app-sidebar__action--button" type="button">Delete</button>
-              <input id="import_project_file" type="file" accept="application/json,.json" class="sr-only" aria-hidden="true" tabindex="-1">
-            </div>
-            <div class="project-controls__row">
-              <label class="sr-only" for="project_name">Project name</label>
-              <input id="project_name" type="text" placeholder="Project name" aria-label="Project name">
-              <button id="save_project_new" class="app-sidebar__action app-sidebar__action--button" type="button">Save new</button>
-              <button id="save_project" class="app-sidebar__action app-sidebar__action--button" type="button">Update</button>
-              <button id="rename_project" class="app-sidebar__action app-sidebar__action--button" type="button">Rename</button>
-              <button id="clear_inputs" class="app-sidebar__action app-sidebar__action--button" type="button">Clear inputs</button>
-            </div>
-            <p id="project_status" class="project-controls__status" role="status" aria-live="polite"></p>
+        <div class="project-controls" aria-label="Project controls">
+          <div class="project-controls__row">
+            <select id="project_select" aria-label="Saved projects">
+              <option value="">Saved projects</option>
+            </select>
+            <button id="load_project" class="btn btn--sm" type="button">Load</button>
           </div>
+          <div class="project-controls__row">
+            <input id="project_name" type="text" placeholder="Project name" aria-label="Project name">
+            <button id="save_project_new" class="btn btn--sm btn--accent" type="button">Save</button>
+            <button id="save_project" class="btn btn--sm" type="button">Update</button>
+          </div>
+          <div class="project-controls__actions">
+            <button id="rename_project" class="btn btn--xs" type="button">Rename</button>
+            <button id="import_project" class="btn btn--xs" type="button">Import</button>
+            <button id="export_project" class="btn btn--xs" type="button">Export</button>
+            <button id="delete_project" class="btn btn--xs btn--danger" type="button">Delete</button>
+            <button id="clear_inputs" class="btn btn--xs" type="button">Clear</button>
+            <input id="import_project_file" type="file" accept="application/json,.json" class="sr-only" aria-hidden="true" tabindex="-1">
+          </div>
+          <p id="project_status" class="project-controls__status" role="status" aria-live="polite"></p>
         </div>
       </div>
       <div class="app-sidebar__content" id="sidebar-inputs">

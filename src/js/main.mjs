@@ -1156,6 +1156,22 @@ document.addEventListener('DOMContentLoaded', () => {
 
   setupUnitConverter();
 
+  // Sidebar toggle
+  const sidebarEl = document.getElementById('app_sidebar');
+  const sidebarClose = document.getElementById('sidebar_close');
+  const sidebarOpen = document.getElementById('sidebar_open');
+  const shell = document.querySelector('.app-shell');
+  if (sidebarEl && sidebarClose && sidebarOpen && shell) {
+    sidebarClose.addEventListener('click', () => {
+      sidebarEl.classList.add('app-sidebar--hidden');
+      shell.classList.add('app-shell--sidebar-hidden');
+    });
+    sidebarOpen.addEventListener('click', () => {
+      sidebarEl.classList.remove('app-sidebar--hidden');
+      shell.classList.remove('app-shell--sidebar-hidden');
+    });
+  }
+
   // Drum drag-to-resize
   const drumContainer = document.getElementById('drum_visual_container');
   const drumResizeHandle = document.getElementById('drum_resize_handle');
