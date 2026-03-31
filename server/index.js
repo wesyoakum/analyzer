@@ -630,8 +630,6 @@ app.post('/api/spec-sheet/pdf', async (req, res, next) => {
       }
     }
 
-    form.flatten();
-
     const pdfBytes = await pdfDoc.save();
     const projectName = textFields['Customer Reference'] || 'winch';
     const today = textFields['Dated'] || new Date().toISOString().slice(0, 10);

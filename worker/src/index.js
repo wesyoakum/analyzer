@@ -291,8 +291,6 @@ async function handleSpecSheetPdf(env, request) {
     }
   }
 
-  form.flatten();
-
   const pdfBytes = await pdfDoc.save();
   const projectName = textFields['Customer Reference'] || 'winch';
   const today = textFields['Dated'] || new Date().toISOString().slice(0, 10);
