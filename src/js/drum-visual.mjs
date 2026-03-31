@@ -21,7 +21,9 @@ const FALLBACK_HEX = {
 };
 
 const SVG_BASE_HEIGHT = 360;
-const SVG_MARGIN = 16;
+const SVG_MARGIN_X = 20;
+const SVG_MARGIN_TOP = 20;
+const SVG_MARGIN_BOTTOM = 4;
 
 /**
  * Parse a CSS color string into RGB components.
@@ -198,18 +200,18 @@ export function renderDrumVisualization(rows, summary, cfg, meta) {
     1
   );
   const heightIn = outerDiaIn;
-  const scale = heightIn > 0 ? (SVG_BASE_HEIGHT - 2 * SVG_MARGIN) / heightIn : 1;
+  const scale = heightIn > 0 ? (SVG_BASE_HEIGHT - SVG_MARGIN_TOP - SVG_MARGIN_BOTTOM) / heightIn : 1;
   const widthIn = Math.max(flange_to_flange_in || 0, cable_dia_in || 0, 1);
   const widthPx = widthIn * scale;
   const heightPx = heightIn * scale;
-  const viewWidth = widthPx + SVG_MARGIN * 2;
-  const viewHeight = heightPx + SVG_MARGIN * 2;
+  const viewWidth = widthPx + SVG_MARGIN_X * 2;
+  const viewHeight = heightPx + SVG_MARGIN_TOP + SVG_MARGIN_BOTTOM;
 
   svg.setAttribute('viewBox', `0 0 ${viewWidth.toFixed(2)} ${viewHeight.toFixed(2)}`);
 
-  const spoolLeft = SVG_MARGIN;
+  const spoolLeft = SVG_MARGIN_X;
   const spoolRight = spoolLeft + widthPx;
-  const centerY = SVG_MARGIN + heightPx / 2;
+  const centerY = SVG_MARGIN_TOP + heightPx / 2;
 
   const coreHeightPx = Math.max(0, (core_dia_in || 0) * scale);
   const coreWidthPx = Math.max(0, (flange_to_flange_in || 0) * scale);
