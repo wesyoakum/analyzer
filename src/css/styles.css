@@ -196,7 +196,7 @@ body {
   border-color: #d4a8a2;
 }
 .btn--danger:hover {
-  background: #2c56a3;
+  background: #1a7a5c;
   color: #fff;
   border-color: #b84233;
 }
@@ -459,7 +459,7 @@ body {
 
 /* Top-level "Inputs" header bar */
 .inputs-header {
-  background: #2c56a3;
+  background: #1a7a5c;
   color: #fff;
   display: flex;
   align-items: center;
@@ -502,7 +502,7 @@ body {
   z-index: 200;
   writing-mode: vertical-rl;
   text-orientation: mixed;
-  background: #2c56a3;
+  background: #1a7a5c;
   color: #fff;
   border: none;
   border-radius: 0 6px 6px 0;
@@ -1279,7 +1279,6 @@ nav.tabs {
 }
 #drum_card .drum-visual__svg {
   margin: 0;
-  outline: 1px solid var(--paper-line-strong);
 }
 #drum_card .drum-visual__info {
   margin: 0;
