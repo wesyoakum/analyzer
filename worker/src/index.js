@@ -3,7 +3,7 @@
 // Two KV keys: "presets" (JSON array) and "projects" (JSON array).
 // KV also stores "abb-spec-sheet-template" (binary PDF) for spec sheet generation.
 
-import { PDFDocument } from 'pdf-lib';
+import { PDFDocument, PDFName } from 'pdf-lib';
 
 // ---------------------------------------------------------------------------
 // Helpers
@@ -261,21 +261,10 @@ async function handleDeleteProject(env, id) {
 // ABB Spec Sheet PDF
 // ---------------------------------------------------------------------------
 
-async function handleSpecSheetPdf(env, request) {
-  const { textFields, checkBoxes } = await request.json();
-  if (!textFields || typeof textFields !== 'object') {
-    return errorResponse(400, 'Request body must contain a "textFields" object.');
-  }
-
-  const templateBytes = await env.DATA.get('abb-spec-sheet-template', { type: 'arrayBuffer' });
-  if (!templateBytes) {
-    return errorResponse(500, 'PDF template not found in KV. Run seed-kv to upload it.');
-  }
-
-  const pdfDoc = await PDFDocument.load(templateBytes);
+function fillSpecSheetPdf(pdfDoc, { textFields, checkBoxes, checkWidgets }) {
   const form = pdfDoc.getForm();
 
-  for (const [fieldName, value] of Object.entries(textFields)) {
+  for (const [fieldName, value] of Object.entries(textFields || {})) {
     try {
       const field = form.getTextField(fieldName);
       if (field && value) field.setText(String(value));
@@ -290,6 +279,36 @@ async function handleSpecSheetPdf(env, request) {
       } catch { /* field not found — skip */ }
     }
   }
+
+  if (Array.isArray(checkWidgets)) {
+    for (const { field: fieldName, widget: widgetIndex } of checkWidgets) {
+      try {
+        const field = form.getCheckBox(fieldName);
+        const widgets = field.acroField.getWidgets();
+        const w = widgets[widgetIndex];
+        if (!w) continue;
+        const ap = w.getAppearances();
+        if (!ap?.normal) continue;
+        const onState = Object.keys(ap.normal).find(k => k !== 'Off');
+        if (onState) w.setAppearanceState(PDFName.of(onState));
+      } catch { /* field/widget not found — skip */ }
+    }
+  }
+}
+
+async function handleSpecSheetPdf(env, request) {
+  const { textFields, checkBoxes, checkWidgets } = await request.json();
+  if (!textFields || typeof textFields !== 'object') {
+    return errorResponse(400, 'Request body must contain a "textFields" object.');
+  }
+
+  const templateBytes = await env.DATA.get('abb-spec-sheet-template', { type: 'arrayBuffer' });
+  if (!templateBytes) {
+    return errorResponse(500, 'PDF template not found in KV. Run seed-kv to upload it.');
+  }
+
+  const pdfDoc = await PDFDocument.load(templateBytes);
+  fillSpecSheetPdf(pdfDoc, { textFields, checkBoxes, checkWidgets });
 
   const pdfBytes = await pdfDoc.save();
   const projectName = textFields['Customer Reference'] || 'winch';

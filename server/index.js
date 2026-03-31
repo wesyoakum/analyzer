@@ -5,7 +5,7 @@ import fs from 'fs/promises';
 import crypto from 'crypto';
 import { execFile } from 'child_process';
 import { promisify } from 'util';
-import { PDFDocument } from 'pdf-lib';
+import { PDFDocument, PDFName } from 'pdf-lib';
 import { buildComputationModel } from '../src/js/analysis-data.mjs';
 import { renderReportHtml } from '../src/js/report-renderer.mjs';
 
@@ -599,12 +599,50 @@ app.post('/api/reports/html', async (req, res, next) => {
 
 
 // ---- ABB Spec Sheet PDF generation ----
-// Client sends pre-computed { textFields, checkBoxes } — server just fills the template.
+// Client sends { textFields, checkBoxes, checkWidgets } — server fills the template.
 
 const SPEC_SHEET_TEMPLATE = path.join(DATA_DIR, 'abb-spec-sheet-template.pdf');
 
+function fillSpecSheetPdf(pdfDoc, { textFields, checkBoxes, checkWidgets }) {
+  const form = pdfDoc.getForm();
+
+  // Text fields
+  for (const [fieldName, value] of Object.entries(textFields || {})) {
+    try {
+      const field = form.getTextField(fieldName);
+      if (field && value) field.setText(String(value));
+    } catch { /* field not found — skip */ }
+  }
+
+  // Simple checkboxes (unique field names — checks all widgets)
+  if (Array.isArray(checkBoxes)) {
+    for (const fieldName of checkBoxes) {
+      try {
+        const field = form.getCheckBox(fieldName);
+        if (field) field.check();
+      } catch { /* field not found — skip */ }
+    }
+  }
+
+  // Per-widget checkboxes (shared field names — check individual widgets)
+  if (Array.isArray(checkWidgets)) {
+    for (const { field: fieldName, widget: widgetIndex } of checkWidgets) {
+      try {
+        const field = form.getCheckBox(fieldName);
+        const widgets = field.acroField.getWidgets();
+        const w = widgets[widgetIndex];
+        if (!w) continue;
+        const ap = w.getAppearances();
+        if (!ap?.normal) continue;
+        const onState = Object.keys(ap.normal).find(k => k !== 'Off');
+        if (onState) w.setAppearanceState(PDFName.of(onState));
+      } catch { /* field/widget not found — skip */ }
+    }
+  }
+}
+
 app.post('/api/spec-sheet/pdf', async (req, res, next) => {
-  const { textFields, checkBoxes } = req.body || {};
+  const { textFields, checkBoxes, checkWidgets } = req.body || {};
   if (!textFields || typeof textFields !== 'object') {
     return sendError(res, 400, 'Request body must contain a "textFields" object.');
   }
@@ -612,23 +650,7 @@ app.post('/api/spec-sheet/pdf', async (req, res, next) => {
   try {
     const templateBytes = await fs.readFile(SPEC_SHEET_TEMPLATE);
     const pdfDoc = await PDFDocument.load(templateBytes);
-    const form = pdfDoc.getForm();
-
-    for (const [fieldName, value] of Object.entries(textFields)) {
-      try {
-        const field = form.getTextField(fieldName);
-        if (field && value) field.setText(String(value));
-      } catch { /* field not found — skip */ }
-    }
-
-    if (Array.isArray(checkBoxes)) {
-      for (const fieldName of checkBoxes) {
-        try {
-          const field = form.getCheckBox(fieldName);
-          if (field) field.check();
-        } catch { /* field not found — skip */ }
-      }
-    }
+    fillSpecSheetPdf(pdfDoc, { textFields, checkBoxes, checkWidgets });
 
     const pdfBytes = await pdfDoc.save();
     const projectName = textFields['Customer Reference'] || 'winch';
