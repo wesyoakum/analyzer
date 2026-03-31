@@ -24,7 +24,7 @@ import { setupComponentSelectors } from './component-selectors.mjs';
 import { renderDrumVisualization, clearDrumVisualization } from './drum-visual.mjs';
 import { renderLatexFragments } from './katex-renderer.mjs';
 import { buildComputationModel } from './analysis-data.mjs';
-import { downloadSpecSheetCSV } from './spec-sheet-export.mjs';
+import { downloadSpecSheetPDF } from './spec-sheet-export.mjs';
 import { renderReport } from './report-renderer.mjs';
 import { initUnitSelectors, initOutputHeaderSelectors, syncPrevUnits, updateOutputHeaders, fromInternal, fromInternalForGroup, getGroupLabel, createGroupSelector, FIELD_UNITS } from './units.mjs';
 
@@ -1153,8 +1153,18 @@ document.addEventListener('DOMContentLoaded', () => {
   // ABB Spec Sheet export button
   const specSheetBtn = document.getElementById('export_spec_sheet');
   if (specSheetBtn) {
-    specSheetBtn.addEventListener('click', () => {
-      downloadSpecSheetCSV(lastComputedModel);
+    specSheetBtn.addEventListener('click', async () => {
+      specSheetBtn.disabled = true;
+      specSheetBtn.textContent = 'Generating\u2026';
+      try {
+        await downloadSpecSheetPDF();
+      } catch (err) {
+        console.error('Spec sheet export failed:', err);
+        alert('Failed to generate spec sheet: ' + (err.message || err));
+      } finally {
+        specSheetBtn.disabled = false;
+        specSheetBtn.textContent = 'ABB Spec Sheet';
+      }
     });
   }
 
