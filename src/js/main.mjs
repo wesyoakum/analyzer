@@ -24,6 +24,7 @@ import { setupComponentSelectors } from './component-selectors.mjs';
 import { renderDrumVisualization, clearDrumVisualization } from './drum-visual.mjs';
 import { renderLatexFragments } from './katex-renderer.mjs';
 import { buildComputationModel } from './analysis-data.mjs';
+import { downloadSpecSheetCSV } from './spec-sheet-export.mjs';
 import { renderReport } from './report-renderer.mjs';
 import { initUnitSelectors, initOutputHeaderSelectors, syncPrevUnits, updateOutputHeaders, fromInternal, fromInternalForGroup, getGroupLabel, createGroupSelector, FIELD_UNITS } from './units.mjs';
 
@@ -1148,6 +1149,14 @@ document.addEventListener('DOMContentLoaded', () => {
   configureSectionFourContent();
 
   setupProjectManager();
+
+  // ABB Spec Sheet export button
+  const specSheetBtn = document.getElementById('export_spec_sheet');
+  if (specSheetBtn) {
+    specSheetBtn.addEventListener('click', () => {
+      downloadSpecSheetCSV(lastComputedModel);
+    });
+  }
 
   setupAutoRecompute();
 
