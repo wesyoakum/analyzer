@@ -1,6 +1,9 @@
 // ===== Cloudflare Worker — analyzer-api =====
 // Mirrors the Express server's preset/project CRUD endpoints using KV storage.
 // Two KV keys: "presets" (JSON array) and "projects" (JSON array).
+// KV also stores "abb-spec-sheet-template" (binary PDF) for spec sheet generation.
+
+import { PDFDocument } from 'pdf-lib';
 
 // ---------------------------------------------------------------------------
 // Helpers
@@ -255,6 +258,56 @@ async function handleDeleteProject(env, id) {
 }
 
 // ---------------------------------------------------------------------------
+// ABB Spec Sheet PDF
+// ---------------------------------------------------------------------------
+
+async function handleSpecSheetPdf(env, request) {
+  const { textFields, checkBoxes } = await request.json();
+  if (!textFields || typeof textFields !== 'object') {
+    return errorResponse(400, 'Request body must contain a "textFields" object.');
+  }
+
+  const templateBytes = await env.DATA.get('abb-spec-sheet-template', { type: 'arrayBuffer' });
+  if (!templateBytes) {
+    return errorResponse(500, 'PDF template not found in KV. Run seed-kv to upload it.');
+  }
+
+  const pdfDoc = await PDFDocument.load(templateBytes);
+  const form = pdfDoc.getForm();
+
+  for (const [fieldName, value] of Object.entries(textFields)) {
+    try {
+      const field = form.getTextField(fieldName);
+      if (field && value) field.setText(String(value));
+    } catch { /* field not found — skip */ }
+  }
+
+  if (Array.isArray(checkBoxes)) {
+    for (const fieldName of checkBoxes) {
+      try {
+        const field = form.getCheckBox(fieldName);
+        if (field) field.check();
+      } catch { /* field not found — skip */ }
+    }
+  }
+
+  form.flatten();
+
+  const pdfBytes = await pdfDoc.save();
+  const projectName = textFields['Customer Reference'] || 'winch';
+  const today = textFields['Dated'] || new Date().toISOString().slice(0, 10);
+  const safeName = projectName.replace(/[^a-zA-Z0-9_-]/g, '_').replace(/_+/g, '_');
+
+  return new Response(pdfBytes, {
+    status: 200,
+    headers: {
+      'Content-Type': 'application/pdf',
+      'Content-Disposition': `attachment; filename="${safeName}_ABB_SpecSheet_${today}.pdf"`,
+    },
+  });
+}
+
+// ---------------------------------------------------------------------------
 // Router
 // ---------------------------------------------------------------------------
 
@@ -285,6 +338,11 @@ function matchRoute(method, pathname) {
     const id = decodeURIComponent(projectMatch[1]);
     if (method === 'GET') return { handler: 'getProject', id };
     if (method === 'DELETE') return { handler: 'deleteProject', id };
+  }
+
+  // /api/spec-sheet/pdf
+  if (pathname === '/api/spec-sheet/pdf' && method === 'POST') {
+    return { handler: 'specSheetPdf' };
   }
 
   // /api/health
@@ -349,6 +407,9 @@ export default {
           break;
         case 'deleteProject':
           response = await handleDeleteProject(env, route.id);
+          break;
+        case 'specSheetPdf':
+          response = await handleSpecSheetPdf(env, request);
           break;
         default:
           response = errorResponse(500, 'Unknown route handler.');

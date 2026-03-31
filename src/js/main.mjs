@@ -1157,7 +1157,7 @@ document.addEventListener('DOMContentLoaded', () => {
       specSheetBtn.disabled = true;
       specSheetBtn.textContent = 'Generating\u2026';
       try {
-        await downloadSpecSheetPDF();
+        await downloadSpecSheetPDF(lastComputedModel);
       } catch (err) {
         console.error('Spec sheet export failed:', err);
         alert('Failed to generate spec sheet: ' + (err.message || err));

@@ -599,182 +599,46 @@ app.post('/api/reports/html', async (req, res, next) => {
 
 
 // ---- ABB Spec Sheet PDF generation ----
+// Client sends pre-computed { textFields, checkBoxes } — server just fills the template.
 
 const SPEC_SHEET_TEMPLATE = path.join(DATA_DIR, 'abb-spec-sheet-template.pdf');
-const MM_PER_IN = 25.4;
-const KGF_TO_LBF = 2.20462;
-const MPM_TO_FPM = 3.28084;
-const SS_W_PER_HP = 745.7;
-
-function ssFmt(v, decimals = 2) {
-  if (v == null || !Number.isFinite(v)) return '';
-  return (+v.toFixed(decimals)).toString();
-}
-
-function ssDual(inches) {
-  if (!Number.isFinite(inches)) return '';
-  return `${ssFmt(inches * MM_PER_IN, 1)} mm / ${ssFmt(inches, 2)} in`;
-}
-
-function ssForce(kgf) {
-  if (!Number.isFinite(kgf)) return '';
-  return `${ssFmt(kgf, 0)} kg / ${ssFmt(kgf * KGF_TO_LBF, 0)} lbs`;
-}
-
-function ssSpeed(mpm) {
-  if (!Number.isFinite(mpm)) return '';
-  return `${ssFmt(mpm, 1)} mpm / ${ssFmt(mpm * MPM_TO_FPM, 1)} fpm`;
-}
 
 app.post('/api/spec-sheet/pdf', async (req, res, next) => {
-  const state = req.body;
-  if (!state || typeof state !== 'object') {
-    return sendError(res, 400, 'Request body must be a JSON object with analyzer state.');
+  const { textFields, checkBoxes } = req.body || {};
+  if (!textFields || typeof textFields !== 'object') {
+    return sendError(res, 400, 'Request body must contain a "textFields" object.');
   }
 
   try {
-    // Build computation model from state
-    const model = buildModelFromProjectState(state);
-
-    const coreDiaIn = stateNumber(state, 'core_in');
-    const ftfIn = stateNumber(state, 'ftf_in');
-    const cableMm = stateNumber(state, 'c_mm');
-    const efficiency = stateNumber(state, 'system_efficiency');
-    const ratedSwlKgf = stateNumber(state, 'rated_swl_kgf');
-    const ratedSpeedMpm = stateNumber(state, 'rated_speed_mpm');
-    const motors = stateNumber(state, 'motors');
-    const motorHp = stateNumber(state, 'motor_hp');
-    const motorMaxRpm = stateNumber(state, 'motor_max_rpm');
-    const gr1 = stateNumber(state, 'gr1');
-    const gr2 = stateNumber(state, 'gr2');
-    const totalLayers = model?.summary?.total_layers;
-    const lightLoadKgf = Number.isFinite(ratedSwlKgf) ? ratedSwlKgf * 0.1 : NaN;
-    const motorKw = Number.isFinite(motorHp) ? motorHp * SS_W_PER_HP / 1000 : NaN;
-
-    // Max speed at light load from model rows
-    let maxSpeedAtLightLoad = NaN;
-    if (model?.rows?.length) {
-      const lastRow = model.rows[model.rows.length - 1];
-      if (model.electricEnabled) {
-        maxSpeedAtLightLoad = lastRow?.el_speed_available_mpm ?? NaN;
-      } else if (model.hydraulicEnabled) {
-        maxSpeedAtLightLoad = lastRow?.hyd_speed_available_mpm ?? NaN;
-      }
-    }
-
-    // Load template PDF
     const templateBytes = await fs.readFile(SPEC_SHEET_TEMPLATE);
     const pdfDoc = await PDFDocument.load(templateBytes);
     const form = pdfDoc.getForm();
 
-    const setText = (fieldName, value) => {
+    for (const [fieldName, value] of Object.entries(textFields)) {
       try {
         const field = form.getTextField(fieldName);
         if (field && value) field.setText(String(value));
       } catch { /* field not found — skip */ }
-    };
-
-    const setCheck = (fieldName, checked) => {
-      try {
-        const field = form.getCheckBox(fieldName);
-        if (field && checked) field.check();
-      } catch { /* field not found — skip */ }
-    };
-
-    const projectName = typeof state.project_name === 'string' ? state.project_name : '';
-    const today = new Date().toISOString().slice(0, 10);
-
-    // Header
-    setText('Customer Reference', projectName);
-    setText('Dated', today);
-
-    // Section 1 — Application checkboxes
-    setCheck('Check Box LARS', true);
-
-    // Section 3 — Drum Data
-    setText('Bare Drum Dia mm  in', ssDual(coreDiaIn));
-    setText('Drum Length mm  in', ssDual(ftfIn));
-    setText('Rope Dia mm  in', Number.isFinite(cableMm)
-      ? `${ssFmt(cableMm, 1)} mm / ${ssFmt(cableMm / MM_PER_IN, 3)} in`
-      : '');
-    setText('System Efficiency  Usually 90 or over', Number.isFinite(efficiency)
-      ? `${ssFmt(efficiency * 100, 0)}%`
-      : '');
-
-    // Section 4a — Gearbox
-    setText('Gearbox Ratio ratio', ssFmt(gr1, 3));
-
-    // Section 4b — External Gearing (GR2 as ratio)
-    // No dedicated ratio field — put in Small Gear Teeth with a note
-    if (Number.isFinite(gr2) && gr2 > 0) {
-      setText('Small Gear Teeth teeth For gearing ratio calculations', `Ratio: ${ssFmt(gr2, 3)}`);
     }
 
-    // Section 5 — Load Specs
-    setCheck('Check Box - Layer 0', true);
-    setText('Rated Load kg  lbs', ssForce(ratedSwlKgf));
-    setText('Maximum Continuous Speed at Rated Load mpm  fpm', ssSpeed(ratedSpeedMpm));
-    setText('Light Load kg  lbs Usually light load is 10 to 30 of the rated load', ssForce(lightLoadKgf));
-    setText('Maximum Control Speed at Light Load mpm  fpm', ssSpeed(maxSpeedAtLightLoad));
-    setText('Maximum or Final Layer to be Wound', Number.isFinite(totalLayers) ? String(totalLayers) : '');
-
-    // Section 6 — Motor Size
-    setText('No. Motors', Number.isFinite(motors) ? ssFmt(motors, 0) : '');
-    setText('Motor Power', Number.isFinite(motorKw)
-      ? `${ssFmt(motorKw, 1)} kW / ${ssFmt(motorHp, 1)} HP`
-      : '');
-    setText('Motor RPM', Number.isFinite(motorMaxRpm) ? ssFmt(motorMaxRpm, 0) : '');
-
-    // Section 9 — Comments
-    const systemType = state.system_type_select === 'hydraulic' ? 'Hydraulic' : 'Electric';
-    const winchType = state.winch_type_select === 'traction' ? 'Traction' : 'Conventional';
-    const depth = stateNumber(state, 'depth_m');
-    const payload = stateNumber(state, 'payload_kg');
-    const cableW = stateNumber(state, 'c_w_kgpm');
-    const mbl = stateNumber(state, 'mbl_kgf');
-    const sf = stateNumber(state, 'safety_factor');
-    const grTotal = (Number.isFinite(gr1) && Number.isFinite(gr2)) ? gr1 * gr2 : NaN;
-
-    const commentLines = [
-      `Generated by C-LARS Winch Analyzer on ${today}`,
-      '',
-      `Drive Type: ${systemType}`,
-      `Winch Type: ${winchType}`,
-      `Total Gear Ratio (GR1 x GR2): ${ssFmt(grTotal, 2)}`,
-      `Operating Depth: ${ssFmt(depth, 0)} m`,
-      `Payload in Water: ${ssFmt(payload, 0)} kg`,
-      `Cable Weight in Water: ${ssFmt(cableW, 2)} kg/m`,
-      `Min. Breaking Load: ${ssFmt(mbl, 0)} kgf`,
-      `Safety Factor: ${ssFmt(sf, 1)}`,
-    ];
-
-    if (model?.hydraulicEnabled) {
-      const hStrings = stateNumber(state, 'h_pump_strings');
-      const hHp = stateNumber(state, 'h_emotor_hp');
-      const hRpm = stateNumber(state, 'h_emotor_rpm');
-      const hPump = stateNumber(state, 'h_pump_cc');
-      const hPsi = stateNumber(state, 'h_max_psi');
-      const hMot = stateNumber(state, 'h_hmot_cc');
-      commentLines.push(
-        '',
-        'Hydraulic System:',
-        `  Pump Strings: ${ssFmt(hStrings, 0)}`,
-        `  E-Motor: ${ssFmt(hHp, 0)} HP @ ${ssFmt(hRpm, 0)} RPM`,
-        `  Pump: ${ssFmt(hPump, 0)} cc/rev`,
-        `  Max Pressure: ${ssFmt(hPsi, 0)} psi`,
-        `  Hyd Motor: ${ssFmt(hMot, 0)} cc/rev`,
-      );
+    if (Array.isArray(checkBoxes)) {
+      for (const fieldName of checkBoxes) {
+        try {
+          const field = form.getCheckBox(fieldName);
+          if (field) field.check();
+        } catch { /* field not found — skip */ }
+      }
     }
 
-    setText('9 Comments  Notes Supply drawing or sketch of winch mechanics  dimensions separately if requiredRow1',
-      commentLines.join('\n'));
-
-    // Flatten form so fields show as printed text
     form.flatten();
 
     const pdfBytes = await pdfDoc.save();
+    const projectName = textFields['Customer Reference'] || 'winch';
+    const today = textFields['Dated'] || new Date().toISOString().slice(0, 10);
+    const safeName = projectName.replace(/[^a-zA-Z0-9_-]/g, '_').replace(/_+/g, '_');
+
     res.set('Content-Type', 'application/pdf');
-    res.set('Content-Disposition', `attachment; filename="${(projectName || 'winch').replace(/[^a-zA-Z0-9_-]/g, '_')}_ABB_SpecSheet_${today}.pdf"`);
+    res.set('Content-Disposition', `attachment; filename="${safeName}_ABB_SpecSheet_${today}.pdf"`);
     res.send(Buffer.from(pdfBytes));
   } catch (err) {
     next(err);
