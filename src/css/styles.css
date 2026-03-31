@@ -196,7 +196,7 @@ body {
   border-color: #d4a8a2;
 }
 .btn--danger:hover {
-  background: #7b2d8e;
+  background: #2c56a3;
   color: #fff;
   border-color: #b84233;
 }
@@ -459,7 +459,7 @@ body {
 
 /* Top-level "Inputs" header bar */
 .inputs-header {
-  background: #7b2d8e;
+  background: #2c56a3;
   color: #fff;
   display: flex;
   align-items: center;
@@ -502,7 +502,7 @@ body {
   z-index: 200;
   writing-mode: vertical-rl;
   text-orientation: mixed;
-  background: #7b2d8e;
+  background: #2c56a3;
   color: #fff;
   border: none;
   border-radius: 0 6px 6px 0;
