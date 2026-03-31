@@ -21,7 +21,7 @@ const FALLBACK_HEX = {
 };
 
 const SVG_BASE_HEIGHT = 360;
-const SVG_MARGIN = 52;
+const SVG_MARGIN = 16;
 
 /**
  * Parse a CSS color string into RGB components.
