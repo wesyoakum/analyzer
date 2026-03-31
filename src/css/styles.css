@@ -256,10 +256,10 @@ body {
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: var(--space-sm);
-  margin-bottom: var(--space-md);
+  gap: var(--space-xs);
+  margin-bottom: var(--space-sm);
   text-align: center;
-  padding-bottom: var(--space-sm);
+  padding-bottom: var(--space-xs);
 }
 
 .page-header__image {
@@ -290,8 +290,8 @@ body {
 .card {
   background: #fff;
   border: none;
-  padding: var(--space-md);
-  margin-top: var(--space-md);
+  padding: var(--space-sm) var(--space-md);
+  margin-top: var(--space-sm);
   box-shadow: none;
 }
 
@@ -330,7 +330,7 @@ body {
 .input-sections {
   display: flex;
   flex-direction: column;
-  gap: var(--space-md);
+  gap: var(--space-sm);
 }
 
 .summary-card {
@@ -347,7 +347,7 @@ body {
 .input-summary {
   display: flex;
   flex-direction: column;
-  gap: var(--space-md);
+  gap: var(--space-sm);
 }
 
 .summary-intro {
@@ -459,7 +459,7 @@ body {
 
 /* Top-level "Inputs" header bar */
 .inputs-header {
-  background: #8b5c2a;
+  background: #b84233;
   color: #fff;
   display: flex;
   align-items: center;
@@ -502,7 +502,7 @@ body {
   z-index: 200;
   writing-mode: vertical-rl;
   text-orientation: mixed;
-  background: #8b5c2a;
+  background: #b84233;
   color: #fff;
   border: none;
   border-radius: 0 6px 6px 0;
@@ -1030,8 +1030,8 @@ button:focus {
 
 /* Report header block */
 .report-header {
-  margin-bottom: var(--space-md);
-  padding: var(--space-md) 0 var(--space-sm);
+  margin-bottom: var(--space-sm);
+  padding: var(--space-sm) 0 var(--space-xs);
   border-bottom: 1px solid var(--paper-line);
 }
 
@@ -1056,7 +1056,7 @@ button:focus {
 
 /* Executive summary */
 .report-executive-summary {
-  margin-bottom: var(--space-md);
+  margin-bottom: var(--space-sm);
 }
 
 .exec-summary__body {
@@ -1069,7 +1069,7 @@ button:focus {
   flex-wrap: wrap;
   align-items: flex-end;
   gap: var(--space-sm);
-  margin-top: var(--space-lg);
+  margin-top: var(--space-md);
 }
 
 .tab-bar .tabs {
@@ -1130,8 +1130,8 @@ nav.tabs {
 
 .panel {
   display: block;
-  padding-top: var(--space-md);
-  scroll-margin-top: var(--space-md);
+  padding-top: var(--space-sm);
+  scroll-margin-top: var(--space-sm);
 }
 
 .panel .card:first-of-type {
@@ -1757,7 +1757,7 @@ th[title] {
 
 /* Panel section titles */
 .panel-section-title {
-  margin: var(--space-xs) 0 var(--space-sm);
+  margin: 0 0 var(--space-xs);
 }
 
 /* Symbols reference table */
