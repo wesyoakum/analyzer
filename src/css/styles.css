@@ -196,7 +196,7 @@ body {
   border-color: #d4a8a2;
 }
 .btn--danger:hover {
-  background: #2c56a3;
+  background: #b84233;
   color: #fff;
   border-color: #b84233;
 }
@@ -459,7 +459,7 @@ body {
 
 /* Top-level "Inputs" header bar */
 .inputs-header {
-  background: #2c56a3;
+  background: #b84233;
   color: #fff;
   display: flex;
   align-items: center;
@@ -502,7 +502,7 @@ body {
   z-index: 200;
   writing-mode: vertical-rl;
   text-orientation: mixed;
-  background: #2c56a3;
+  background: #b84233;
   color: #fff;
   border: none;
   border-radius: 0 6px 6px 0;
@@ -1261,7 +1261,30 @@ nav.tabs {
   margin: 0;
 }
 #drum_card .card-header {
-  padding: var(--space-sm) var(--space-md) 0;
+  padding: 0;
+  margin: 0;
+}
+#drum_card .section-title {
+  margin: 0;
+}
+#drum_card .card-header-actions {
+  margin: 0;
+}
+#drum_card .drum-visual {
+  margin: 0;
+  gap: 0;
+}
+#drum_card .drum-visual__image {
+  margin: 0;
+}
+#drum_card .drum-visual__svg {
+  margin: 0;
+}
+#drum_card .drum-visual__info {
+  margin: 0;
+}
+#drum_card .drum-summary {
+  margin: 0;
 }
 
 .drum-visual {
