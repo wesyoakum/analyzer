@@ -935,11 +935,17 @@ async function setupProjectManager() {
   };
 
   const saveProject = async ({ useSelectedId }) => {
-    const selectedId = useSelectedId ? select.value || undefined : undefined;
+    let selectedId = useSelectedId ? select.value || undefined : undefined;
     const name = nameInput.value.trim();
     if (!name) {
       window.alert('Enter a project name before saving.');
       return;
+    }
+
+    // If no explicit ID, check for existing project with same name and overwrite it
+    if (!selectedId) {
+      const existing = cachedProjects.find(p => p.name === name);
+      if (existing) selectedId = existing.id;
     }
 
     const payload = {
