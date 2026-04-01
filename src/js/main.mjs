@@ -2431,7 +2431,11 @@ function computeAll() {
 
     lastComputedModel = model;
 
-    // Wraps note removed from output per user request
+    // Update wraps_override placeholder with calculated value
+    const wrapsEl = /** @type {HTMLInputElement|null} */ (document.getElementById('wraps_override'));
+    if (wrapsEl && model.meta?.wraps_per_layer_calc != null) {
+      wrapsEl.placeholder = String(model.meta.wraps_per_layer_calc);
+    }
 
     lastDrumState = { rows: model.rows, summary: model.summary, cfg: model.cfg, meta: model.meta };
     renderDrumVisualization(model.rows, model.summary, model.cfg, model.meta);
