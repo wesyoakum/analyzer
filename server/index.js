@@ -5,7 +5,7 @@ import fs from 'fs/promises';
 import crypto from 'crypto';
 import { execFile } from 'child_process';
 import { promisify } from 'util';
-import { PDFDocument, PDFName, PDFBool } from 'pdf-lib';
+import { PDFDocument } from 'pdf-lib';
 import { buildComputationModel } from '../src/js/analysis-data.mjs';
 import { renderReportHtml } from '../src/js/report-renderer.mjs';
 
@@ -633,10 +633,6 @@ app.post('/api/spec-sheet/pdf', async (req, res, next) => {
     const templateBytes = await fs.readFile(SPEC_SHEET_TEMPLATE);
     const pdfDoc = await PDFDocument.load(templateBytes);
     fillSpecSheetPdf(pdfDoc, { textFields, checkBoxes });
-
-    // Tell viewers to regenerate appearance streams for print compatibility
-    const acroForm = pdfDoc.catalog.lookup(PDFName.of('AcroForm'));
-    if (acroForm) acroForm.set(PDFName.of('NeedAppearances'), PDFBool.True);
 
     const pdfBytes = await pdfDoc.save({ useObjectStreams: false });
     const projectName = textFields['Customer Reference'] || 'winch';

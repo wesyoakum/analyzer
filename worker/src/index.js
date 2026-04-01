@@ -3,7 +3,7 @@
 // Two KV keys: "presets" (JSON array) and "projects" (JSON array).
 // KV also stores "abb-spec-sheet-template" (binary PDF) for spec sheet generation.
 
-import { PDFDocument, PDFName, PDFBool } from 'pdf-lib';
+import { PDFDocument } from 'pdf-lib';
 
 // ---------------------------------------------------------------------------
 // Helpers
@@ -294,10 +294,6 @@ async function handleSpecSheetPdf(env, request) {
 
   const pdfDoc = await PDFDocument.load(templateBytes);
   fillSpecSheetPdf(pdfDoc, { textFields, checkBoxes });
-
-  // Tell viewers to regenerate appearance streams for print compatibility
-  const acroForm = pdfDoc.catalog.lookup(PDFName.of('AcroForm'));
-  if (acroForm) acroForm.set(PDFName.of('NeedAppearances'), PDFBool.True);
 
   const pdfBytes = await pdfDoc.save({ useObjectStreams: false });
   const projectName = textFields['Customer Reference'] || 'winch';
