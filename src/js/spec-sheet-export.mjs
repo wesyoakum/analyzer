@@ -176,7 +176,8 @@ export async function downloadSpecSheetPDF(model) {
 
   const blob = await res.blob();
   const safeName = (projectName || 'winch').replace(/[^a-zA-Z0-9_-]/g, '_').replace(/_+/g, '_');
-  const filename = `${safeName}_ABB_SpecSheet_${dated}.pdf`;
+  const ts = new Date().toISOString().replace(/[-:]/g, '').replace('T', '_').slice(0, 15);
+  const filename = `${safeName}_ABB_SpecSheet_${dated}_${ts}.pdf`;
 
   const url = URL.createObjectURL(blob);
   const a = document.createElement('a');
