@@ -108,9 +108,9 @@ export function buildSpecSheetFields(model) {
 
   // --- Read ABB Spec Sheet sidebar inputs ---
   const cert = q('abb_certifications')?.value || '';
-  const drumInnerDia = parseFloat(q('abb_drum_inner_dia')?.value);
-  const largeGearDia = parseFloat(q('abb_large_gear_dia')?.value);
-  const largeGearWidth = parseFloat(q('abb_large_gear_width')?.value);
+  const drumInnerDiaIn = parseFloat(q('abb_drum_inner_dia_in')?.value);
+  const largeGearDiaIn = parseFloat(q('abb_large_gear_dia_in')?.value);
+  const largeGearWidthIn = parseFloat(q('abb_large_gear_width_in')?.value);
 
   const ringTeeth = safeRead('ring_teeth');   // Zr
   const pinionTeeth = safeRead('pinion_teeth'); // Zp
@@ -148,16 +148,16 @@ export function buildSpecSheetFields(model) {
   };
 
   // Bare drum inner dia
-  if (Number.isFinite(drumInnerDia) && drumInnerDia > 0) {
-    textFields['Bare Drum Inner Dia mm  in'] = dualIn(drumInnerDia);
+  if (Number.isFinite(drumInnerDiaIn) && drumInnerDiaIn > 0) {
+    textFields['Bare Drum Inner Dia mm  in'] = dualIn(drumInnerDiaIn);
   }
 
   // Large gear dia & width (for inertia calculations)
-  if (Number.isFinite(largeGearDia) && largeGearDia > 0) {
-    textFields['Large Gear Dia mm  in For inertia calculations'] = dualIn(largeGearDia);
+  if (Number.isFinite(largeGearDiaIn) && largeGearDiaIn > 0) {
+    textFields['Large Gear Dia mm  in For inertia calculations'] = dualIn(largeGearDiaIn);
   }
-  if (Number.isFinite(largeGearWidth) && largeGearWidth > 0) {
-    textFields['Large Gear Width mm  in For inertia calculations'] = dualIn(largeGearWidth);
+  if (Number.isFinite(largeGearWidthIn) && largeGearWidthIn > 0) {
+    textFields['Large Gear Width mm  in For inertia calculations'] = dualIn(largeGearWidthIn);
   }
 
   // Gear teeth logic: if Zr and Zp are filled, use tooth counts;

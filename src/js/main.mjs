@@ -1190,8 +1190,26 @@ document.addEventListener('DOMContentLoaded', () => {
 
   setupAutoRecompute();
 
-
-
+  // Dual mm/in auto-conversion for ABB Spec Sheet fields
+  const MM_PER_IN = 25.4;
+  const dualPairs = [
+    ['abb_drum_inner_dia_mm', 'abb_drum_inner_dia_in'],
+    ['abb_large_gear_dia_mm', 'abb_large_gear_dia_in'],
+    ['abb_large_gear_width_mm', 'abb_large_gear_width_in'],
+  ];
+  for (const [mmId, inId] of dualPairs) {
+    const mmEl = /** @type {HTMLInputElement|null} */ (document.getElementById(mmId));
+    const inEl = /** @type {HTMLInputElement|null} */ (document.getElementById(inId));
+    if (!mmEl || !inEl) continue;
+    mmEl.addEventListener('input', () => {
+      const v = parseFloat(mmEl.value);
+      inEl.value = Number.isFinite(v) ? (v / MM_PER_IN).toFixed(3) : '';
+    });
+    inEl.addEventListener('input', () => {
+      const v = parseFloat(inEl.value);
+      mmEl.value = Number.isFinite(v) ? (v * MM_PER_IN).toFixed(1) : '';
+    });
+  }
 
   setupUnitConverter();
 
