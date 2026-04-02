@@ -728,6 +728,112 @@
           <select id="hyd-power-output-unit" aria-label="Power output unit"></select>
         </div>
       </section>
+      <section class="card" id="sidebar-abb-spec">
+        <h3 class="input-section__title">ABB Spec Sheet Options</h3>
+
+        <!-- Text inputs -->
+        <table class="worksheet">
+          <thead>
+            <tr>
+              <th scope="col">Parameter</th>
+              <th scope="col" class="value">Input</th>
+              <th scope="col" class="units">Units</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <th scope="row"><label class="param-label" for="abb_certifications">Certifications</label></th>
+              <td class="value"><input id="abb_certifications" type="text" value="DnV"></td>
+              <td class="units">–</td>
+            </tr>
+            <tr>
+              <th scope="row"><label class="param-label" for="abb_drum_inner_dia">Bare Drum Inner Dia</label></th>
+              <td class="value"><input id="abb_drum_inner_dia" type="number" step="any" placeholder="enter"></td>
+              <td class="units">mm / in</td>
+            </tr>
+            <tr>
+              <th scope="row"><label class="param-label" for="abb_large_gear_dia">Large Gear Dia</label></th>
+              <td class="value"><input id="abb_large_gear_dia" type="number" step="any" placeholder="enter"></td>
+              <td class="units">mm / in</td>
+            </tr>
+            <tr>
+              <th scope="row"><label class="param-label" for="abb_large_gear_width">Large Gear Width</label></th>
+              <td class="value"><input id="abb_large_gear_width" type="number" step="any" placeholder="enter"></td>
+              <td class="units">mm / in</td>
+            </tr>
+          </tbody>
+        </table>
+
+        <!-- Application type checkboxes -->
+        <h4 class="abb-opts__heading">Application Type</h4>
+        <div class="abb-opts__grid">
+          <label class="abb-opts__cb"><input id="abb_app_general" type="checkbox"><span>General</span></label>
+          <label class="abb-opts__cb"><input id="abb_app_tow" type="checkbox"><span>Tow</span></label>
+          <label class="abb-opts__cb"><input id="abb_app_ahc" type="checkbox" checked><span>AHC</span></label>
+          <label class="abb-opts__cb"><input id="abb_app_lars" type="checkbox" checked><span>LARS</span></label>
+          <label class="abb-opts__cb"><input id="abb_app_oceanographic" type="checkbox"><span>Oceanographic</span></label>
+          <label class="abb-opts__cb"><input id="abb_app_umbilical" type="checkbox"><span>Umbilical</span></label>
+          <label class="abb-opts__cb"><input id="abb_app_spud" type="checkbox"><span>Spud</span></label>
+          <label class="abb-opts__cb"><input id="abb_app_other" type="checkbox"><span>Other</span></label>
+        </div>
+
+        <!-- Yes / No option toggles -->
+        <h4 class="abb-opts__heading">Options <span class="dim">(checked = Yes)</span></h4>
+        <div class="abb-opts__grid">
+          <label class="abb-opts__cb"><input id="abb_motor_brake" type="checkbox" checked><span>Motor Brake</span></label>
+          <label class="abb-opts__cb"><input id="abb_auto_haul" type="checkbox"><span>Auto Haul &amp; Payout</span></label>
+          <label class="abb-opts__cb"><input id="abb_ahc_option" type="checkbox" checked><span>AHC</span></label>
+          <label class="abb-opts__cb"><input id="abb_clutch" type="checkbox"><span>Clutch</span></label>
+          <label class="abb-opts__cb"><input id="abb_ext_measure" type="checkbox"><span>External Measure</span></label>
+          <label class="abb-opts__cb"><input id="abb_gearbox_can_change" type="checkbox"><span>Gearbox Can Change</span></label>
+          <label class="abb-opts__cb"><input id="abb_ext_gearing_can_change" type="checkbox"><span>Ext Gearing Can Change</span></label>
+        </div>
+
+        <!-- Location toggles (Motor Shaft / Drum Shaft) -->
+        <h4 class="abb-opts__heading">Component Locations</h4>
+        <table class="worksheet">
+          <thead>
+            <tr>
+              <th scope="col">Component</th>
+              <th scope="col" class="value">Location</th>
+              <th scope="col" class="units"></th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <th scope="row"><label class="param-label" for="abb_loc_gearbox">Gearbox</label></th>
+              <td class="value">
+                <select id="abb_loc_gearbox">
+                  <option value="motor" selected>Motor Shaft</option>
+                  <option value="drum">Drum Shaft</option>
+                </select>
+              </td>
+              <td class="units"></td>
+            </tr>
+            <tr>
+              <th scope="row"><label class="param-label" for="abb_loc_ext_gearing">Ext Gearing</label></th>
+              <td class="value">
+                <select id="abb_loc_ext_gearing">
+                  <option value="motor">Motor Shaft</option>
+                  <option value="drum" selected>Drum Shaft</option>
+                </select>
+              </td>
+              <td class="units"></td>
+            </tr>
+            <tr>
+              <th scope="row"><label class="param-label" for="abb_loc_encoder">Encoder</label></th>
+              <td class="value">
+                <select id="abb_loc_encoder">
+                  <option value="motor" selected>Motor Shaft</option>
+                  <option value="drum">Drum Shaft</option>
+                </select>
+              </td>
+              <td class="units"></td>
+            </tr>
+          </tbody>
+        </table>
+      </section>
+
       <div class="btnbar app-sidebar__footer-actions">
         <button id="import-presets-btn" type="button">Import Presets</button>
         <input id="import-presets-file" type="file" accept="application/json,.json" class="sr-only" aria-hidden="true" tabindex="-1">

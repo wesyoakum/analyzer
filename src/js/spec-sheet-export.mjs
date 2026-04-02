@@ -106,6 +106,18 @@ export function buildSpecSheetFields(model) {
     );
   }
 
+  // --- Read ABB Spec Sheet sidebar inputs ---
+  const cert = q('abb_certifications')?.value || '';
+  const drumInnerDia = parseFloat(q('abb_drum_inner_dia')?.value);
+  const largeGearDia = parseFloat(q('abb_large_gear_dia')?.value);
+  const largeGearWidth = parseFloat(q('abb_large_gear_width')?.value);
+
+  const ringTeeth = safeRead('ring_teeth');   // Zr
+  const pinionTeeth = safeRead('pinion_teeth'); // Zp
+
+  const isChecked = (id) => !!q(id)?.checked;
+  const selVal = (id) => q(id)?.value || '';
+
   // Text fields — keys must match the PDF form field names exactly
   const textFields = {
     'Customer Reference': projectName,
@@ -132,26 +144,63 @@ export function buildSpecSheetFields(model) {
     'Motor Volts': '480',
     'Motor Hz': '60',
     '9 Comments  Notes Supply drawing or sketch of winch mechanics  dimensions separately if requiredRow1': commentLines.join('\n'),
+    'Certifications (e.g. DnV)': cert,
   };
 
-  // Put GR2 info in external gearing field
-  if (Number.isFinite(gr2) && gr2 > 0) {
+  // Bare drum inner dia
+  if (Number.isFinite(drumInnerDia) && drumInnerDia > 0) {
+    textFields['Bare Drum Inner Dia mm  in'] = dualIn(drumInnerDia);
+  }
+
+  // Large gear dia & width (for inertia calculations)
+  if (Number.isFinite(largeGearDia) && largeGearDia > 0) {
+    textFields['Large Gear Dia mm  in For inertia calculations'] = dualIn(largeGearDia);
+  }
+  if (Number.isFinite(largeGearWidth) && largeGearWidth > 0) {
+    textFields['Large Gear Width mm  in For inertia calculations'] = dualIn(largeGearWidth);
+  }
+
+  // Gear teeth logic: if Zr and Zp are filled, use tooth counts;
+  // otherwise fall back to ratio string for GR2
+  if (Number.isFinite(ringTeeth) && ringTeeth > 0
+      && Number.isFinite(pinionTeeth) && pinionTeeth > 0) {
+    textFields['Large Gear Teeth teeth For gearing ratio calculations'] = fmt(ringTeeth, 0);
+    textFields['Small Gear Teeth teeth For gearing ratio calculations'] = fmt(pinionTeeth, 0);
+  } else if (Number.isFinite(gr2) && gr2 > 0) {
     textFields['Small Gear Teeth teeth For gearing ratio calculations'] = `Ratio: ${fmt(gr2, 3)}`;
   }
 
-  // Checkboxes — all fields now have unique names
+  // --- Checkboxes ---
   const checkBoxes = [
     'Check Box - Layer 0',
-    'Check Box LARS',
-    'CB Gearbox Motor Shaft',       // Gearbox location → Motor Shaft
-    'CB ExtGearing Drum Shaft',     // External gearing location → Drum Shaft
-    'CB Encoder Motor Shaft',       // Encoder location → Motor Shaft
-    'CB MotorBrake Yes',            // Motor used as brake → Yes
-    'CB AutoHaul No',               // Auto Haul & Payout → No
-    'CB AHC No',                    // AHC → No (default)
-    'CB Clutch No',                 // Clutch used → No
-    'CB ExtMeasure No',             // External measure device → No
   ];
+
+  // Application type checkboxes
+  if (isChecked('abb_app_general'))       checkBoxes.push('Check Box General');
+  if (isChecked('abb_app_tow'))           checkBoxes.push('Check Box Tow');
+  if (isChecked('abb_app_ahc'))           checkBoxes.push('Check Box AHC');
+  if (isChecked('abb_app_lars'))          checkBoxes.push('Check Box LARS');
+  if (isChecked('abb_app_oceanographic')) checkBoxes.push('Check Box Oceanographic');
+  if (isChecked('abb_app_umbilical'))     checkBoxes.push('Check Box Umbilical');
+  if (isChecked('abb_app_spud'))          checkBoxes.push('Check Box Spud');
+  if (isChecked('abb_app_other'))         checkBoxes.push('Check Box Other');
+
+  // Yes / No option pairs — checked = Yes, unchecked = No
+  checkBoxes.push(isChecked('abb_motor_brake')   ? 'CB MotorBrake Yes'   : 'CB MotorBrake No');
+  checkBoxes.push(isChecked('abb_auto_haul')     ? 'CB AutoHaul Yes'     : 'CB AutoHaul No');
+  checkBoxes.push(isChecked('abb_ahc_option')    ? 'CB AHC Yes'          : 'CB AHC No');
+  checkBoxes.push(isChecked('abb_clutch')        ? 'CB Clutch Yes'       : 'CB Clutch No');
+  checkBoxes.push(isChecked('abb_ext_measure')   ? 'CB ExtMeasure Yes'   : 'CB ExtMeasure No');
+  checkBoxes.push(isChecked('abb_gearbox_can_change')      ? 'CB Gearbox CanChange Yes'    : 'CB Gearbox CanChange No');
+  checkBoxes.push(isChecked('abb_ext_gearing_can_change')  ? 'CB ExtGearing CanChange Yes'  : 'CB ExtGearing CanChange No');
+
+  // Location toggles — Motor Shaft or Drum Shaft
+  checkBoxes.push(selVal('abb_loc_gearbox') === 'drum'
+    ? 'CB Gearbox Drum Shaft' : 'CB Gearbox Motor Shaft');
+  checkBoxes.push(selVal('abb_loc_ext_gearing') === 'drum'
+    ? 'CB ExtGearing Drum Shaft' : 'CB ExtGearing Motor Shaft');
+  checkBoxes.push(selVal('abb_loc_encoder') === 'drum'
+    ? 'CB Encoder Drum Shaft' : 'CB Encoder Motor Shaft');
 
   return { textFields, checkBoxes, projectName, dated: today };
 }

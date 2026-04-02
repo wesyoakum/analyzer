@@ -9,8 +9,8 @@
   --ink-900: #142238;
   --ink-700: #2f3b54;
   --ink-500: #55637d;
-  --accent: #2563eb;
-  --accent-light: #eff6ff;
+  --accent: #0d9488;
+  --accent-light: #f0fdfa;
   --doc-serif: "Inter", "Segoe UI", system-ui, -apple-system, BlinkMacSystemFont, "Roboto", "Helvetica Neue", Arial, sans-serif;
   --tension-low: #6c2bd9;
   --tension-high: #f97316;
@@ -1486,6 +1486,33 @@ th[title] {
 }
 
 .plot-panel__checkbox input {
+  margin: 0;
+}
+
+/* ABB Spec Sheet Options */
+.abb-opts__heading {
+  margin: 14px 0 6px;
+  font-size: 0.82rem;
+  font-weight: 600;
+  color: var(--ink-700);
+}
+.abb-opts__grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 4px 16px;
+  margin-bottom: 10px;
+}
+.abb-opts__cb {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 0.82rem;
+  color: var(--ink-700);
+  cursor: pointer;
+  user-select: none;
+  padding: 2px 0;
+}
+.abb-opts__cb input {
   margin: 0;
 }
 
