@@ -2455,7 +2455,11 @@ function computeAll() {
       h_pump_cc: read('h_pump_cc'),
       h_max_psi: read('h_max_psi'),
       h_hmot_cc: read('h_hmot_cc'),
-      h_hmot_rpm_cap: read('h_hmot_rpm_max')
+      h_hmot_rpm_cap: read('h_hmot_rpm_max'),
+      dynamic_enabled: q('dynamic_enabled')?.checked ?? false,
+      J_drum_kgm2: read('J_drum_kgm2'),
+      cable_w_air_kgpm: read('cable_w_air_kgpm'),
+      accel_time_s: read('accel_time_s'),
     });
 
     lastComputedModel = model;

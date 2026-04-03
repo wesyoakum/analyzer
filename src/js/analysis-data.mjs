@@ -62,6 +62,13 @@ export function buildComputationModel(inputs) {
   const torque_per_hmotor_maxP = torque_per_motor_from_pressure_Pa(dP_Pa, h_hmot_cc);
   const torque_at_drum_maxP_factor = Math.max(gr1, 1) * Math.max(gr2, 1) * Math.max(motors, 1);
 
+  // Dynamic loads (inertia)
+  const dynamicEnabled = Boolean(inputs.dynamic_enabled);
+  const J_drum_kgm2 = positiveOr(inputs.J_drum_kgm2, 0);
+  const cable_w_air_kgpm = positiveOr(inputs.cable_w_air_kgpm, 0);
+  const accel_time_s = positiveOr(inputs.accel_time_s, 0);
+  const core_radius_m = ((inputs.core_dia_in || 0) + 2 * (inputs.lebus_thk_in || 0)) * M_PER_IN / 2;
+
   const { rows: baseRows, summary, meta } = calcLayers(cfg);
   const rows = baseRows.map(r => ({ ...r }));
 
@@ -157,6 +164,21 @@ export function buildComputationModel(inputs) {
       r.hyd_speed_power_mpm = 0; r.hyd_speed_flow_mpm = 0; r.hyd_speed_available_mpm = 0;
       r.hyd_hp_used_at_available = 0; r.hyd_elec_input_hp_used = 0;
       r.hyd_drum_rpm_flow = 0; r.hyd_drum_rpm_power = 0; r.hyd_drum_rpm_available = 0;
+    }
+
+    // Dynamic loads: acceleration torque from rotational inertia
+    if (dynamicEnabled && accel_time_s > 0) {
+      const cable_on_drum_m = r.spooled_len_m;
+      const m_cable = cable_on_drum_m * cable_w_air_kgpm;
+      const r_outer_m = radius_m;
+      const J_cable = 0.5 * m_cable * (r_outer_m * r_outer_m + core_radius_m * core_radius_m);
+      const J_total = J_drum_kgm2 + J_cable;
+      const line_speed_mps = (r.line_speed_mpm || 0) / 60;
+      const omega = radius_m > 0 ? line_speed_mps / radius_m : 0;
+      const alpha = omega / accel_time_s;
+      r.accel_torque_drum_Nm = +(J_total * alpha).toFixed(1);
+    } else {
+      r.accel_torque_drum_Nm = 0;
     }
   }
 

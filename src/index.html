@@ -4,7 +4,7 @@
   <meta charset="utf-8" />
   <title>Winch Analysis</title>
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <link rel="stylesheet" href="css/styles.css?v=6" />
+  <link rel="stylesheet" href="css/styles.css?v=7" />
   <!-- KaTeX setup -->
   <link
     rel="stylesheet"
@@ -484,11 +484,51 @@
           </section>
         </div>
     </section>
-    
-    
-    
-    
-    <section class="card" data-drive-scope="electric" data-summary-card>
+
+    <section class="card" id="sidebar-dynamic-loads">
+      <section class="input-section">
+        <h3 class="input-section__title">Dynamic Loads</h3>
+        <table class="worksheet">
+          <thead>
+            <tr>
+              <th scope="col">Parameter</th>
+              <th scope="col" class="value">Input</th>
+              <th scope="col" class="units">Units</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <th scope="row">
+                <label class="param-label" for="dynamic_enabled">Enable Dynamic Loads</label>
+              </th>
+              <td class="value"><input id="dynamic_enabled" type="checkbox"></td>
+              <td class="units">–</td>
+            </tr>
+            <tr>
+              <th scope="row">
+                <label class="param-label" for="J_drum_kgm2" data-code="J_drum_kgm2">Drum + Ring Gear Inertia <span class="symbol" aria-hidden="true" data-latex="J_{drum}">J<sub>drum</sub></span></label>
+              </th>
+              <td class="value"><input id="J_drum_kgm2" type="number" step="any" placeholder="enter"></td>
+              <td class="units">kg·m²</td>
+            </tr>
+            <tr>
+              <th scope="row">
+                <label class="param-label" for="cable_w_air_kgpm" data-code="cable_w_air_kgpm">Cable Weight in Air <span class="symbol" aria-hidden="true" data-latex="w_{c,air}">w<sub>c,air</sub></span></label>
+              </th>
+              <td class="value"><input id="cable_w_air_kgpm" type="number" step="0.1" placeholder="enter"></td>
+              <td class="units">kg/m</td>
+            </tr>
+            <tr>
+              <th scope="row">
+                <label class="param-label" for="accel_time_s" data-code="accel_time_s">Acceleration Time <span class="symbol" aria-hidden="true" data-latex="t_{a}">t<sub>a</sub></span></label>
+              </th>
+              <td class="value"><input id="accel_time_s" type="number" step="0.1" value="5"></td>
+              <td class="units">s</td>
+            </tr>
+          </tbody>
+        </table>
+      </section>
+    </section>
       <h2 class="section-title">Section 1.2: Electric Inputs</h2>
       <table class="worksheet">
         <thead>
@@ -1110,6 +1150,9 @@
               </th>
               <th title="avail_tension_kgf" data-unit-group="force_kgf">
                 <span data-latex="T_{avail}">T<sub>avail</sub></span><br>(<span class="th-unit">kgf</span>)
+              </th>
+              <th title="max_accel_torque_drum_Nm" data-unit-group="torque_Nm" class="dynamic-col">
+                <span data-latex="\tau_{accel}">τ<sub>accel</sub></span><br>(<span class="th-unit">N·m</span>)
               </th>
             </tr>
           </thead>

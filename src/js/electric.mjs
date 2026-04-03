@@ -83,6 +83,14 @@ export function rowsToElectricLayer(rows, payload_kg, cable_w_kgpm, gr1, gr2, mo
     }
   }
 
+  // Third pass: find max acceleration torque per layer
+  const maxAccelByLayer = new Map();
+  for (const r of rows) {
+    const val = r.accel_torque_drum_Nm || 0;
+    const cur = maxAccelByLayer.get(r.layer_no) || 0;
+    if (val > cur) maxAccelByLayer.set(r.layer_no, val);
+  }
+
   // Final: compute max tension/torque values at the layer start (pre-wrap)
   const out = [];
   const denom = (gr1 || 1) * (gr2 || 1) * (motors || 1);
@@ -107,7 +115,8 @@ export function rowsToElectricLayer(rows, payload_kg, cable_w_kgpm, gr1, gr2, mo
       max_gearbox_torque_Nm: maxGbT_Nm,
       max_torque_Nm: maxDrumT_Nm,
       tau_req_drum_kNm: +(maxDrumT_Nm / 1000).toFixed(1),
-      max_motor_torque_Nm: maxMotorNm
+      max_motor_torque_Nm: maxMotorNm,
+      max_accel_torque_drum_Nm: maxAccelByLayer.get(L.layer_no) || 0
     });
   }
   return out;
@@ -138,7 +147,8 @@ export function projectElectricWraps(rows) {
     vGB: r.el_speed_gearbox_mpm,
     vavail: r.el_speed_available_mpm,
     line_speed_mpm: r.line_speed_mpm,
-    avail_tension_kgf: r.avail_tension_kgf
+    avail_tension_kgf: r.avail_tension_kgf,
+    accel_torque_drum_Nm: r.accel_torque_drum_Nm || 0
   }));
 }
 
@@ -186,7 +196,8 @@ export function renderElectricTables(
       torqueCell(r.max_gearbox_torque_Nm),
       `<td>${fmtSpd(r.line_speed_at_start_mpm ?? '')}</td>`,
       `<td>${fmtKgf(r.tension_required_start_kgf)}-${fmtKgf(r.tension_required_end_kgf)}</td>`,
-      `<td>${fmtKgf(r.avail_tension_kgf)}</td>`
+      `<td>${fmtKgf(r.avail_tension_kgf)}</td>`,
+      `<td>${r.max_accel_torque_drum_Nm ? fmtTrq(r.max_accel_torque_drum_Nm) : '–'}</td>`
     ];
     tr.innerHTML = cells.join('');
     tbodyLayer.appendChild(tr);
