@@ -4,7 +4,7 @@
   <meta charset="utf-8" />
   <title>Winch Analysis</title>
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <link rel="stylesheet" href="css/styles.css?v=7" />
+  <link rel="stylesheet" href="css/styles.css?v=8" />
   <!-- KaTeX setup -->
   <link
     rel="stylesheet"
@@ -517,13 +517,6 @@
               </th>
               <td class="value"><input id="cable_w_air_kgpm" type="number" step="0.1" placeholder="enter"></td>
               <td class="units">kg/m</td>
-            </tr>
-            <tr>
-              <th scope="row">
-                <label class="param-label" for="accel_time_s" data-code="accel_time_s">Acceleration Time <span class="symbol" aria-hidden="true" data-latex="t_{a}">t<sub>a</sub></span></label>
-              </th>
-              <td class="value"><input id="accel_time_s" type="number" step="0.1" value="5"></td>
-              <td class="units">s</td>
             </tr>
           </tbody>
         </table>
@@ -1151,8 +1144,8 @@
               <th title="avail_tension_kgf" data-unit-group="force_kgf">
                 <span data-latex="T_{avail}">T<sub>avail</sub></span><br>(<span class="th-unit">kgf</span>)
               </th>
-              <th title="max_accel_torque_drum_Nm" data-unit-group="torque_Nm" class="dynamic-col">
-                <span data-latex="\tau_{accel}">τ<sub>accel</sub></span><br>(<span class="th-unit">N·m</span>)
+              <th title="min_avail_accel_mps2" class="dynamic-col">
+                <span data-latex="a_{min}">a<sub>min</sub></span><br>(m/s²)
               </th>
             </tr>
           </thead>

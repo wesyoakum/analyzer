@@ -166,19 +166,30 @@ export function buildComputationModel(inputs) {
       r.hyd_drum_rpm_flow = 0; r.hyd_drum_rpm_power = 0; r.hyd_drum_rpm_available = 0;
     }
 
-    // Dynamic loads: acceleration torque from rotational inertia
-    if (dynamicEnabled && accel_time_s > 0) {
+    // Dynamic loads: available linear acceleration from torque margin and inertia
+    if (dynamicEnabled) {
       const cable_on_drum_m = r.spooled_len_m;
       const m_cable = cable_on_drum_m * cable_w_air_kgpm;
-      const r_outer_m = radius_m;
-      const J_cable = 0.5 * m_cable * (r_outer_m * r_outer_m + core_radius_m * core_radius_m);
+      const J_cable = 0.5 * m_cable * (radius_m * radius_m + core_radius_m * core_radius_m);
       const J_total = J_drum_kgm2 + J_cable;
-      const line_speed_mps = (r.line_speed_mpm || 0) / 60;
-      const omega = radius_m > 0 ? line_speed_mps / radius_m : 0;
-      const alpha = omega / accel_time_s;
-      r.accel_torque_drum_Nm = +(J_total * alpha).toFixed(1);
+      r.J_total_kgm2 = +J_total.toFixed(2);
+
+      // Available drum torque from drive limits
+      const tau_avail_drum = (Number.isFinite(motor_tmax) ? motor_tmax : 0) * gear_product * motors;
+      const tau_margin = tau_avail_drum - drum_T;
+      r.tau_margin_Nm = +tau_margin.toFixed(1);
+
+      // Available linear acceleration: a = (τ_margin / J_total) × r
+      if (J_total > 0 && tau_margin > 0) {
+        const alpha = tau_margin / J_total;
+        r.avail_accel_mps2 = +(alpha * radius_m).toFixed(3);
+      } else {
+        r.avail_accel_mps2 = 0;
+      }
     } else {
-      r.accel_torque_drum_Nm = 0;
+      r.J_total_kgm2 = 0;
+      r.tau_margin_Nm = 0;
+      r.avail_accel_mps2 = 0;
     }
   }
 

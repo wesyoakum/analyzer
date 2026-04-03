@@ -83,12 +83,13 @@ export function rowsToElectricLayer(rows, payload_kg, cable_w_kgpm, gr1, gr2, mo
     }
   }
 
-  // Third pass: find max acceleration torque per layer
-  const maxAccelByLayer = new Map();
+  // Third pass: find minimum available acceleration per layer
+  const minAccelByLayer = new Map();
   for (const r of rows) {
-    const val = r.accel_torque_drum_Nm || 0;
-    const cur = maxAccelByLayer.get(r.layer_no) || 0;
-    if (val > cur) maxAccelByLayer.set(r.layer_no, val);
+    const val = r.avail_accel_mps2 ?? 0;
+    if (!minAccelByLayer.has(r.layer_no) || val < minAccelByLayer.get(r.layer_no)) {
+      minAccelByLayer.set(r.layer_no, val);
+    }
   }
 
   // Final: compute max tension/torque values at the layer start (pre-wrap)
@@ -116,7 +117,7 @@ export function rowsToElectricLayer(rows, payload_kg, cable_w_kgpm, gr1, gr2, mo
       max_torque_Nm: maxDrumT_Nm,
       tau_req_drum_kNm: +(maxDrumT_Nm / 1000).toFixed(1),
       max_motor_torque_Nm: maxMotorNm,
-      max_accel_torque_drum_Nm: maxAccelByLayer.get(L.layer_no) || 0
+      min_avail_accel_mps2: minAccelByLayer.get(L.layer_no) ?? 0
     });
   }
   return out;
@@ -148,7 +149,7 @@ export function projectElectricWraps(rows) {
     vavail: r.el_speed_available_mpm,
     line_speed_mpm: r.line_speed_mpm,
     avail_tension_kgf: r.avail_tension_kgf,
-    accel_torque_drum_Nm: r.accel_torque_drum_Nm || 0
+    avail_accel_mps2: r.avail_accel_mps2 || 0
   }));
 }
 
@@ -197,7 +198,7 @@ export function renderElectricTables(
       `<td>${fmtSpd(r.line_speed_at_start_mpm ?? '')}</td>`,
       `<td>${fmtKgf(r.tension_required_start_kgf)}-${fmtKgf(r.tension_required_end_kgf)}</td>`,
       `<td>${fmtKgf(r.avail_tension_kgf)}</td>`,
-      `<td>${r.max_accel_torque_drum_Nm ? fmtTrq(r.max_accel_torque_drum_Nm) : '–'}</td>`
+      `<td>${r.min_avail_accel_mps2 ? formatDecimal(r.min_avail_accel_mps2, 2) : '–'}</td>`
     ];
     tr.innerHTML = cells.join('');
     tbodyLayer.appendChild(tr);
