@@ -439,10 +439,11 @@ body {
 }
 @media (max-width: 1100px) {
   .app-shell {
-    grid-template-columns: minmax(0, 1fr);
-    gap: 24px;
-    padding: 24px 16px 48px;
-    justify-content: center;
+    grid-template-columns: 1fr;
+    grid-template-rows: auto auto 1fr;
+    gap: 0;
+    row-gap: 16px;
+    padding: 16px 12px 48px;
   }
 
   .app-sidebar {
@@ -450,22 +451,25 @@ body {
     max-height: none;
     width: 100%;
     grid-column: 1;
+    grid-row: auto;
   }
 
   .app-sidebar__content {
     overflow: visible;
   }
 
-  .sheet {
-    grid-column: 1;
-    justify-self: stretch;
-    width: 100%;
-  }
-
   .report-nav {
     grid-column: 1;
+    grid-row: auto;
     overflow-x: auto;
     -webkit-overflow-scrolling: touch;
+  }
+
+  .sheet {
+    grid-column: 1;
+    grid-row: auto;
+    width: 100%;
+    max-width: 100%;
   }
 }
 
