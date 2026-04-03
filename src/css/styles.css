@@ -463,8 +463,16 @@ body {
   }
 
   .report-nav {
+    position: sticky;
+    top: 0;
+    z-index: 100;
     overflow-x: auto;
     -webkit-overflow-scrolling: touch;
+    background: var(--paper-background);
+  }
+
+  .panel {
+    scroll-margin-top: 60px;
   }
 
   .sheet {
@@ -551,7 +559,7 @@ body {
   max-width: var(--sheet-width);
 }
 .app-shell--sidebar-hidden .sidebar-toggle {
-  display: block;
+  display: block !important;
 }
 .app-shell--sidebar-hidden .report-nav {
   grid-column: 1;
