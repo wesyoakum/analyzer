@@ -1151,6 +1151,8 @@ document.addEventListener('DOMContentLoaded', () => {
 
   setupWrapTableToggleLabels();
 
+  setupPayloadBreakdownToggle();
+
   setupPlotSettingsDialogs();
 
   configureSectionFourContent();
@@ -1691,6 +1693,23 @@ function setupWrapTableToggleLabels() {
 
     apply();
     details.addEventListener('toggle', apply);
+  });
+}
+
+function setupPayloadBreakdownToggle() {
+  const toggle = document.querySelector('.payload-breakdown-toggle');
+  const body = document.getElementById('payload-breakdown-body');
+  if (!toggle || !body) return;
+
+  const flip = () => {
+    const open = body.hidden;
+    body.hidden = !open;
+    toggle.setAttribute('aria-expanded', String(open));
+  };
+
+  toggle.addEventListener('click', flip);
+  toggle.addEventListener('keydown', e => {
+    if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); flip(); }
   });
 }
 
