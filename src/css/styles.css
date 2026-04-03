@@ -446,7 +446,8 @@ body {
 
   .sheet {
     grid-column: 1;
-    justify-self: center;
+    justify-self: stretch;
+    width: 100%;
   }
 
   .report-nav {
@@ -1962,12 +1963,6 @@ th[title] {
     max-width: 100%;
   }
 
-  .plot-controls__group {
-    min-width: 0;
-    flex-basis: 100%;
-  }
-}
-
   .sheet table thead,
   .sheet table tbody {
     width: 100%;
@@ -1980,6 +1975,11 @@ th[title] {
     overflow-wrap: normal;
     word-break: normal;
   }
+
+  .plot-controls__group {
+    min-width: 0;
+    flex-basis: 100%;
+  }
 }
 
 /* ========== Small phone styles ========== */
@@ -1989,9 +1989,10 @@ th[title] {
   }
 
   .sheet {
-    padding: 0 16px;
+    padding: 0 12px;
     border-left: none;
     border-right: none;
+    overflow-x: hidden;
   }
 
   .report-header__title {
