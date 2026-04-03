@@ -1219,6 +1219,11 @@ document.addEventListener('DOMContentLoaded', () => {
   const sidebarOpen = document.getElementById('sidebar_open');
   const shell = document.querySelector('.app-shell');
   if (sidebarEl && sidebarClose && sidebarOpen && shell) {
+    // Auto-hide sidebar on mobile so the sheet is visible first
+    if (window.matchMedia('(max-width: 1100px)').matches) {
+      sidebarEl.classList.add('app-sidebar--hidden');
+      shell.classList.add('app-shell--sidebar-hidden');
+    }
     sidebarClose.addEventListener('click', () => {
       sidebarEl.classList.add('app-sidebar--hidden');
       shell.classList.add('app-shell--sidebar-hidden');

@@ -439,35 +439,35 @@ body {
 }
 @media (max-width: 1100px) {
   .app-shell {
-    grid-template-columns: 1fr;
-    grid-template-rows: auto auto 1fr;
-    gap: 0;
-    row-gap: 16px;
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
     padding: 16px 12px 48px;
+    max-width: none;
   }
 
   .app-sidebar {
     position: static;
     max-height: none;
     width: 100%;
-    grid-column: 1;
-    grid-row: auto;
+    order: -1;
   }
 
   .app-sidebar__content {
     overflow: visible;
   }
 
+  .sidebar-toggle {
+    position: fixed;
+    display: block;
+  }
+
   .report-nav {
-    grid-column: 1;
-    grid-row: auto;
     overflow-x: auto;
     -webkit-overflow-scrolling: touch;
   }
 
   .sheet {
-    grid-column: 1;
-    grid-row: auto;
     width: 100%;
     max-width: 100%;
   }
