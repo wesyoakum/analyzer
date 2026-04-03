@@ -533,7 +533,7 @@ body {
   z-index: 200;
   writing-mode: vertical-rl;
   text-orientation: mixed;
-  background: #1a7a5c;
+  background: var(--accent);
   color: #fff;
   border: none;
   border-radius: 0 6px 6px 0;
@@ -547,7 +547,7 @@ body {
   transition: background 0.15s;
 }
 .sidebar-toggle:hover {
-  background: #6a2579;
+  background: var(--ink-900);
 }
 
 /* Sidebar collapsed state */
