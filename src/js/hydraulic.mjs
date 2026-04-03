@@ -101,9 +101,19 @@ export function rowsToHydraulicLayer(rows, payload_kg, cable_w_kgpm) {
     }
   }
 
+  // Aggregate min available acceleration per layer
+  const minAccelByLayer = new Map();
+  for (const r of rows) {
+    const val = r.avail_accel_mps2 ?? 0;
+    if (!minAccelByLayer.has(r.layer_no) || val < minAccelByLayer.get(r.layer_no)) {
+      minAccelByLayer.set(r.layer_no, val);
+    }
+  }
+
   const out = [...byLayer.values()].sort((a, b) => a.layer_no - b.layer_no);
   for (const L of out) {
     L.hyd_tension_required_end_kgf = +tension_kgf(L.post_deployed_m, payload_kg, cable_w_kgpm).toFixed(1);
+    L.min_avail_accel_mps2 = minAccelByLayer.get(L.layer_no) ?? 0;
   }
   return out;
 }
@@ -169,7 +179,8 @@ export function renderHydraulicTables(hyLayers, hyWraps, tbodyLayer, tbodyWraps)
       fmtKnm(r.hyd_tau_avail_kNm),
       fmtTrq(r.max_gearbox_torque_Nm),
       `${fmtKgf(r.hyd_tension_required_start_kgf)}-${fmtKgf(r.hyd_tension_required_end_kgf)}`,
-      fmtKgf(r.hyd_avail_tension_kgf)
+      fmtKgf(r.hyd_avail_tension_kgf),
+      r.min_avail_accel_mps2 ? formatDecimal(r.min_avail_accel_mps2, 2) : '–'
     ];
     tr.innerHTML = cells.map(v => `<td>${v}</td>`).join('');
     tbodyLayer.appendChild(tr);
