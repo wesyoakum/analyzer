@@ -26,6 +26,17 @@
   box-sizing: border-box;
 }
 
+img,
+svg,
+canvas {
+  max-width: 100%;
+}
+
+html,
+body {
+  overflow-x: hidden;
+}
+
 body {
   margin: 0;
   padding: 0;
@@ -265,6 +276,7 @@ body {
 .page-header__image {
   width: auto;
   height: auto;
+  max-width: 100%;
 }
 
 .page-title {
