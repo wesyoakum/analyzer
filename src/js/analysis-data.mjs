@@ -173,8 +173,10 @@ export function buildComputationModel(inputs) {
       const J_total = J_drum_kgm2 + J_cable;
       r.J_total_kgm2 = +J_total.toFixed(2);
 
-      // Available drum torque from drive limits
-      const tau_avail_drum = (Number.isFinite(motor_tmax) ? motor_tmax : 0) * gear_product * motors;
+      // Available drum torque from drive limits (use whichever drive provides more)
+      const tau_elec_drum = (Number.isFinite(motor_tmax) ? motor_tmax : 0) * gear_product * motors;
+      const tau_hyd_drum = r.hyd_drum_torque_maxP_Nm || 0;
+      const tau_avail_drum = Math.max(tau_elec_drum, tau_hyd_drum);
       const tau_margin = tau_avail_drum - drum_T;
       r.tau_margin_Nm = +tau_margin.toFixed(1);
 
