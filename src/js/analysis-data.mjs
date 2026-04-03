@@ -66,7 +66,6 @@ export function buildComputationModel(inputs) {
   const dynamicEnabled = Boolean(inputs.dynamic_enabled);
   const J_drum_kgm2 = positiveOr(inputs.J_drum_kgm2, 0);
   const cable_w_air_kgpm = positiveOr(inputs.cable_w_air_kgpm, 0);
-  const accel_time_s = positiveOr(inputs.accel_time_s, 0);
   const core_radius_m = ((inputs.core_dia_in || 0) + 2 * (inputs.lebus_thk_in || 0)) * M_PER_IN / 2;
 
   const { rows: baseRows, summary, meta } = calcLayers(cfg);

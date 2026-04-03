@@ -2459,7 +2459,6 @@ function computeAll() {
       dynamic_enabled: q('dynamic_enabled')?.checked ?? false,
       J_drum_kgm2: read('J_drum_kgm2'),
       cable_w_air_kgpm: read('cable_w_air_kgpm'),
-      accel_time_s: read('accel_time_s'),
     });
 
     lastComputedModel = model;
