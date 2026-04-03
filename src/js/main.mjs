@@ -17,7 +17,7 @@ import { renderElectricTables } from './electric.mjs';
 
 import { renderHydraulicTables } from './hydraulic.mjs';
 
-import { drawWaveContours, drawWaveHeightContours } from './plots/wave-contours.mjs';
+import { drawWaveContours, drawWaveHeightContours, drawWaveAccelContours } from './plots/wave-contours.mjs';
 import { drawDepthProfiles } from './plots/depth-profiles.mjs';
 import { drawHydraulicRpmTorque } from './plots/rpm-torque.mjs';
 import { setupComponentSelectors } from './component-selectors.mjs';
@@ -1276,6 +1276,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
   // Wave/depth/hydraulic plot controls
   ['wave_scenario', 'wave_tmin', 'wave_tmax', 'wave_vmin', 'wave_vmax', 'wave_tmin_height', 'wave_tmax_height', 'wave_hmin', 'wave_hmax', 'wave_speed_show_sea_states', 'wave_show_sea_states', 'wave_show_breaking_limit', 'wave_show_pm_curve', 'wave_show_jonswap_curve', 'wave_show_smb_curve',
+    'wave_accel_tmin', 'wave_accel_tmax', 'wave_accel_amin', 'wave_accel_amax', 'wave_accel_show_sea_states',
     'depth_xmin', 'depth_xmax', 'depth_speed_ymin', 'depth_speed_ymax',
     'depth_xmin_tension', 'depth_xmax_tension', 'depth_tension_ymin', 'depth_tension_ymax',
     'hyd_torque_xmin', 'hyd_torque_xmax', 'hyd_rpm_ymin', 'hyd_rpm_ymax']
@@ -2635,6 +2636,26 @@ function redrawPlots() {
     });
   }
 
+  // Acceleration contours (optional)
+  const waveAccelSvg = /** @type {SVGSVGElement|null} */ (document.getElementById('wave_svg_accel'));
+  if (waveAccelSvg) {
+    const accelTminEl = document.getElementById('wave_accel_tmin');
+    const accelTmaxEl = document.getElementById('wave_accel_tmax');
+    const accelAminEl = document.getElementById('wave_accel_amin');
+    const accelAmaxEl = document.getElementById('wave_accel_amax');
+    const accelShowSeaStatesEl = document.getElementById('wave_accel_show_sea_states');
+    drawWaveAccelContours(waveAccelSvg, {
+      scenario: waveScenarioEl?.value || 'electric',
+      elLayers: lastElLayer,
+      hyLayers: lastHyLayer,
+      Tmin: Number.isFinite(parseInput(accelTminEl)) ? parseInput(accelTminEl) : 4,
+      Tmax: Number.isFinite(parseInput(accelTmaxEl)) ? parseInput(accelTmaxEl) : 20,
+      accelMin: Number.isFinite(parseInput(accelAminEl)) ? parseInput(accelAminEl) : 0,
+      accelMax: Number.isFinite(parseInput(accelAmaxEl)) ? parseInput(accelAmaxEl) : undefined,
+      showSeaStateOverlay: Boolean(accelShowSeaStatesEl?.checked)
+    });
+  }
+
   // Depth profiles (optional - skip if controls/SVGs absent)
   const depthSpeedSvg = /** @type {SVGSVGElement|null} */ (document.getElementById('depth_speed_svg'));
   const depthTensionSvg = /** @type {SVGSVGElement|null} */ (document.getElementById('depth_tension_svg'));
@@ -2741,6 +2762,7 @@ function clearPlots() {
   const svgs = [
     q('wave_svg'),
     q('wave_svg_height'),
+    q('wave_svg_accel'),
     q('depth_speed_svg'),
     q('depth_tension_svg'),
     q('hyd_rpm_torque_svg')

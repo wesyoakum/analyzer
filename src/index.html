@@ -4,7 +4,7 @@
   <meta charset="utf-8" />
   <title>Winch Analysis</title>
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <link rel="stylesheet" href="css/styles.css?v=12" />
+  <link rel="stylesheet" href="css/styles.css?v=13" />
   <!-- KaTeX setup -->
   <link
     rel="stylesheet"
@@ -997,9 +997,49 @@
         </div>
       </section>
 
+      <section class="card card--performance wave-card" data-print-ahc-only>
+        <div class="card-header">
+          <h2 class="section-title">Section 2.2: Required Acceleration Contours</h2>
+          <div class="card-header-actions"></div>
+        </div>
+        <div class="plot-panel plot-panel--compact plot-panel--performance">
+          <div class="plot-panel__heading">
+            <div>
+              <div class="plot-title">Required Acceleration vs Period with Height Lines</div>
+              <div class="dim">Required acceleration from sinusoidal heave motion: a = 2π²H / T². The contour set traces peak-to-trough wave heights. Colored horizontal layer lines mark each layer's available acceleration from dynamic loads analysis. The intersection indicates the shortest wave period at which the winch can match the required acceleration.</div>
+            </div>
+            <button type="button" class="plot-settings-btn" data-plot-settings-target="plot-settings-wave-accel" aria-label="Open axis settings for acceleration vs period plot">⚙</button>
+          </div>
+          <div class="plot-panel__toggles" aria-label="Wave acceleration overlays">
+            <label class="plot-panel__checkbox" title="Overlay representative Douglas sea-state bands">
+              <input id="wave_accel_show_sea_states" type="checkbox">
+              <span>Sea states</span>
+            </label>
+          </div>
+          <div class="plotwrap">
+            <svg id="wave_svg_accel" width="1000" height="540" viewBox="0 0 1000 540"></svg>
+          </div>
+          <div class="legend legend--panel">
+            <div class="legitem"><span class="swatch accent"></span><span>Layer available acceleration</span></div>
+            <div class="legitem"><span class="swatch"></span><span>H = integer m</span></div>
+            <div class="legitem"><span class="swatch dashed"></span><span>H = 0.5 m offsets</span></div>
+            <div class="legitem"><span class="swatch sea-state"></span><span>Douglas sea-state bands (optional)</span></div>
+          </div>
+          <p class="dim interactive-hint">Interactive: move mouse for crosshairs.</p>
+        </div>
+        <div id="plot-settings-wave-accel" class="plot-settings-panel" hidden>
+          <div class="plot-settings-grid">
+            <label>T min (s) <input id="wave_accel_tmin" type="number" step="0.5" value="4"></label>
+            <label>T max (s) <input id="wave_accel_tmax" type="number" step="0.5" value="20"></label>
+            <label>a min (m/s²) <input id="wave_accel_amin" type="number" step="0.1" value="0"></label>
+            <label>a max (m/s²) <input id="wave_accel_amax" type="number" step="0.1"></label>
+          </div>
+        </div>
+      </section>
+
       <section class="card card--performance">
         <div class="card-header">
-          <h2 class="section-title">Section 2.2: Depth Profiles</h2>
+          <h2 class="section-title">Section 2.3: Depth Profiles</h2>
           <div class="card-header-actions"></div>
         </div>
         
@@ -1060,7 +1100,7 @@
 
       <section class="card card--performance" data-drive-scope="hydraulic">
         <div class="card-header">
-          <h2 class="section-title">Section 2.3: Hydraulic RPM vs Torque</h2>
+          <h2 class="section-title">Section 2.4: Hydraulic RPM vs Torque</h2>
           <div class="card-header-actions"></div>
         </div>
         <div class="plot-pair">

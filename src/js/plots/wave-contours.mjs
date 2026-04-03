@@ -23,6 +23,298 @@ export function drawWaveHeightContours(svg, opts = {}) {
   renderWavePlot(svg, opts, 'height');
 }
 
+/**
+ * Draw the wave acceleration contour plot (acceleration vs period with height contours).
+ * Required acceleration from sinusoidal heave: a = 2π²H / T²
+ * Layer lines show available acceleration from dynamic loads analysis.
+ */
+export function drawWaveAccelContours(svg, opts = {}) {
+  if (svg._waveHandlers) {
+    const { move, leave, pointerup, contextmenu, dblclick } = svg._waveHandlers;
+    svg.removeEventListener('pointermove', move);
+    svg.removeEventListener('pointerleave', leave);
+    svg.removeEventListener('pointerenter', move);
+    if (pointerup) svg.removeEventListener('pointerup', pointerup);
+    if (contextmenu) svg.removeEventListener('contextmenu', contextmenu);
+    if (dblclick) svg.removeEventListener('dblclick', dblclick);
+    delete svg._waveHandlers;
+  }
+  while (svg.firstChild) svg.removeChild(svg.firstChild);
+
+  const parseNumber = val => { const n = Number(val); return Number.isFinite(n) ? n : NaN; };
+
+  let {
+    scenario = 'electric',
+    Tmin = 4,
+    Tmax = 20,
+    Hmin = 0,
+    Hmax = 6,
+    accelMin = 0,
+    accelMax = null,
+    showSeaStateOverlay = false,
+    elLayers = [],
+    hyLayers = []
+  } = opts;
+
+  Tmin = parseNumber(Tmin);
+  if (!Number.isFinite(Tmin) || Tmin <= 0) Tmin = 4;
+  Tmin = Math.max(0.1, Tmin);
+  Tmax = parseNumber(Tmax);
+  if (!Number.isFinite(Tmax)) Tmax = Tmin + 16;
+  Tmax = Math.max(Tmin + 0.1, Tmax);
+  Hmin = parseNumber(Hmin);
+  if (!Number.isFinite(Hmin)) Hmin = 0;
+  Hmin = Math.max(0, Hmin);
+  Hmax = parseNumber(Hmax);
+  if (!Number.isFinite(Hmax)) Hmax = Math.max(6, Hmin + 0.5);
+  Hmax = Math.max(Hmin + 0.1, Hmax);
+
+  accelMin = parseNumber(accelMin);
+  if (!Number.isFinite(accelMin)) accelMin = 0;
+  accelMin = Math.max(0, accelMin);
+
+  // Layer available accelerations
+  let layerAccels = [];
+  const layers = scenario === 'electric' ? (elLayers || []) : (hyLayers || []);
+  layerAccels = layers
+    .filter(r => Number.isFinite(+r.min_avail_accel_mps2) && +r.min_avail_accel_mps2 > 0)
+    .map(r => ({ layer_no: r.layer_no, a_mps2: +r.min_avail_accel_mps2 }));
+  layerAccels.sort((a, b) => a.a_mps2 - b.a_mps2);
+
+  // Y range: max required accel from contours = 2π²Hmax / Tmin²
+  const amaxFromContours = 2 * Math.PI * Math.PI * Hmax / Math.max(Tmin * Tmin, 1e-9);
+  let maxLayerAccel = 0;
+  for (const { a_mps2 } of layerAccels) {
+    if (a_mps2 > maxLayerAccel) maxLayerAccel = a_mps2;
+  }
+  const parsedAmax = parseNumber(accelMax);
+  const hasExplicitAmax = Number.isFinite(parsedAmax) && parsedAmax > accelMin;
+  let Amax = hasExplicitAmax ? Math.max(accelMin + 0.1, parsedAmax) : Math.max(amaxFromContours, maxLayerAccel, accelMin + 0.1) * 1.05;
+  if (!Number.isFinite(Amax) || Amax <= accelMin) Amax = accelMin + 1;
+  const Amin = accelMin;
+
+  const accentColor = (() => {
+    if (typeof window !== 'undefined' && typeof document !== 'undefined' && window.getComputedStyle) {
+      const val = window.getComputedStyle(document.documentElement).getPropertyValue('--accent');
+      if (val) return val.trim();
+    }
+    return '#2c56a3';
+  })();
+
+  const W = svg.viewBox.baseVal.width || svg.clientWidth || 1000;
+  const H = svg.viewBox.baseVal.height || svg.clientHeight || 540;
+  const ML = 64, MR = 20, MT = 20, MB = 46;
+  const innerW = W - ML - MR, innerH = H - MT - MB;
+
+  const sx = t => {
+    const clamped = Math.min(Math.max(t, Tmin), Tmax);
+    return ML + (clamped - Tmin) / Math.max(Tmax - Tmin, 1e-9) * innerW;
+  };
+  const sy = val => {
+    const clamped = Math.min(Math.max(val, Amin), Amax);
+    return MT + (1 - (clamped - Amin) / Math.max(Amax - Amin, 1e-9)) * innerH;
+  };
+
+  // Frame
+  svg.appendChild(svgEl('rect', { x: ML, y: MT, width: innerW, height: innerH, fill: '#fff', stroke: '#ccc' }));
+
+  // Grid & ticks
+  const xt = niceTicks(Tmin, Tmax, 8).ticks;
+  const yt = niceTicks(Amin, Amax, 6).ticks;
+  xt.forEach(tx => {
+    const X = sx(tx);
+    svg.appendChild(svgEl('line', { x1: X, y1: MT, x2: X, y2: H - MB, stroke: '#eee' }));
+    const t = svgEl('text', { x: X, y: H - MB + 18, 'text-anchor': 'middle', 'font-size': '12', fill: '#444' });
+    t.textContent = (Math.round(tx * 100) / 100).toString();
+    svg.appendChild(t);
+  });
+  yt.forEach(v => {
+    const Y = sy(v);
+    svg.appendChild(svgEl('line', { x1: ML, y1: Y, x2: W - MR, y2: Y, stroke: '#eee' }));
+    const t = svgEl('text', { x: ML - 6, y: Y + 4, 'text-anchor': 'end', 'font-size': '12', fill: '#444' });
+    t.textContent = (Math.round(v * 100) / 100).toString();
+    svg.appendChild(t);
+  });
+
+  // Axis labels
+  svg.appendChild(svgEl('text', { x: ML + innerW / 2, y: H - 8, 'text-anchor': 'middle', 'font-size': '12', fill: '#444' }))
+     .textContent = 'Period T (s)';
+  svg.appendChild(svgEl('text', {
+    x: 18, y: MT + innerH / 2, transform: `rotate(-90,18,${MT + innerH / 2})`,
+    'text-anchor': 'middle', 'font-size': '12', fill: '#444'
+  })).textContent = 'Acceleration (m/s²)';
+
+  // Sea state overlay
+  if (showSeaStateOverlay) {
+    const overlay = svgEl('g', { 'pointer-events': 'none' });
+    SEA_STATE_REGIONS.forEach(region => {
+      const leftT = Math.max(Tmin, region.tp[0]);
+      const rightT = Math.min(Tmax, region.tp[1]);
+      const lowH = Math.max(Hmin, region.hs[0]);
+      const highH = Math.min(Hmax, region.hs[1]);
+      if (rightT <= leftT || highH <= lowH) return;
+
+      const pts = [];
+      const samples = 120;
+      for (let i = 0; i <= samples; i++) {
+        const T = leftT + (rightT - leftT) * (i / samples);
+        const highA = 2 * Math.PI * Math.PI * highH / Math.max(T * T, 1e-9);
+        pts.push([sx(T), sy(highA)]);
+      }
+      for (let i = samples; i >= 0; i--) {
+        const T = leftT + (rightT - leftT) * (i / samples);
+        const lowA = 2 * Math.PI * Math.PI * lowH / Math.max(T * T, 1e-9);
+        pts.push([sx(T), sy(lowA)]);
+      }
+
+      overlay.appendChild(svgEl('path', {
+        d: `${svgPathFromPoints(pts)} Z`,
+        fill: region.color,
+        stroke: 'rgba(70, 82, 107, 0.55)',
+        'stroke-width': 1.2
+      }));
+
+      const midT = (leftT + rightT) / 2;
+      const midA = 2 * Math.PI * Math.PI * ((lowH + highH) / 2) / Math.max(midT * midT, 1e-9);
+      if (midA >= Amin && midA <= Amax) {
+        const label = svgEl('text', {
+          x: sx(midT), y: sy(midA),
+          'text-anchor': 'middle', 'dominant-baseline': 'middle',
+          'font-size': '12', 'font-weight': '600', fill: '#27324b'
+        });
+        label.textContent = `SS ${region.ss}`;
+        overlay.appendChild(label);
+      }
+    });
+    svg.appendChild(overlay);
+  }
+
+  // Acceleration contour lines: a = 2π²H / T² for H in 0.5m steps
+  let contourId = 0;
+  const contourLabelLayer = svgEl('g', {
+    'font-family': 'monospace', 'font-size': '11', fill: '#5c6478', 'pointer-events': 'none'
+  });
+
+  const Hstep = 0.5;
+  for (let Hm = Hstep; Hm <= Hmax + 1e-9; Hm += Hstep) {
+    const pts = [];
+    const samples = 200;
+    for (let i = 0; i <= samples; i++) {
+      const T = Tmin + (Tmax - Tmin) * i / samples;
+      const a = 2 * Math.PI * Math.PI * Hm / Math.max(T * T, 1e-9);
+      pts.push([sx(T), sy(a)]);
+    }
+    const isIntegerContour = Math.abs(Hm - Math.round(Hm)) < 1e-9;
+    const pathAttrs = {
+      d: svgPathFromPoints(pts),
+      fill: 'none',
+      stroke: '#999',
+      'stroke-width': 1.5,
+      'stroke-dasharray': isIntegerContour ? '0' : '6 6'
+    };
+    if (isIntegerContour) {
+      pathAttrs.id = `accel-contour-${contourId++}`;
+    }
+    svg.appendChild(svgEl('path', pathAttrs));
+
+    if (isIntegerContour && pts.length > 1) {
+      const labelText = `---------- ${Math.round(Hm)} m ----------`;
+      const text = svgEl('text', { 'text-anchor': 'middle' });
+      const textPath = svgEl('textPath', { href: `#${pathAttrs.id}`, 'startOffset': '50%' });
+      textPath.setAttributeNS('http://www.w3.org/1999/xlink', 'href', `#${pathAttrs.id}`);
+      textPath.textContent = labelText;
+      text.appendChild(textPath);
+      contourLabelLayer.appendChild(text);
+    }
+  }
+
+  // Horizontal lines for each layer's available acceleration
+  layerAccels.forEach(L => {
+    if (L.a_mps2 < Amin - 1e-9 || L.a_mps2 > Amax + 1e-9) return;
+    const Y = sy(L.a_mps2);
+    svg.appendChild(svgEl('line', { x1: ML, y1: Y, x2: W - MR, y2: Y, stroke: accentColor, 'stroke-width': 1.5 }));
+    const lbl = svgEl('text', {
+      x: W - MR - 2, y: Y - 3,
+      'text-anchor': 'end', 'font-size': '11', fill: accentColor
+    });
+    lbl.textContent = `L${L.layer_no} (${L.a_mps2.toFixed(2)} m/s²)`;
+    svg.appendChild(lbl);
+  });
+
+  if (contourLabelLayer.childNodes.length) {
+    svg.appendChild(contourLabelLayer);
+  }
+
+  // Hover crosshairs
+  const hoverLayer = svgEl('g', { 'pointer-events': 'none' });
+  const hoverLine = svgEl('line', { x1: ML, x2: ML, y1: MT, y2: H - MB, stroke: accentColor, 'stroke-width': 1.5, 'stroke-dasharray': '6 4', opacity: 0 });
+  const hoverHLine = svgEl('line', { x1: ML, x2: W - MR, y1: MT, y2: MT, stroke: accentColor, 'stroke-width': 1.5, 'stroke-dasharray': '6 4', opacity: 0 });
+  const hoverLabel = svgEl('text', { x: ML, y: H - MB + 20, 'text-anchor': 'middle', 'font-size': '12', fill: accentColor, opacity: 0 });
+  const hoverYLabel = svgEl('text', { x: ML - 8, y: MT, 'text-anchor': 'end', 'font-size': '12', fill: accentColor, opacity: 0 });
+  hoverLayer.appendChild(hoverLine);
+  hoverLayer.appendChild(hoverHLine);
+  hoverLayer.appendChild(hoverLabel);
+  hoverLayer.appendChild(hoverYLabel);
+  svg.appendChild(hoverLayer);
+
+  const clamp = (val, min, max) => Math.min(Math.max(val, min), max);
+  const toViewBoxPoint = evt => {
+    if (typeof DOMPoint === 'function' && svg.getScreenCTM) {
+      const ctm = svg.getScreenCTM();
+      if (ctm && typeof ctm.inverse === 'function') {
+        const point = new DOMPoint(evt.clientX, evt.clientY);
+        const svgPoint = point.matrixTransform(ctm.inverse());
+        return { x: svgPoint.x, y: svgPoint.y };
+      }
+    }
+    const rect = svg.getBoundingClientRect();
+    const vb = svg.viewBox.baseVal;
+    const vbWidth = vb && vb.width ? vb.width : rect.width;
+    const vbHeight = vb && vb.height ? vb.height : rect.height;
+    const offsetX = vb && vb.x ? vb.x : 0;
+    const offsetY = vb && vb.y ? vb.y : 0;
+    const scaleX = rect.width ? vbWidth / rect.width : 1;
+    const scaleY = rect.height ? vbHeight / rect.height : 1;
+    return { x: offsetX + (evt.clientX - rect.left) * scaleX, y: offsetY + (evt.clientY - rect.top) * scaleY };
+  };
+
+  const updateHover = evt => {
+    const { x: localX, y: localY } = toViewBoxPoint(evt);
+    if (localX < ML || localX > W - MR || localY < MT || localY > H - MB) {
+      hoverLine.setAttribute('opacity', '0'); hoverLabel.setAttribute('opacity', '0');
+      hoverHLine.setAttribute('opacity', '0'); hoverYLabel.setAttribute('opacity', '0');
+      return;
+    }
+    const clampedX = clamp(localX, ML, W - MR);
+    const clampedY = clamp(localY, MT, H - MB);
+    const xVal = Tmin + ((clampedX - ML) / Math.max(innerW, 1e-9)) * (Tmax - Tmin);
+    const yVal = Amax - ((clampedY - MT) / Math.max(innerH, 1e-9)) * (Amax - Amin);
+    hoverLine.setAttribute('x1', clampedX); hoverLine.setAttribute('x2', clampedX); hoverLine.setAttribute('opacity', '1');
+    hoverHLine.setAttribute('y1', clampedY); hoverHLine.setAttribute('y2', clampedY); hoverHLine.setAttribute('opacity', '1');
+    hoverLabel.setAttribute('x', clampedX);
+    hoverLabel.textContent = `${(Math.round(xVal * 10) / 10).toFixed(1)} sec`;
+    hoverLabel.setAttribute('opacity', '1');
+    hoverYLabel.setAttribute('y', clampedY + 4);
+    hoverYLabel.textContent = `${(Math.round(yVal * 100) / 100).toFixed(2)} m/s²`;
+    hoverYLabel.setAttribute('opacity', '1');
+  };
+
+  const hideHover = () => {
+    hoverLine.setAttribute('opacity', '0'); hoverLabel.setAttribute('opacity', '0');
+    hoverHLine.setAttribute('opacity', '0'); hoverYLabel.setAttribute('opacity', '0');
+  };
+
+  svg.addEventListener('pointermove', updateHover);
+  svg.addEventListener('pointerenter', updateHover);
+  svg.addEventListener('pointerleave', hideHover);
+  svg._waveHandlers = { move: updateHover, leave: hideHover };
+
+  // zero line
+  if (Amin <= 0 && Amax >= 0) {
+    svg.appendChild(svgEl('line', { x1: ML, y1: sy(0), x2: W - MR, y2: sy(0), stroke: '#bbb', 'stroke-dasharray': '4 4' }));
+  }
+}
+
 function renderWavePlot(svg, {
   scenario = 'electric',
   Tmin = 4,
