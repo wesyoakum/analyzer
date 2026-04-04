@@ -9,8 +9,8 @@
   --ink-900: #1e293b;
   --ink-700: #334155;
   --ink-500: #55637d;
-  --accent: #16a34a;
-  --accent-light: #f0fdf4;
+  --accent: #ea580c;
+  --accent-light: #fff7ed;
   --doc-serif: "Inter", "Segoe UI", system-ui, -apple-system, BlinkMacSystemFont, "Roboto", "Helvetica Neue", Arial, sans-serif;
   --tension-low: #6c2bd9;
   --tension-high: #f97316;
@@ -505,7 +505,6 @@ body {
     width: 100%;
     max-width: 100%;
     min-width: 0;
-    overflow-x: hidden;
     overflow-wrap: break-word;
     word-break: break-word;
     padding-left: 16px;
@@ -513,6 +512,16 @@ body {
     box-sizing: border-box;
     grid-column: unset;
     grid-row: unset;
+  }
+
+  .sheet .card,
+  .sheet .info-card {
+    overflow-x: auto;
+    max-width: 100%;
+  }
+
+  .sheet table {
+    max-width: 100%;
   }
 
   .card {
