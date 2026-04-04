@@ -32,10 +32,7 @@ canvas {
   max-width: 100%;
 }
 
-html,
-body {
-  overflow-x: hidden;
-}
+/* No overflow-x on html/body — it breaks position:sticky on descendants */
 
 body {
   margin: 0;
@@ -49,14 +46,18 @@ body {
 .app-shell {
   display: grid;
   grid-template-columns: var(--sidebar-width) minmax(0, var(--sheet-width));
-  grid-template-rows: auto 1fr;
   column-gap: var(--shell-column-gap);
-  row-gap: 0;
   align-items: start;
   justify-content: center;
   max-width: calc(var(--sidebar-width) + var(--sheet-width) + var(--shell-column-gap));
   margin: 0 auto;
   padding: var(--space-lg) var(--space-lg) var(--space-xl);
+  overflow-x: clip;         /* prevent horizontal scroll without breaking sticky */
+}
+
+.main-content {
+  grid-column: 2 / 3;
+  min-width: 0;
 }
 
 .sheet {
@@ -67,8 +68,6 @@ body {
   box-shadow: 0 18px 42px rgba(20, 34, 56, 0.14);
   padding: var(--space-md) 60px var(--space-xl);
   position: relative;
-  grid-column: 2 / 3;
-  grid-row: 2;
   font-family: var(--doc-serif);
   line-height: 1.58;
   hyphens: auto;
@@ -115,7 +114,6 @@ body {
   width: var(--sidebar-width);
   overflow: hidden;
   grid-column: 1 / 2;
-  grid-row: 1 / 3;
 }
 
 .app-sidebar__header {
@@ -446,19 +444,47 @@ body {
     max-width: none;
   }
 
+  /* Sidebar becomes a fixed drawer overlay on narrow viewports */
   .app-sidebar {
-    position: static;
-    max-height: none;
-    width: 100%;
-    order: -1;
+    position: fixed;
+    top: 0;
+    left: 0;
+    bottom: 0;
+    width: min(520px, 90vw);
+    max-height: 100vh;
+    z-index: 300;
+    background: var(--paper);
+    box-shadow: 4px 0 24px rgba(0,0,0,0.18);
+    border-radius: 0;
+    transition: transform 0.25s ease;
   }
 
   .app-sidebar__content {
-    overflow: visible;
+    overflow-y: auto;
+    max-height: calc(100vh - 100px);
+  }
+
+  /* When hidden, slide off-screen (override display:none from wide-viewport rule) */
+  .app-sidebar.app-sidebar--hidden {
+    display: flex !important;
+    transform: translateX(-100%);
+    pointer-events: none;
   }
 
   .sidebar-toggle {
     position: fixed;
+    display: block;
+  }
+
+  /* Backdrop overlay when sidebar is open */
+  .sidebar-backdrop {
+    display: none;
+    position: fixed;
+    inset: 0;
+    background: rgba(0,0,0,0.35);
+    z-index: 299;
+  }
+  .sidebar-backdrop--visible {
     display: block;
   }
 
@@ -504,6 +530,27 @@ body {
   font-weight: 600;
   letter-spacing: 0.02em;
   margin: 0;
+}
+
+/* Payload breakdown collapsible toggle */
+.payload-breakdown-toggle {
+  cursor: pointer;
+  user-select: none;
+}
+.payload-breakdown-toggle__cell {
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--ink-500);
+  padding: 6px 8px;
+}
+.payload-breakdown-toggle__icon {
+  display: inline-block;
+  font-size: 10px;
+  transition: transform 0.15s ease;
+  margin-right: 4px;
+}
+.payload-breakdown-toggle[aria-expanded="true"] .payload-breakdown-toggle__icon {
+  transform: rotate(90deg);
 }
 
 /* Top-level "Inputs" header bar */
@@ -568,10 +615,11 @@ body {
   background: var(--ink-900);
 }
 
-/* Sidebar collapsed state */
+/* Sidebar collapsed state — wide viewports: hide completely */
 .app-sidebar--hidden {
   display: none !important;
 }
+/* Narrow viewports override: use transform slide instead of display:none (see media query) */
 .app-shell--sidebar-hidden {
   grid-template-columns: minmax(0, var(--sheet-width));
   max-width: var(--sheet-width);
@@ -579,10 +627,7 @@ body {
 .app-shell--sidebar-hidden .sidebar-toggle {
   display: block !important;
 }
-.app-shell--sidebar-hidden .report-nav {
-  grid-column: 1;
-}
-.app-shell--sidebar-hidden .sheet {
+.app-shell--sidebar-hidden .main-content {
   grid-column: 1;
 }
 
@@ -1054,7 +1099,7 @@ th .th-unit-select {
   font-weight: 600;
 }
 
-/* Report navigation bar — sits above the sheet */
+/* Report navigation bar — sits above the sheet inside .main-content */
 .report-nav {
   position: sticky;
   top: 0;
@@ -1065,8 +1110,6 @@ th .th-unit-select {
   border-bottom: none;
   padding: 0;
   margin: 0 0 8px;
-  grid-column: 2 / 3;
-  grid-row: 1;
 }
 
 .report-nav__link {
@@ -1804,6 +1847,11 @@ th[title] {
 .swatch.power {
   border-top-color: #9249c6;
   border-top-style: dashed;
+}
+
+.swatch.min-disp {
+  border-top-color: #e07020;
+  border-top-style: solid;
 }
 
 .swatch-group {

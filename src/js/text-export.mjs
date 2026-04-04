@@ -211,6 +211,7 @@ export function buildTextSummary(model) {
   if (systemType === 'hydraulic') {
     const hEff = safeRead('h_emotor_eff');
     const hMotCc = safeRead('h_hmot_cc');
+    const hMotCcMin = safeRead('h_hmot_cc_min');
     const hMotRpm = safeRead('h_hmot_rpm_max');
     const hStrings = safeRead('h_pump_strings');
     const hEmotorHp = safeRead('h_emotor_hp');
@@ -222,7 +223,9 @@ export function buildTextSummary(model) {
     pushIf(lines, 'Electro-Hydro-Mechanical Efficiency', hEff != null ? `${fmt(hEff * 100)}%` : null);
     const hMotPreset = selectText('hydraulic_motor_select');
     pushIf(lines, 'Hydraulic Motor', hMotPreset);
-    pushIf(lines, 'Hydraulic Motor Displacement', fmt(hMotCc) ? `${fmt(hMotCc)} cc/rev` : null);
+    const isVariable = Number.isFinite(hMotCcMin) && hMotCcMin > 0 && hMotCcMin < hMotCc;
+    pushIf(lines, 'Motor Displacement (Max)', fmt(hMotCc) ? `${fmt(hMotCc)} cc/rev` : null);
+    if (isVariable) pushIf(lines, 'Motor Displacement (Min)', fmt(hMotCcMin) ? `${fmt(hMotCcMin)} cc/rev` : null);
     pushIf(lines, 'Hydraulic Motor Max Speed', fmt(hMotRpm) ? `${fmt(hMotRpm)} RPM` : null);
 
     lines.push('');

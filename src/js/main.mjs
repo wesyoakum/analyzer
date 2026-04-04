@@ -503,6 +503,58 @@ function computeDepthSpeedSegmentsForPayload(payloadKg, context, options = {}) {
   return segments;
 }
 
+/**
+ * Build depth-speed segments from min-displacement available speed in hydraulic wraps.
+ * @param {Array<Object>} hyWraps
+ * @param {number} deadEnd
+ * @returns {Array<{depth_start: number, depth_end: number, speed_ms: number}>}
+ */
+function buildMinDispSegments(hyWraps, deadEnd) {
+  const segments = [];
+  let fallbackStart = null;
+  for (const w of hyWraps) {
+    if (!w) continue;
+    const depthEndRaw = Number.isFinite(w.deployed_len_m) ? w.deployed_len_m : null;
+    if (!Number.isFinite(depthEndRaw)) { fallbackStart = null; continue; }
+    let depthStartRaw = Number.isFinite(w.pre_deployed_len_m) ? w.pre_deployed_len_m : null;
+    if (!Number.isFinite(depthStartRaw) && Number.isFinite(w.total_cable_len_m) && Number.isFinite(w.pre_spooled_len_m)) {
+      depthStartRaw = w.total_cable_len_m - w.pre_spooled_len_m;
+    }
+    if (!Number.isFinite(depthStartRaw) && Number.isFinite(fallbackStart)) depthStartRaw = fallbackStart;
+    if (!Number.isFinite(depthStartRaw)) depthStartRaw = depthEndRaw;
+    if (depthStartRaw < depthEndRaw) { const tmp = depthStartRaw; depthStartRaw = depthEndRaw; depthEndRaw = tmp; }
+    const toD = v => Number.isFinite(v) ? +Math.max(0, v - deadEnd).toFixed(3) : 0;
+    const speedMpm = Number.isFinite(w.hyd_speed_available_mpm_min) ? w.hyd_speed_available_mpm_min : 0;
+    segments.push({ depth_start: toD(depthStartRaw), depth_end: toD(depthEndRaw), speed_ms: Math.max(0, speedMpm / 60) });
+    fallbackStart = depthEndRaw + deadEnd;
+  }
+  segments.sort((a, b) => (b.depth_start || 0) - (a.depth_start || 0));
+  return segments;
+}
+
+function buildMinDispTensionSegments(hyWraps, deadEnd) {
+  const segments = [];
+  let fallbackStart = null;
+  for (const w of hyWraps) {
+    if (!w) continue;
+    const depthEndRaw = Number.isFinite(w.deployed_len_m) ? w.deployed_len_m : null;
+    if (!Number.isFinite(depthEndRaw)) { fallbackStart = null; continue; }
+    let depthStartRaw = Number.isFinite(w.pre_deployed_len_m) ? w.pre_deployed_len_m : null;
+    if (!Number.isFinite(depthStartRaw) && Number.isFinite(w.total_cable_len_m) && Number.isFinite(w.pre_spooled_len_m)) {
+      depthStartRaw = w.total_cable_len_m - w.pre_spooled_len_m;
+    }
+    if (!Number.isFinite(depthStartRaw) && Number.isFinite(fallbackStart)) depthStartRaw = fallbackStart;
+    if (!Number.isFinite(depthStartRaw)) depthStartRaw = depthEndRaw;
+    if (depthStartRaw < depthEndRaw) { const tmp = depthStartRaw; depthStartRaw = depthEndRaw; depthEndRaw = tmp; }
+    const toD = v => Number.isFinite(v) ? +Math.max(0, v - deadEnd).toFixed(3) : 0;
+    const tensionKgf = Number.isFinite(w.hyd_avail_tension_kgf_min) ? w.hyd_avail_tension_kgf_min : 0;
+    segments.push({ depth_start: toD(depthStartRaw), depth_end: toD(depthEndRaw), avail_tension_kgf: Math.max(0, tensionKgf) });
+    fallbackStart = depthEndRaw + deadEnd;
+  }
+  segments.sort((a, b) => (b.depth_start || 0) - (a.depth_start || 0));
+  return segments;
+}
+
 const CSV_BUTTON_SPECS = {
   csv_el_layer: {
     filename: () => 'electric-layer.csv',
@@ -605,7 +657,17 @@ const PLOT_DISPLAY_SETTING_IDS = [
   'hyd_torque_xmin',
   'hyd_torque_xmax',
   'hyd_rpm_ymin',
-  'hyd_rpm_ymax'
+  'hyd_rpm_ymax',
+  'hyd_show_max_disp',
+  'hyd_show_min_disp',
+  'depth_show_max_disp',
+  'depth_show_min_disp',
+  'wave_show_max_disp',
+  'wave_show_min_disp',
+  'wave_ht_show_max_disp',
+  'wave_ht_show_min_disp',
+  'depth_tension_show_max_disp',
+  'depth_tension_show_min_disp'
 ];
 
 function readElementStateValue(el) {
@@ -1151,6 +1213,8 @@ document.addEventListener('DOMContentLoaded', () => {
 
   setupWrapTableToggleLabels();
 
+  setupPayloadBreakdownToggle();
+
   setupPlotSettingsDialogs();
 
   configureSectionFourContent();
@@ -1217,21 +1281,29 @@ document.addEventListener('DOMContentLoaded', () => {
   const sidebarEl = document.getElementById('app_sidebar');
   const sidebarClose = document.getElementById('sidebar_close');
   const sidebarOpen = document.getElementById('sidebar_open');
+  const sidebarBackdrop = document.getElementById('sidebar_backdrop');
   const shell = document.querySelector('.app-shell');
   if (sidebarEl && sidebarClose && sidebarOpen && shell) {
-    // Auto-hide sidebar on mobile so the sheet is visible first
-    if (window.matchMedia('(max-width: 1100px)').matches) {
+    const isNarrow = () => window.matchMedia('(max-width: 1100px)').matches;
+
+    const closeSidebar = () => {
       sidebarEl.classList.add('app-sidebar--hidden');
       shell.classList.add('app-shell--sidebar-hidden');
-    }
-    sidebarClose.addEventListener('click', () => {
-      sidebarEl.classList.add('app-sidebar--hidden');
-      shell.classList.add('app-shell--sidebar-hidden');
-    });
-    sidebarOpen.addEventListener('click', () => {
+      if (sidebarBackdrop) sidebarBackdrop.classList.remove('sidebar-backdrop--visible');
+    };
+    const openSidebar = () => {
       sidebarEl.classList.remove('app-sidebar--hidden');
       shell.classList.remove('app-shell--sidebar-hidden');
-    });
+      if (isNarrow() && sidebarBackdrop) sidebarBackdrop.classList.add('sidebar-backdrop--visible');
+    };
+
+    // Auto-hide sidebar on mobile so the sheet is visible first
+    if (isNarrow()) {
+      closeSidebar();
+    }
+    sidebarClose.addEventListener('click', closeSidebar);
+    sidebarOpen.addEventListener('click', openSidebar);
+    if (sidebarBackdrop) sidebarBackdrop.addEventListener('click', closeSidebar);
   }
 
   // Drum drag-to-resize
@@ -1279,7 +1351,9 @@ document.addEventListener('DOMContentLoaded', () => {
     'wave_accel_tmin', 'wave_accel_tmax', 'wave_accel_amin', 'wave_accel_amax', 'wave_accel_show_sea_states',
     'depth_xmin', 'depth_xmax', 'depth_speed_ymin', 'depth_speed_ymax',
     'depth_xmin_tension', 'depth_xmax_tension', 'depth_tension_ymin', 'depth_tension_ymax',
-    'hyd_torque_xmin', 'hyd_torque_xmax', 'hyd_rpm_ymin', 'hyd_rpm_ymax']
+    'hyd_torque_xmin', 'hyd_torque_xmax', 'hyd_rpm_ymin', 'hyd_rpm_ymax',
+    'hyd_show_max_disp', 'hyd_show_min_disp', 'depth_show_max_disp', 'depth_show_min_disp',
+    'wave_show_max_disp', 'wave_show_min_disp', 'wave_ht_show_max_disp', 'wave_ht_show_min_disp']
     .forEach(id => {
       const el = document.getElementById(id);
       if (!el) return;
@@ -1691,6 +1765,23 @@ function setupWrapTableToggleLabels() {
 
     apply();
     details.addEventListener('toggle', apply);
+  });
+}
+
+function setupPayloadBreakdownToggle() {
+  const toggle = document.querySelector('.payload-breakdown-toggle');
+  const body = document.getElementById('payload-breakdown-body');
+  if (!toggle || !body) return;
+
+  const flip = () => {
+    const open = body.hidden;
+    body.hidden = !open;
+    toggle.setAttribute('aria-expanded', String(open));
+  };
+
+  toggle.addEventListener('click', flip);
+  toggle.addEventListener('keydown', e => {
+    if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); flip(); }
   });
 }
 
@@ -2456,6 +2547,7 @@ function computeAll() {
       h_pump_cc: read('h_pump_cc'),
       h_max_psi: read('h_max_psi'),
       h_hmot_cc: read('h_hmot_cc'),
+      h_hmot_cc_min: read('h_hmot_cc_min'),
       h_hmot_rpm_cap: read('h_hmot_rpm_max'),
       dynamic_enabled: q('dynamic_enabled')?.checked ?? false,
       J_drum_kgm2: read('J_drum_kgm2'),
@@ -2620,7 +2712,9 @@ function redrawPlots() {
       Tmax: Number.isFinite(TmaxVal) ? TmaxVal : 20,
       speedMin: Number.isFinite(speedMinVal) ? speedMinVal : undefined,
       speedMax: Number.isFinite(speedMaxVal) ? speedMaxVal : undefined,
-      showSeaStateOverlay: Boolean(waveSpeedShowSeaStatesEl?.checked)
+      showSeaStateOverlay: Boolean(waveSpeedShowSeaStatesEl?.checked),
+      showMaxDisp: Boolean(q('wave_show_max_disp')?.checked),
+      showMinDisp: Boolean(q('wave_show_min_disp')?.checked)
     });
     drawWaveHeightContours(waveSvgHeight, {
       ...baseWaveOpts,
@@ -2632,7 +2726,9 @@ function redrawPlots() {
       showBreakingLimit: Boolean(waveShowBreakingLimitEl?.checked),
       showPmCurve: Boolean(waveShowPmCurveEl?.checked),
       showJonswapCurve: Boolean(waveShowJonswapCurveEl?.checked),
-      showSmbCurve: Boolean(waveShowSmbCurveEl?.checked)
+      showSmbCurve: Boolean(waveShowSmbCurveEl?.checked),
+      showMaxDisp: Boolean(q('wave_ht_show_max_disp')?.checked),
+      showMinDisp: Boolean(q('wave_ht_show_min_disp')?.checked)
     });
   }
 
@@ -2713,10 +2809,47 @@ function redrawPlots() {
     const depthXmaxTensionVal = parseInput(depthXmaxTensionEl);
     const depthTensionMinVal = parseInput(depthTensionYminEl);
     const depthTensionMaxVal = parseInput(depthTensionYmaxEl);
+    // Build displacement overlay profiles from wrap data
+    const deadEndM = Number.isFinite(read('dead_m')) ? Math.max(0, read('dead_m')) : 0;
+    const depthShowMinDisp = Boolean(q('depth_show_min_disp')?.checked);
+    const depthShowMaxDisp = Boolean(q('depth_show_max_disp')?.checked);
+    const tensionShowMinDisp = Boolean(q('depth_tension_show_min_disp')?.checked);
+    const tensionShowMaxDisp = Boolean(q('depth_tension_show_max_disp')?.checked);
+    let tensionExtraProfiles = [];
+    if (activeScenario === 'hydraulic' && lastHyWraps && lastHyWraps.length) {
+      if (depthShowMinDisp) {
+        const minDispSegments = buildMinDispSegments(lastHyWraps, deadEndM);
+        if (minDispSegments.length) {
+          flowSpeedProfiles.push({
+            label: 'Available speed (Min Disp)',
+            inlineLabel: 'Min Disp',
+            inlineLabelColor: '#e07020',
+            color: '#e07020',
+            strokeWidth: 3,
+            legendStrokeWidth: 3,
+            strokeDasharray: '',
+            legendStrokeDasharray: '',
+            segments: minDispSegments
+          });
+        }
+      }
+      if (tensionShowMinDisp) {
+        const minDispTensionSegments = buildMinDispTensionSegments(lastHyWraps, deadEndM);
+        if (minDispTensionSegments.length) {
+          tensionExtraProfiles.push({
+            label: 'Available tension (Min Disp)',
+            color: '#e07020',
+            strokeWidth: 2.4,
+            segments: minDispTensionSegments
+          });
+        }
+      }
+    }
+
     drawDepthProfiles(depthSpeedSvg, depthTensionSvg, {
       scenario: activeScenario,       // 'electric' | 'hydraulic'
       elWraps: lastElWraps,
-      hyWraps: lastHyWraps,
+      hyWraps: depthShowMaxDisp ? lastHyWraps : [],
       payload_kg: payloadRaw,
       payload_air_kg: Number.isFinite(read('payload_air_kg')) ? read('payload_air_kg') : null,
       cable_w_kgpm: read('c_w_kgpm'),
@@ -2733,7 +2866,9 @@ function redrawPlots() {
       tension_ymin: Number.isFinite(depthTensionMinVal) ? depthTensionMinVal : undefined,
       tension_ymax: Number.isFinite(depthTensionMaxVal) ? depthTensionMaxVal : undefined,
       speed_primary_label: speedPrimaryLabel,
-      speed_extra_profiles: flowSpeedProfiles
+      speed_extra_profiles: flowSpeedProfiles,
+      tension_extra_profiles: tensionExtraProfiles,
+      tension_show_max_disp: tensionShowMaxDisp
     });
 
   }
@@ -2750,10 +2885,13 @@ function redrawPlots() {
     const rpmMaxVal = parseInput(hydRpmYmaxEl);
     drawHydraulicRpmTorque(rpmTorqueSvg, {
       wraps: lastHyWraps,
+      wrapsMin: lastHyWraps,
       torqueMin: Number.isFinite(torqueMinVal) ? torqueMinVal : undefined,
       torqueMax: Number.isFinite(torqueMaxVal) ? torqueMaxVal : undefined,
       rpmMin: Number.isFinite(rpmMinVal) ? rpmMinVal : undefined,
-      rpmMax: Number.isFinite(rpmMaxVal) ? rpmMaxVal : undefined
+      rpmMax: Number.isFinite(rpmMaxVal) ? rpmMaxVal : undefined,
+      showMaxDisp: Boolean(q('hyd_show_max_disp')?.checked),
+      showMinDisp: Boolean(q('hyd_show_min_disp')?.checked)
     });
   }
 }

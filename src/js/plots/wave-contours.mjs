@@ -328,6 +328,8 @@ function renderWavePlot(svg, {
   showPmCurve = false,
   showJonswapCurve = false,
   showSmbCurve = false,
+  showMaxDisp = true,
+  showMinDisp = false,
 
   elLayers = [],
   hyLayers = []
@@ -375,22 +377,35 @@ function renderWavePlot(svg, {
 
   // layer speeds in m/s (start-of-layer)
   let layerSpeeds = [];
+  let layerSpeedsMinDisp = [];
   if (scenario === 'electric') {
     layerSpeeds = (elLayers || [])
       .filter(r => Number.isFinite(+r.line_speed_at_start_mpm))
       .map(r => ({ layer_no: r.layer_no, v_ms: (+r.line_speed_at_start_mpm) / 60 }));
   } else {
-    layerSpeeds = (hyLayers || [])
-      .filter(r => Number.isFinite(+r.hyd_speed_available_mpm))
-      .map(r => ({ layer_no: r.layer_no, v_ms: (+r.hyd_speed_available_mpm) / 60 }));
+    if (showMaxDisp) {
+      layerSpeeds = (hyLayers || [])
+        .filter(r => Number.isFinite(+r.hyd_speed_available_mpm))
+        .map(r => ({ layer_no: r.layer_no, v_ms: (+r.hyd_speed_available_mpm) / 60 }));
+    }
+    if (showMinDisp) {
+      layerSpeedsMinDisp = (hyLayers || [])
+        .filter(r => Number.isFinite(+r.hyd_speed_available_mpm_min))
+        .map(r => ({ layer_no: r.layer_no, v_ms: (+r.hyd_speed_available_mpm_min) / 60 }));
+    }
   }
   layerSpeeds = layerSpeeds.filter(L => Number.isFinite(L.v_ms) && L.v_ms >= 0);
   layerSpeeds.sort((a, b) => a.v_ms - b.v_ms);
+  layerSpeedsMinDisp = layerSpeedsMinDisp.filter(L => Number.isFinite(L.v_ms) && L.v_ms >= 0);
+  layerSpeedsMinDisp.sort((a, b) => a.v_ms - b.v_ms);
 
   // Y range (speed plot only) derived from contours and layers
   const vmaxFromContours = Math.PI * Hmax / Math.max(Tmin, 1e-9);
   let maxLayerSpeed = 0;
   for (const { v_ms } of layerSpeeds) {
+    if (v_ms > maxLayerSpeed) maxLayerSpeed = v_ms;
+  }
+  for (const { v_ms } of layerSpeedsMinDisp) {
     if (v_ms > maxLayerSpeed) maxLayerSpeed = v_ms;
   }
   let autoVmax = Math.max(vmaxFromContours, maxLayerSpeed, speedMin + 0.1) * 1.05;
@@ -557,7 +572,7 @@ function renderWavePlot(svg, {
       }
     }
 
-    // horizontal lines for each layer speed
+    // horizontal lines for each layer speed (max displacement)
     layerSpeeds.forEach(L => {
       if (L.v_ms < Vmin - 1e-9 || L.v_ms > Vmax + 1e-9) return;
       const Y = sy(L.v_ms);
@@ -570,6 +585,23 @@ function renderWavePlot(svg, {
         fill: accentColor
       });
       lbl.textContent = `L${L.layer_no} (${L.v_ms.toFixed(2)} m/s)`;
+      svg.appendChild(lbl);
+    });
+
+    // horizontal lines for min-displacement layer speeds
+    const minDispColor = '#e07020';
+    layerSpeedsMinDisp.forEach(L => {
+      if (L.v_ms < Vmin - 1e-9 || L.v_ms > Vmax + 1e-9) return;
+      const Y = sy(L.v_ms);
+      svg.appendChild(svgEl('line', { x1: ML, y1: Y, x2: W - MR, y2: Y, stroke: minDispColor, 'stroke-width': 1.5 }));
+      const lbl = svgEl('text', {
+        x: ML + 4,
+        y: Y - 3,
+        'text-anchor': 'start',
+        'font-size': '11',
+        fill: minDispColor
+      });
+      lbl.textContent = `L${L.layer_no} min (${L.v_ms.toFixed(2)} m/s)`;
       svg.appendChild(lbl);
     });
 
@@ -733,6 +765,35 @@ function renderWavePlot(svg, {
       }
     });
 
+
+    // min-displacement iso-lines
+    const minDispColorH = '#e07020';
+    layerSpeedsMinDisp.forEach(L => {
+      if (!Number.isFinite(L.v_ms) || L.v_ms <= 0) return;
+      const TmaxForLine = Math.min(Tmax, (Hmax * Math.PI) / Math.max(L.v_ms, 1e-12));
+      if (TmaxForLine <= Tmin + 1e-6) return;
+      const minH = (L.v_ms * Tmin) / Math.PI;
+      const maxH = (L.v_ms * TmaxForLine) / Math.PI;
+      if (maxH < Hmin - 1e-6 || minH > Hmax + 1e-6) return;
+      const pts = [];
+      const samples = 200;
+      for (let i = 0; i <= samples; i++) {
+        const T = Tmin + (TmaxForLine - Tmin) * i / samples;
+        pts.push([sx(T), sy((L.v_ms * T) / Math.PI)]);
+      }
+      svg.appendChild(svgEl('path', {
+        d: svgPathFromPoints(pts),
+        fill: 'none',
+        stroke: minDispColorH,
+        'stroke-width': 1.6
+      }));
+      const lastPt = pts[pts.length - 1];
+      if (lastPt && lastPt[1] >= MT && lastPt[1] <= H - MB) {
+        const lbl = svgEl('text', { x: lastPt[0] - 4, y: lastPt[1] + 14, 'text-anchor': 'end', 'font-size': '11', fill: minDispColorH });
+        lbl.textContent = `L${L.layer_no} min (${L.v_ms.toFixed(2)} m/s)`;
+        svg.appendChild(lbl);
+      }
+    });
 
     drawSeaStateOverlay();
 

@@ -22,7 +22,7 @@ function getAccentColor() {
  */
 export function drawHydraulicRpmTorque(
   svg,
-  { wraps = [], torqueMin = 0, torqueMax = null, rpmMin = 0, rpmMax = null } = {}
+  { wraps = [], wrapsMin = [], torqueMin = 0, torqueMax = null, rpmMin = 0, rpmMax = null, showMaxDisp = true, showMinDisp = false } = {}
 ) {
   if (!svg) return;
   if (svg._rpmTorqueHandlers) {
@@ -37,7 +37,7 @@ export function drawHydraulicRpmTorque(
   }
   while (svg.firstChild) svg.removeChild(svg.firstChild);
 
-  const data = (Array.isArray(wraps) ? wraps : [])
+  const dataMax = (Array.isArray(wraps) ? wraps : [])
     .map(w => ({
       wrap: w.wrap_no,
       layer: w.layer_no,
@@ -46,7 +46,20 @@ export function drawHydraulicRpmTorque(
     }))
     .filter(d => Number.isFinite(d.torque) && d.torque > 0 && Number.isFinite(d.rpmAvail) && d.rpmAvail >= 0);
 
-  if (!data.length) {
+  const dataMinDisp = (Array.isArray(wrapsMin) ? wrapsMin : [])
+    .map(w => ({
+      wrap: w.wrap_no,
+      layer: w.layer_no,
+      torque: toNumber(w.torque_Nm),
+      rpmAvail: toNumber(w.hyd_drum_rpm_available_min)
+    }))
+    .filter(d => Number.isFinite(d.torque) && d.torque > 0 && Number.isFinite(d.rpmAvail) && d.rpmAvail >= 0);
+
+  // Choose which data to use for axis scaling
+  const data = showMaxDisp ? dataMax : dataMinDisp;
+  const allData = [...(showMaxDisp ? dataMax : []), ...(showMinDisp ? dataMinDisp : [])];
+
+  if (!allData.length) {
     const msg = svgEl('text', {
       x: (svg.viewBox.baseVal.width || svg.clientWidth || 1000) / 2,
       y: (svg.viewBox.baseVal.height || svg.clientHeight || 540) / 2,
@@ -59,9 +72,11 @@ export function drawHydraulicRpmTorque(
     return;
   }
 
-  data.sort((a, b) => a.torque - b.torque);
+  dataMax.sort((a, b) => a.torque - b.torque);
+  dataMinDisp.sort((a, b) => a.torque - b.torque);
 
   const accent = getAccentColor();
+  const minDispColor = '#e07020';
   const W = svg.viewBox.baseVal.width || svg.clientWidth || 1000;
   const H = svg.viewBox.baseVal.height || svg.clientHeight || 540;
   const ML = 70, MR = 20, MT = 20, MB = 60;
@@ -69,14 +84,14 @@ export function drawHydraulicRpmTorque(
   const innerH = H - MT - MB;
 
   const torqueMinVal = Number.isFinite(Number(torqueMin)) ? Math.max(0, Number(torqueMin)) : 0;
-  const torqueMaxData = Math.max(...data.map(d => d.torque));
+  const torqueMaxData = Math.max(...allData.map(d => d.torque));
   const torqueExtent = Math.max(torqueMinVal + 1, torqueMaxData);
   const { step: torqueStep } = niceTicks(torqueMinVal, torqueExtent, 6);
   const autoTorqueMax = torqueMinVal + Math.max(1, Math.ceil((torqueExtent - torqueMinVal) / Math.max(torqueStep, 1e-9))) * Math.max(torqueStep, 1e-9);
   const torqueMaxVal = Number.isFinite(Number(torqueMax)) && Number(torqueMax) > torqueMinVal ? Number(torqueMax) : autoTorqueMax;
 
   const rpmMinVal = Number.isFinite(Number(rpmMin)) ? Math.max(0, Number(rpmMin)) : 0;
-  const rpmMaxCandidate = Math.max(...data.map(d => d.rpmAvail));
+  const rpmMaxCandidate = Math.max(...allData.map(d => d.rpmAvail));
   const autoRpmMax = Math.max(rpmMinVal + 1, rpmMaxCandidate * 1.1);
   const rpmMaxVal = Number.isFinite(Number(rpmMax)) && Number(rpmMax) > rpmMinVal ? Number(rpmMax) : autoRpmMax;
 
@@ -124,8 +139,8 @@ export function drawHydraulicRpmTorque(
   ylabel.textContent = 'Drum RPM';
   svg.appendChild(ylabel);
 
-  const pathFor = (field, { dropAtMaxTorque = false } = {}) => {
-    const points = data
+  const pathForDataset = (dataset, field, { dropAtMaxTorque = false } = {}) => {
+    const points = dataset
       .map(d => [d.torque, d[field]])
       .filter(([torque, rpm]) => Number.isFinite(torque) && Number.isFinite(rpm));
 
@@ -141,27 +156,56 @@ export function drawHydraulicRpmTorque(
     return svgPathFromPoints(points.map(([torque, rpm]) => [sx(torque), sy(rpm)]));
   };
 
-  const availPath = pathFor('rpmAvail', { dropAtMaxTorque: true });
-  if (availPath) {
-    svg.appendChild(svgEl('path', {
-      d: availPath,
-      fill: 'none',
-      stroke: accent,
-      'stroke-width': 3
-    }));
+  // Max-displacement curve
+  if (showMaxDisp && dataMax.length) {
+    const availPath = pathForDataset(dataMax, 'rpmAvail', { dropAtMaxTorque: true });
+    if (availPath) {
+      svg.appendChild(svgEl('path', {
+        d: availPath,
+        fill: 'none',
+        stroke: accent,
+        'stroke-width': 3
+      }));
+    }
+
+    const minPoint = dataMax.find(d => Number.isFinite(d.rpmAvail));
+    if (minPoint) {
+      const y = sy(minPoint.rpmAvail);
+      svg.appendChild(svgEl('line', {
+        x1: sx(torqueMinVal),
+        y1: y,
+        x2: sx(minPoint.torque),
+        y2: y,
+        stroke: accent,
+        'stroke-width': 2
+      }));
+    }
   }
 
-  const minPoint = data.find(d => Number.isFinite(d.rpmAvail));
-  if (minPoint) {
-    const y = sy(minPoint.rpmAvail);
-    svg.appendChild(svgEl('line', {
-      x1: sx(torqueMinVal),
-      y1: y,
-      x2: sx(minPoint.torque),
-      y2: y,
-      stroke: accent,
-      'stroke-width': 2
-    }));
+  // Min-displacement curve
+  if (showMinDisp && dataMinDisp.length) {
+    const minDispPath = pathForDataset(dataMinDisp, 'rpmAvail', { dropAtMaxTorque: true });
+    if (minDispPath) {
+      svg.appendChild(svgEl('path', {
+        d: minDispPath,
+        fill: 'none',
+        stroke: minDispColor,
+        'stroke-width': 3
+      }));
+    }
+
+    const firstPt = dataMinDisp.find(d => Number.isFinite(d.rpmAvail));
+    if (firstPt) {
+      const y = sy(firstPt.rpmAvail);
+      svg.appendChild(svgEl('line', {
+        x1: sx(torqueMinVal),
+        y1: y,
+        x2: sx(firstPt.torque),
+        y2: y,
+        stroke: minDispColor,
+        'stroke-width': 2
+      }));
+    }
   }
 
   let pins = [];

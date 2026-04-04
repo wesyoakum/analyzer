@@ -116,6 +116,7 @@ export const FIELD_UNITS = {
   motor_tmax:           'torque_Nm',
   // Hydraulic
   h_hmot_cc:            'displacement_cc',
+  h_hmot_cc_min:        'displacement_cc',
   h_emotor_hp:          'power_hp',
   h_pump_cc:            'displacement_cc',
   h_max_psi:            'pressure_psi',

@@ -62,7 +62,9 @@ export function rowsToHydraulicLayer(rows, payload_kg, cable_w_kgpm) {
         hyd_tension_theoretical_start_kgf: null,
         hyd_tension_required_start_kgf: null,
         hyd_tension_required_end_kgf: null,
-        hyd_avail_tension_kgf: null
+        hyd_avail_tension_kgf: null,
+        hyd_speed_available_mpm_min: null,
+        hyd_avail_tension_kgf_min: null
       });
     } else {
       const L = byLayer.get(r.layer_no);
@@ -88,6 +90,8 @@ export function rowsToHydraulicLayer(rows, payload_kg, cable_w_kgpm) {
       L.hyd_tension_theoretical_start_kgf = r.tension_theoretical_kgf ?? null;
       L.hyd_tension_required_start_kgf = +tension_kgf(L.pre_deployed_m, payload_kg, cable_w_kgpm).toFixed(1);
       L.hyd_avail_tension_kgf = r.hyd_avail_tension_kgf ?? null;
+      L.hyd_speed_available_mpm_min = r.hyd_speed_available_mpm_min ?? null;
+      L.hyd_avail_tension_kgf_min = r.hyd_avail_tension_kgf_min ?? null;
     }
     if (L && Number.isFinite(r.gearbox_torque_Nm)) {
       L.max_gearbox_torque_Nm = Number.isFinite(L.max_gearbox_torque_Nm)
@@ -147,7 +151,13 @@ export function projectHydraulicWraps(rows) {
     hyd_drum_rpm_flow: r.hyd_drum_rpm_flow,
     hyd_drum_rpm_power: r.hyd_drum_rpm_power,
     hyd_drum_rpm_available: r.hyd_drum_rpm_available,
-    torque_Nm: r.torque_Nm
+    torque_Nm: r.torque_Nm,
+    // Min-displacement variants
+    hyd_speed_flow_mpm_min: r.hyd_speed_flow_mpm_min,
+    hyd_speed_available_mpm_min: r.hyd_speed_available_mpm_min,
+    hyd_drum_rpm_flow_min: r.hyd_drum_rpm_flow_min,
+    hyd_drum_rpm_available_min: r.hyd_drum_rpm_available_min,
+    hyd_avail_tension_kgf_min: r.hyd_avail_tension_kgf_min
   }));
 }
 
