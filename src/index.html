@@ -4,7 +4,7 @@
   <meta charset="utf-8" />
   <title>Winch Analysis</title>
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <link rel="stylesheet" href="css/styles.css?v=15" />
+  <link rel="stylesheet" href="css/styles.css?v=16" />
   <!-- KaTeX setup -->
   <link
     rel="stylesheet"
@@ -1122,6 +1122,16 @@
               </div>
               <button type="button" class="plot-settings-btn" data-plot-settings-target="plot-settings-depth-tension" aria-label="Open axis settings for tension vs depth plot">⚙</button>
             </div>
+            <div class="plot-panel__toggles" aria-label="Displacement overlays">
+              <label class="plot-panel__checkbox" title="Show max-displacement curve">
+                <input id="depth_tension_show_max_disp" type="checkbox" checked data-persist="off">
+                <span>Max Disp</span>
+              </label>
+              <label class="plot-panel__checkbox" title="Show min-displacement curve">
+                <input id="depth_tension_show_min_disp" type="checkbox" data-persist="off">
+                <span>Min Disp</span>
+              </label>
+            </div>
             <div class="plotwrap">
               <svg id="depth_tension_svg" viewBox="0 0 1000 540"></svg>
             </div>
@@ -1134,6 +1144,7 @@
                 </span>
                 <span>Available tension (normal / exceeded)</span>
               </div>
+              <div class="legitem"><span class="swatch min-disp"></span><span>Available tension (Min Disp)</span></div>
             </div>
             <p class="dim interactive-hint">Interactive: move mouse for crosshairs, click to pin a point, right-click a pin to remove it, double-click to clear all pins.</p>
           </div>

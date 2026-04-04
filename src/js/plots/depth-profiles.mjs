@@ -71,7 +71,9 @@ export function drawDepthProfiles(svgSpeed, svgTension, {
   tension_ymin = 0,
   tension_ymax = null,
   speed_primary_label = null,
-  speed_extra_profiles = []
+  speed_extra_profiles = [],
+  tension_extra_profiles = [],
+  tension_show_max_disp = true
 } = {}) {
   const wraps = (scenario === 'electric') ? (elWraps || []) : (hyWraps || []);
   const speedField = (scenario === 'electric')
@@ -184,7 +186,9 @@ export function drawDepthProfiles(svgSpeed, svgTension, {
     extraProfiles: Array.isArray(speed_extra_profiles) ? speed_extra_profiles : [],
     enablePins: true
   });
-  drawTensionProfile(svgTension, segments, tensionDepthMin, tensionDepthMax, tensionMin, tensionMax, payload_kg, cable_w_kgpm, accentColor, ratedSwl, payload_air_kg);
+  drawTensionProfile(svgTension, tension_show_max_disp ? segments : [], tensionDepthMin, tensionDepthMax, tensionMin, tensionMax, payload_kg, cable_w_kgpm, accentColor, ratedSwl, payload_air_kg, {
+    extraProfiles: Array.isArray(tension_extra_profiles) ? tension_extra_profiles : []
+  });
 }
 
 // ---------- Speed vs Depth ----------
@@ -798,7 +802,7 @@ function removeTrailingZeros(text) {
 }
 
 // ---------- Tension vs Depth ----------
-function drawTensionProfile(svg, segments, depthMin, depthMax, tensionMin, tensionMax, payload_kg, cable_w_kgpm, accentColor, ratedSwl = null, payload_air_kg = null) {
+function drawTensionProfile(svg, segments, depthMin, depthMax, tensionMin, tensionMax, payload_kg, cable_w_kgpm, accentColor, ratedSwl = null, payload_air_kg = null, options = {}) {
   if (svg && svg._depthTensionHandlers) {
     const { move, leave, pointerup, contextmenu, dblclick } = svg._depthTensionHandlers;
     svg.removeEventListener('pointermove', move);
@@ -970,6 +974,30 @@ function drawTensionProfile(svg, segments, depthMin, depthMax, tensionMin, tensi
       stroke: seg.color,
       'stroke-width': 2.4
     }));
+  });
+
+  // Render extra tension profiles (e.g. min-displacement overlay)
+  const extraProfiles = Array.isArray(options.extraProfiles) ? options.extraProfiles : [];
+  extraProfiles.forEach(profile => {
+    if (!profile || !Array.isArray(profile.segments)) return;
+    const strokeColor = profile.color || '#e07020';
+    const strokeWidth = Number.isFinite(profile.strokeWidth) ? profile.strokeWidth : 2.4;
+    profile.segments.forEach(seg => {
+      if (!seg || !Number.isFinite(seg.avail_tension_kgf)) return;
+      const depthEnd = Math.min(seg.depth_start, seg.depth_end);
+      const depthStart = Math.max(seg.depth_start, seg.depth_end);
+      if (Math.max(depthStart, depthEnd) < depthMin - 1e-9) return;
+      if (Math.min(depthStart, depthEnd) > depthMax + 1e-9) return;
+      const tension = seg.avail_tension_kgf;
+      if (tension < tensionMin - 1e-9 || tension > tensionMax + 1e-9) return;
+      const x0 = sx(clampDepth(depthEnd));
+      const x1 = sx(clampDepth(depthStart));
+      if (Math.abs(x1 - x0) < 1e-6) return;
+      svg.appendChild(svgEl('line', {
+        x1: x0, y1: sy(tension), x2: x1, y2: sy(tension),
+        stroke: strokeColor, 'stroke-width': strokeWidth
+      }));
+    });
   });
 
   const drawPieces = (pieces, { strokeWidth = 2, dash = null } = {}) => {

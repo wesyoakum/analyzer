@@ -532,6 +532,29 @@ function buildMinDispSegments(hyWraps, deadEnd) {
   return segments;
 }
 
+function buildMinDispTensionSegments(hyWraps, deadEnd) {
+  const segments = [];
+  let fallbackStart = null;
+  for (const w of hyWraps) {
+    if (!w) continue;
+    const depthEndRaw = Number.isFinite(w.deployed_len_m) ? w.deployed_len_m : null;
+    if (!Number.isFinite(depthEndRaw)) { fallbackStart = null; continue; }
+    let depthStartRaw = Number.isFinite(w.pre_deployed_len_m) ? w.pre_deployed_len_m : null;
+    if (!Number.isFinite(depthStartRaw) && Number.isFinite(w.total_cable_len_m) && Number.isFinite(w.pre_spooled_len_m)) {
+      depthStartRaw = w.total_cable_len_m - w.pre_spooled_len_m;
+    }
+    if (!Number.isFinite(depthStartRaw) && Number.isFinite(fallbackStart)) depthStartRaw = fallbackStart;
+    if (!Number.isFinite(depthStartRaw)) depthStartRaw = depthEndRaw;
+    if (depthStartRaw < depthEndRaw) { const tmp = depthStartRaw; depthStartRaw = depthEndRaw; depthEndRaw = tmp; }
+    const toD = v => Number.isFinite(v) ? +Math.max(0, v - deadEnd).toFixed(3) : 0;
+    const tensionKgf = Number.isFinite(w.hyd_avail_tension_kgf_min) ? w.hyd_avail_tension_kgf_min : 0;
+    segments.push({ depth_start: toD(depthStartRaw), depth_end: toD(depthEndRaw), avail_tension_kgf: Math.max(0, tensionKgf) });
+    fallbackStart = depthEndRaw + deadEnd;
+  }
+  segments.sort((a, b) => (b.depth_start || 0) - (a.depth_start || 0));
+  return segments;
+}
+
 const CSV_BUTTON_SPECS = {
   csv_el_layer: {
     filename: () => 'electric-layer.csv',
@@ -642,7 +665,9 @@ const PLOT_DISPLAY_SETTING_IDS = [
   'wave_show_max_disp',
   'wave_show_min_disp',
   'wave_ht_show_max_disp',
-  'wave_ht_show_min_disp'
+  'wave_ht_show_min_disp',
+  'depth_tension_show_max_disp',
+  'depth_tension_show_min_disp'
 ];
 
 function readElementStateValue(el) {
@@ -2784,24 +2809,40 @@ function redrawPlots() {
     const depthXmaxTensionVal = parseInput(depthXmaxTensionEl);
     const depthTensionMinVal = parseInput(depthTensionYminEl);
     const depthTensionMaxVal = parseInput(depthTensionYmaxEl);
-    // Build min-displacement speed profile overlay from wrap data
+    // Build displacement overlay profiles from wrap data
     const deadEndM = Number.isFinite(read('dead_m')) ? Math.max(0, read('dead_m')) : 0;
     const depthShowMinDisp = Boolean(q('depth_show_min_disp')?.checked);
     const depthShowMaxDisp = Boolean(q('depth_show_max_disp')?.checked);
-    if (activeScenario === 'hydraulic' && depthShowMinDisp && lastHyWraps && lastHyWraps.length) {
-      const minDispSegments = buildMinDispSegments(lastHyWraps, deadEndM);
-      if (minDispSegments.length) {
-        flowSpeedProfiles.push({
-          label: 'Available speed (Min Disp)',
-          inlineLabel: 'Min Disp',
-          inlineLabelColor: '#e07020',
-          color: '#e07020',
-          strokeWidth: 3,
-          legendStrokeWidth: 3,
-          strokeDasharray: '',
-          legendStrokeDasharray: '',
-          segments: minDispSegments
-        });
+    const tensionShowMinDisp = Boolean(q('depth_tension_show_min_disp')?.checked);
+    const tensionShowMaxDisp = Boolean(q('depth_tension_show_max_disp')?.checked);
+    let tensionExtraProfiles = [];
+    if (activeScenario === 'hydraulic' && lastHyWraps && lastHyWraps.length) {
+      if (depthShowMinDisp) {
+        const minDispSegments = buildMinDispSegments(lastHyWraps, deadEndM);
+        if (minDispSegments.length) {
+          flowSpeedProfiles.push({
+            label: 'Available speed (Min Disp)',
+            inlineLabel: 'Min Disp',
+            inlineLabelColor: '#e07020',
+            color: '#e07020',
+            strokeWidth: 3,
+            legendStrokeWidth: 3,
+            strokeDasharray: '',
+            legendStrokeDasharray: '',
+            segments: minDispSegments
+          });
+        }
+      }
+      if (tensionShowMinDisp) {
+        const minDispTensionSegments = buildMinDispTensionSegments(lastHyWraps, deadEndM);
+        if (minDispTensionSegments.length) {
+          tensionExtraProfiles.push({
+            label: 'Available tension (Min Disp)',
+            color: '#e07020',
+            strokeWidth: 2.4,
+            segments: minDispTensionSegments
+          });
+        }
       }
     }
 
@@ -2825,7 +2866,9 @@ function redrawPlots() {
       tension_ymin: Number.isFinite(depthTensionMinVal) ? depthTensionMinVal : undefined,
       tension_ymax: Number.isFinite(depthTensionMaxVal) ? depthTensionMaxVal : undefined,
       speed_primary_label: speedPrimaryLabel,
-      speed_extra_profiles: flowSpeedProfiles
+      speed_extra_profiles: flowSpeedProfiles,
+      tension_extra_profiles: tensionExtraProfiles,
+      tension_show_max_disp: tensionShowMaxDisp
     });
 
   }
