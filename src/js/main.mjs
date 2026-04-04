@@ -1256,21 +1256,29 @@ document.addEventListener('DOMContentLoaded', () => {
   const sidebarEl = document.getElementById('app_sidebar');
   const sidebarClose = document.getElementById('sidebar_close');
   const sidebarOpen = document.getElementById('sidebar_open');
+  const sidebarBackdrop = document.getElementById('sidebar_backdrop');
   const shell = document.querySelector('.app-shell');
   if (sidebarEl && sidebarClose && sidebarOpen && shell) {
-    // Auto-hide sidebar on mobile so the sheet is visible first
-    if (window.matchMedia('(max-width: 1100px)').matches) {
+    const isNarrow = () => window.matchMedia('(max-width: 1100px)').matches;
+
+    const closeSidebar = () => {
       sidebarEl.classList.add('app-sidebar--hidden');
       shell.classList.add('app-shell--sidebar-hidden');
-    }
-    sidebarClose.addEventListener('click', () => {
-      sidebarEl.classList.add('app-sidebar--hidden');
-      shell.classList.add('app-shell--sidebar-hidden');
-    });
-    sidebarOpen.addEventListener('click', () => {
+      if (sidebarBackdrop) sidebarBackdrop.classList.remove('sidebar-backdrop--visible');
+    };
+    const openSidebar = () => {
       sidebarEl.classList.remove('app-sidebar--hidden');
       shell.classList.remove('app-shell--sidebar-hidden');
-    });
+      if (isNarrow() && sidebarBackdrop) sidebarBackdrop.classList.add('sidebar-backdrop--visible');
+    };
+
+    // Auto-hide sidebar on mobile so the sheet is visible first
+    if (isNarrow()) {
+      closeSidebar();
+    }
+    sidebarClose.addEventListener('click', closeSidebar);
+    sidebarOpen.addEventListener('click', openSidebar);
+    if (sidebarBackdrop) sidebarBackdrop.addEventListener('click', closeSidebar);
   }
 
   // Drum drag-to-resize
