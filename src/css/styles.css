@@ -9,8 +9,8 @@
   --ink-900: #1e293b;
   --ink-700: #334155;
   --ink-500: #55637d;
-  --accent: #2563eb;
-  --accent-light: #eff6ff;
+  --accent: #16a34a;
+  --accent-light: #f0fdf4;
   --doc-serif: "Inter", "Segoe UI", system-ui, -apple-system, BlinkMacSystemFont, "Roboto", "Helvetica Neue", Arial, sans-serif;
   --tension-low: #6c2bd9;
   --tension-high: #f97316;
@@ -478,10 +478,15 @@ body {
   .sheet {
     width: 100%;
     max-width: 100%;
+    min-width: 0;
     overflow-x: hidden;
+    overflow-wrap: break-word;
+    word-break: break-word;
     padding-left: 16px;
     padding-right: 16px;
     box-sizing: border-box;
+    grid-column: unset;
+    grid-row: unset;
   }
 
   .card {
