@@ -867,6 +867,7 @@ export const FIELD_MAPS = {
   }),
   hydraulicMotor: /** @type {SelectConfig['fieldMap']} */ ({
     h_hmot_cc: 'hyd_motor_disp_cc',
+    h_hmot_cc_min: 'hyd_motor_min_disp_cc',
     h_hmot_rpm_max: 'hyd_motor_max_rpm'
   }),
   hpuMotor: /** @type {SelectConfig['fieldMap']} */ ({

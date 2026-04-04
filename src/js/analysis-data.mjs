@@ -47,6 +47,9 @@ export function buildComputationModel(inputs) {
   const h_pump_cc = positiveOr(inputs.h_pump_cc, 0);
   const h_max_psi = positiveOr(inputs.h_max_psi, 0);
   const h_hmot_cc = positiveOr(inputs.h_hmot_cc, 0);
+  const h_hmot_cc_min_raw = positiveOr(inputs.h_hmot_cc_min, 0);
+  const h_hmot_cc_min = h_hmot_cc_min_raw > 0 ? h_hmot_cc_min_raw : h_hmot_cc;
+  const variableDisplacement = h_hmot_cc_min > 0 && h_hmot_cc_min < h_hmot_cc;
   const h_hmot_rpm_cap = positiveOr(inputs.h_hmot_rpm_cap, Infinity);
 
   const hp_str_usable = h_emotor_hp * h_emotor_eff;
@@ -60,6 +63,7 @@ export function buildComputationModel(inputs) {
 
   const dP_Pa = h_max_psi * PSI_TO_PA;
   const torque_per_hmotor_maxP = torque_per_motor_from_pressure_Pa(dP_Pa, h_hmot_cc);
+  const torque_per_hmotor_maxP_minDisp = torque_per_motor_from_pressure_Pa(dP_Pa, h_hmot_cc_min);
   const torque_at_drum_maxP_factor = Math.max(gr1, 1) * Math.max(gr2, 1) * Math.max(motors, 1);
 
   // Dynamic loads (inertia)
@@ -158,11 +162,35 @@ export function buildComputationModel(inputs) {
       r.hyd_drum_rpm_flow = +Math.max(0, rpm_flow_drum).toFixed(1);
       r.hyd_drum_rpm_power = +Math.max(0, rpm_power_drum).toFixed(1);
       r.hyd_drum_rpm_available = +Math.max(0, rpm_available_drum).toFixed(1);
+
+      // --- Min-displacement variant (for variable displacement motors) ---
+      let P_req_psi_min = psi_from_torque_and_disp_Nm_cc(torque_per_hmotor_required, h_hmot_cc_min);
+      if (!Number.isFinite(P_req_psi_min) || P_req_psi_min < 0) P_req_psi_min = 0;
+      const rpm_flow_per_motor_min = Math.min(h_hmot_rpm_cap, rpm_from_gpm_and_disp(q_tot_gpm / Math.max(motors, 1), h_hmot_cc_min));
+      const speed_flow_mpm_min = line_speed_mpm_from_motor_rpm(rpm_flow_per_motor_min, gr1, gr2, r.layer_dia_in);
+      const rpm_flow_clean_min = Number.isFinite(rpm_flow_per_motor_min) && rpm_flow_per_motor_min > 0 ? rpm_flow_per_motor_min : 0;
+      const rpm_flow_drum_min = rpm_flow_clean_min / gear_product_safe;
+      let speed_avail_mpm_min = Math.min(speed_power_mpm, speed_flow_mpm_min);
+      if (!Number.isFinite(speed_avail_mpm_min) || speed_avail_mpm_min < 0) speed_avail_mpm_min = 0;
+      const rpm_available_drum_min = Number.isFinite(speed_avail_mpm_min) ? speed_avail_mpm_min / safe_drum_circumference : 0;
+      const drum_T_pressure_max_min = torque_per_hmotor_maxP_minDisp * torque_at_drum_maxP_factor;
+      const hyd_avail_tension_N_min = drum_T_pressure_max_min / Math.max(radius_m, 1e-12);
+
+      r.hyd_P_required_psi_min = Math.round(P_req_psi_min);
+      r.hyd_speed_flow_mpm_min = +speed_flow_mpm_min.toFixed(2);
+      r.hyd_speed_available_mpm_min = +speed_avail_mpm_min.toFixed(2);
+      r.hyd_drum_rpm_flow_min = +Math.max(0, rpm_flow_drum_min).toFixed(1);
+      r.hyd_drum_rpm_available_min = +Math.max(0, rpm_available_drum_min).toFixed(1);
+      r.hyd_drum_torque_maxP_Nm_min = +drum_T_pressure_max_min.toFixed(2);
+      r.hyd_avail_tension_kgf_min = +(hyd_avail_tension_N_min / G).toFixed(1);
     } else {
       r.hyd_drum_torque_maxP_Nm = 0; r.hyd_avail_tension_kgf = 0; r.hyd_P_required_psi = 0;
       r.hyd_speed_power_mpm = 0; r.hyd_speed_flow_mpm = 0; r.hyd_speed_available_mpm = 0;
       r.hyd_hp_used_at_available = 0; r.hyd_elec_input_hp_used = 0;
       r.hyd_drum_rpm_flow = 0; r.hyd_drum_rpm_power = 0; r.hyd_drum_rpm_available = 0;
+      r.hyd_P_required_psi_min = 0; r.hyd_speed_flow_mpm_min = 0; r.hyd_speed_available_mpm_min = 0;
+      r.hyd_drum_rpm_flow_min = 0; r.hyd_drum_rpm_available_min = 0;
+      r.hyd_drum_torque_maxP_Nm_min = 0; r.hyd_avail_tension_kgf_min = 0;
     }
 
     // Dynamic loads: available linear acceleration from torque margin and inertia
@@ -203,7 +231,7 @@ export function buildComputationModel(inputs) {
     cfg, summary, meta, rows,
     electricEnabled, hydraulicEnabled,
     inputs: { ...inputs, gr1, gr2, motors, denom_mech, gear_product, gearbox_max_torque_Nm, P_per_motor_W },
-    hydraulic: { h_strings, h_emotor_hp, h_emotor_eff, h_emotor_rpm, h_pump_cc, h_max_psi, h_hmot_cc, h_hmot_rpm_cap, torque_per_hmotor_maxP, torque_at_drum_maxP_factor, q_tot_gpm, rpm_flow_per_motor_available },
+    hydraulic: { h_strings, h_emotor_hp, h_emotor_eff, h_emotor_rpm, h_pump_cc, h_max_psi, h_hmot_cc, h_hmot_cc_min, variableDisplacement, h_hmot_rpm_cap, torque_per_hmotor_maxP, torque_per_hmotor_maxP_minDisp, torque_at_drum_maxP_factor, q_tot_gpm, rpm_flow_per_motor_available },
     tables: { elLayer, hyLayer, elWraps, hyWraps }
   };
 }

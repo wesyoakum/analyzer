@@ -617,9 +617,16 @@
               </tr>
               <tr>
                 <th scope="row">
-                  <label class="param-label" for="h_hmot_cc" data-code="h_hmot_cc">Hydraulic Motor Displacement <span class="symbol" aria-hidden="true" data-latex="q_{hm}">q<sub>hm</sub></span></label>
+                  <label class="param-label" for="h_hmot_cc" data-code="h_hmot_cc">Motor Displacement (Max) <span class="symbol" aria-hidden="true" data-latex="q_{hm,\max}">q<sub>hm,max</sub></span></label>
                 </th>
                 <td class="value"><input id="h_hmot_cc" type="number" step="1" value="55"></td>
+                <td class="units">cc/rev</td>
+              </tr>
+              <tr>
+                <th scope="row">
+                  <label class="param-label" for="h_hmot_cc_min" data-code="h_hmot_cc_min">Motor Displacement (Min) <span class="symbol" aria-hidden="true" data-latex="q_{hm,\min}">q<sub>hm,min</sub></span></label>
+                </th>
+                <td class="value"><input id="h_hmot_cc_min" type="number" step="1" value=""></td>
                 <td class="units">cc/rev</td>
               </tr>
               <tr>
@@ -943,6 +950,14 @@
               <button type="button" class="plot-settings-btn" data-plot-settings-target="plot-settings-wave-speed" aria-label="Open axis settings for speed vs period plot">⚙</button>
             </div>
             <div class="plot-panel__toggles" aria-label="Wave speed overlays">
+              <label class="plot-panel__checkbox" title="Show max-displacement iso-lines">
+                <input id="wave_show_max_disp" type="checkbox" checked data-persist="off">
+                <span>Max Disp</span>
+              </label>
+              <label class="plot-panel__checkbox" title="Show min-displacement iso-lines">
+                <input id="wave_show_min_disp" type="checkbox" data-persist="off">
+                <span>Min Disp</span>
+              </label>
               <label class="plot-panel__checkbox" title="Overlay representative Douglas sea-state bands">
                 <input id="wave_speed_show_sea_states" type="checkbox">
                 <span>Sea states</span>
@@ -966,6 +981,14 @@
               <button type="button" class="plot-settings-btn" data-plot-settings-target="plot-settings-wave-height" aria-label="Open axis settings for wave height vs period plot">⚙</button>
             </div>
             <div class="plot-panel__toggles" aria-label="Wave height overlays">
+              <label class="plot-panel__checkbox" title="Show max-displacement iso-lines">
+                <input id="wave_ht_show_max_disp" type="checkbox" checked data-persist="off">
+                <span>Max Disp</span>
+              </label>
+              <label class="plot-panel__checkbox" title="Show min-displacement iso-lines">
+                <input id="wave_ht_show_min_disp" type="checkbox" data-persist="off">
+                <span>Min Disp</span>
+              </label>
               <label class="plot-panel__checkbox" title="Overlay representative Douglas sea-state bands">
                 <input id="wave_show_sea_states" type="checkbox">
                 <span>Sea states</span>
@@ -1059,6 +1082,16 @@
               </div>
               <button type="button" class="plot-settings-btn" data-plot-settings-target="plot-settings-depth-speed" aria-label="Open axis settings for speed vs depth plot">⚙</button>
             </div>
+            <div class="plot-panel__toggles" aria-label="Displacement overlays">
+              <label class="plot-panel__checkbox" title="Show max-displacement curve">
+                <input id="depth_show_max_disp" type="checkbox" checked data-persist="off">
+                <span>Max Disp</span>
+              </label>
+              <label class="plot-panel__checkbox" title="Show min-displacement curve">
+                <input id="depth_show_min_disp" type="checkbox" data-persist="off">
+                <span>Min Disp</span>
+              </label>
+            </div>
             <div class="plotwrap">
               <svg id="depth_speed_svg" viewBox="0 0 1000 540"></svg>
             </div>
@@ -1120,11 +1153,22 @@
               </div>
               <button type="button" class="plot-settings-btn" data-plot-settings-target="plot-settings-hyd-rpm" aria-label="Open axis settings for hydraulic RPM vs torque plot">⚙</button>
             </div>
+            <div class="plot-panel__toggles" aria-label="Displacement overlays">
+              <label class="plot-panel__checkbox" title="Show max-displacement curve (lowest speed, highest torque)">
+                <input id="hyd_show_max_disp" type="checkbox" checked data-persist="off">
+                <span>Max Disp</span>
+              </label>
+              <label class="plot-panel__checkbox" title="Show min-displacement curve (highest speed, lowest torque)">
+                <input id="hyd_show_min_disp" type="checkbox" data-persist="off">
+                <span>Min Disp</span>
+              </label>
+            </div>
             <div class="plotwrap">
               <svg id="hyd_rpm_torque_svg" viewBox="0 0 1000 540"></svg>
             </div>
             <div class="legend legend--compact legend--panel">
-              <div class="legitem"><span class="swatch accent"></span><span>Available RPM</span></div>
+              <div class="legitem"><span class="swatch accent"></span><span>Available RPM (Max Disp)</span></div>
+              <div class="legitem"><span class="swatch min-disp"></span><span>Available RPM (Min Disp)</span></div>
               <div class="legitem"><span class="swatch flow"></span><span>Flow-limited RPM</span></div>
               <div class="legitem"><span class="swatch power"></span><span>Power-limited RPM</span></div>
             </div>

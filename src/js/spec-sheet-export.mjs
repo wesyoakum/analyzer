@@ -95,6 +95,10 @@ export function buildSpecSheetFields(model) {
     const hPump = safeRead('h_pump_cc');
     const hPsi = safeRead('h_max_psi');
     const hMot = safeRead('h_hmot_cc');
+    const hMotMin = safeRead('h_hmot_cc_min');
+    const motDispStr = (Number.isFinite(hMotMin) && hMotMin > 0 && hMotMin < hMot)
+      ? `${fmt(hMotMin, 0)}–${fmt(hMot, 0)} cc/rev (variable)`
+      : `${fmt(hMot, 0)} cc/rev`;
     commentLines.push(
       '',
       'Hydraulic System:',
@@ -102,7 +106,7 @@ export function buildSpecSheetFields(model) {
       `  E-Motor: ${fmt(hHp, 0)} HP @ ${fmt(hRpm, 0)} RPM`,
       `  Pump: ${fmt(hPump, 0)} cc/rev`,
       `  Max Pressure: ${fmt(hPsi, 0)} psi`,
-      `  Hyd Motor: ${fmt(hMot, 0)} cc/rev`,
+      `  Hyd Motor: ${motDispStr}`,
     );
   }
 

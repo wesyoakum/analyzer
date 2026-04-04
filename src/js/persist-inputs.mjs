@@ -43,6 +43,7 @@ function readValue(el) {
 }
 
 function applyValue(el, stored) {
+  if (stored === undefined) return;
   if (el.tagName === 'INPUT') {
     const type = el.type;
     if (type === 'checkbox') {
