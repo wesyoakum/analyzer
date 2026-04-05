@@ -605,7 +605,12 @@ const PLOT_DISPLAY_SETTING_IDS = [
   'hyd_torque_xmin',
   'hyd_torque_xmax',
   'hyd_rpm_ymin',
-  'hyd_rpm_ymax'
+  'hyd_rpm_ymax',
+  'wave_accel_tmin',
+  'wave_accel_tmax',
+  'wave_accel_amin',
+  'wave_accel_amax',
+  'wave_accel_show_sea_states'
 ];
 
 function readElementStateValue(el) {
