@@ -2857,8 +2857,8 @@ function redrawPlots() {
             inlineLabel: 'Min Disp',
             inlineLabelColor: '#e07020',
             color: '#e07020',
-            strokeWidth: 3,
-            legendStrokeWidth: 3,
+            strokeWidth: 6.4,
+            legendStrokeWidth: 6.4,
             strokeDasharray: '',
             legendStrokeDasharray: '',
             segments: minDispSegments
