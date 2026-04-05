@@ -2779,15 +2779,23 @@ function redrawPlots() {
     const payloadRaw = read('payload_kg');
     const payloadVal = Number.isFinite(payloadRaw) ? Math.max(0, payloadRaw) : null;
     const activeScenario = getActiveScenario();
+    const depthShowMinDisp = Boolean(q('depth_show_min_disp')?.checked);
+    const depthShowMaxDisp = Boolean(q('depth_show_max_disp')?.checked);
+    const tensionShowMinDisp = Boolean(q('depth_tension_show_min_disp')?.checked);
+    const tensionShowMaxDisp = Boolean(q('depth_tension_show_max_disp')?.checked);
+    // Hydraulic speed plot: when both Max Disp and Min Disp are unchecked, clear the plot
+    // (primary label + Max Disp curve + flow limit gated by depthShowMaxDisp; Min Disp curve gated by depthShowMinDisp).
     let speedPrimaryLabel = null;
     /** @type {SpeedProfileSegments[]} */
     let flowSpeedProfiles = [];
     if (Number.isFinite(payloadVal)) {
-      speedPrimaryLabel = formatPayloadLabel(payloadVal);
+      if (activeScenario !== 'hydraulic' || depthShowMaxDisp) {
+        speedPrimaryLabel = formatPayloadLabel(payloadVal);
+      }
       if (lastDepthProfileContext && lastDepthProfileContext.scenario === activeScenario) {
         const accentColor = readAccentColor();
 
-        if (activeScenario === 'hydraulic') {
+        if (activeScenario === 'hydraulic' && depthShowMaxDisp) {
           const segments = computeDepthSpeedSegmentsForPayload(payloadVal, lastDepthProfileContext, { mode: 'flow' });
           if (segments.length) {
             flowSpeedProfiles = [{
@@ -2816,10 +2824,6 @@ function redrawPlots() {
     const depthTensionMaxVal = parseInput(depthTensionYmaxEl);
     // Build displacement overlay profiles from wrap data
     const deadEndM = Number.isFinite(read('dead_m')) ? Math.max(0, read('dead_m')) : 0;
-    const depthShowMinDisp = Boolean(q('depth_show_min_disp')?.checked);
-    const depthShowMaxDisp = Boolean(q('depth_show_max_disp')?.checked);
-    const tensionShowMinDisp = Boolean(q('depth_tension_show_min_disp')?.checked);
-    const tensionShowMaxDisp = Boolean(q('depth_tension_show_max_disp')?.checked);
     let tensionExtraProfiles = [];
     if (activeScenario === 'hydraulic' && lastHyWraps && lastHyWraps.length) {
       if (depthShowMinDisp) {

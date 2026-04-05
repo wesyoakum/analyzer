@@ -224,7 +224,7 @@ function drawSpeedProfile(svg, segments, depthMin, depthMax, speedMin, speedMax,
   const showLegend = options && options.showLegend !== undefined ? Boolean(options.showLegend) : true;
   const legendEntries = [];
   if (showLegend && options.primaryLabel) {
-    legendEntries.push({ label: options.primaryLabel, color: accentColor, strokeWidth: 4.8, strokeDasharray: null });
+    legendEntries.push({ label: options.primaryLabel, color: accentColor, strokeWidth: 6.4, strokeDasharray: null });
   }
   if (showLegend) {
     extraProfiles.forEach(profile => {
@@ -355,7 +355,7 @@ function drawSpeedProfile(svg, segments, depthMin, depthMax, speedMin, speedMax,
       x2: x1,
       y2: y,
       stroke: strokeColor,
-      'stroke-width': 4.8
+      'stroke-width': 6.4
     }));
   });
 
