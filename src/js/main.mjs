@@ -667,7 +667,12 @@ const PLOT_DISPLAY_SETTING_IDS = [
   'wave_ht_show_max_disp',
   'wave_ht_show_min_disp',
   'depth_tension_show_max_disp',
-  'depth_tension_show_min_disp'
+  'depth_tension_show_min_disp',
+  'wave_accel_tmin',
+  'wave_accel_tmax',
+  'wave_accel_amin',
+  'wave_accel_amax',
+  'wave_accel_show_sea_states'
 ];
 
 function readElementStateValue(el) {
