@@ -4,7 +4,7 @@
   <meta charset="utf-8" />
   <title>Winch Analysis</title>
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <link rel="stylesheet" href="css/styles.css?v=30" />
+  <link rel="stylesheet" href="css/styles.css?v=31" />
   <!-- KaTeX setup -->
   <link
     rel="stylesheet"
@@ -1564,148 +1564,393 @@
           </table>
         </div>
 
-        <h3>A) Available Line Speed — Unitless Relations</h3>
-        <p>
-          $$P_{\min} =
-          \left(
-            \dfrac{T_{\mathrm{SWL}}\, v_{\mathrm{rated}}}{\eta_{\mathrm{sys}}}
-          \right)\, 1.2$$
-        </p>
-        <p>
-          $$D_{\mathrm{layer}}(\ell)=D_{\mathrm{core}}+2t_{\mathrm{lebus}}+d_c+(\ell-1)d_c\,\phi_{\mathrm{pack}}$$
-        </p>
-        <p>Where:</p>
-        <ul>
-          <li><span class="math" data-latex="D_{\mathrm{core}}"></span> = core diameter</li>
-          <li><span class="math" data-latex="t_{\mathrm{lebus}}"></span> = Lebus liner thickness</li>
-          <li><span class="math" data-latex="d_c"></span> = cable diameter</li>
-          <li><span class="math" data-latex="\phi_{\mathrm{pack}}"></span> = packing factor</li>
-          <li><span class="math" data-latex="\ell"></span> = layer index</li>
-        </ul>
-        <ol>
-          <li><p>$$Q_{p,i} = \eta_{vp}\, n_e\, D_p$$</p></li>
-          <li><p>$$Q_{tot} = N_p\, Q_{p,i}$$</p></li>
-          <li><p>$$Q_{m} = \dfrac{Q_{tot}}{N_{m}}$$</p></li>
-          <li><p>$$n_{m} = \dfrac{\eta_{vm}\, Q_{m}}{D_{m}}$$</p></li>
-          <li>
-            <p>$$n_{d} = \dfrac{n_{m}}{G_{tot}}$$</p>
-            <p>$$G_{tot} = G_{gb} \, G_{pr}$$</p>
-          </li>
-          <li>
-            <p>
-              $$v_{flow}(z) = \left( \frac{\pi \, D_{\ell}(z)}{60} \right) n_{d}$$
-            </p>
-          </li>
-          <li><p>$$P_{avail} = \eta_{em}\, P_{nom}$$</p></li>
-          <li><p>$$v_{pwr}(z) = \dfrac{P_{avail}}{T(z)}$$</p></li>
-          <li>
-            <p>
-              $$v_{avail}(z) = \min\!\big(v_{flow}(z),\, v_{pwr}(z)\big)$$
-            </p>
-          </li>
-        </ol>
-
-        <!-- Equations -->
-        <div class="equations">
-          <p>
-            $$v_{flow}(z) =
-            \frac{\pi \, D_\ell(z)}{60}
-            \left(
-              \frac{
-                \eta_{vm}
-                \left(
-                  \dfrac{N_p \, \eta_{vp} \, n_e \, D_p}{N_m}
-                \right)
-              }{
-                D_m \, G_{gb} \, G_{pr}
-              }
-            \right)$$
-          </p>
-
-          <p>
-            $$v_{pwr}(z) =
-            \frac{\eta_{em} \, P_{nom}}{T(z)}$$
-          </p>
-
-          <p>
-            $$v_{avail}(z) =
-            \min\!\big(v_{flow}(z),\, v_{pwr}(z)\big)$$
-          </p>
-        </div>
-
-        <h3>B) Tension vs Depth — Unitless Relations</h3>
-        <ol start="10">
-          <li>
-            <p>
-              $$T_{\mathrm{static}}(z) = W_{\mathrm{pay,sub}} + w_{c,\mathrm{sub}}\, z$$
-            </p>
-            <span class="note">
-              for
-              <span class="math" data-latex="0 \le z \le L"></span>
-            </span>
-          </li>
-          <li>
-            <p>
-              $$T_{\mathrm{static}}(z) = W_{\mathrm{pay,sub}} + w_{c,\mathrm{sub}}\, L$$
-            </p>
-            <span class="note">
-              for
-              <span class="math" data-latex="z > L"></span>
-            </span>
-          </li>
-          <li>
-            <p>
-              $$T(z) = T_{\mathrm{static}}(z) + \Delta T_a + \Delta T_d + \Delta T_h$$
-            </p>
-          </li>
-          <li>
-            <p>
-              $$T(z) = T_{\mathrm{static}}(z) + \Delta T_a + \Delta T_d + \Delta T_h$$
-            </p>
-          </li>
-        </ol>
-
-        <h3>C) Cross-Checks (Optional)</h3>
-        <ol start="14">
-          <li>
-            <p>
-              $$T_{\mathrm{cap}}(z) = \dfrac{\tau_m N_m\, \eta_{\mathrm{train}}}{r_{\ell}(z)\, G_{tot}}$$
-            </p>
-          </li>
-          <li>
-            <p>
-              $$\tau_m = \dfrac{\Delta p\, D_m\, \eta_{mm}}{2\pi}$$
-            </p>
-          </li>
-          <li>
-            <p>
-              $$D_{\ell}(i) = 2 r_{\mathrm{core}} + 2 (i - 0.5) p_c$$
-            </p>
-          </li>
-        </ol>
-
-        <h3>D) Deployment Checks</h3>
-        <p>
-          Use these quick checks when validating simulation output against the normalized relations above.
-        </p>
-        <ul>
-          <li>
-            <p>
-              $$T_{\mathrm{hoist}}(z) = T_{\mathrm{static}}(z) + \Delta T_a + \Delta T_d + \Delta T_h$$
-            </p>
-            consolidates the static and dynamic contributors into a single hoisting load profile.
-          </li>
-          <li>
-            <p>
-              $$P_{\mathrm{req}}(z) = T(z) \, v_{\mathrm{avail}}(z)$$
-            </p>
-            offers a spot-check on power demand at any depth when comparing to drive sizing limits.
-          </li>
-        </ul>
+        <!-- ============================================================ -->
+        <!-- SECTION 4.2: CALCULATIONS                                    -->
+        <!-- Comprehensive narrative of every computation in the app       -->
+        <!-- ============================================================ -->
+        <h3>Calculations</h3>
 
         <p>
-          Each equation isolates the dependent quantity on the left-hand side for quick substitution while preserving unit-consistent implementation across measurement systems. All efficiencies, ratios, and reductions are dimensionless. Power-, flow-, and tension-limited speeds follow directly from these relationships.
+          This section documents every calculation performed by the analyzer. Each subsection follows the
+          order in which the code evaluates results: drum geometry first, then line tension, then drive
+          performance (electric or hydraulic), and finally dynamic/inertial loads. Every equation shown
+          here corresponds directly to a line of code in the computation engine.
         </p>
+
+        <!-- ── A) Drum Geometry ── -->
+        <h4>A) Drum Geometry and Cable Spooling</h4>
+        <p>
+          The drum is modeled as a cylindrical core with a Lebus liner, onto which cable is wound in
+          discrete wraps organized into layers. The geometry determines how much cable fits on the drum,
+          the effective winding diameter at each layer, and — critically — the moment arm that converts
+          line tension into drum torque.
+        </p>
+
+        <p><strong>Wraps per layer.</strong>
+          The number of wraps that fit side-by-side across the drum face is set by the flange-to-flange
+          width divided by the cable diameter. The result is truncated to the nearest half-wrap (Lebus
+          grooves allow half-wrap crossovers). On even-numbered layers the wraps shift by a half-pitch,
+          so one fewer wrap fits when the calculated value is a whole number.
+        </p>
+        <p>
+          $$W_{\mathrm{layer}} = \mathrm{trunc}_{\,0.5}\!\left(\frac{F_{f2f}}{d_c}\right)$$
+        </p>
+
+        <p><strong>First-layer (bare drum) diameter.</strong>
+          The innermost winding surface sits on top of the Lebus liner, so the effective diameter of the
+          first layer is the core plus twice the liner thickness plus one cable diameter (the cable
+          centerline is one radius above the surface):
+        </p>
+        <p>
+          $$D_1 = D_{\mathrm{core}} + 2\,t_{\mathrm{lebus}} + d_c$$
+        </p>
+
+        <p><strong>Layer diameter growth.</strong>
+          Each subsequent layer adds cable on top of the previous one. In a Lebus-groove arrangement the
+          cables do not stack directly on center — they nestle into the valley between wraps below. The
+          packing factor <span class="math" data-latex="\phi"></span> (typically ~0.877 for round cable on
+          Lebus) captures this geometric nesting:
+        </p>
+        <p>
+          $$D_{\ell+1} = D_{\ell} + 2\,d_c\,\phi$$
+        </p>
+
+        <p><strong>Wrap length.</strong>
+          Each wrap is one full circumference at the current layer diameter, converted from inches to meters:
+        </p>
+        <p>
+          $$L_{\mathrm{wrap}} = \pi\,D_{\ell} \qquad (\text{in inches; } \times\,0.0254 \text{ for meters})$$
+        </p>
+
+        <p><strong>Spooled and deployed lengths.</strong>
+          The total cable length is the sum of operating depth and dead-end reserve. As each wrap is added,
+          the spooled (on-drum) length accumulates and the deployed (hanging) length is what remains:
+        </p>
+        <p>
+          $$L_{\mathrm{cable}} = z_{\mathrm{operating}} + z_{\mathrm{dead\text{-}end}}$$
+        </p>
+        <p>
+          $$L_{\mathrm{spooled}} = \sum_{i=1}^{w} L_{\mathrm{wrap},i} \qquad L_{\mathrm{deployed}} = L_{\mathrm{cable}} - L_{\mathrm{spooled}}$$
+        </p>
+
+        <!-- ── B) Line Tension ── -->
+        <h4>B) Line Tension</h4>
+        <p>
+          The static line tension at any point during deployment is the weight hanging below the drum:
+          the payload at the end of the cable, plus the weight of all cable that has been paid out. As the
+          winch spools out cable, deployed length increases and tension rises linearly with depth.
+        </p>
+        <p>
+          $$T(z) = m_{\mathrm{payload}} + w_c \cdot z_{\mathrm{deployed}}$$
+        </p>
+        <p>
+          where <span class="math" data-latex="m_{\mathrm{payload}}"></span> is the submerged payload weight (kg-force),
+          <span class="math" data-latex="w_c"></span> is the cable weight per unit length in water (kgf/m), and
+          <span class="math" data-latex="z_{\mathrm{deployed}}"></span> is the length of cable hanging below the drum (m).
+          This value is computed for every wrap position.
+        </p>
+
+        <!-- ── C) Torque Requirements ── -->
+        <h4>C) Drum and Drivetrain Torque</h4>
+        <p>
+          Line tension acts at the winding radius to create a torque demand on the drum. This torque must
+          be delivered through the gearbox and ultimately by the prime mover (electric motor or hydraulic
+          motor). The torque scales with the layer radius — outer layers demand more torque for the same
+          line pull.
+        </p>
+
+        <p><strong>Drum torque.</strong>
+          Converting line tension from kgf to newtons and multiplying by the layer radius:
+        </p>
+        <p>
+          $$\tau_{\mathrm{drum}} = T \cdot g \cdot r_{\ell}$$
+        </p>
+        <p>
+          where <span class="math" data-latex="g = 9.80665"></span> m/s&sup2; and
+          <span class="math" data-latex="r_{\ell} = D_{\ell} \cdot 0.0254\,/\,2"></span> (layer radius in meters).
+        </p>
+
+        <p><strong>Gearbox torque.</strong>
+          The torque seen at the gearbox output shaft (between gear stages G1 and G2) is the drum torque
+          divided by the number of motors and the second gear ratio. This is the value checked against the
+          gearbox rating:
+        </p>
+        <p>
+          $$\tau_{\mathrm{gearbox}} = \frac{\tau_{\mathrm{drum}}}{N_m \cdot G_2}$$
+        </p>
+
+        <p><strong>Motor torque (electric).</strong>
+          The torque at each individual motor shaft is the drum torque divided by the full drivetrain
+          multiplication:
+        </p>
+        <p>
+          $$\tau_{\mathrm{motor}} = \frac{\tau_{\mathrm{drum}}}{G_1 \cdot G_2 \cdot N_m}$$
+        </p>
+
+        <!-- ── D) Electric Drive Performance ── -->
+        <h4>D) Electric Drive — Speed and Tension</h4>
+        <p>
+          An electric drive is speed-limited by two independent constraints: the motor's maximum RPM
+          (set by the VFD or nameplate rating), and the power available from the motor. The winch can
+          never exceed either limit, so the available line speed is the lesser of the two.
+        </p>
+
+        <p><strong>Power-limited motor RPM.</strong>
+          Given a motor's shaft power and the torque it must deliver, the maximum RPM it can sustain is
+          found from <span class="math" data-latex="P = \tau \cdot \omega"></span>:
+        </p>
+        <p>
+          $$n_{\mathrm{power}} = \frac{P_{\mathrm{motor}} \cdot 60}{2\pi\,\tau_{\mathrm{motor}}}$$
+        </p>
+        <p>
+          where <span class="math" data-latex="P_{\mathrm{motor}} = \mathrm{HP}_{\mathrm{rated}} \cdot \eta_{\mathrm{motor}} \cdot 745.7"></span> (watts per motor).
+          At low tension the motor can spin very fast; at high tension it slows down.
+        </p>
+
+        <p><strong>Line speed from motor RPM.</strong>
+          Motor RPM translates to line speed through the gear reduction and drum circumference:
+        </p>
+        <p>
+          $$v = \pi \cdot D_{\ell} \cdot \frac{n_{\mathrm{motor}}}{G_1 \cdot G_2} \qquad (\text{m/min, with } D_{\ell} \text{ in meters})$$
+        </p>
+
+        <p><strong>Available line speed.</strong>
+          The power-limited speed and the max-RPM speed are each converted to line speed, and the
+          minimum governs:
+        </p>
+        <p>
+          $$v_{\mathrm{avail}} = \min\!\big(v_{\mathrm{power}},\; v_{\mathrm{max\text{-}RPM}}\big)$$
+        </p>
+
+        <p><strong>Available line tension.</strong>
+          The maximum tension the electric drive can exert is determined by the motor's peak torque
+          rating, amplified by the full gear train:
+        </p>
+        <p>
+          $$T_{\mathrm{avail}} = \frac{\tau_{\mathrm{motor,max}} \cdot G_1 \cdot G_2 \cdot N_m}{r_{\ell} \cdot g}$$
+        </p>
+
+        <!-- ── E) Hydraulic Drive Performance ── -->
+        <h4>E) Hydraulic Drive — Speed, Pressure, and Tension</h4>
+        <p>
+          A hydraulic drive has three independent constraints on line speed: the total flow the pumps
+          can deliver (flow-limited), the total electrical power driving the pumps (power-limited),
+          and optionally a hydraulic motor RPM cap. The available speed is the minimum of these. Unlike
+          an electric drive where torque is the primary motor-side variable, hydraulic systems are
+          governed by pressure and flow.
+        </p>
+
+        <p><strong>System flow.</strong>
+          Each pump string delivers flow based on the electric motor speed and pump displacement. Total
+          system flow is the sum across all strings:
+        </p>
+        <p>
+          $$Q_{\mathrm{string}} = \frac{D_{\mathrm{pump}} \cdot n_{\mathrm{e\text{-}motor}}}{3785.41} \qquad Q_{\mathrm{total}} = Q_{\mathrm{string}} \cdot N_{\mathrm{strings}}$$
+        </p>
+        <p>
+          (3785.41 cc/gal converts cc/min to US GPM.)
+        </p>
+
+        <p><strong>Flow-limited hydraulic motor RPM.</strong>
+          The flow available to each hydraulic motor determines its maximum speed, capped by its
+          nameplate RPM limit:
+        </p>
+        <p>
+          $$n_{\mathrm{h\text{-}motor,flow}} = \min\!\left(n_{\mathrm{cap}},\;\frac{Q_{\mathrm{total}} \cdot 3785.41}{N_m \cdot D_{\mathrm{h\text{-}motor}}}\right)$$
+        </p>
+
+        <p><strong>Flow-limited line speed.</strong>
+          The hydraulic motor RPM is geared down and converted to line speed at the drum:
+        </p>
+        <p>
+          $$v_{\mathrm{flow}} = \pi \cdot D_{\ell} \cdot \frac{n_{\mathrm{h\text{-}motor,flow}}}{G_1 \cdot G_2}$$
+        </p>
+
+        <p><strong>Power-limited line speed.</strong>
+          The total usable electrical power sets an upper bound on line speed. Power equals force times
+          velocity, so dividing the available power by the line tension gives the maximum speed the
+          power plant can sustain:
+        </p>
+        <p>
+          $$v_{\mathrm{power}} = \frac{\mathrm{HP}_{\mathrm{e\text{-}motor}} \cdot N_{\mathrm{strings}} \cdot \eta_{\mathrm{e\text{-}motor}} \cdot 745.7}{T \cdot g} \cdot 60$$
+        </p>
+        <p>
+          (The factor of 60 converts m/s to m/min; <span class="math" data-latex="T \cdot g"></span> converts kgf to newtons.)
+        </p>
+
+        <p><strong>Available line speed.</strong></p>
+        <p>
+          $$v_{\mathrm{avail}} = \min\!\big(v_{\mathrm{power}},\; v_{\mathrm{flow}}\big)$$
+        </p>
+
+        <p><strong>Required pressure.</strong>
+          The hydraulic pressure needed to generate the required torque at each hydraulic motor is
+          derived from the displacement-torque relationship. This tells you how much of the system's
+          pressure capacity is being used at each wrap position:
+        </p>
+        <p>
+          $$\Delta p = \frac{\tau_{\mathrm{h\text{-}motor}} \cdot 2\pi}{D_{\mathrm{h\text{-}motor}} \times 10^{-6}} \cdot \frac{1}{6894.76}$$
+        </p>
+        <p>
+          where <span class="math" data-latex="\tau_{\mathrm{h\text{-}motor}} = \tau_{\mathrm{drum}} / (G_1 \cdot G_2 \cdot N_m)"></span>
+          and 6894.76 Pa/psi converts to psi. The operating pressure is capped at the system maximum
+          <span class="math" data-latex="\Delta p_{\mathrm{max}}"></span>.
+        </p>
+
+        <p><strong>Available torque and tension from max pressure.</strong>
+          At full system pressure, the torque each hydraulic motor can deliver is:
+        </p>
+        <p>
+          $$\tau_{\mathrm{h\text{-}motor,max}} = \frac{\Delta p_{\mathrm{max}} \cdot 6894.76 \cdot D_{\mathrm{h\text{-}motor}} \times 10^{-6}}{2\pi}$$
+        </p>
+        <p>
+          Multiplied through the gear train and all motors, this becomes the drum torque capacity, and
+          dividing by the layer radius gives the maximum line pull:
+        </p>
+        <p>
+          $$T_{\mathrm{avail}} = \frac{\tau_{\mathrm{h\text{-}motor,max}} \cdot G_1 \cdot G_2 \cdot N_m}{r_{\ell} \cdot g}$$
+        </p>
+
+        <p><strong>Hydraulic power consumed.</strong>
+          At the available speed, the actual flow and pressure used determine hydraulic horsepower consumed.
+          The code works backwards from the available line speed to find the drum RPM, then motor RPM,
+          then the flow each motor requires, and finally applies the standard hydraulic power formula:
+        </p>
+        <p>
+          $$\mathrm{HP}_{\mathrm{hyd}} = \frac{\Delta p_{\mathrm{operating}} \cdot Q_{\mathrm{used}}}{1714}$$
+        </p>
+        <p>
+          The electrical input power is then
+          <span class="math" data-latex="\mathrm{HP}_{\mathrm{elec}} = \mathrm{HP}_{\mathrm{hyd}}\,/\,\eta_{\mathrm{e\text{-}motor}}"></span>,
+          both capped at the system's total usable capacity.
+        </p>
+
+        <!-- ── F) Dynamic Loads ── -->
+        <h4>F) Dynamic Loads — Inertia and Available Acceleration</h4>
+        <p>
+          When the winch must accelerate or decelerate (as during active heave compensation), the drive
+          must supply extra torque beyond what static tension demands. The available acceleration margin
+          depends on how much torque the drive can deliver above the static load, and on the total
+          rotational inertia of the drum and cable.
+        </p>
+
+        <p><strong>Cable moment of inertia.</strong>
+          The cable wound on the drum is modeled as a thick-walled cylinder with inner radius equal to
+          the core (plus Lebus liner) and outer radius equal to the current layer radius. Using the
+          hollow-cylinder formula:
+        </p>
+        <p>
+          $$J_{\mathrm{cable}} = \tfrac{1}{2}\,m_{\mathrm{cable}}\!\left(r_{\mathrm{layer}}^2 + r_{\mathrm{core}}^2\right)$$
+        </p>
+        <p>
+          where <span class="math" data-latex="m_{\mathrm{cable}} = L_{\mathrm{spooled}} \cdot w_{\mathrm{cable,air}}"></span>
+          (mass of cable currently on the drum, in kg).
+        </p>
+
+        <p><strong>Total inertia.</strong></p>
+        <p>
+          $$J_{\mathrm{total}} = J_{\mathrm{drum}} + J_{\mathrm{cable}}$$
+        </p>
+        <p>
+          <span class="math" data-latex="J_{\mathrm{drum}}"></span> is the bare drum's rotational inertia (from
+          SolidWorks or measurement), in kg&middot;m&sup2;.
+        </p>
+
+        <p><strong>Available drive torque.</strong>
+          The maximum torque the drive can deliver at the drum depends on which drive type is active.
+          For electric drives it is the motor peak torque multiplied through the gear train; for hydraulic
+          drives it is the torque at maximum system pressure. When both drives are configured, the
+          analyzer uses whichever provides more:
+        </p>
+        <p>
+          $$\tau_{\mathrm{elec,drum}} = \tau_{\mathrm{motor,max}} \cdot G_1 \cdot G_2 \cdot N_m$$
+        </p>
+        <p>
+          $$\tau_{\mathrm{hyd,drum}} = \tau_{\mathrm{h\text{-}motor,max}} \cdot G_1 \cdot G_2 \cdot N_m$$
+        </p>
+        <p>
+          $$\tau_{\mathrm{avail}} = \max\!\big(\tau_{\mathrm{elec,drum}},\;\tau_{\mathrm{hyd,drum}}\big)$$
+        </p>
+
+        <p><strong>Torque margin.</strong>
+          The surplus torque above what static tension requires — this is what's available to accelerate
+          the load:
+        </p>
+        <p>
+          $$\tau_{\mathrm{margin}} = \tau_{\mathrm{avail}} - \tau_{\mathrm{drum,static}}$$
+        </p>
+
+        <p><strong>Available linear acceleration.</strong>
+          The angular acceleration of the drum converts to linear acceleration at the cable through the
+          layer radius:
+        </p>
+        <p>
+          $$\alpha = \frac{\tau_{\mathrm{margin}}}{J_{\mathrm{total}}} \qquad a = \alpha \cdot r_{\ell}$$
+        </p>
+        <p>
+          This value is computed for every wrap. The layer tables report the <em>minimum</em>
+          <span class="math" data-latex="a"></span> across all wraps in each layer — the worst case for
+          that layer. If the torque margin is zero or negative, the drive cannot accelerate at all and
+          <span class="math" data-latex="a = 0"></span>.
+        </p>
+
+        <!-- ── G) Wave Kinematics ── -->
+        <h4>G) Wave Kinematics — Required Velocity and Acceleration</h4>
+        <p>
+          For active heave compensation (AHC), the winch must match the vessel's heave motion. The
+          vessel heave is modeled as a sinusoid with wave height
+          <span class="math" data-latex="H"></span> (peak-to-peak) and period
+          <span class="math" data-latex="T_w"></span>. The required line velocity and acceleration
+          are the first and second derivatives of this sine wave:
+        </p>
+        <p>
+          $$z(t) = \frac{H}{2}\sin\!\left(\frac{2\pi}{T_w}\,t\right)$$
+        </p>
+        <p>
+          $$v_{\mathrm{max}} = \frac{\pi\,H}{T_w}$$
+        </p>
+        <p>
+          $$a_{\mathrm{max}} = \frac{2\pi^2\,H}{T_w^2}$$
+        </p>
+        <p>
+          The contour plots in Section 2 show these values across a grid of wave heights and periods,
+          overlaid with horizontal lines showing each layer's available speed or acceleration.
+          Where a layer line falls below a contour, the winch cannot fully compensate the heave at
+          that sea state.
+        </p>
+
+        <!-- ── H) Torque Compliance ── -->
+        <h4>H) Torque Compliance Checks</h4>
+        <p>
+          The electric drive section computes compliance checks against component torque ratings.
+          These verify that the gearbox and motor are not overloaded under the worst-case operating
+          condition or the Factory Acceptance Test (FAT) load.
+        </p>
+
+        <p><strong>FAT drum torque.</strong>
+          The FAT condition is 125% of the rated safe working load (SWL) at the full-drum diameter
+          (outermost layer, maximum moment arm):
+        </p>
+        <p>
+          $$\tau_{\mathrm{FAT}} = T_{\mathrm{SWL}} \cdot 1.25 \cdot g \cdot \frac{D_{\mathrm{full\text{-}drum}}}{2} \cdot 0.0254$$
+        </p>
+
+        <p><strong>Operating peak drum torque.</strong>
+          The maximum drum torque encountered during normal operation across all layers:
+        </p>
+        <p>
+          $$\tau_{\mathrm{ops}} = \max_{\ell}\!\big(\tau_{\mathrm{drum,max,}\ell}\big)$$
+        </p>
+
+        <p><strong>Design worst-case.</strong>
+          The torque used for compliance is whichever is greater — the FAT load or the operating peak:
+        </p>
+        <p>
+          $$\tau_{\mathrm{design}} = \max\!\big(\tau_{\mathrm{FAT}},\;\tau_{\mathrm{ops}}\big)$$
+        </p>
+        <p>
+          This design torque is then divided down through the gear train to find the torque at the
+          gearbox and at each motor, and compared to their respective ratings.</p>
       </section>
     </div>
 
@@ -1811,7 +2056,7 @@
       <!-- Main app script -->
       <script type="module" src="js/main.mjs"></script>
     </div>
-    <div id="build-tag" style="position:fixed;bottom:4px;right:4px;font:10px monospace;color:#999;pointer-events:none;z-index:9999">html:v30 | <span id="css-ver-tag">css:?</span></div>
+    <div id="build-tag" style="position:fixed;bottom:4px;right:4px;font:10px monospace;color:#999;pointer-events:none;z-index:9999">html:v31 | <span id="css-ver-tag">css:?</span></div>
     <script>
       try {
         const accent = getComputedStyle(document.documentElement).getPropertyValue('--accent').trim();

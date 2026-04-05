@@ -9,8 +9,8 @@
   --ink-900: #1e293b;
   --ink-700: #334155;
   --ink-500: #55637d;
-  --accent: #0891b2;
-  --accent-light: #ecfeff;
+  --accent: #be185d;
+  --accent-light: #fdf2f8;
   --doc-serif: "Inter", "Segoe UI", system-ui, -apple-system, BlinkMacSystemFont, "Roboto", "Helvetica Neue", Arial, sans-serif;
   --tension-low: #6c2bd9;
   --tension-high: #f97316;
@@ -324,6 +324,19 @@ body {
 .info-card code {
   font-weight: 600;
   color: var(--ink-700);
+}
+
+.info-card h4 {
+  font-size: 15px;
+  font-weight: 700;
+  margin: 28px 0 8px;
+  color: var(--ink-900);
+  border-bottom: 1px solid var(--paper-line-soft);
+  padding-bottom: 4px;
+}
+
+.info-card h4:first-of-type {
+  margin-top: 16px;
 }
 
 .math {
