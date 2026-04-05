@@ -4,7 +4,7 @@
   <meta charset="utf-8" />
   <title>Winch Analysis</title>
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <link rel="stylesheet" href="css/styles.css?v=32" />
+  <link rel="stylesheet" href="css/styles.css?v=33" />
   <!-- KaTeX setup -->
   <link
     rel="stylesheet"
@@ -1660,6 +1660,7 @@
         <p>
           $$W_{\mathrm{layer}} = \mathrm{trunc}_{\,0.5}\!\left(\frac{F_{f2f}}{d_c}\right)$$
         </p>
+        <small class="code-ref">layer-engine.mjs:72</small>
 
         <p><strong>First-layer (bare drum) diameter.</strong>
           The innermost winding surface sits on top of the Lebus liner, so the effective diameter of the
@@ -1669,6 +1670,7 @@
         <p>
           $$D_1 = D_{\mathrm{core}} + 2\,t_{\mathrm{lebus}} + d_c$$
         </p>
+        <small class="code-ref">layer-engine.mjs:80</small>
 
         <p><strong>Layer diameter growth.</strong>
           Each subsequent layer adds cable on top of the previous one. In a Lebus-groove arrangement the
@@ -1679,6 +1681,7 @@
         <p>
           $$D_{\ell+1} = D_{\ell} + 2\,d_c\,\phi$$
         </p>
+        <small class="code-ref">layer-engine.mjs:128</small>
 
         <p><strong>Wrap length.</strong>
           Each wrap is one full circumference at the current layer diameter, converted from inches to meters:
@@ -1686,6 +1689,7 @@
         <p>
           $$L_{\mathrm{wrap}} = \pi\,D_{\ell} \qquad (\text{in inches; } \times\,0.0254 \text{ for meters})$$
         </p>
+        <small class="code-ref">layer-engine.mjs:102–103</small>
 
         <p><strong>Spooled and deployed lengths.</strong>
           The total cable length is the sum of operating depth and dead-end reserve. As each wrap is added,
@@ -1694,9 +1698,11 @@
         <p>
           $$L_{\mathrm{cable}} = z_{\mathrm{operating}} + z_{\mathrm{dead\text{-}end}}$$
         </p>
+        <small class="code-ref">layer-engine.mjs:68</small>
         <p>
           $$L_{\mathrm{spooled}} = \sum_{i=1}^{w} L_{\mathrm{wrap},i} \qquad L_{\mathrm{deployed}} = L_{\mathrm{cable}} - L_{\mathrm{spooled}}$$
         </p>
+        <small class="code-ref">layer-engine.mjs:108–117</small>
 
         <!-- ── B) Line Tension ── -->
         <h4>B) Line Tension</h4>
@@ -1708,6 +1714,7 @@
         <p>
           $$T(z) = m_{\mathrm{payload}} + w_c \cdot z_{\mathrm{deployed}}$$
         </p>
+        <small class="code-ref">utils.mjs:49</small>
         <p>
           where <span class="math" data-latex="m_{\mathrm{payload}}"></span> is the submerged payload weight (kg-force),
           <span class="math" data-latex="w_c"></span> is the cable weight per unit length in water (kgf/m), and
@@ -1730,6 +1737,7 @@
         <p>
           $$\tau_{\mathrm{drum}} = T \cdot g \cdot r_{\ell}$$
         </p>
+        <small class="code-ref">analysis-data.mjs:81</small>
         <p>
           where <span class="math" data-latex="g = 9.80665"></span> m/s&sup2; and
           <span class="math" data-latex="r_{\ell} = D_{\ell} \cdot 0.0254\,/\,2"></span> (layer radius in meters).
@@ -1743,6 +1751,7 @@
         <p>
           $$\tau_{\mathrm{gearbox}} = \frac{\tau_{\mathrm{drum}}}{N_m \cdot G_2}$$
         </p>
+        <small class="code-ref">analysis-data.mjs:87</small>
 
         <p><strong>Motor torque (electric).</strong>
           The torque at each individual motor shaft is the drum torque divided by the full drivetrain
@@ -1751,6 +1760,7 @@
         <p>
           $$\tau_{\mathrm{motor}} = \frac{\tau_{\mathrm{drum}}}{G_1 \cdot G_2 \cdot N_m}$$
         </p>
+        <small class="code-ref">analysis-data.mjs:90</small>
 
         <!-- ── D) Electric Drive Performance ── -->
         <h4>D) Electric Drive — Speed and Tension</h4>
@@ -1767,6 +1777,7 @@
         <p>
           $$n_{\mathrm{power}} = \frac{P_{\mathrm{motor}} \cdot 60}{2\pi\,\tau_{\mathrm{motor}}}$$
         </p>
+        <small class="code-ref">analysis-data.mjs:93</small>
         <p>
           where <span class="math" data-latex="P_{\mathrm{motor}} = \mathrm{HP}_{\mathrm{rated}} \cdot \eta_{\mathrm{motor}} \cdot 745.7"></span> (watts per motor).
           At low tension the motor can spin very fast; at high tension it slows down.
@@ -1778,6 +1789,7 @@
         <p>
           $$v = \pi \cdot D_{\ell} \cdot \frac{n_{\mathrm{motor}}}{G_1 \cdot G_2} \qquad (\text{m/min, with } D_{\ell} \text{ in meters})$$
         </p>
+        <small class="code-ref">utils.mjs:62–66</small>
 
         <p><strong>Available line speed.</strong>
           The power-limited speed and the max-RPM speed are each converted to line speed, and the
@@ -1786,6 +1798,7 @@
         <p>
           $$v_{\mathrm{avail}} = \min\!\big(v_{\mathrm{power}},\; v_{\mathrm{max\text{-}RPM}}\big)$$
         </p>
+        <small class="code-ref">analysis-data.mjs:105</small>
 
         <p><strong>Available line tension.</strong>
           The maximum tension the electric drive can exert is determined by the motor's peak torque
@@ -1794,6 +1807,7 @@
         <p>
           $$T_{\mathrm{avail}} = \frac{\tau_{\mathrm{motor,max}} \cdot G_1 \cdot G_2 \cdot N_m}{r_{\ell} \cdot g}$$
         </p>
+        <small class="code-ref">utils.mjs:54–59</small>
 
         <!-- ── E) Hydraulic Drive Performance ── -->
         <h4>E) Hydraulic Drive — Speed, Pressure, and Tension</h4>
@@ -1812,6 +1826,7 @@
         <p>
           $$Q_{\mathrm{string}} = \frac{D_{\mathrm{pump}} \cdot n_{\mathrm{e\text{-}motor}}}{3785.41} \qquad Q_{\mathrm{total}} = Q_{\mathrm{string}} \cdot N_{\mathrm{strings}}$$
         </p>
+        <small class="code-ref">utils.mjs:69 &rarr; analysis-data.mjs:54–55</small>
         <p>
           (3785.41 cc/gal converts cc/min to US GPM.)
         </p>
@@ -1823,6 +1838,7 @@
         <p>
           $$n_{\mathrm{h\text{-}motor,flow}} = \min\!\left(n_{\mathrm{cap}},\;\frac{Q_{\mathrm{total}} \cdot 3785.41}{N_m \cdot D_{\mathrm{h\text{-}motor}}}\right)$$
         </p>
+        <small class="code-ref">utils.mjs:70 &rarr; analysis-data.mjs:127</small>
 
         <p><strong>Flow-limited line speed.</strong>
           The hydraulic motor RPM is geared down and converted to line speed at the drum:
@@ -1830,6 +1846,7 @@
         <p>
           $$v_{\mathrm{flow}} = \pi \cdot D_{\ell} \cdot \frac{n_{\mathrm{h\text{-}motor,flow}}}{G_1 \cdot G_2}$$
         </p>
+        <small class="code-ref">analysis-data.mjs:128</small>
 
         <p><strong>Power-limited line speed.</strong>
           The total usable electrical power sets an upper bound on line speed. Power equals force times
@@ -1839,6 +1856,7 @@
         <p>
           $$v_{\mathrm{power}} = \frac{\mathrm{HP}_{\mathrm{e\text{-}motor}} \cdot N_{\mathrm{strings}} \cdot \eta_{\mathrm{e\text{-}motor}} \cdot 745.7}{T \cdot g} \cdot 60$$
         </p>
+        <small class="code-ref">analysis-data.mjs:132–137</small>
         <p>
           (The factor of 60 converts m/s to m/min; <span class="math" data-latex="T \cdot g"></span> converts kgf to newtons.)
         </p>
@@ -1847,6 +1865,7 @@
         <p>
           $$v_{\mathrm{avail}} = \min\!\big(v_{\mathrm{power}},\; v_{\mathrm{flow}}\big)$$
         </p>
+        <small class="code-ref">analysis-data.mjs:141</small>
 
         <p><strong>Required pressure.</strong>
           The hydraulic pressure needed to generate the required torque at each hydraulic motor is
@@ -1856,6 +1875,7 @@
         <p>
           $$\Delta p = \frac{\tau_{\mathrm{h\text{-}motor}} \cdot 2\pi}{D_{\mathrm{h\text{-}motor}} \times 10^{-6}} \cdot \frac{1}{6894.76}$$
         </p>
+        <small class="code-ref">utils.mjs:72–76 &rarr; analysis-data.mjs:125</small>
         <p>
           where <span class="math" data-latex="\tau_{\mathrm{h\text{-}motor}} = \tau_{\mathrm{drum}} / (G_1 \cdot G_2 \cdot N_m)"></span>
           and 6894.76 Pa/psi converts to psi. The operating pressure is capped at the system maximum
@@ -1868,6 +1888,7 @@
         <p>
           $$\tau_{\mathrm{h\text{-}motor,max}} = \frac{\Delta p_{\mathrm{max}} \cdot 6894.76 \cdot D_{\mathrm{h\text{-}motor}} \times 10^{-6}}{2\pi}$$
         </p>
+        <small class="code-ref">utils.mjs:78–81 &rarr; analysis-data.mjs:60–63</small>
         <p>
           Multiplied through the gear train and all motors, this becomes the drum torque capacity, and
           dividing by the layer radius gives the maximum line pull:
@@ -1875,6 +1896,7 @@
         <p>
           $$T_{\mathrm{avail}} = \frac{\tau_{\mathrm{h\text{-}motor,max}} \cdot G_1 \cdot G_2 \cdot N_m}{r_{\ell} \cdot g}$$
         </p>
+        <small class="code-ref">analysis-data.mjs:119–122</small>
 
         <p><strong>Hydraulic power consumed.</strong>
           At the available speed, the actual flow and pressure used determine hydraulic horsepower consumed.
@@ -1884,6 +1906,7 @@
         <p>
           $$\mathrm{HP}_{\mathrm{hyd}} = \frac{\Delta p_{\mathrm{operating}} \cdot Q_{\mathrm{used}}}{1714}$$
         </p>
+        <small class="code-ref">utils.mjs:83 &rarr; analysis-data.mjs:150</small>
         <p>
           The electrical input power is then
           <span class="math" data-latex="\mathrm{HP}_{\mathrm{elec}} = \mathrm{HP}_{\mathrm{hyd}}\,/\,\eta_{\mathrm{e\text{-}motor}}"></span>,
@@ -1907,6 +1930,7 @@
         <p>
           $$J_{\mathrm{cable}} = \tfrac{1}{2}\,m_{\mathrm{cable}}\!\left(r_{\mathrm{layer}}^2 + r_{\mathrm{core}}^2\right)$$
         </p>
+        <small class="code-ref">analysis-data.mjs:171–172</small>
         <p>
           where <span class="math" data-latex="m_{\mathrm{cable}} = L_{\mathrm{spooled}} \cdot w_{\mathrm{cable,air}}"></span>
           (mass of cable currently on the drum, in kg).
@@ -1916,6 +1940,7 @@
         <p>
           $$J_{\mathrm{total}} = J_{\mathrm{drum}} + J_{\mathrm{cable}}$$
         </p>
+        <small class="code-ref">analysis-data.mjs:173</small>
         <p>
           <span class="math" data-latex="J_{\mathrm{drum}}"></span> is the bare drum's rotational inertia (from
           SolidWorks or measurement), in kg&middot;m&sup2;.
@@ -1930,12 +1955,15 @@
         <p>
           $$\tau_{\mathrm{elec,drum}} = \tau_{\mathrm{motor,max}} \cdot G_1 \cdot G_2 \cdot N_m \qquad (\text{electric enabled})$$
         </p>
+        <small class="code-ref">analysis-data.mjs:177</small>
         <p>
           $$\tau_{\mathrm{hyd,drum}} = \tau_{\mathrm{h\text{-}motor,max}} \cdot G_1 \cdot G_2 \cdot N_m \qquad (\text{hydraulic enabled})$$
         </p>
+        <small class="code-ref">analysis-data.mjs:178</small>
         <p>
           $$\tau_{\mathrm{avail}} = \max\!\big(\tau_{\mathrm{elec,drum}},\;\tau_{\mathrm{hyd,drum}}\big)$$
         </p>
+        <small class="code-ref">analysis-data.mjs:179</small>
         <p>
           In practice only one drive type is active at a time, so
           <span class="math" data-latex="\tau_{\mathrm{avail}}"></span> equals the torque from that
@@ -1949,6 +1977,7 @@
         <p>
           $$\tau_{\mathrm{margin}} = \tau_{\mathrm{avail}} - \tau_{\mathrm{drum,static}}$$
         </p>
+        <small class="code-ref">analysis-data.mjs:180</small>
 
         <p><strong>Available linear acceleration.</strong>
           The angular acceleration of the drum converts to linear acceleration at the cable through the
@@ -1957,6 +1986,7 @@
         <p>
           $$\alpha = \frac{\tau_{\mathrm{margin}}}{J_{\mathrm{total}}} \qquad a = \alpha \cdot r_{\ell}$$
         </p>
+        <small class="code-ref">analysis-data.mjs:185–186</small>
         <p>
           This value is computed for every wrap. The layer tables report the <em>minimum</em>
           <span class="math" data-latex="a"></span> across all wraps in each layer — the worst case for
@@ -1979,9 +2009,11 @@
         <p>
           $$v_{\mathrm{max}} = \frac{\pi\,H}{T_w}$$
         </p>
+        <small class="code-ref">plots/wave-contours.mjs:391</small>
         <p>
           $$a_{\mathrm{max}} = \frac{2\pi^2\,H}{T_w^2}$$
         </p>
+        <small class="code-ref">plots/wave-contours.mjs:85</small>
         <p>
           The contour plots in Section 2 show these values across a grid of wave heights and periods,
           overlaid with horizontal lines showing each layer's available speed or acceleration.
@@ -2004,6 +2036,7 @@
         <p>
           $$\tau_{\mathrm{FAT}} = T_{\mathrm{SWL}} \cdot 1.25 \cdot g \cdot \frac{D_{\mathrm{full\text{-}drum}}}{2} \cdot 0.0254$$
         </p>
+        <small class="code-ref">electric.mjs:237</small>
 
         <p><strong>Operating peak drum torque.</strong>
           The maximum drum torque encountered during normal operation across all layers:
@@ -2011,6 +2044,7 @@
         <p>
           $$\tau_{\mathrm{ops}} = \max_{\ell}\!\big(\tau_{\mathrm{drum,max,}\ell}\big)$$
         </p>
+        <small class="code-ref">electric.mjs:239</small>
 
         <p><strong>Design worst-case.</strong>
           The torque used for compliance is whichever is greater — the FAT load or the operating peak:
@@ -2018,6 +2052,7 @@
         <p>
           $$\tau_{\mathrm{design}} = \max\!\big(\tau_{\mathrm{FAT}},\;\tau_{\mathrm{ops}}\big)$$
         </p>
+        <small class="code-ref">electric.mjs:242</small>
         <p>
           This design torque is then divided down through the gear train to find the torque at the
           gearbox and at each motor, and compared to their respective ratings.</p>
@@ -2126,7 +2161,7 @@
       <!-- Main app script -->
       <script type="module" src="js/main.mjs"></script>
     </div>
-    <div id="build-tag" style="position:fixed;bottom:4px;right:4px;font:10px monospace;color:#999;pointer-events:none;z-index:9999">html:v32 | <span id="css-ver-tag">css:?</span></div>
+    <div id="build-tag" style="position:fixed;bottom:4px;right:4px;font:10px monospace;color:#999;pointer-events:none;z-index:9999">html:v33 | <span id="css-ver-tag">css:?</span></div>
     <script>
       try {
         const accent = getComputedStyle(document.documentElement).getPropertyValue('--accent').trim();
