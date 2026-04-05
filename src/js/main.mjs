@@ -532,6 +532,29 @@ function buildMinDispSegments(hyWraps, deadEnd) {
   return segments;
 }
 
+function buildMinDispFlowSegments(hyWraps, deadEnd) {
+  const segments = [];
+  let fallbackStart = null;
+  for (const w of hyWraps) {
+    if (!w) continue;
+    const depthEndRaw = Number.isFinite(w.deployed_len_m) ? w.deployed_len_m : null;
+    if (!Number.isFinite(depthEndRaw)) { fallbackStart = null; continue; }
+    let depthStartRaw = Number.isFinite(w.pre_deployed_len_m) ? w.pre_deployed_len_m : null;
+    if (!Number.isFinite(depthStartRaw) && Number.isFinite(w.total_cable_len_m) && Number.isFinite(w.pre_spooled_len_m)) {
+      depthStartRaw = w.total_cable_len_m - w.pre_spooled_len_m;
+    }
+    if (!Number.isFinite(depthStartRaw) && Number.isFinite(fallbackStart)) depthStartRaw = fallbackStart;
+    if (!Number.isFinite(depthStartRaw)) depthStartRaw = depthEndRaw;
+    if (depthStartRaw < depthEndRaw) { const tmp = depthStartRaw; depthStartRaw = depthEndRaw; depthEndRaw = tmp; }
+    const toD = v => Number.isFinite(v) ? +Math.max(0, v - deadEnd).toFixed(3) : 0;
+    const speedMpm = Number.isFinite(w.hyd_speed_flow_mpm_min) ? w.hyd_speed_flow_mpm_min : 0;
+    segments.push({ depth_start: toD(depthStartRaw), depth_end: toD(depthEndRaw), speed_ms: Math.max(0, speedMpm / 60) });
+    fallbackStart = depthEndRaw + deadEnd;
+  }
+  segments.sort((a, b) => (b.depth_start || 0) - (a.depth_start || 0));
+  return segments;
+}
+
 function buildMinDispTensionSegments(hyWraps, deadEnd) {
   const segments = [];
   let fallbackStart = null;
@@ -2839,6 +2862,18 @@ function redrawPlots() {
             strokeDasharray: '',
             legendStrokeDasharray: '',
             segments: minDispSegments
+          });
+        }
+        const minDispFlowSegments = buildMinDispFlowSegments(lastHyWraps, deadEndM);
+        if (minDispFlowSegments.length) {
+          flowSpeedProfiles.push({
+            label: 'V_Q (Min Disp)',
+            color: '#eed500',
+            strokeWidth: 2,
+            legendStrokeWidth: 2,
+            strokeDasharray: '5 4',
+            legendStrokeDasharray: '5 4',
+            segments: minDispFlowSegments
           });
         }
       }
