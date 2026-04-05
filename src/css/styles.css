@@ -9,8 +9,8 @@
   --ink-900: #1e293b;
   --ink-700: #334155;
   --ink-500: #55637d;
-  --accent: #b45309;
-  --accent-light: #fffbeb;
+  --accent: #0369a1;
+  --accent-light: #f0f9ff;
   --doc-serif: "Inter", "Segoe UI", system-ui, -apple-system, BlinkMacSystemFont, "Roboto", "Helvetica Neue", Arial, sans-serif;
   --tension-low: #6c2bd9;
   --tension-high: #f97316;
@@ -1511,6 +1511,7 @@ th[title] {
   align-items: flex-start;
   justify-content: space-between;
   gap: 12px;
+  min-width: 0;
 }
 
 .plot-panel__heading > div {
@@ -1518,6 +1519,9 @@ th[title] {
   flex-direction: column;
   gap: 6px;
   flex: 1;
+  min-width: 0;
+  overflow-wrap: break-word;
+  word-break: break-word;
 }
 
 .refresh-link {
