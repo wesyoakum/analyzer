@@ -1,0 +1,181 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Harmony Mural Palette</title>
+<style>
+  body { font-family: system-ui, sans-serif; background: #f5f5f5; padding: 40px; margin: 0; }
+  h1 { font-size: 22px; color: #2c3e50; margin-bottom: 24px; }
+  .grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(220px, 1fr)); gap: 16px; }
+  .swatch {
+    border-radius: 10px;
+    overflow: hidden;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.12);
+    background: #fff;
+  }
+  .swatch .color {
+    height: 100px;
+  }
+  .swatch .info {
+    padding: 12px 14px;
+  }
+  .swatch .label {
+    font-weight: 600;
+    font-size: 14px;
+    color: #222;
+  }
+  .swatch .hex {
+    font-family: monospace;
+    font-size: 13px;
+    color: #666;
+    margin-top: 2px;
+  }
+  .swatch .role {
+    font-size: 12px;
+    color: #999;
+    margin-top: 4px;
+  }
+  .combo {
+    margin-top: 40px;
+    padding: 32px;
+    border-radius: 12px;
+    background: #fff;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+  }
+  .combo h2 { font-size: 16px; color: #2c3e50; margin: 0 0 20px; }
+  .combo-row {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    margin-bottom: 10px;
+  }
+  .combo-line {
+    height: 6px;
+    border-radius: 3px;
+    flex: 1;
+  }
+  .combo-dash {
+    height: 4px;
+    flex: 1;
+    background: repeating-linear-gradient(
+      90deg,
+      var(--c) 0px, var(--c) 8px,
+      transparent 8px, transparent 14px
+    );
+    border-radius: 2px;
+  }
+  .combo-label {
+    font-size: 12px;
+    font-family: monospace;
+    color: #555;
+    min-width: 200px;
+  }
+</style>
+</head>
+<body>
+  <h1>Harmony Mural — Inspired Palette</h1>
+
+  <div class="grid">
+    <div class="swatch">
+      <div class="color" style="background:#c23b3b"></div>
+      <div class="info">
+        <div class="label">Warm Red</div>
+        <div class="hex">#c23b3b</div>
+        <div class="role">Accent / primary curves</div>
+      </div>
+    </div>
+    <div class="swatch">
+      <div class="color" style="background:#fdf0ec"></div>
+      <div class="info">
+        <div class="label">Warm White</div>
+        <div class="hex">#fdf0ec</div>
+        <div class="role">Accent-light / backgrounds</div>
+      </div>
+    </div>
+    <div class="swatch">
+      <div class="color" style="background:#1a5e7a"></div>
+      <div class="info">
+        <div class="label">Deep Teal</div>
+        <div class="hex">#1a5e7a</div>
+        <div class="role">V_P candidate</div>
+      </div>
+    </div>
+    <div class="swatch">
+      <div class="color" style="background:#d4a017"></div>
+      <div class="info">
+        <div class="label">Golden Yellow</div>
+        <div class="hex">#d4a017</div>
+        <div class="role">V_Q candidate</div>
+      </div>
+    </div>
+    <div class="swatch">
+      <div class="color" style="background:#d26a2b"></div>
+      <div class="info">
+        <div class="label">Burnt Orange</div>
+        <div class="hex">#d26a2b</div>
+        <div class="role">Min Disp curves</div>
+      </div>
+    </div>
+    <div class="swatch">
+      <div class="color" style="background:#8b1a1a"></div>
+      <div class="info">
+        <div class="label">Dark Crimson</div>
+        <div class="hex">#8b1a1a</div>
+        <div class="role">Exceed / warning</div>
+      </div>
+    </div>
+    <div class="swatch">
+      <div class="color" style="background:#2c3e50"></div>
+      <div class="info">
+        <div class="label">Navy</div>
+        <div class="hex">#2c3e50</div>
+        <div class="role">Rated speed / neutral</div>
+      </div>
+    </div>
+    <div class="swatch">
+      <div class="color" style="background:#3d8a8a"></div>
+      <div class="info">
+        <div class="label">Light Teal</div>
+        <div class="hex">#3d8a8a</div>
+        <div class="role">Sea-state bands</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="combo">
+    <h2>Simulated plot preview</h2>
+    <div class="combo-row">
+      <span class="combo-label">Available speed (Max Disp)</span>
+      <div class="combo-line" style="background:#c23b3b"></div>
+    </div>
+    <div class="combo-row">
+      <span class="combo-label">Available speed (Min Disp)</span>
+      <div class="combo-line" style="background:#d26a2b"></div>
+    </div>
+    <div class="combo-row">
+      <span class="combo-label">V_P (power-limited)</span>
+      <div class="combo-dash" style="--c:#1a5e7a"></div>
+    </div>
+    <div class="combo-row">
+      <span class="combo-label">V_Q (Max Disp)</span>
+      <div class="combo-dash" style="--c:#c23b3b"></div>
+    </div>
+    <div class="combo-row">
+      <span class="combo-label">V_Q (Min Disp)</span>
+      <div class="combo-dash" style="--c:#d4a017"></div>
+    </div>
+    <div class="combo-row">
+      <span class="combo-label">Rated speed</span>
+      <div class="combo-line" style="background:#2c3e50"></div>
+    </div>
+    <div class="combo-row">
+      <span class="combo-label">Exceeded</span>
+      <div class="combo-line" style="background:#8b1a1a"></div>
+    </div>
+    <div class="combo-row">
+      <span class="combo-label">Sea-state band</span>
+      <div class="combo-line" style="background:#3d8a8a; opacity:0.35; height:20px; border-radius:4px"></div>
+    </div>
+  </div>
+</body>
+</html>
