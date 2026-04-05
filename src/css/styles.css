@@ -9,8 +9,8 @@
   --ink-900: #1e293b;
   --ink-700: #334155;
   --ink-500: #55637d;
-  --accent: #d97706;
-  --accent-light: #fffbeb;
+  --accent: #4f46e5;
+  --accent-light: #eef2ff;
   --doc-serif: "Inter", "Segoe UI", system-ui, -apple-system, BlinkMacSystemFont, "Roboto", "Helvetica Neue", Arial, sans-serif;
   --tension-low: #6c2bd9;
   --tension-high: #f97316;
@@ -34,7 +34,7 @@ canvas {
 
 html,
 body {
-  overflow-x: hidden;
+  overflow-x: clip;
 }
 
 body {
@@ -466,7 +466,7 @@ body {
     grid-template-columns: none !important;
     gap: 16px;
     padding: 2% 2% 48px;
-    overflow-x: hidden !important;
+    overflow-x: clip !important;
   }
 
   .app-sidebar {
