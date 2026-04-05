@@ -4,7 +4,7 @@
   <meta charset="utf-8" />
   <title>Winch Analysis</title>
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <link rel="stylesheet" href="css/styles.css?v=31" />
+  <link rel="stylesheet" href="css/styles.css?v=32" />
   <!-- KaTeX setup -->
   <link
     rel="stylesheet"
@@ -1922,19 +1922,24 @@
         </p>
 
         <p><strong>Available drive torque.</strong>
-          The maximum torque the drive can deliver at the drum depends on which drive type is active.
-          For electric drives it is the motor peak torque multiplied through the gear train; for hydraulic
-          drives it is the torque at maximum system pressure. When both drives are configured, the
-          analyzer uses whichever provides more:
+          The maximum torque the drive can deliver at the drum comes from whichever drive type is
+          enabled. For an electric system it is the motor peak torque multiplied through the gear
+          train; for a hydraulic system it is the torque at maximum system pressure. Only the
+          enabled drive contributes — if electric is off, its torque is zero and vice versa:
         </p>
         <p>
-          $$\tau_{\mathrm{elec,drum}} = \tau_{\mathrm{motor,max}} \cdot G_1 \cdot G_2 \cdot N_m$$
+          $$\tau_{\mathrm{elec,drum}} = \tau_{\mathrm{motor,max}} \cdot G_1 \cdot G_2 \cdot N_m \qquad (\text{electric enabled})$$
         </p>
         <p>
-          $$\tau_{\mathrm{hyd,drum}} = \tau_{\mathrm{h\text{-}motor,max}} \cdot G_1 \cdot G_2 \cdot N_m$$
+          $$\tau_{\mathrm{hyd,drum}} = \tau_{\mathrm{h\text{-}motor,max}} \cdot G_1 \cdot G_2 \cdot N_m \qquad (\text{hydraulic enabled})$$
         </p>
         <p>
           $$\tau_{\mathrm{avail}} = \max\!\big(\tau_{\mathrm{elec,drum}},\;\tau_{\mathrm{hyd,drum}}\big)$$
+        </p>
+        <p>
+          In practice only one drive type is active at a time, so
+          <span class="math" data-latex="\tau_{\mathrm{avail}}"></span> equals the torque from that
+          drive. If both were enabled simultaneously, the greater would govern.
         </p>
 
         <p><strong>Torque margin.</strong>
@@ -2121,7 +2126,7 @@
       <!-- Main app script -->
       <script type="module" src="js/main.mjs"></script>
     </div>
-    <div id="build-tag" style="position:fixed;bottom:4px;right:4px;font:10px monospace;color:#999;pointer-events:none;z-index:9999">html:v31 | <span id="css-ver-tag">css:?</span></div>
+    <div id="build-tag" style="position:fixed;bottom:4px;right:4px;font:10px monospace;color:#999;pointer-events:none;z-index:9999">html:v32 | <span id="css-ver-tag">css:?</span></div>
     <script>
       try {
         const accent = getComputedStyle(document.documentElement).getPropertyValue('--accent').trim();
