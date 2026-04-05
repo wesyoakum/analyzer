@@ -9,8 +9,8 @@
   --ink-900: #1e293b;
   --ink-700: #334155;
   --ink-500: #55637d;
-  --accent: #9333ea;
-  --accent-light: #faf5ff;
+  --accent: #b45309;
+  --accent-light: #fffbeb;
   --doc-serif: "Inter", "Segoe UI", system-ui, -apple-system, BlinkMacSystemFont, "Roboto", "Helvetica Neue", Arial, sans-serif;
   --tension-low: #6c2bd9;
   --tension-high: #f97316;
@@ -442,8 +442,10 @@ body {
     display: flex;
     flex-direction: column;
     gap: 16px;
-    padding: 16px 12px 48px;
-    max-width: none;
+    padding: 2% 2% 48px;
+    max-width: 100%;
+    width: 100%;
+    box-sizing: border-box;
   }
 
   .app-sidebar {
@@ -481,8 +483,8 @@ body {
     min-width: 0;
     overflow-wrap: break-word;
     word-break: break-word;
-    padding-left: 8px;
-    padding-right: 8px;
+    padding-left: 2%;
+    padding-right: 2%;
     border-left: none;
     border-right: none;
     box-sizing: border-box;
@@ -492,13 +494,13 @@ body {
 
   .card {
     min-width: 0;
-    padding-left: 8px;
-    padding-right: 8px;
+    padding-left: 2%;
+    padding-right: 2%;
   }
 
   .info-card {
-    padding-left: 8px;
-    padding-right: 8px;
+    padding-left: 2%;
+    padding-right: 2%;
   }
 
   .worksheet td.value {
@@ -515,7 +517,6 @@ body {
     display: block;
     overflow-x: auto;
     max-width: 100%;
-  }
   }
 
   .plot-pair {
@@ -2059,13 +2060,11 @@ th[title] {
 /* ========== Small phone styles ========== */
 @media (max-width: 480px) {
   .app-shell {
-    padding: 12px 8px 32px;
+    padding: 1% 1% 32px;
   }
 
   .sheet {
-    padding: 0 4px;
-    border-left: none;
-    border-right: none;
+    padding: 0 1%;
   }
 
   .report-header__title {
