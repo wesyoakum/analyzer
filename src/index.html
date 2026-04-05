@@ -4,7 +4,7 @@
   <meta charset="utf-8" />
   <title>Winch Analysis</title>
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <link rel="stylesheet" href="css/styles.css?v=25" />
+  <link rel="stylesheet" href="css/styles.css?v=26" />
   <!-- KaTeX setup -->
   <link
     rel="stylesheet"
@@ -941,7 +941,7 @@
               </label>
             </div>
             <div class="plotwrap">
-              <svg id="wave_svg" width="1000" height="540" viewBox="0 0 1000 540"></svg>
+              <svg id="wave_svg" viewBox="0 0 1000 540"></svg>
             </div>
             <div class="legend legend--panel">
               <div class="legitem"><span class="swatch accent"></span><span>Layer speed</span></div>
@@ -980,7 +980,7 @@
               </label>
             </div>
             <div class="plotwrap">
-              <svg id="wave_svg_height" width="1000" height="540" viewBox="0 0 1000 540"></svg>
+              <svg id="wave_svg_height" viewBox="0 0 1000 540"></svg>
             </div>
             <div class="legend legend--panel">
               <div class="legitem"><span class="swatch gray"></span><span>Layer speed iso-line</span></div>
@@ -1017,7 +1017,7 @@
             </label>
           </div>
           <div class="plotwrap">
-            <svg id="wave_svg_accel" width="1000" height="540" viewBox="0 0 1000 540"></svg>
+            <svg id="wave_svg_accel" viewBox="0 0 1000 540"></svg>
           </div>
           <div class="legend legend--panel">
             <div class="legitem"><span class="swatch accent"></span><span>Layer available acceleration</span></div>
@@ -1811,7 +1811,7 @@
       <!-- Main app script -->
       <script type="module" src="js/main.mjs"></script>
     </div>
-    <div id="build-tag" style="position:fixed;bottom:4px;right:4px;font:10px monospace;color:#999;pointer-events:none;z-index:9999">html:v25 | <span id="css-ver-tag">css:?</span></div>
+    <div id="build-tag" style="position:fixed;bottom:4px;right:4px;font:10px monospace;color:#999;pointer-events:none;z-index:9999">html:v26 | <span id="css-ver-tag">css:?</span></div>
     <script>
       try {
         const accent = getComputedStyle(document.documentElement).getPropertyValue('--accent').trim();
