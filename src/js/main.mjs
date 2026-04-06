@@ -1340,6 +1340,7 @@ document.addEventListener('DOMContentLoaded', () => {
   }
 
   setupAutoRecompute();
+  setupLazyPlotObserver();
 
   // Dual mm/in auto-conversion for ABB Spec Sheet fields
   const MM_PER_IN = 25.4;
@@ -2767,8 +2768,84 @@ function computeAll() {
   }
 }
 
-// ---- Plot redraw helper (uses decoupled plotting modules) ----
+// ---- Plot helpers ----
+const parseInput = (el) => {
+  if (!el) return NaN;
+  return parseFloat((el.value || '').replace(',', '.'));
+};
+
+// ---- Lazy plot rendering via IntersectionObserver ----
+const plotDirty = { wave: true, accel: true, depth: true, rpmTorque: true };
+
+/** Mark all plots dirty and draw any that are currently visible. */
 function redrawPlots() {
+  plotDirty.wave = true;
+  plotDirty.accel = true;
+  plotDirty.depth = true;
+  plotDirty.rpmTorque = true;
+  drawVisiblePlots();
+}
+
+/** Draw only plots whose sections are currently in the viewport. */
+function drawVisiblePlots() {
+  const root = document.querySelector('.main-content');
+  if (!root) return;
+
+  const isVisible = (el) => {
+    if (!el) return false;
+    const rect = el.getBoundingClientRect();
+    const rootRect = root.getBoundingClientRect();
+    return rect.bottom > rootRect.top && rect.top < rootRect.bottom;
+  };
+
+  if (plotDirty.wave && isVisible(document.getElementById('section-wave-contours'))) {
+    drawWavePlots();
+    plotDirty.wave = false;
+  }
+  if (plotDirty.accel && isVisible(document.getElementById('section-accel-contours'))) {
+    drawAccelPlot();
+    plotDirty.accel = false;
+  }
+  if (plotDirty.depth && isVisible(document.getElementById('section-depth-profiles'))) {
+    drawDepthPlots();
+    plotDirty.depth = false;
+  }
+  if (plotDirty.rpmTorque && isVisible(document.getElementById('section-hyd-rpm-torque'))) {
+    drawRpmTorquePlot();
+    plotDirty.rpmTorque = false;
+  }
+}
+
+/** Set up IntersectionObserver to trigger lazy plot rendering. */
+function setupLazyPlotObserver() {
+  const root = document.querySelector('.main-content');
+  if (!root) return;
+
+  const observer = new IntersectionObserver((entries) => {
+    for (const entry of entries) {
+      if (!entry.isIntersecting) continue;
+      const id = entry.target.id;
+      if (id === 'section-wave-contours' && plotDirty.wave) {
+        drawWavePlots(); plotDirty.wave = false;
+      } else if (id === 'section-accel-contours' && plotDirty.accel) {
+        drawAccelPlot(); plotDirty.accel = false;
+      } else if (id === 'section-depth-profiles' && plotDirty.depth) {
+        drawDepthPlots(); plotDirty.depth = false;
+      } else if (id === 'section-hyd-rpm-torque' && plotDirty.rpmTorque) {
+        drawRpmTorquePlot(); plotDirty.rpmTorque = false;
+      }
+    }
+  }, { root, threshold: 0 });
+
+  ['section-wave-contours', 'section-accel-contours', 'section-depth-profiles', 'section-hyd-rpm-torque'].forEach(id => {
+    const el = document.getElementById(id);
+    if (el) observer.observe(el);
+  });
+}
+
+// ---- Individual plot draw functions ----
+
+function drawWavePlots() {
   // Wave contours (optional - skip if controls/SVGs absent)
   const waveScenarioEl = /** @type {HTMLSelectElement|null} */ (document.getElementById('wave_scenario'));
   const waveTminEl = /** @type {HTMLInputElement|null} */ (document.getElementById('wave_tmin'));
@@ -2787,11 +2864,6 @@ function redrawPlots() {
   const waveShowSmbCurveEl = /** @type {HTMLInputElement|null} */ (document.getElementById('wave_show_smb_curve'));
   const waveSvg = /** @type {SVGSVGElement|null} */ (document.getElementById('wave_svg'));
   const waveSvgHeight = /** @type {SVGSVGElement|null} */ (document.getElementById('wave_svg_height'));
-
-  const parseInput = (el) => {
-    if (!el) return NaN;
-    return parseFloat((el.value || '').replace(',', '.'));
-  };
 
   if (waveScenarioEl && waveTminEl && waveTmaxEl && waveHmaxEl && waveSvg && waveSvgHeight) {
     const TminVal = parseInput(waveTminEl);
@@ -2833,7 +2905,10 @@ function redrawPlots() {
     });
   }
 
-  // Acceleration contours (optional)
+}
+
+function drawAccelPlot() {
+  const waveScenarioEl = document.getElementById('wave_scenario');
   const waveAccelSvg = /** @type {SVGSVGElement|null} */ (document.getElementById('wave_svg_accel'));
   if (waveAccelSvg) {
     const accelTminEl = document.getElementById('wave_accel_tmin');
@@ -2853,6 +2928,9 @@ function redrawPlots() {
     });
   }
 
+}
+
+function drawDepthPlots() {
   // Depth profiles (optional - skip if controls/SVGs absent)
   const depthSpeedSvg = /** @type {SVGSVGElement|null} */ (document.getElementById('depth_speed_svg'));
   const depthTensionSvg = /** @type {SVGSVGElement|null} */ (document.getElementById('depth_tension_svg'));
@@ -2998,6 +3076,9 @@ function redrawPlots() {
 
   }
 
+}
+
+function drawRpmTorquePlot() {
   const rpmTorqueSvg = /** @type {SVGSVGElement|null} */ (document.getElementById('hyd_rpm_torque_svg'));
   const hydTorqueXminEl = /** @type {HTMLInputElement|null} */ (document.getElementById('hyd_torque_xmin'));
   const hydTorqueXmaxEl = /** @type {HTMLInputElement|null} */ (document.getElementById('hyd_torque_xmax'));
