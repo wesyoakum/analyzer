@@ -319,6 +319,9 @@ body {
 .app-sidebar__content .worksheet td.units,
 .app-sidebar__content .worksheet th.units {
   width: 60px;
+  padding-left: 4px;
+  padding-right: 4px;
+  text-align: center;
 }
 
 
