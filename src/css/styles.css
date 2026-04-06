@@ -2404,6 +2404,10 @@ th[title] {
     border: none;
   }
 
+  .print-break-after {
+    page-break-after: always;
+  }
+
   /* Plots: ensure they fit page width */
   .plotwrap svg,
   .drum-visual__svg {

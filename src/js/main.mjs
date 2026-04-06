@@ -2050,6 +2050,9 @@ function buildInputSectionSummary(sectionEl) {
   });
 
   if (!summarySection.children.length) return null;
+  if (sectionEl.hasAttribute('data-print-break-after')) {
+    summarySection.classList.add('print-break-after');
+  }
   return summarySection;
 }
 
@@ -2072,6 +2075,9 @@ function buildInputSubsectionSummary(subsectionEl) {
     .forEach(table => summarySubsection.appendChild(buildSummaryTable(table)));
 
   if (!summarySubsection.children.length) return null;
+  if (subsectionEl.hasAttribute('data-print-break-after')) {
+    summarySubsection.classList.add('print-break-after');
+  }
   return summarySubsection;
 }
 

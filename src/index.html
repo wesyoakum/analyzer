@@ -4,7 +4,7 @@
   <meta charset="utf-8" />
   <title>Winch Analysis</title>
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <link rel="stylesheet" href="css/styles.css?v=73" />
+  <link rel="stylesheet" href="css/styles.css?v=74" />
   <script>
     // Apply saved theme before first paint to prevent flash
     (function() {
@@ -60,7 +60,7 @@
         <section class="card" data-summary-card>
           <h2 class="section-title">Section 1.1: System Inputs</h2>
             <div class="input-sections">
-              <section class="input-section">
+              <section class="input-section" data-print-break-after>
                 <h3 class="input-section__title">System</h3>
                 <table class="worksheet">
                   <thead>
@@ -237,7 +237,7 @@
               <p class="note"><span class="math" data-latex="L_{\max}=\dfrac{(MBL/SF)-W_{\mathrm{payload}}}{w_{c}}"></span>.</p>
             </section>
     
-            <section class="input-subsection">
+            <section class="input-subsection" data-print-break-after>
               <h4 class="input-subsection__title">Drum</h4>
               <table class="worksheet">
                 <thead>
@@ -423,7 +423,7 @@
               </tbody>
             </table>
     
-            <section class="input-subsection">
+            <section class="input-subsection" data-print-break-after>
               <h4 class="input-subsection__title">Gearbox</h4>
               <table class="worksheet">
                 <thead>
@@ -2196,7 +2196,7 @@
       <span class="theme-toggle__icon--light" aria-hidden="true">&#9728;</span>
     </button>
 
-    <div id="build-tag" style="position:fixed;bottom:4px;right:4px;font:10px monospace;color:#999;pointer-events:none;z-index:9999">v73</div>
+    <div id="build-tag" style="position:fixed;bottom:4px;right:4px;font:10px monospace;color:#999;pointer-events:none;z-index:9999">v74</div>
     <script>
       // Theme toggle handler
       document.getElementById('theme_toggle').addEventListener('click', function() {
