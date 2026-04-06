@@ -319,6 +319,8 @@ body {
 .app-sidebar__content .worksheet td.units,
 .app-sidebar__content .worksheet th.units {
   width: 50px;
+  white-space: nowrap;
+  font-size: 0.8em;
 }
 
 
