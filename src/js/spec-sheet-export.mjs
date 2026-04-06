@@ -50,7 +50,7 @@ export function buildSpecSheetFields(model) {
   const ftfIn = safeRead('ftf_in');
   const cableMm = safeRead('c_mm');
   const efficiency = safeRead('system_efficiency');
-  const ratedSwlKgf = safeRead('rated_swl_kgf');
+  const ratedSwlKgf = safeRead('swl_fd_kgf');
   const ratedSpeedMpm = safeRead('rated_speed_mpm');
   const motors = safeRead('motors');
   const motorHp = safeRead('motor_hp');

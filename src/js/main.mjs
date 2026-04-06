@@ -37,6 +37,35 @@ let lastDrumState = null;
 /** @type {DepthProfileContext|null} */
 let lastDepthProfileContext = null;
 let lastComputedModel = null;
+/** Tracks which SWL field the user last edited: 'bd' or 'fd' */
+let swlLastEdited = 'fd';
+
+/**
+ * Sync SWL_BD ↔ SWL_FD using drum radius ratio.
+ * Whichever field the user last edited is the source; the other is computed.
+ * Relationship: SWL_BD × r_bare = SWL_FD × r_full  (constant drum torque)
+ */
+function syncSwlFields(bareDrumDiaIn, fullDrumDiaIn) {
+  const bdEl = /** @type {HTMLInputElement|null} */ (document.getElementById('swl_bd_kgf'));
+  const fdEl = /** @type {HTMLInputElement|null} */ (document.getElementById('swl_fd_kgf'));
+  if (!bdEl || !fdEl) return;
+  if (!Number.isFinite(bareDrumDiaIn) || bareDrumDiaIn <= 0 ||
+      !Number.isFinite(fullDrumDiaIn) || fullDrumDiaIn <= 0) return;
+
+  const ratio = bareDrumDiaIn / fullDrumDiaIn;  // r_bare / r_full
+
+  if (swlLastEdited === 'bd') {
+    const bdVal = parseFloat(bdEl.value);
+    if (Number.isFinite(bdVal) && bdVal > 0) {
+      fdEl.value = String(Math.round(bdVal * ratio));
+    }
+  } else {
+    const fdVal = parseFloat(fdEl.value);
+    if (Number.isFinite(fdVal) && fdVal > 0) {
+      bdEl.value = String(Math.round(fdVal / ratio));
+    }
+  }
+}
 
 function readAccentColor() {
   if (typeof window !== 'undefined' && window.getComputedStyle) {
@@ -110,7 +139,7 @@ function updateGearRatioRanges(model) {
   const gr2 = model.inputs.gr2;
   const gearbox_max_torque = model.inputs.gearbox_max_torque_Nm;
   const rated_speed_mpm = read('rated_speed_mpm');
-  const rated_swl_kgf = read('rated_swl_kgf');
+  const rated_swl_kgf = read('swl_fd_kgf');
 
   const hasRatedSpeed = Number.isFinite(rated_speed_mpm) && rated_speed_mpm > 0;
   const hasRatedSwl = Number.isFinite(rated_swl_kgf) && rated_swl_kgf > 0;
@@ -1339,6 +1368,12 @@ document.addEventListener('DOMContentLoaded', () => {
     });
   }
 
+  // Track which SWL field the user last edited (must be before setupAutoRecompute)
+  const swlBdEl = document.getElementById('swl_bd_kgf');
+  const swlFdEl = document.getElementById('swl_fd_kgf');
+  if (swlBdEl) swlBdEl.addEventListener('input', () => { swlLastEdited = 'bd'; });
+  if (swlFdEl) swlFdEl.addEventListener('input', () => { swlLastEdited = 'fd'; });
+
   setupAutoRecompute();
   setupLazyPlotObserver();
 
@@ -2071,7 +2106,7 @@ function updateExecutiveSummary(model, torqueChecks) {
   if (!el) return;
 
   const summary = model?.summary || {};
-  const ratedSwl = read('rated_swl_kgf');
+  const ratedSwl = read('swl_fd_kgf');
   const ratedSpeed = read('rated_speed_mpm');
   const depth = read('depth_m');
   const layers = summary.total_layers;
@@ -2668,6 +2703,9 @@ function computeAll() {
 
     lastComputedModel = model;
 
+    // Sync SWL_BD ↔ SWL_FD based on drum radius ratio
+    syncSwlFields(model.rows[0]?.layer_dia_in, model.summary?.full_drum_dia_in);
+
     // Update wraps_override placeholder with calculated value
     const wrapsEl = /** @type {HTMLInputElement|null} */ (document.getElementById('wraps_override'));
     if (wrapsEl && model.meta?.wraps_per_layer_calc != null) {
@@ -2712,7 +2750,7 @@ function computeAll() {
       model.inputs.gearbox_max_torque_Nm,
       model.inputs.motor_tmax,
       q('el_tau_max_summary'),
-      read('rated_swl_kgf'),
+      read('swl_fd_kgf'),
       model.summary.full_drum_dia_in,
       model.inputs.motors,
       model.inputs.gr1 * model.inputs.gr2,
@@ -2729,7 +2767,7 @@ function computeAll() {
         maxOpsDepth = Math.max(0, deployed - (Number.isFinite(deadEnd) ? deadEnd : 0));
       }
     }
-    const ratedSwlForSeen = read('rated_swl_kgf');
+    const ratedSwlForSeen = read('swl_fd_kgf');
     const fullDrumRadius_m = (model.summary.full_drum_dia_in * M_PER_IN) / 2;
     const fatDrumTorque = (Number.isFinite(ratedSwlForSeen) && ratedSwlForSeen > 0)
       ? ratedSwlForSeen * 1.25 * G * fullDrumRadius_m
@@ -2950,7 +2988,7 @@ function drawDepthPlots() {
     const ratedSpeedMs = Number.isFinite(ratedSpeedMpmRaw) ? ratedSpeedMpmRaw / 60 : null;
     const operatingDepthRaw = read('depth_m');
     const operatingDepth = Number.isFinite(operatingDepthRaw) ? operatingDepthRaw : null;
-    const ratedSwlRaw = read('rated_swl_kgf');
+    const ratedSwlRaw = read('swl_fd_kgf');
     const ratedSwl = Number.isFinite(ratedSwlRaw) ? ratedSwlRaw : null;
     const payloadRaw = read('payload_kg');
     const payloadVal = Number.isFinite(payloadRaw) ? Math.max(0, payloadRaw) : null;

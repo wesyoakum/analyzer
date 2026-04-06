@@ -82,8 +82,10 @@ export function buildTextSummaryLines(model) {
 
   // Design
   lines.push('');
-  const swlD = fieldDisplay('rated_swl_kgf');
-  pushIf(lines, 'Safe Working Load', swlD.val ? `${swlD.val} ${swlD.label}` : null);
+  const swlBdD = fieldDisplay('swl_bd_kgf');
+  pushIf(lines, 'SWL at Bare Drum', swlBdD.val ? `${swlBdD.val} ${swlBdD.label}` : null);
+  const swlFdD = fieldDisplay('swl_fd_kgf');
+  pushIf(lines, 'SWL at Full Drum', swlFdD.val ? `${swlFdD.val} ${swlFdD.label}` : null);
   const speedD = fieldDisplay('rated_speed_mpm');
   pushIf(lines, 'Rated Line Speed', speedD.val ? `${speedD.val} ${speedD.label}` : null);
 

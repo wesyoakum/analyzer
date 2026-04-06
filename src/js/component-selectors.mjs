@@ -15,7 +15,7 @@ import { apiUrl, apiHeaders } from './api-config.mjs';
  * @property {number|string|boolean} [motor_tmax_Nm]
  * @property {number|string|boolean} [system_type_select]
  * @property {number|string|boolean} [winch_type_select]
- * @property {number|string|boolean} [rated_swl_kgf]
+ * @property {number|string|boolean} [swl_fd_kgf]
  * @property {number|string|boolean} [rated_speed_mpm]
  * @property {number|string|boolean} [dead_m]
  * @property {number|string|boolean} [depth_m]
@@ -794,7 +794,7 @@ export const SYSTEM_OPTIONS = [
     payload_select: 'PL-8000',
     hpu_select: 'HPU-2S-210',
     hpu_motor_select: 'LAM75-18-365TC',
-    rated_swl_kgf: 8000,
+    swl_fd_kgf: 8000,
     rated_speed_mpm: 30,
     cable_len_m: 3100,
     dead_m: 100,
@@ -825,7 +825,7 @@ export const SYSTEM_OPTIONS = [
     payload_select: 'PL-10000',
     hpu_select: 'HPU-2S-250',
     hpu_motor_select: 'LAM110-12-444TC',
-    rated_swl_kgf: 12000,
+    swl_fd_kgf: 12000,
     rated_speed_mpm: 25,
     cable_len_m: 3620,
     dead_m: 120,
@@ -915,7 +915,7 @@ export const FIELD_MAPS = {
     cable_select: 'cable_select',
     drum_select: 'drum_select',
     payload_select: 'payload_select',
-    rated_swl_kgf: 'rated_swl_kgf',
+    swl_fd_kgf: 'swl_fd_kgf',
     rated_speed_mpm: 'rated_speed_mpm',
     cable_len_m: 'cable_len_m',
     dead_m: 'dead_m',

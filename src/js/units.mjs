@@ -87,7 +87,8 @@ export const UNIT_GROUPS = {
 // ---- Input field → unit group mapping ----
 export const FIELD_UNITS = {
   // Design
-  rated_swl_kgf:        'force_kgf',
+  swl_bd_kgf:           'force_kgf',
+  swl_fd_kgf:           'force_kgf',
   rated_speed_mpm:      'speed_mpm',
   // Cable
   c_mm:                 'length_mm',
