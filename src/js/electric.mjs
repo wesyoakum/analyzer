@@ -107,6 +107,11 @@ export function rowsToElectricLayer(rows, payload_kg, cable_w_kgpm, gr1, gr2, mo
     const maxGbT_Nm = +(maxDrumT_Nm / (motorsSafe * gr2Safe)).toFixed(1);
     const maxMotorNm = +(maxGbT_Nm / (gr1 || 1)).toFixed(1);
 
+    const gr1Safe = Math.max(gr1 || 1, 1e-9);
+    const gbRpm = Number.isFinite(L.motor_rpm_at_start) && L.motor_rpm_at_start > 0
+      ? +(L.motor_rpm_at_start / gr1Safe).toFixed(1)
+      : null;
+
     out.push({
       ...L,
       max_tension_theoretical_kgf: maxTheo_kgf,
@@ -117,6 +122,7 @@ export function rowsToElectricLayer(rows, payload_kg, cable_w_kgpm, gr1, gr2, mo
       max_torque_Nm: maxDrumT_Nm,
       tau_req_drum_kNm: +(maxDrumT_Nm / 1000).toFixed(1),
       max_motor_torque_Nm: maxMotorNm,
+      gearbox_rpm: gbRpm,
       min_avail_accel_mps2: minAccelByLayer.get(L.layer_no) ?? 0
     });
   }
@@ -196,6 +202,8 @@ export function renderElectricTables(
       `<td>${formatCableOnDrumRange(r.pre_on_drum_m, r.post_on_drum_m)}</td>`,
       `<td>${formatDepthRange(r.pre_deployed_m, r.post_deployed_m)}</td>`,
       torqueCell(r.max_gearbox_torque_Nm),
+      `<td>${r.gearbox_rpm != null ? formatDecimal(r.gearbox_rpm, 1) : '–'}</td>`,
+      `<td>${r.motor_rpm_at_start != null ? formatDecimal(Number(r.motor_rpm_at_start), 1) : '–'}</td>`,
       `<td>${fmtSpd(r.line_speed_at_start_mpm ?? '')}</td>`,
       `<td>${fmtKgf(r.tension_required_start_kgf)}-${fmtKgf(r.tension_required_end_kgf)}</td>`,
       `<td>${fmtKgf(r.avail_tension_kgf)}</td>`,
