@@ -1342,6 +1342,15 @@ document.addEventListener('DOMContentLoaded', () => {
   setupAutoRecompute();
   setupLazyPlotObserver();
 
+  // Nav links: scroll to target without setting URL hash
+  document.querySelectorAll('.report-nav__link').forEach(link => {
+    link.addEventListener('click', (e) => {
+      e.preventDefault();
+      const target = document.querySelector(link.getAttribute('href'));
+      if (target) target.scrollIntoView({ behavior: 'smooth' });
+    });
+  });
+
   // Dual mm/in auto-conversion for ABB Spec Sheet fields
   const MM_PER_IN = 25.4;
   const dualPairs = [
