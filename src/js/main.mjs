@@ -1152,6 +1152,7 @@ async function setupProjectManager() {
     if (!file) return;
 
     setStatus('Loading\u2026', true);
+    await new Promise(r => setTimeout(r, 0));
     try {
       const raw = JSON.parse(await file.text());
       const imported = toImportedProject(raw);
@@ -1163,6 +1164,7 @@ async function setupProjectManager() {
 
       applyProjectState(imported.state);
       syncPrevUnits();
+      await new Promise(r => setTimeout(r, 0));
       computeAll();
       nameInput.value = imported.name;
 
@@ -1228,6 +1230,8 @@ async function setupProjectManager() {
     }
     isLoadingProject = true;
     setStatus('Loading\u2026', true);
+    // Yield to let the browser paint the spinner
+    await new Promise(r => setTimeout(r, 0));
     const project = await getProjectById(selectedId);
     if (!project || typeof project.state !== 'object' || project.state === null) {
       isLoadingProject = false;
@@ -1238,6 +1242,8 @@ async function setupProjectManager() {
     applyProjectState(project.state);
     syncPrevUnits();
     nameInput.value = project.name || '';
+    // Yield again before heavy computation so spinner stays visible
+    await new Promise(r => setTimeout(r, 0));
     computeAll();
     select.value = selectedId;
     isLoadingProject = false;
