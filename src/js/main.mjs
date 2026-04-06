@@ -2356,6 +2356,21 @@ function clearMinimumSystemHp() {
   if (output) output.textContent = '–';
 }
 
+function updateMaxFlowRate() {
+  const output = /** @type {HTMLElement|null} */ (document.getElementById('h_max_flow_gpm'));
+  if (!output) return;
+  const hp = read('h_emotor_hp');
+  const strings = read('h_pump_strings');
+  const eff = read('h_emotor_eff');
+  const psi = read('h_max_psi');
+  if (hp > 0 && strings > 0 && eff > 0 && psi > 0) {
+    const gpm = (hp * strings * eff * 1714) / psi;
+    output.textContent = gpm.toFixed(1);
+  } else {
+    output.textContent = '—';
+  }
+}
+
 /**
  * Sync payload totals from component weights (same pattern as GR2 teeth).
  * If all three component weights are entered for a group, sum → set total.
@@ -2577,6 +2592,7 @@ function computeAll() {
     const rated_swl_kgf = read('rated_swl_kgf');
     const system_efficiency = read('system_efficiency');
     updateMinimumSystemHp(rated_speed_mpm, rated_swl_kgf, system_efficiency);
+    updateMaxFlowRate();
 
     syncPayloadBreakdown();
     syncGR2FromTeeth();

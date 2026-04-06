@@ -4,7 +4,7 @@
   <meta charset="utf-8" />
   <title>Winch Analysis</title>
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <link rel="stylesheet" href="css/styles.css?v=45" />
+  <link rel="stylesheet" href="css/styles.css?v=46" />
   <script>
     // Apply saved theme before first paint to prevent flash
     (function() {
@@ -727,6 +727,13 @@
                 </th>
                 <td class="value"><input id="h_max_psi" type="number" step="100" value="3500"></td>
                 <td class="units">psi</td>
+              </tr>
+              <tr>
+                <th scope="row">
+                  <span class="param-label" data-code="h_max_flow_gpm">Max Available Flow Rate <span class="symbol" aria-hidden="true" data-latex="Q_{\max}">Q<sub>max</sub></span></span>
+                </th>
+                <td class="value"><span id="h_max_flow_gpm" class="output-field">—</span></td>
+                <td class="units">gpm</td>
               </tr>
             </tbody>
           </table>
@@ -2177,7 +2184,7 @@
       <span class="theme-toggle__icon--light" aria-hidden="true">&#9728;</span>
     </button>
 
-    <div id="build-tag" style="position:fixed;bottom:4px;right:4px;font:10px monospace;color:#999;pointer-events:none;z-index:9999">html:v45 | <span id="css-ver-tag">css:?</span></div>
+    <div id="build-tag" style="position:fixed;bottom:4px;right:4px;font:10px monospace;color:#999;pointer-events:none;z-index:9999">html:v46 | <span id="css-ver-tag">css:?</span></div>
     <script>
       // Theme toggle handler
       document.getElementById('theme_toggle').addEventListener('click', function() {
