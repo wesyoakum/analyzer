@@ -75,34 +75,51 @@ function readAccentColor() {
   return '#1a6b6a';
 }
 
-function updateTorqueCheckMessages(gearboxFailed, motorFailed, maxGearboxTorqueSeen, maxMotorTorqueSeen, condition = '') {
+function updateTorqueCheckMessages(gearboxFailed, motorFailed, {
+  opsGbTorque = NaN, opsMotorTorque = NaN, opsDepth = 0,
+  fat125GbTorque = NaN, fat125MotorTorque = NaN,
+  fat180GbTorque = NaN, fat180MotorTorque = NaN
+} = {}) {
   const gearboxMsgEl = /** @type {HTMLElement|null} */ (q('gearbox_torque_check_msg'));
   const motorMsgEl = /** @type {HTMLElement|null} */ (q('motor_torque_check_msg'));
   const gearboxSeenEl = /** @type {HTMLElement|null} */ (q('gearbox_torque_seen_msg'));
   const motorSeenEl = /** @type {HTMLElement|null} */ (q('motor_torque_seen_msg'));
+
+  const torqueUnit = getGroupLabel('torque_Nm');
+  const fmt = (v) => Number.isFinite(v) && v > 0 ? `${fromInternalForGroup('torque_Nm', v).toFixed(1)} ${torqueUnit}` : '–';
+
+  if (gearboxSeenEl) {
+    const lines = [];
+    if (Number.isFinite(opsGbTorque) && opsGbTorque > 0) {
+      lines.push(`Max Op Torque at ${Math.round(opsDepth)} m depth: ${fmt(opsGbTorque)}`);
+    }
+    if (Number.isFinite(fat125GbTorque) && fat125GbTorque > 0) {
+      lines.push(`Torque at FAT 1.25 SWL: ${fmt(fat125GbTorque)}`);
+    }
+    if (Number.isFinite(fat180GbTorque) && fat180GbTorque > 0) {
+      lines.push(`Torque at FAT 1.8 SWL: ${fmt(fat180GbTorque)}`);
+    }
+    gearboxSeenEl.innerHTML = lines.join('<br>');
+  }
   if (gearboxMsgEl) {
     gearboxMsgEl.textContent = gearboxFailed ? 'Gearbox torque check failed.' : '';
   }
+
+  if (motorSeenEl) {
+    const lines = [];
+    if (Number.isFinite(opsMotorTorque) && opsMotorTorque > 0) {
+      lines.push(`Max Op Torque at ${Math.round(opsDepth)} m depth: ${fmt(opsMotorTorque)}`);
+    }
+    if (Number.isFinite(fat125MotorTorque) && fat125MotorTorque > 0) {
+      lines.push(`Torque at FAT 1.25 SWL: ${fmt(fat125MotorTorque)}`);
+    }
+    if (Number.isFinite(fat180MotorTorque) && fat180MotorTorque > 0) {
+      lines.push(`Torque at FAT 1.8 SWL: ${fmt(fat180MotorTorque)}`);
+    }
+    motorSeenEl.innerHTML = lines.join('<br>');
+  }
   if (motorMsgEl) {
     motorMsgEl.textContent = motorFailed ? 'Motor torque check failed.' : '';
-  }
-  const atLabel = condition ? ` at ${condition}` : '';
-  const torqueUnit = getGroupLabel('torque_Nm');
-  if (gearboxSeenEl) {
-    if (Number.isFinite(maxGearboxTorqueSeen) && maxGearboxTorqueSeen > 0) {
-      const display = fromInternalForGroup('torque_Nm', maxGearboxTorqueSeen);
-      gearboxSeenEl.textContent = `Max torque seen: ${display.toFixed(1)} ${torqueUnit}${atLabel}`;
-    } else {
-      gearboxSeenEl.textContent = '';
-    }
-  }
-  if (motorSeenEl) {
-    if (Number.isFinite(maxMotorTorqueSeen) && maxMotorTorqueSeen > 0) {
-      const display = fromInternalForGroup('torque_Nm', maxMotorTorqueSeen);
-      motorSeenEl.textContent = `Max torque seen: ${display.toFixed(1)} ${torqueUnit}${atLabel}`;
-    } else {
-      motorSeenEl.textContent = '';
-    }
   }
 }
 
@@ -2772,23 +2789,31 @@ function computeAll() {
     }
     const ratedSwlForSeen = read('swl_fd_kgf');
     const fullDrumRadius_m = (model.summary.full_drum_dia_in * M_PER_IN) / 2;
-    const fatDrumTorque = (Number.isFinite(ratedSwlForSeen) && ratedSwlForSeen > 0)
-      ? ratedSwlForSeen * fatFactor * G * fullDrumRadius_m
-      : 0;
-    const isFatWorstCase = fatDrumTorque >= maxOpsDrumTorque;
-    const maxDrumTorqueSeen = Math.max(maxOpsDrumTorque, fatDrumTorque);
-    const torqueCondition = isFatWorstCase ? 'FAT' : `${Math.round(maxOpsDepth)} m depth`;
+    const hasSWL = Number.isFinite(ratedSwlForSeen) && ratedSwlForSeen > 0;
+    const fat125DrumTorque = hasSWL ? ratedSwlForSeen * 1.25 * G * fullDrumRadius_m : 0;
+    const fat180DrumTorque = hasSWL ? ratedSwlForSeen * 1.80 * G * fullDrumRadius_m : 0;
+    const maxDrumTorqueSeen = Math.max(maxOpsDrumTorque, fatFactor === 1.8 ? fat180DrumTorque : fat125DrumTorque);
     const gr2Val = model.inputs.gr2;
     const motorsVal = Math.max(model.inputs.motors || 1, 1);
-    const maxGbTorqueSeen = (Number.isFinite(gr2Val) && gr2Val > 0)
-      ? maxDrumTorqueSeen / (motorsVal * gr2Val)
-      : NaN;
     const gr1Val = model.inputs.gr1;
-    const maxMotorTorqueSeen = (Number.isFinite(gr1Val) && gr1Val > 0 && Number.isFinite(maxGbTorqueSeen))
-      ? maxGbTorqueSeen / gr1Val
-      : NaN;
+    const gbDiv = (Number.isFinite(gr2Val) && gr2Val > 0) ? motorsVal * gr2Val : NaN;
+    const motorDiv = (Number.isFinite(gr1Val) && gr1Val > 0) ? gr1Val : NaN;
+    const toGb = (drum) => Number.isFinite(gbDiv) ? drum / gbDiv : NaN;
+    const toMotor = (gb) => Number.isFinite(motorDiv) && Number.isFinite(gb) ? gb / motorDiv : NaN;
 
-    updateTorqueCheckMessages(Boolean(torqueChecks?.gearboxCheckFailed), Boolean(torqueChecks?.motorCheckFailed), maxGbTorqueSeen, maxMotorTorqueSeen, torqueCondition);
+    const opsGbTorque = toGb(maxOpsDrumTorque);
+    const fat125GbTorque = toGb(fat125DrumTorque);
+    const fat180GbTorque = toGb(fat180DrumTorque);
+
+    updateTorqueCheckMessages(
+      Boolean(torqueChecks?.gearboxCheckFailed),
+      Boolean(torqueChecks?.motorCheckFailed),
+      {
+        opsGbTorque, opsMotorTorque: toMotor(opsGbTorque), opsDepth: maxOpsDepth,
+        fat125GbTorque, fat125MotorTorque: toMotor(fat125GbTorque),
+        fat180GbTorque, fat180MotorTorque: toMotor(fat180GbTorque),
+      }
+    );
     updateGearRatioRanges(model);
     renderHydraulicTables(lastHyLayer, lastHyWraps, q('tbody_hy_layer'), q('tbody_hy_wraps'));
 
@@ -2809,7 +2834,7 @@ function computeAll() {
     lastComputedModel = null;
     clearDrumVisualization();
     clearPlots();
-    updateTorqueCheckMessages(false, false, NaN, NaN);
+    updateTorqueCheckMessages(false, false);
     clearGearRatioRanges();
     updateCsvButtonStates();
     renderInputSummary();
