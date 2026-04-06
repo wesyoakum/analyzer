@@ -2788,14 +2788,10 @@ function redrawPlots() {
 
 /** Draw only plots whose sections are currently in the viewport. */
 function drawVisiblePlots() {
-  const root = document.querySelector('.main-content');
-  if (!root) return;
-
   const isVisible = (el) => {
     if (!el) return false;
     const rect = el.getBoundingClientRect();
-    const rootRect = root.getBoundingClientRect();
-    return rect.bottom > rootRect.top && rect.top < rootRect.bottom;
+    return rect.bottom > 0 && rect.top < window.innerHeight;
   };
 
   if (plotDirty.wave && isVisible(document.getElementById('section-wave-contours'))) {
@@ -2818,9 +2814,6 @@ function drawVisiblePlots() {
 
 /** Set up IntersectionObserver to trigger lazy plot rendering. */
 function setupLazyPlotObserver() {
-  const root = document.querySelector('.main-content');
-  if (!root) return;
-
   const observer = new IntersectionObserver((entries) => {
     for (const entry of entries) {
       if (!entry.isIntersecting) continue;
@@ -2835,7 +2828,7 @@ function setupLazyPlotObserver() {
         drawRpmTorquePlot(); plotDirty.rpmTorque = false;
       }
     }
-  }, { root, threshold: 0 });
+  }, { threshold: 0 });
 
   ['section-wave-contours', 'section-accel-contours', 'section-depth-profiles', 'section-hyd-rpm-torque'].forEach(id => {
     const el = document.getElementById(id);
