@@ -4,7 +4,7 @@
   <meta charset="utf-8" />
   <title>Winch Analysis</title>
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <link rel="stylesheet" href="css/styles.css?v=75" />
+  <link rel="stylesheet" href="css/styles.css?v=76" />
   <script>
     // Apply saved theme before first paint to prevent flash
     (function() {
@@ -1024,7 +1024,7 @@
         </div>
       </section>
 
-      <section class="card card--performance">
+      <section class="card card--performance" id="section-depth-profiles">
         <div class="card-header">
           <h2 class="section-title">Section 2.3: Depth Profiles</h2>
           <div class="card-header-actions"></div>
@@ -1269,7 +1269,7 @@
         </div>
       </details>
 
-      <div class="card" data-drive-scope="hydraulic">
+      <div class="card" data-drive-scope="hydraulic" id="section-hyd-layer">
         <div class="table-header">
           <div class="section-title">Section 3.4: Hydraulic Layer Table</div>
           <button id="csv_hy_layer" class="copy-csv-btn" type="button" title="Copy table as CSV" disabled>&#x2398;</button>
@@ -2196,7 +2196,7 @@
       <span class="theme-toggle__icon--light" aria-hidden="true">&#9728;</span>
     </button>
 
-    <div id="build-tag" style="position:fixed;bottom:4px;right:4px;font:10px monospace;color:#999;pointer-events:none;z-index:9999">v75</div>
+    <div id="build-tag" style="position:fixed;bottom:4px;right:4px;font:10px monospace;color:#999;pointer-events:none;z-index:9999">v76</div>
     <script>
       // Theme toggle handler
       document.getElementById('theme_toggle').addEventListener('click', function() {

@@ -2410,7 +2410,9 @@ th[title] {
 
   #panel-performance,
   #panel-results,
-  #panel-instructions {
+  #panel-instructions,
+  #section-depth-profiles,
+  #section-hyd-layer {
     page-break-before: always;
   }
 
