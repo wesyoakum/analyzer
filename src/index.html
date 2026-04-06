@@ -4,7 +4,7 @@
   <meta charset="utf-8" />
   <title>Winch Analysis</title>
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <link rel="stylesheet" href="css/styles.css?v=54" />
+  <link rel="stylesheet" href="css/styles.css?v=55" />
   <script>
     // Apply saved theme before first paint to prevent flash
     (function() {
@@ -497,7 +497,13 @@
 
     <section class="card" id="sidebar-dynamic-loads">
       <section class="input-section">
-        <h3 class="input-section__title">Dynamic Loads</h3>
+        <h3 class="input-section__title">
+          <label style="display:inline-flex;align-items:center;gap:6px;cursor:pointer;">
+            <input id="dynamic_enabled" type="checkbox">
+            Dynamic Loads
+          </label>
+        </h3>
+        <div id="dynamic_loads_body" class="is-hidden">
         <table class="worksheet">
           <thead>
             <tr>
@@ -507,13 +513,6 @@
             </tr>
           </thead>
           <tbody>
-            <tr>
-              <th scope="row">
-                <label class="param-label" for="dynamic_enabled">Enable Dynamic Loads</label>
-              </th>
-              <td class="value"><input id="dynamic_enabled" type="checkbox"></td>
-              <td class="units">–</td>
-            </tr>
             <tr>
               <th scope="row">
                 <label class="param-label" for="J_drum_kgm2" data-code="J_drum_kgm2">Drum + Ring Gear Inertia <span class="symbol" aria-hidden="true" data-latex="J_{drum}">J<sub>drum</sub></span></label>
@@ -530,6 +529,7 @@
             </tr>
           </tbody>
         </table>
+        </div>
       </section>
     </section>
     <section class="card" data-drive-scope="electric" data-summary-card>
@@ -2122,7 +2122,7 @@
       <span class="theme-toggle__icon--light" aria-hidden="true">&#9728;</span>
     </button>
 
-    <div id="build-tag" style="position:fixed;bottom:4px;right:4px;font:10px monospace;color:#999;pointer-events:none;z-index:9999">html:v54 | <span id="css-ver-tag">css:?</span></div>
+    <div id="build-tag" style="position:fixed;bottom:4px;right:4px;font:10px monospace;color:#999;pointer-events:none;z-index:9999">html:v55 | <span id="css-ver-tag">css:?</span></div>
     <script>
       // Theme toggle handler
       document.getElementById('theme_toggle').addEventListener('click', function() {

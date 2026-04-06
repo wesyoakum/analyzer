@@ -1216,6 +1216,7 @@ document.addEventListener('DOMContentLoaded', () => {
   setupCollapsibleToggles();
 
   setupDriveModeControls();
+  setupDynamicLoadsToggle();
 
   setupCsvDownloads();
 
@@ -2448,6 +2449,15 @@ function setupDriveModeControls() {
   }
 
   syncDriveModeVisibility();
+}
+
+function setupDynamicLoadsToggle() {
+  const cb = /** @type {HTMLInputElement|null} */ (document.getElementById('dynamic_enabled'));
+  const body = document.getElementById('dynamic_loads_body');
+  if (!cb || !body) return;
+  const sync = () => body.classList.toggle('is-hidden', !cb.checked);
+  cb.addEventListener('change', sync);
+  sync();
 }
 
 function driveModeEnabled(mode) {
