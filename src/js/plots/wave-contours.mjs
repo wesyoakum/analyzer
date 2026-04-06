@@ -2,12 +2,28 @@
 import { niceTicks, svgEl, svgPathFromPoints } from '../utils.mjs';
 
 const SEA_STATE_REGIONS = [
-  { ss: 3, tp: [3, 6], hs: [0.5, 1.25], color: 'rgba(126,200,212,0.25)' },
-  { ss: 4, tp: [5, 8], hs: [1.25, 2.5], color: 'rgba(217,165,40,0.25)' },
-  { ss: 5, tp: [6, 10], hs: [2.5, 4], color: 'rgba(74,157,168,0.25)' },
-  { ss: 6, tp: [8, 14], hs: [4, 6], color: 'rgba(229,84,56,0.22)' },
-  { ss: 7, tp: [10, 16], hs: [6, 9], color: 'rgba(184,32,37,0.22)' }
+  { ss: 3, hs: [0.5, 1.25], color: 'rgba(126,200,212,0.25)' },
+  { ss: 4, hs: [1.25, 2.5], color: 'rgba(217,165,40,0.25)' },
+  { ss: 5, hs: [2.5, 4], color: 'rgba(74,157,168,0.25)' },
+  { ss: 6, hs: [4, 6], color: 'rgba(229,84,56,0.22)' },
+  { ss: 7, hs: [6, 9], color: 'rgba(184,32,37,0.22)' }
 ];
+
+// PM fully-developed-sea envelope: T_center = sqrt(PM_T_COEFF · H_s)
+// Derived from H = 0.21·g·T² / 7.54²  →  T = √(H · 7.54² / (0.21·g))
+const PM_T_COEFF = (7.54 * 7.54) / (0.21 * 9.80665);  // ≈ 27.607
+const ENVELOPE_FRAC = 0.20;   // ±20 % band around center period
+const T_PRACTICAL_MIN = 4;    // global lower clamp (s)
+const T_PRACTICAL_MAX = 16;   // global upper clamp (s)
+
+/** Period envelope for a given significant wave height. */
+function envelopeT(H) {
+  const Tc = Math.sqrt(PM_T_COEFF * H);
+  return {
+    lo: Math.max(T_PRACTICAL_MIN, (1 - ENVELOPE_FRAC) * Tc),
+    hi: Math.min(T_PRACTICAL_MAX, (1 + ENVELOPE_FRAC) * Tc)
+  };
+}
 
 /**
  * Draw the wave contour plot (speed vs period with height contours).
@@ -144,27 +160,29 @@ export function drawWaveAccelContours(svg, opts = {}) {
     'text-anchor': 'middle', 'font-size': '12', fill: '#444'
   })).textContent = 'Acceleration (m/s²)';
 
-  // Sea state overlay
+  // Sea state overlay (envelope curves, not rectangles)
   if (showSeaStateOverlay) {
     const overlay = svgEl('g', { 'pointer-events': 'none' });
+    const envSamples = 80;
     SEA_STATE_REGIONS.forEach(region => {
-      const leftT = Math.max(Tmin, region.tp[0]);
-      const rightT = Math.min(Tmax, region.tp[1]);
       const lowH = Math.max(Hmin, region.hs[0]);
       const highH = Math.min(Hmax, region.hs[1]);
-      if (rightT <= leftT || highH <= lowH) return;
+      if (highH <= lowH) return;
 
       const pts = [];
-      const samples = 120;
-      for (let i = 0; i <= samples; i++) {
-        const T = leftT + (rightT - leftT) * (i / samples);
-        const highA = 2 * Math.PI * Math.PI * highH / Math.max(T * T, 1e-9);
-        pts.push([sx(T), sy(highA)]);
+      // Right boundary (high-T side → lower accel): H from bottom to top
+      for (let i = 0; i <= envSamples; i++) {
+        const H = lowH + (highH - lowH) * (i / envSamples);
+        const Thi = Math.min(Tmax, Math.max(Tmin, envelopeT(H).hi));
+        const a = 2 * Math.PI * Math.PI * H / Math.max(Thi * Thi, 1e-9);
+        pts.push([sx(Thi), sy(a)]);
       }
-      for (let i = samples; i >= 0; i--) {
-        const T = leftT + (rightT - leftT) * (i / samples);
-        const lowA = 2 * Math.PI * Math.PI * lowH / Math.max(T * T, 1e-9);
-        pts.push([sx(T), sy(lowA)]);
+      // Left boundary (low-T side → higher accel): H from top to bottom
+      for (let i = envSamples; i >= 0; i--) {
+        const H = lowH + (highH - lowH) * (i / envSamples);
+        const Tlo = Math.max(Tmin, Math.min(Tmax, envelopeT(H).lo));
+        const a = 2 * Math.PI * Math.PI * H / Math.max(Tlo * Tlo, 1e-9);
+        pts.push([sx(Tlo), sy(a)]);
       }
 
       overlay.appendChild(svgEl('path', {
@@ -174,15 +192,17 @@ export function drawWaveAccelContours(svg, opts = {}) {
         'stroke-width': 1.2
       }));
 
-      const midT = (leftT + rightT) / 2;
-      const midA = 2 * Math.PI * Math.PI * ((lowH + highH) / 2) / Math.max(midT * midT, 1e-9);
-      if (midA >= Amin && midA <= Amax) {
+      const midH = (lowH + highH) / 2;
+      const midEnv = envelopeT(midH);
+      const midT = (midEnv.lo + midEnv.hi) / 2;
+      const midA = 2 * Math.PI * Math.PI * midH / Math.max(midT * midT, 1e-9);
+      if (midA >= Amin && midA <= Amax && midT >= Tmin && midT <= Tmax) {
         const label = svgEl('text', {
           x: sx(midT), y: sy(midA),
           'text-anchor': 'middle', 'dominant-baseline': 'middle',
           'font-size': '12', 'font-weight': '600', fill: '#27324b'
         });
-        label.textContent = `SS ${region.ss}`;
+        label.textContent = `SS ${region.ss} env.`;
         overlay.appendChild(label);
       }
     });
@@ -477,25 +497,25 @@ function renderWavePlot(svg, {
     const drawSeaStateOverlaySpeed = () => {
       if (!showSeaStateOverlay) return;
       const overlay = svgEl('g', { 'pointer-events': 'none' });
+      const samples = 80;
 
       SEA_STATE_REGIONS.forEach(region => {
-        const leftT = Math.max(Tmin, region.tp[0]);
-        const rightT = Math.min(Tmax, region.tp[1]);
         const lowH = Math.max(Hmin, region.hs[0]);
         const highH = Math.min(Hmax, region.hs[1]);
-        if (rightT <= leftT || highH <= lowH) return;
+        if (highH <= lowH) return;
 
         const pts = [];
-        const samples = 120;
+        // Right boundary (high-T side → lower speed): H from bottom to top
         for (let i = 0; i <= samples; i++) {
-          const T = leftT + (rightT - leftT) * (i / samples);
-          const highV = Math.PI * highH / Math.max(T, 1e-9);
-          pts.push([sx(T), sy(highV)]);
+          const H = lowH + (highH - lowH) * (i / samples);
+          const Thi = Math.min(Tmax, Math.max(Tmin, envelopeT(H).hi));
+          pts.push([sx(Thi), sy(Math.PI * H / Math.max(Thi, 1e-9))]);
         }
+        // Left boundary (low-T side → higher speed): H from top to bottom
         for (let i = samples; i >= 0; i--) {
-          const T = leftT + (rightT - leftT) * (i / samples);
-          const lowV = Math.PI * lowH / Math.max(T, 1e-9);
-          pts.push([sx(T), sy(lowV)]);
+          const H = lowH + (highH - lowH) * (i / samples);
+          const Tlo = Math.max(Tmin, Math.min(Tmax, envelopeT(H).lo));
+          pts.push([sx(Tlo), sy(Math.PI * H / Math.max(Tlo, 1e-9))]);
         }
 
         overlay.appendChild(svgEl('path', {
@@ -505,9 +525,11 @@ function renderWavePlot(svg, {
           'stroke-width': 1.2
         }));
 
-        const midT = (leftT + rightT) / 2;
-        const midV = Math.PI * ((lowH + highH) / 2) / Math.max(midT, 1e-9);
-        if (midV >= Vmin && midV <= Vmax) {
+        const midH = (lowH + highH) / 2;
+        const midEnv = envelopeT(midH);
+        const midT = (midEnv.lo + midEnv.hi) / 2;
+        const midV = Math.PI * midH / Math.max(midT, 1e-9);
+        if (midV >= Vmin && midV <= Vmax && midT >= Tmin && midT <= Tmax) {
           const label = svgEl('text', {
             x: sx(midT),
             y: sy(midV),
@@ -517,7 +539,7 @@ function renderWavePlot(svg, {
             'font-weight': '600',
             fill: '#27324b'
           });
-          label.textContent = `SS ${region.ss}`;
+          label.textContent = `SS ${region.ss} env.`;
           overlay.appendChild(label);
         }
       });
@@ -613,38 +635,50 @@ function renderWavePlot(svg, {
     const drawSeaStateOverlay = () => {
       if (!showSeaStateOverlay) return;
       const overlay = svgEl('g', { 'pointer-events': 'none' });
+      const samples = 80;
       SEA_STATE_REGIONS.forEach(region => {
-        const leftT = Math.max(Tmin, region.tp[0]);
-        const rightT = Math.min(Tmax, region.tp[1]);
         const lowH = Math.max(Hmin, region.hs[0]);
         const highH = Math.min(Hmax, region.hs[1]);
-        if (rightT <= leftT || highH <= lowH) return;
+        if (highH <= lowH) return;
 
-        const x0 = sx(leftT);
-        const x1 = sx(rightT);
-        const yTop = sy(highH);
-        const yBottom = sy(lowH);
-        overlay.appendChild(svgEl('rect', {
-          x: x0,
-          y: yTop,
-          width: x1 - x0,
-          height: yBottom - yTop,
+        const pts = [];
+        // Right boundary (T_hi): sweep H from bottom to top
+        for (let i = 0; i <= samples; i++) {
+          const H = lowH + (highH - lowH) * (i / samples);
+          const Thi = Math.min(Tmax, Math.max(Tmin, envelopeT(H).hi));
+          pts.push([sx(Thi), sy(H)]);
+        }
+        // Left boundary (T_lo): sweep H from top to bottom
+        for (let i = samples; i >= 0; i--) {
+          const H = lowH + (highH - lowH) * (i / samples);
+          const Tlo = Math.max(Tmin, Math.min(Tmax, envelopeT(H).lo));
+          pts.push([sx(Tlo), sy(H)]);
+        }
+
+        overlay.appendChild(svgEl('path', {
+          d: `${svgPathFromPoints(pts)} Z`,
           fill: region.color,
           stroke: 'rgba(70, 82, 107, 0.55)',
           'stroke-width': 1.2
         }));
 
-        const label = svgEl('text', {
-          x: (x0 + x1) / 2,
-          y: (yTop + yBottom) / 2,
-          'text-anchor': 'middle',
-          'dominant-baseline': 'middle',
-          'font-size': '12',
-          'font-weight': '600',
-          fill: '#27324b'
-        });
-        label.textContent = `SS ${region.ss}`;
-        overlay.appendChild(label);
+        // Label at centroid of the envelope
+        const midH = (lowH + highH) / 2;
+        const midEnv = envelopeT(midH);
+        const midT = (midEnv.lo + midEnv.hi) / 2;
+        if (midT >= Tmin && midT <= Tmax) {
+          const label = svgEl('text', {
+            x: sx(midT),
+            y: sy(midH),
+            'text-anchor': 'middle',
+            'dominant-baseline': 'middle',
+            'font-size': '12',
+            'font-weight': '600',
+            fill: '#27324b'
+          });
+          label.textContent = `SS ${region.ss} env.`;
+          overlay.appendChild(label);
+        }
       });
       svg.appendChild(overlay);
     };
