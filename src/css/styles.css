@@ -115,6 +115,11 @@ body {
 .main-content {
   grid-column: 2 / 3;
   min-width: 0;
+  position: sticky;
+  top: 32px;
+  max-height: calc(100vh - 64px);
+  overflow-y: auto;
+  overflow-x: hidden;
 }
 
 .sheet {
@@ -1284,6 +1289,26 @@ th .th-unit-select {
   background: var(--accent-light);
 }
 
+.report-nav__pdf-btn {
+  margin-left: auto;
+  padding: 6px 14px;
+  font-size: 0.8rem;
+  font-weight: 600;
+  color: var(--accent);
+  background: none;
+  border: 1px solid var(--accent);
+  border-radius: 4px;
+  cursor: pointer;
+  white-space: nowrap;
+  align-self: center;
+  transition: background 0.15s, color 0.15s;
+}
+
+.report-nav__pdf-btn:hover {
+  background: var(--accent);
+  color: #fff;
+}
+
 /* Report header block */
 .report-header {
   margin-bottom: var(--space-sm);
@@ -2352,6 +2377,12 @@ th[title] {
   /* Reset layout for single-column print */
   .app-shell {
     display: block;
+  }
+
+  .main-content {
+    position: static;
+    max-height: none;
+    overflow: visible;
   }
 
   .app-content {

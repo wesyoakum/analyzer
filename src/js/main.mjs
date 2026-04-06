@@ -1248,6 +1248,14 @@ document.addEventListener('DOMContentLoaded', () => {
     });
   }
 
+  // Save PDF button
+  const pdfBtn = document.getElementById('save-pdf-btn');
+  if (pdfBtn) {
+    pdfBtn.addEventListener('click', () => {
+      window.print();
+    });
+  }
+
   // Text summary export button
   const textSummaryBtn = document.getElementById('export_text_summary');
   if (textSummaryBtn) {

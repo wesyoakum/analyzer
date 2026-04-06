@@ -4,7 +4,7 @@
   <meta charset="utf-8" />
   <title>Winch Analysis</title>
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <link rel="stylesheet" href="css/styles.css?v=68" />
+  <link rel="stylesheet" href="css/styles.css?v=69" />
   <script>
     // Apply saved theme before first paint to prevent flash
     (function() {
@@ -847,6 +847,7 @@
       <a class="report-nav__link" href="#panel-performance">2 System Performance</a>
       <a class="report-nav__link" href="#panel-results">3 Layer Data</a>
       <a class="report-nav__link" href="#panel-instructions">4 Calculations</a>
+      <button id="save-pdf-btn" class="report-nav__pdf-btn" title="Save as PDF">&#128438; PDF</button>
     </nav>
     <div class="sheet">
       <header class="page-header">
@@ -2195,7 +2196,7 @@
       <span class="theme-toggle__icon--light" aria-hidden="true">&#9728;</span>
     </button>
 
-    <div id="build-tag" style="position:fixed;bottom:4px;right:4px;font:10px monospace;color:#999;pointer-events:none;z-index:9999">html:v68 | <span id="css-ver-tag">css:?</span></div>
+    <div id="build-tag" style="position:fixed;bottom:4px;right:4px;font:10px monospace;color:#999;pointer-events:none;z-index:9999">html:v69 | <span id="css-ver-tag">css:?</span></div>
     <script>
       // Theme toggle handler
       document.getElementById('theme_toggle').addEventListener('click', function() {
