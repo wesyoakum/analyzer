@@ -2408,6 +2408,12 @@ th[title] {
     page-break-after: always;
   }
 
+  #panel-performance,
+  #panel-results,
+  #panel-instructions {
+    page-break-before: always;
+  }
+
   /* Plots: ensure they fit page width */
   .plotwrap svg,
   .drum-visual__svg {
