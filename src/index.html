@@ -152,15 +152,6 @@
                 </tr>
                 <tr>
                   <th scope="row">
-                    <label class="param-label" for="fat_brake_test" data-code="fat_brake_test">Use Brake Test</label>
-                  </th>
-                  <td class="value">
-                    <input id="fat_brake_test" type="checkbox">
-                  </td>
-                  <td class="units">–</td>
-                </tr>
-                <tr>
-                  <th scope="row">
                     <label class="param-label" for="rated_speed_mpm" data-code="rated_speed_mpm">Rated Line Speed <span class="symbol" aria-hidden="true" data-latex="v_{\mathrm{rated}}">v<sub>rated</sub></span></label>
                   </th>
                   <td class="value"><input id="rated_speed_mpm" type="number" step="1" value="30"></td>
@@ -504,6 +495,15 @@
                     </th>
                     <td class="value"><input id="gearbox_max_torque_Nm" type="number" step="100" placeholder="enter"><div id="gearbox_torque_seen_msg" class="gear-range-message" aria-live="polite"></div><div id="gearbox_torque_check_msg" class="torque-check-message" aria-live="polite"></div></td>
                     <td class="units">N·m</td>
+                  </tr>
+                  <tr>
+                    <th scope="row">
+                      <label class="param-label" for="fat_brake_test" data-code="fat_brake_test">Use Brake Test</label>
+                    </th>
+                    <td class="value">
+                      <input id="fat_brake_test" type="checkbox">
+                    </td>
+                    <td class="units">–</td>
                   </tr>
                 </tbody>
               </table>
@@ -2221,7 +2221,7 @@
       <span class="theme-toggle__icon--light" aria-hidden="true">&#9728;</span>
     </button>
 
-    <div id="build-tag" style="position:fixed;bottom:4px;right:4px;font:10px monospace;color:#999;pointer-events:none;z-index:9999">v90</div>
+    <div id="build-tag" style="position:fixed;bottom:4px;right:4px;font:10px monospace;color:#999;pointer-events:none;z-index:9999">v91</div>
     <script>
       // Theme toggle handler
       document.getElementById('theme_toggle').addEventListener('click', function() {
