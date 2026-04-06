@@ -719,6 +719,33 @@ export const HYDRAULIC_MOTOR_OPTIONS = [
     hyd_motor_min_disp_cc: 64.6,
     hyd_motor_disp_cc: 170,
     hyd_motor_max_rpm: 3100
+  },
+  {
+    pn: 'LEDUC 28',
+    name: 'LEDUC 28',
+    description: 'LEDUC 28 — 28.1 cc/rev, 5550 rpm',
+    hyd_motor_disp_cc: 28.1,
+    hyd_motor_min_disp_cc: 9.6,
+    hyd_motor_max_rpm: 5550,
+    disp_note: 'Max displacement adjustable: 9.6–28.1 cc/rev\nMin displacement adjustable: 5.6–19.4 cc/rev'
+  },
+  {
+    pn: 'LEDUC 85',
+    name: 'LEDUC 85',
+    description: 'LEDUC 85 — 85.2 cc/rev, 3900 rpm',
+    hyd_motor_disp_cc: 85.2,
+    hyd_motor_min_disp_cc: 30.6,
+    hyd_motor_max_rpm: 3900,
+    disp_note: 'Max displacement adjustable: 30.6–85.2 cc/rev\nMin displacement adjustable: 17–57.4 cc/rev'
+  },
+  {
+    pn: 'LEDUC 115',
+    name: 'LEDUC 115',
+    description: 'LEDUC 115 — 115.6 cc/rev, 3550 rpm',
+    hyd_motor_disp_cc: 115.6,
+    hyd_motor_min_disp_cc: 41.1,
+    hyd_motor_max_rpm: 3550,
+    disp_note: 'Max displacement adjustable: 41.1–115.6 cc/rev\nMin displacement adjustable: 23.1–78.1 cc/rev'
   }
 ];
 
@@ -1741,6 +1768,23 @@ function attachWatcher(inputId) {
   watchedInputs.add(inputId);
 }
 
+function updateDispNote(option) {
+  const noteRow = document.getElementById('hyd_motor_disp_note_row');
+  const noteEl = document.getElementById('hyd_motor_disp_note');
+  if (!noteRow || !noteEl) return;
+  if (option && option.disp_note) {
+    noteEl.textContent = '';
+    option.disp_note.split('\n').forEach((line, i) => {
+      if (i > 0) noteEl.appendChild(document.createElement('br'));
+      noteEl.appendChild(document.createTextNode(line));
+    });
+    noteRow.classList.remove('is-hidden');
+  } else {
+    noteEl.textContent = '';
+    noteRow.classList.add('is-hidden');
+  }
+}
+
 function applySelection(config, pn, { skipEvents = false } = {}) {
   const selectEl = /** @type {HTMLSelectElement|null} */ (document.getElementById(config.selectId));
   if (!selectEl) return;
@@ -1755,8 +1799,11 @@ function applySelection(config, pn, { skipEvents = false } = {}) {
         delete inputEl.dataset.componentPn;
       }
     });
+    if (config.selectId === 'hydraulic_motor_select') updateDispNote(null);
     return;
   }
+
+  if (config.selectId === 'hydraulic_motor_select') updateDispNote(option);
 
   fieldEntries.forEach(([inputId, optionKey]) => {
     const inputEl = /** @type {HTMLElement|null} */ (document.getElementById(inputId));

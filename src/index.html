@@ -4,7 +4,7 @@
   <meta charset="utf-8" />
   <title>Winch Analysis</title>
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <link rel="stylesheet" href="css/styles.css?v=59" />
+  <link rel="stylesheet" href="css/styles.css?v=60" />
   <script>
     // Apply saved theme before first paint to prevent flash
     (function() {
@@ -626,6 +626,9 @@
                 </th>
                 <td class="value"><input id="h_hmot_cc_min" type="number" step="1" value=""></td>
                 <td class="units">cc/rev</td>
+              </tr>
+              <tr id="hyd_motor_disp_note_row" class="is-hidden">
+                <td colspan="3"><small id="hyd_motor_disp_note" class="dim"></small></td>
               </tr>
               <tr>
                 <th scope="row">
@@ -2192,7 +2195,7 @@
       <span class="theme-toggle__icon--light" aria-hidden="true">&#9728;</span>
     </button>
 
-    <div id="build-tag" style="position:fixed;bottom:4px;right:4px;font:10px monospace;color:#999;pointer-events:none;z-index:9999">html:v59 | <span id="css-ver-tag">css:?</span></div>
+    <div id="build-tag" style="position:fixed;bottom:4px;right:4px;font:10px monospace;color:#999;pointer-events:none;z-index:9999">html:v60 | <span id="css-ver-tag">css:?</span></div>
     <script>
       // Theme toggle handler
       document.getElementById('theme_toggle').addEventListener('click', function() {
