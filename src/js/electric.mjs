@@ -172,7 +172,8 @@ export function renderElectricTables(
   fullDrumDiaIn,
   driveMotorCount,
   totalGearRatio,
-  gr2 = null
+  gr2 = null,
+  fatFactor = 1.25
 ) {
   const hasGearboxMax = Number.isFinite(gearboxMaxTorqueNm) && gearboxMaxTorqueNm > 0;
   const hasMotorMax = Number.isFinite(motorTmaxNm) && motorTmaxNm > 0;
@@ -233,8 +234,8 @@ export function renderElectricTables(
   const driveMotorsSafe = Number.isFinite(driveMotorCount) && driveMotorCount > 0 ? driveMotorCount : 0;
   const totalGearRatioSafe = Number.isFinite(totalGearRatio) && totalGearRatio > 0 ? totalGearRatio : 0;
 
-  // Factory acceptance test: SWL × 1.25 at full drum
-  const tauFatDrumNm = swlSafe * 1.25 * G * (drumDiaM / 2);
+  // Factory acceptance test: SWL × fatFactor at full drum
+  const tauFatDrumNm = swlSafe * fatFactor * G * (drumDiaM / 2);
   // Actual peak drum torque from operating layers
   const tauOpsDrumNm = elLayers.reduce((max, L) =>
     Number.isFinite(L.max_drum_torque_Nm) ? Math.max(max, L.max_drum_torque_Nm) : max, 0);

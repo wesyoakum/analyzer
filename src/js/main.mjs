@@ -2742,6 +2742,8 @@ function computeAll() {
       }
     });
 
+    const fatFactor = q('fat_brake_test')?.checked ? 1.8 : 1.25;
+
     const torqueChecks = renderElectricTables(
       lastElLayer,
       lastElWraps,
@@ -2754,9 +2756,10 @@ function computeAll() {
       model.summary.full_drum_dia_in,
       model.inputs.motors,
       model.inputs.gr1 * model.inputs.gr2,
-      model.inputs.gr2
+      model.inputs.gr2,
+      fatFactor
     );
-    // Compute max torque seen: worst case of operating layers and FAT (SWL×1.25 at full drum)
+    // Compute max torque seen: worst case of operating layers and FAT
     let maxOpsDrumTorque = 0;
     let maxOpsDepth = 0;
     const deadEnd = model.cfg?.dead_end_m ?? read('dead_m') ?? 0;
@@ -2770,7 +2773,7 @@ function computeAll() {
     const ratedSwlForSeen = read('swl_fd_kgf');
     const fullDrumRadius_m = (model.summary.full_drum_dia_in * M_PER_IN) / 2;
     const fatDrumTorque = (Number.isFinite(ratedSwlForSeen) && ratedSwlForSeen > 0)
-      ? ratedSwlForSeen * 1.25 * G * fullDrumRadius_m
+      ? ratedSwlForSeen * fatFactor * G * fullDrumRadius_m
       : 0;
     const isFatWorstCase = fatDrumTorque >= maxOpsDrumTorque;
     const maxDrumTorqueSeen = Math.max(maxOpsDrumTorque, fatDrumTorque);
