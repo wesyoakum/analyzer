@@ -1,10 +1,7 @@
 // ===== text-export.mjs — Plain-text summary export of analyzer inputs =====
 
 import { q, read } from './utils.mjs';
-
-const MM_PER_IN = 25.4;
-const KGF_TO_LBF = 2.20462;
-const W_PER_HP = 745.7;
+import { fromInternal, fromInternalForGroup, getGroupLabel, FIELD_UNITS } from './units.mjs';
 
 function safeRead(id) {
   try { return read(id); } catch { return null; }
@@ -45,6 +42,17 @@ function pushIf(lines, label, value) {
   }
 }
 
+/** Read a field's value converted to its current display unit, return { val, label }. */
+function fieldDisplay(id, decimals = 0) {
+  const raw = safeRead(id);
+  if (!Number.isFinite(raw)) return { val: null, label: '' };
+  const groupName = FIELD_UNITS[id];
+  if (!groupName) return { val: fmt(raw, decimals), label: '' };
+  const converted = fromInternal(id, raw);
+  const unitLabel = getGroupLabel(groupName);
+  return { val: fmt(converted, decimals), label: unitLabel };
+}
+
 /**
  * Build a plain-text summary of all analyzer inputs.
  * @param {object|null} model - The last computed model
@@ -73,40 +81,30 @@ export function buildTextSummaryLines(model) {
   lines.push(`Active Heave Compensation: ${ahcEnabled ? 'Yes' : 'No'}`);
 
   // Design
-  const swl = safeRead('rated_swl_kgf');
-  const speed = safeRead('rated_speed_mpm');
-
   lines.push('');
-  const swlStr = fmt(swl);
-  if (swlStr) {
-    const lbs = fmt(swl * KGF_TO_LBF);
-    pushIf(lines, 'Safe Working Load', `${swlStr} kgf${lbs ? ` (${lbs} lbs)` : ''}`);
-  }
-  pushIf(lines, 'Rated Line Speed', fmt(speed) ? `${fmt(speed)} m/min` : null);
+  const swlD = fieldDisplay('rated_swl_kgf');
+  pushIf(lines, 'Safe Working Load', swlD.val ? `${swlD.val} ${swlD.label}` : null);
+  const speedD = fieldDisplay('rated_speed_mpm');
+  pushIf(lines, 'Rated Line Speed', speedD.val ? `${speedD.val} ${speedD.label}` : null);
 
   // Cable
-  const cableMm = safeRead('c_mm');
-  const cableLen = safeRead('cable_len_m');
-  const depth = safeRead('depth_m');
-  const dead = safeRead('dead_m');
-  const cableW = safeRead('c_w_kgpm');
-  const mbl = safeRead('mbl_kgf');
-
   lines.push('');
   const cablePreset = selectText('cable_select');
   pushIf(lines, 'Cable', cablePreset);
-  pushIf(lines, 'Cable Diameter', fmt(cableMm, 1) ? `${fmt(cableMm, 1)} mm` : null);
-  pushIf(lines, 'Cable Length', fmt(cableLen) ? `${fmt(cableLen)} m` : null);
-  pushIf(lines, 'Max Operating Depth', fmt(depth) ? `${fmt(depth)} m` : null);
-  pushIf(lines, 'Dead End Length', fmt(dead) ? `${fmt(dead)} m` : null);
-  pushIf(lines, 'Cable Weight in Water', fmt(cableW, 2) ? `${fmt(cableW, 2)} kg/m` : null);
-  pushIf(lines, 'Minimum Breaking Load', fmt(mbl) ? `${fmt(mbl)} kgf` : null);
+  const cableDia = fieldDisplay('c_mm', 1);
+  pushIf(lines, 'Cable Diameter', cableDia.val ? `${cableDia.val} ${cableDia.label}` : null);
+  const cableLen = fieldDisplay('cable_len_m');
+  pushIf(lines, 'Cable Length', cableLen.val ? `${cableLen.val} ${cableLen.label}` : null);
+  const depthD = fieldDisplay('depth_m');
+  pushIf(lines, 'Max Operating Depth', depthD.val ? `${depthD.val} ${depthD.label}` : null);
+  const deadD = fieldDisplay('dead_m');
+  pushIf(lines, 'Dead End Length', deadD.val ? `${deadD.val} ${deadD.label}` : null);
+  const cableW = fieldDisplay('c_w_kgpm', 2);
+  pushIf(lines, 'Cable Weight in Water', cableW.val ? `${cableW.val} ${cableW.label}` : null);
+  const mblD = fieldDisplay('mbl_kgf');
+  pushIf(lines, 'Minimum Breaking Load', mblD.val ? `${mblD.val} ${mblD.label}` : null);
 
   // Drum
-  const coreIn = safeRead('core_in');
-  const flangeIn = safeRead('flange_dia_in');
-  const ftfIn = safeRead('ftf_in');
-  const lebusIn = safeRead('lebus_in');
   const pack = safeRead('pack');
   const wrapsOverride = safeRead('wraps_override');
   const calcWraps = model?.meta?.wraps_per_layer_calc;
@@ -115,10 +113,14 @@ export function buildTextSummaryLines(model) {
   lines.push('');
   const drumPreset = selectText('drum_select');
   pushIf(lines, 'Drum', drumPreset);
-  pushIf(lines, 'Core Diameter', fmt(coreIn, 2) ? `${fmt(coreIn, 2)} in (${fmt(coreIn * MM_PER_IN, 1)} mm)` : null);
-  pushIf(lines, 'Flange Diameter', fmt(flangeIn, 2) ? `${fmt(flangeIn, 2)} in (${fmt(flangeIn * MM_PER_IN, 1)} mm)` : null);
-  pushIf(lines, 'Flange-to-Flange Width', fmt(ftfIn, 2) ? `${fmt(ftfIn, 2)} in (${fmt(ftfIn * MM_PER_IN, 1)} mm)` : null);
-  pushIf(lines, 'Lebus Liner Thickness', fmt(lebusIn, 3) ? `${fmt(lebusIn, 3)} in` : null);
+  const coreD = fieldDisplay('core_in', 2);
+  pushIf(lines, 'Core Diameter', coreD.val ? `${coreD.val} ${coreD.label}` : null);
+  const flangeD = fieldDisplay('flange_dia_in', 2);
+  pushIf(lines, 'Flange Diameter', flangeD.val ? `${flangeD.val} ${flangeD.label}` : null);
+  const ftfD = fieldDisplay('ftf_in', 2);
+  pushIf(lines, 'Flange-to-Flange Width', ftfD.val ? `${ftfD.val} ${ftfD.label}` : null);
+  const lebusD = fieldDisplay('lebus_in', 3);
+  pushIf(lines, 'Lebus Liner Thickness', lebusD.val ? `${lebusD.val} ${lebusD.label}` : null);
   pushIf(lines, 'Packing Factor', fmt(pack, 3));
 
   // Wraps per layer: show calculated value; if overridden, show override with calc as note
@@ -133,48 +135,53 @@ export function buildTextSummaryLines(model) {
   if (model?.summary) {
     const s = model.summary;
     pushIf(lines, 'Total Layers', s.total_layers != null ? String(s.total_layers) : null);
-    pushIf(lines, 'Full Drum Diameter', fmt(s.full_drum_dia_in, 2) ? `${fmt(s.full_drum_dia_in, 2)} in` : null);
-    pushIf(lines, 'Total Cable Length', fmt(s.total_cable_len_m) ? `${fmt(s.total_cable_len_m)} m` : null);
+    if (Number.isFinite(s.full_drum_dia_in)) {
+      const diaVal = fromInternalForGroup('length_in', s.full_drum_dia_in);
+      pushIf(lines, 'Full Drum Diameter', `${fmt(diaVal, 2)} ${getGroupLabel('length_in')}`);
+    }
+    if (Number.isFinite(s.total_cable_len_m)) {
+      const lenVal = fromInternalForGroup('length_m', s.total_cable_len_m);
+      pushIf(lines, 'Total Cable Length', `${fmt(lenVal)} ${getGroupLabel('length_m')}`);
+    }
   }
 
   // Payload
-  const payloadAir = safeRead('payload_air_kg');
-  const payloadWater = safeRead('payload_kg');
-
   lines.push('');
   const payloadPreset = selectText('payload_select');
   pushIf(lines, 'Payload', payloadPreset);
-  if (Number.isFinite(payloadAir) && payloadAir > 0) {
-    pushIf(lines, 'Payload in Air', `${fmt(payloadAir)} kg`);
+  const payloadAirD = fieldDisplay('payload_air_kg');
+  const payloadAirRaw = safeRead('payload_air_kg');
+  if (Number.isFinite(payloadAirRaw) && payloadAirRaw > 0) {
+    pushIf(lines, 'Payload in Air', `${payloadAirD.val} ${payloadAirD.label}`);
   }
-  pushIf(lines, 'Payload in Water', fmt(payloadWater) ? `${fmt(payloadWater)} kg` : null);
+  const payloadWaterD = fieldDisplay('payload_kg');
+  pushIf(lines, 'Payload in Water', payloadWaterD.val ? `${payloadWaterD.val} ${payloadWaterD.label}` : null);
 
   // Payload breakdown (only if filled)
-  const tmsAir = safeRead('tms_air_kg');
-  const vehicleAir = safeRead('vehicle_air_kg');
-  const addlAir = safeRead('additional_air_kg');
-  const tmsWater = safeRead('tms_water_kg');
-  const vehicleWater = safeRead('vehicle_water_kg');
-  const addlWater = safeRead('additional_water_kg');
-  const hasBreakdown = [tmsAir, vehicleAir, addlAir, tmsWater, vehicleWater, addlWater]
-    .some(v => Number.isFinite(v) && v > 0);
+  const massLabel = getGroupLabel('mass_kg');
+  const breakdownFields = [
+    ['tms_air_kg', 'TMS in Air'], ['vehicle_air_kg', 'Vehicle in Air'], ['additional_air_kg', 'Additional in Air'],
+    ['tms_water_kg', 'TMS in Water'], ['vehicle_water_kg', 'Vehicle in Water'], ['additional_water_kg', 'Additional in Water'],
+  ];
+  const hasBreakdown = breakdownFields.some(([id]) => {
+    const v = safeRead(id);
+    return Number.isFinite(v) && v > 0;
+  });
 
   if (hasBreakdown) {
     lines.push('');
     lines.push('  Payload Breakdown:');
-    if (Number.isFinite(tmsAir) && tmsAir > 0) lines.push(`    TMS in Air: ${fmt(tmsAir)} kg`);
-    if (Number.isFinite(vehicleAir) && vehicleAir > 0) lines.push(`    Vehicle in Air: ${fmt(vehicleAir)} kg`);
-    if (Number.isFinite(addlAir) && addlAir > 0) lines.push(`    Additional in Air: ${fmt(addlAir)} kg`);
-    if (Number.isFinite(tmsWater) && tmsWater > 0) lines.push(`    TMS in Water: ${fmt(tmsWater)} kg`);
-    if (Number.isFinite(vehicleWater) && vehicleWater > 0) lines.push(`    Vehicle in Water: ${fmt(vehicleWater)} kg`);
-    if (Number.isFinite(addlWater) && addlWater > 0) lines.push(`    Additional in Water: ${fmt(addlWater)} kg`);
+    for (const [id, label] of breakdownFields) {
+      const d = fieldDisplay(id);
+      const raw = safeRead(id);
+      if (Number.isFinite(raw) && raw > 0) lines.push(`    ${label}: ${d.val} ${d.label}`);
+    }
   }
 
   // Drivetrain
   const motors = safeRead('motors');
   const gr1 = safeRead('gr1');
   const gr2 = safeRead('gr2');
-  const gbTorque = safeRead('gearbox_max_torque_Nm');
   const grTotal = (Number.isFinite(gr1) && Number.isFinite(gr2)) ? gr1 * gr2 : null;
 
   lines.push('');
@@ -184,60 +191,64 @@ export function buildTextSummaryLines(model) {
   pushIf(lines, 'Gear Ratio 1 (Gearbox)', fmt(gr1, 3));
   pushIf(lines, 'Gear Ratio 2 (External)', fmt(gr2, 3));
   pushIf(lines, 'Total Gear Ratio', fmt(grTotal, 2));
-  if (Number.isFinite(gbTorque) && gbTorque > 0) {
-    pushIf(lines, 'Gearbox Max Torque Rating', `${fmt(gbTorque)} N·m`);
+  const gbTorqueD = fieldDisplay('gearbox_max_torque_Nm');
+  const gbTorqueRaw = safeRead('gearbox_max_torque_Nm');
+  if (Number.isFinite(gbTorqueRaw) && gbTorqueRaw > 0) {
+    pushIf(lines, 'Gearbox Max Torque Rating', `${gbTorqueD.val} ${gbTorqueD.label}`);
   }
 
   // Electric inputs
   if (systemType === 'electric') {
     const motorEff = safeRead('motor_eff');
-    const motorHp = safeRead('motor_hp');
-    const motorRpm = safeRead('motor_max_rpm');
-    const motorTmax = safeRead('motor_tmax');
-    const motorKw = Number.isFinite(motorHp) ? motorHp * W_PER_HP / 1000 : null;
 
     lines.push('');
     pushIf(lines, 'System Efficiency (Electric)', motorEff != null ? `${fmt(motorEff * 100)}%` : null);
     const motorPreset = selectText('electric_motor_select');
     pushIf(lines, 'Motor', motorPreset);
-    pushIf(lines, 'Motor Rated Power', fmt(motorHp, 1) ? `${fmt(motorHp, 1)} HP (${fmt(motorKw, 1)} kW)` : null);
+    const motorPwrD = fieldDisplay('motor_hp', 1);
+    pushIf(lines, 'Motor Rated Power', motorPwrD.val ? `${motorPwrD.val} ${motorPwrD.label}` : null);
+    const motorRpm = safeRead('motor_max_rpm');
     pushIf(lines, 'Motor Maximum Speed', fmt(motorRpm) ? `${fmt(motorRpm)} RPM` : null);
-    pushIf(lines, 'Motor Max Torque Rating', fmt(motorTmax) ? `${fmt(motorTmax)} N·m` : null);
+    const motorTmaxD = fieldDisplay('motor_tmax');
+    pushIf(lines, 'Motor Max Torque Rating', motorTmaxD.val ? `${motorTmaxD.val} ${motorTmaxD.label}` : null);
   }
 
   // Hydraulic inputs
   if (systemType === 'hydraulic') {
     const hEff = safeRead('h_emotor_eff');
-    const hMotCc = safeRead('h_hmot_cc');
-    const hMotCcMin = safeRead('h_hmot_cc_min');
+    const hMotCcRaw = safeRead('h_hmot_cc');
+    const hMotCcMinRaw = safeRead('h_hmot_cc_min');
     const hMotRpm = safeRead('h_hmot_rpm_max');
     const hStrings = safeRead('h_pump_strings');
-    const hEmotorHp = safeRead('h_emotor_hp');
     const hEmotorRpm = safeRead('h_emotor_rpm');
-    const hPumpCc = safeRead('h_pump_cc');
-    const hMaxPsi = safeRead('h_max_psi');
 
     lines.push('');
     pushIf(lines, 'System Efficiency (Hydraulic)', hEff != null ? `${fmt(hEff * 100)}%` : null);
     const hMotPreset = selectText('hydraulic_motor_select');
     pushIf(lines, 'Hydraulic Motor', hMotPreset);
-    const isVariable = Number.isFinite(hMotCcMin) && hMotCcMin > 0 && hMotCcMin < hMotCc;
-    pushIf(lines, 'Motor Displacement (Max)', fmt(hMotCc) ? `${fmt(hMotCc)} cc/rev` : null);
-    if (isVariable) pushIf(lines, 'Motor Displacement (Min)', fmt(hMotCcMin) ? `${fmt(hMotCcMin)} cc/rev` : null);
+    const hMotD = fieldDisplay('h_hmot_cc');
+    const hMotMinD = fieldDisplay('h_hmot_cc_min');
+    const isVariable = Number.isFinite(hMotCcMinRaw) && hMotCcMinRaw > 0 && hMotCcMinRaw < hMotCcRaw;
+    pushIf(lines, 'Motor Displacement (Max)', hMotD.val ? `${hMotD.val} ${hMotD.label}` : null);
+    if (isVariable) pushIf(lines, 'Motor Displacement (Min)', hMotMinD.val ? `${hMotMinD.val} ${hMotMinD.label}` : null);
     pushIf(lines, 'Hydraulic Motor Max Speed', fmt(hMotRpm) ? `${fmt(hMotRpm)} RPM` : null);
 
     lines.push('');
     pushIf(lines, 'Pump Strings', fmt(hStrings));
     const hpuMotorPreset = selectText('hpu_motor_select');
     pushIf(lines, 'HPU Motor', hpuMotorPreset);
-    pushIf(lines, 'Electric Motor Power', fmt(hEmotorHp) ? `${fmt(hEmotorHp)} HP per string` : null);
+    const hEmotorPwrD = fieldDisplay('h_emotor_hp');
+    pushIf(lines, 'Electric Motor Power', hEmotorPwrD.val ? `${hEmotorPwrD.val} ${hEmotorPwrD.label} per string` : null);
     pushIf(lines, 'Electric Motor Speed', fmt(hEmotorRpm) ? `${fmt(hEmotorRpm)} RPM` : null);
     const pumpPreset = selectText('hydraulic_pump_select');
     pushIf(lines, 'Pump', pumpPreset);
-    if (Number.isFinite(hPumpCc) && hPumpCc > 0) {
-      pushIf(lines, 'Pump Displacement', `${fmt(hPumpCc)} cc/rev`);
+    const hPumpD = fieldDisplay('h_pump_cc');
+    const hPumpRaw = safeRead('h_pump_cc');
+    if (Number.isFinite(hPumpRaw) && hPumpRaw > 0) {
+      pushIf(lines, 'Pump Displacement', `${hPumpD.val} ${hPumpD.label}`);
     }
-    pushIf(lines, 'Max System Pressure', fmt(hMaxPsi) ? `${fmt(hMaxPsi)} psi` : null);
+    const hPsiD = fieldDisplay('h_max_psi');
+    pushIf(lines, 'Max System Pressure', hPsiD.val ? `${hPsiD.val} ${hPsiD.label}` : null);
   }
 
   lines.push('');

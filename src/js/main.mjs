@@ -1326,6 +1326,11 @@ document.addEventListener('DOMContentLoaded', () => {
 
     cancelBtn.addEventListener('click', () => summaryDialog.close());
 
+    // Close on backdrop click
+    summaryDialog.addEventListener('click', (e) => {
+      if (e.target === summaryDialog) summaryDialog.close();
+    });
+
     selectAllBtn.addEventListener('click', () => {
       const checkboxes = summaryList.querySelectorAll('input[type="checkbox"]');
       const allChecked = [...checkboxes].every(cb => cb.checked);
