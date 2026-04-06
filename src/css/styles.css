@@ -106,8 +106,6 @@ body {
   column-gap: var(--shell-column-gap);
   align-items: start;
   justify-content: center;
-  height: 100vh;
-  overflow: hidden;
   max-width: calc(var(--sidebar-width) + var(--sheet-width) + var(--shell-column-gap));
   margin: 0 auto;
   padding: var(--space-lg) var(--space-lg) var(--space-xl);
@@ -117,7 +115,9 @@ body {
 .main-content {
   grid-column: 2 / 3;
   min-width: 0;
-  max-height: 100vh;
+  position: sticky;
+  top: 32px;
+  max-height: calc(100vh - 64px);
   overflow-y: auto;
   overflow-x: hidden;
 }
@@ -168,7 +168,9 @@ body {
 }
 
 .app-sidebar {
-  max-height: 100vh;
+  position: sticky;
+  top: 32px;
+  max-height: calc(100vh - 64px);
   display: flex;
   flex-direction: column;
   width: var(--sidebar-width);
@@ -625,8 +627,6 @@ body {
     grid-template-columns: none !important;
     gap: 16px;
     padding: 2% 2% 48px;
-    height: auto !important;
-    overflow: visible !important;
     overflow-x: clip !important;
   }
 
@@ -2473,8 +2473,6 @@ th[title] {
   /* Reset layout for single-column print */
   .app-shell {
     display: block;
-    height: auto;
-    overflow: visible;
   }
 
   .main-content {
