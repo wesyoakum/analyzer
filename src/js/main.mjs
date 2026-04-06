@@ -901,15 +901,12 @@ async function setupProjectManager() {
   const nameInput = /** @type {HTMLInputElement|null} */ (document.getElementById('project_name'));
   const select = /** @type {HTMLSelectElement|null} */ (document.getElementById('project_select'));
   const saveNewBtn = document.getElementById('save_project_new');
-  const saveBtn = document.getElementById('save_project');
-  const renameBtn = document.getElementById('rename_project');
-  const loadBtn = document.getElementById('load_project');
   const importBtn = document.getElementById('import_project');
   const importFileInput = /** @type {HTMLInputElement|null} */ (document.getElementById('import_project_file'));
   const exportBtn = document.getElementById('export_project');
   const deleteBtn = document.getElementById('delete_project');
   const statusEl = document.getElementById('project_status');
-  if (!nameInput || !select || !saveNewBtn || !saveBtn || !renameBtn || !loadBtn || !importBtn || !importFileInput || !exportBtn || !deleteBtn || !statusEl) return;
+  if (!nameInput || !select || !saveNewBtn || !importBtn || !importFileInput || !exportBtn || !deleteBtn || !statusEl) return;
 
   const LOCAL_PROJECTS_KEY = 'analyzer.projects.v1';
   let cachedProjects = [];
@@ -1091,19 +1088,16 @@ async function setupProjectManager() {
     return projects.find(project => project.id === projectId) || null;
   };
 
-  const saveProject = async ({ useSelectedId }) => {
-    let selectedId = useSelectedId ? select.value || undefined : undefined;
+  const saveProject = async () => {
     const name = nameInput.value.trim();
     if (!name) {
       window.alert('Enter a project name before saving.');
       return;
     }
 
-    // If no explicit ID, check for existing project with same name and overwrite it
-    if (!selectedId) {
-      const existing = cachedProjects.find(p => p.name === name);
-      if (existing) selectedId = existing.id;
-    }
+    // Check for existing project with same name and overwrite it
+    const existing = cachedProjects.find(p => p.name === name);
+    const selectedId = existing ? existing.id : undefined;
 
     const payload = {
       ...(selectedId ? { id: selectedId } : {}),
@@ -1140,62 +1134,11 @@ async function setupProjectManager() {
     await loadProjects();
     select.value = savedProject.id;
     nameInput.value = savedProject.name || name;
-    setStatus(savedRemotely ? (selectedId ? 'Project updated.' : 'Project saved.') : (selectedId ? 'Updated locally (offline/server unavailable).' : 'Saved locally (offline/server unavailable).'));
+    setStatus(savedRemotely ? 'Project saved.' : 'Saved locally (offline/server unavailable).');
   };
 
   saveNewBtn.addEventListener('click', async () => {
-    await saveProject({ useSelectedId: false });
-  });
-
-  saveBtn.addEventListener('click', async () => {
-    if (!select.value) {
-      window.alert('Select a saved project to update, or use Save new.');
-      return;
-    }
-    await saveProject({ useSelectedId: true });
-  });
-
-  renameBtn.addEventListener('click', async () => {
-    const selectedId = select.value;
-    if (!selectedId) {
-      window.alert('Select a saved project to rename.');
-      return;
-    }
-
-    const nextName = nameInput.value.trim();
-    if (!nextName) {
-      window.alert('Enter a new project name first.');
-      return;
-    }
-
-    const current = await getProjectById(selectedId);
-    if (!current || typeof current.state !== 'object' || current.state === null) {
-      window.alert('Unable to rename: project data could not be loaded.');
-      return;
-    }
-
-    await saveProject({ useSelectedId: true });
-    nameInput.value = nextName;
-  });
-
-  loadBtn.addEventListener('click', async () => {
-    const selectedId = select.value;
-    if (!selectedId) {
-      window.alert('Select a saved project to load.');
-      return;
-    }
-
-    const project = await getProjectById(selectedId);
-    if (!project || typeof project.state !== 'object' || project.state === null) {
-      window.alert('Unable to load project.');
-      return;
-    }
-
-    applyProjectState(project.state);
-    syncPrevUnits();
-    nameInput.value = project.name || '';
-    computeAll();
-    setStatus('Project loaded.');
+    await saveProject();
   });
 
   importBtn.addEventListener('click', () => {
@@ -1271,15 +1214,23 @@ async function setupProjectManager() {
     setStatus('Project deleted.');
   });
 
-  select.addEventListener('change', () => {
-    const option = select.selectedOptions?.[0];
-    if (option?.value) {
-      nameInput.value = option.textContent || '';
+  select.addEventListener('change', async () => {
+    const selectedId = select.value;
+    if (!selectedId) {
+      nameInput.value = '';
       setStatus('');
       return;
     }
-    nameInput.value = '';
-    setStatus('');
+    const project = await getProjectById(selectedId);
+    if (!project || typeof project.state !== 'object' || project.state === null) {
+      window.alert('Unable to load project.');
+      return;
+    }
+    applyProjectState(project.state);
+    syncPrevUnits();
+    nameInput.value = project.name || '';
+    computeAll();
+    setStatus('Project loaded.');
   });
 
   await loadProjects();
