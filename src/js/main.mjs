@@ -2817,7 +2817,7 @@ function redrawPlots() {
         const vPowerSegments = buildVPowerSegments(lastHyWraps, deadEndM);
         if (vPowerSegments.length) {
           flowSpeedProfiles.push({
-            label: 'V_P',
+            label: 'v_P',
             color: '#7ec8d4',
             strokeWidth: 2,
             legendStrokeWidth: 2,
@@ -2832,7 +2832,7 @@ function redrawPlots() {
         if (maxDispFlowSegments.length) {
           const accentColor = readAccentColor();
           flowSpeedProfiles.push({
-            label: 'V_Q (Max Disp)',
+            label: 'v_Q (Max Disp)',
             color: accentColor,
             strokeWidth: 2,
             legendStrokeWidth: 2,
@@ -2860,7 +2860,7 @@ function redrawPlots() {
         const minDispFlowSegments = buildMinDispFlowSegments(lastHyWraps, deadEndM);
         if (minDispFlowSegments.length) {
           flowSpeedProfiles.push({
-            label: 'V_Q (Min Disp)',
+            label: 'v_Q (Min Disp)',
             color: '#d9a528',
             strokeWidth: 2,
             legendStrokeWidth: 2,

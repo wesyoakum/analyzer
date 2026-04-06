@@ -4,7 +4,7 @@
   <meta charset="utf-8" />
   <title>Winch Analysis</title>
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <link rel="stylesheet" href="css/styles.css?v=58" />
+  <link rel="stylesheet" href="css/styles.css?v=59" />
   <script>
     // Apply saved theme before first paint to prevent flash
     (function() {
@@ -234,7 +234,7 @@
                   </tr>
                 </tbody>
               </table>
-              <p class="note"><span class="math" data-latex="L_{\max}=\dfrac{(MBL/SF)-W_{\mathrm{pay,sub}}}{w_{c,\mathrm{sub}}}"></span>.</p>
+              <p class="note"><span class="math" data-latex="L_{\max}=\dfrac{(MBL/SF)-W_{\mathrm{payload}}}{w_{c}}"></span>.</p>
             </section>
     
             <section class="input-subsection">
@@ -615,14 +615,14 @@
               </tr>
               <tr>
                 <th scope="row">
-                  <label class="param-label" for="h_hmot_cc" data-code="h_hmot_cc">Motor Displacement (Max) <span class="symbol" aria-hidden="true" data-latex="q_{hm,\max}">q<sub>hm,max</sub></span></label>
+                  <label class="param-label" for="h_hmot_cc" data-code="h_hmot_cc">Motor Displacement (Max) <span class="symbol" aria-hidden="true" data-latex="\delta_{m,\max}">δ<sub>m,max</sub></span></label>
                 </th>
                 <td class="value"><input id="h_hmot_cc" type="number" step="1" value="55"></td>
                 <td class="units">cc/rev</td>
               </tr>
               <tr>
                 <th scope="row">
-                  <label class="param-label" for="h_hmot_cc_min" data-code="h_hmot_cc_min">Motor Displacement (Min) <span class="symbol" aria-hidden="true" data-latex="q_{hm,\min}">q<sub>hm,min</sub></span></label>
+                  <label class="param-label" for="h_hmot_cc_min" data-code="h_hmot_cc_min">Motor Displacement (Min) <span class="symbol" aria-hidden="true" data-latex="\delta_{m,\min}">δ<sub>m,min</sub></span></label>
                 </th>
                 <td class="value"><input id="h_hmot_cc_min" type="number" step="1" value=""></td>
                 <td class="units">cc/rev</td>
@@ -705,7 +705,7 @@
               </tr>
               <tr>
                 <th scope="row">
-                  <label class="param-label" for="h_pump_cc" data-code="h_pump_cc">Pump Displacement <span class="symbol" aria-hidden="true" data-latex="q_{\mathrm{pump}}">q<sub>pump</sub></span></label>
+                  <label class="param-label" for="h_pump_cc" data-code="h_pump_cc">Pump Displacement <span class="symbol" aria-hidden="true" data-latex="\delta_{p}">δ<sub>p</sub></span></label>
                 </th>
                 <td class="value"><input id="h_pump_cc" type="number" step="10" value="210"></td>
                 <td class="units">cc/rev</td>
@@ -1183,7 +1183,7 @@
             <tr>
               <th title="layer_no">L#<br>–</th>
               <th title="layer_dia_in" data-unit-group="length_in">
-                <span data-latex="D_{layer}">D<sub>layer</sub></span><br><span class="th-unit">in</span>
+                <span data-latex="D_{\ell}">D<sub>ℓ</sub></span><br><span class="th-unit">in</span>
               </th>
               <th title="on_drum_range_m" data-unit-group="length_m">Cable On Drum<br><span class="th-unit">m</span></th>
               <th title="depth_range_m" data-unit-group="length_m">Depth<br><span class="th-unit">m</span></th>
@@ -1229,7 +1229,7 @@
                 <th title="wrap_no">W#<br>–</th>
                 <th title="layer_no">L#<br>–</th>
                 <th title="layer_dia_in" data-unit-group="length_in">
-                  <span data-latex="D_{layer}">D<sub>layer</sub></span><br><span class="th-unit">in</span>
+                  <span data-latex="D_{\ell}">D<sub>ℓ</sub></span><br><span class="th-unit">in</span>
                 </th>
                 <th title="wrap_len_in" data-unit-group="length_in">
                   <span data-latex="L_{wrap}">L<sub>wrap</sub></span><br><span class="th-unit">in</span>
@@ -1250,7 +1250,7 @@
                   <span data-latex="\tau_{m}">τ<sub>m</sub></span><br><span class="th-unit">N·m</span>
                 </th>
                 <th title="motor_rpm">
-                  <span data-latex="n_{m}">n<sub>m</sub></span><br>rpm
+                  <span data-latex="\omega_{m}">&omega;<sub>m</sub></span><br>rpm
                 </th>
                 <th title="line_speed_mpm" data-unit-group="speed_mpm">
                   <span data-latex="v">v</span><br><span class="th-unit">m/min</span>
@@ -1275,7 +1275,7 @@
             <tr>
               <th title="layer_no">L#<br>–</th>
               <th title="layer_dia_in" data-unit-group="length_in">
-                <span data-latex="D_{layer}">D<sub>layer</sub></span><br><span class="th-unit">in</span>
+                <span data-latex="D_{\ell}">D<sub>ℓ</sub></span><br><span class="th-unit">in</span>
               </th>
               <th title="on_drum_range_m" data-unit-group="length_m">Cable On Drum<br><span class="th-unit">m</span></th>
               <th title="depth_range_m" data-unit-group="length_m">Depth<br><span class="th-unit">m</span></th>
@@ -1339,7 +1339,7 @@
                 <th title="wrap_no">W#<br>–</th>
                 <th title="layer_no">L#<br>–</th>
                 <th title="layer_dia_in" data-unit-group="length_in">
-                  <span data-latex="D_{layer}">D<sub>layer</sub></span><br><span class="th-unit">in</span>
+                  <span data-latex="D_{\ell}">D<sub>ℓ</sub></span><br><span class="th-unit">in</span>
                 </th>
                 <th title="wrap_len_in" data-unit-group="length_in">
                   <span data-latex="L_{wrap}">L<sub>wrap</sub></span><br><span class="th-unit">in</span>
@@ -1404,24 +1404,72 @@
               </tr>
             </thead>
             <tbody>
+              <!-- Design -->
               <tr>
-                <td><span class="math" data-latex="n_{e}"></span></td>
+                <td><span class="math" data-latex="T_{\mathrm{SWL}}"></span></td>
+                <td>safe working load</td>
+                <td>kgf</td>
+              </tr>
+              <tr>
+                <td><span class="math" data-latex="v_{\mathrm{rated}}"></span></td>
+                <td>rated line speed</td>
+                <td>m/min</td>
+              </tr>
+              <tr>
+                <td><span class="math" data-latex="\mathrm{SF}"></span></td>
+                <td>safety factor</td>
+                <td>–</td>
+              </tr>
+              <tr>
+                <td><span class="math" data-latex="\mathrm{MBL}"></span></td>
+                <td>minimum breaking load</td>
+                <td>kgf</td>
+              </tr>
+              <!-- Efficiency -->
+              <tr>
+                <td><span class="math" data-latex="\eta_{sys}"></span></td>
+                <td>system efficiency (electric or hydraulic)</td>
+                <td>–</td>
+              </tr>
+              <tr>
+                <td><span class="math" data-latex="\eta_{em}"></span></td>
+                <td>electromechanical efficiency (electric motor)</td>
+                <td>–</td>
+              </tr>
+              <tr>
+                <td><span class="math" data-latex="\eta_{vp}"></span></td>
+                <td>pump volumetric efficiency</td>
+                <td>–</td>
+              </tr>
+              <tr>
+                <td><span class="math" data-latex="\eta_{vm}"></span></td>
+                <td>motor volumetric efficiency</td>
+                <td>–</td>
+              </tr>
+              <tr>
+                <td><span class="math" data-latex="\eta_{train}"></span></td>
+                <td>drivetrain efficiency</td>
+                <td>–</td>
+              </tr>
+              <tr>
+                <td><span class="math" data-latex="\eta_{mm}"></span></td>
+                <td>mechanical efficiency of motor</td>
+                <td>–</td>
+              </tr>
+              <!-- Hydraulic -->
+              <tr>
+                <td><span class="math" data-latex="\omega_{e}"></span></td>
                 <td>electric motor speed</td>
                 <td>rpm</td>
               </tr>
               <tr>
-                <td><span class="math" data-latex="D_{p}"></span></td>
+                <td><span class="math" data-latex="\delta_{p}"></span></td>
                 <td>pump displacement</td>
                 <td>cc/rev</td>
               </tr>
               <tr>
                 <td><span class="math" data-latex="N_{p}"></span></td>
                 <td>number of pumps</td>
-                <td>–</td>
-              </tr>
-              <tr>
-                <td><span class="math" data-latex="\eta_{vp}"></span></td>
-                <td>pump volumetric efficiency</td>
                 <td>–</td>
               </tr>
               <tr>
@@ -1435,48 +1483,60 @@
                 <td>cc/min</td>
               </tr>
               <tr>
+                <td><span class="math" data-latex="Q_{\max}"></span></td>
+                <td>max available flow rate</td>
+                <td>gpm</td>
+              </tr>
+              <tr>
+                <td><span class="math" data-latex="P_{\max}"></span></td>
+                <td>system maximum pressure</td>
+                <td>psi</td>
+              </tr>
+              <tr>
                 <td><span class="math" data-latex="N_{m}"></span></td>
                 <td>number of motors in parallel</td>
                 <td>–</td>
               </tr>
               <tr>
-                <td><span class="math" data-latex="D_{m}"></span></td>
-                <td>motor displacement</td>
+                <td><span class="math" data-latex="\delta_{m}"></span></td>
+                <td>hydraulic motor displacement</td>
                 <td>cc/rev</td>
               </tr>
               <tr>
-                <td><span class="math" data-latex="\eta_{vm}"></span></td>
-                <td>motor volumetric efficiency</td>
-                <td>–</td>
-              </tr>
-              <tr>
-                <td><span class="math" data-latex="n_{m}"></span></td>
-                <td>motor speed</td>
+                <td><span class="math" data-latex="\omega_{m}"></span></td>
+                <td>hydraulic motor speed</td>
                 <td>rpm</td>
               </tr>
               <tr>
-                <td><span class="math" data-latex="n_{d}"></span></td>
+                <td><span class="math" data-latex="\omega_{d}"></span></td>
                 <td>drum (ring) speed</td>
                 <td>rpm</td>
               </tr>
+              <!-- Gear train -->
               <tr>
-                <td><span class="math" data-latex="G_{gb}"></span></td>
-                <td>gearbox reduction</td>
+                <td><span class="math" data-latex="G_{1}"></span></td>
+                <td>gear ratio 1 (gearbox reduction)</td>
                 <td>–</td>
               </tr>
               <tr>
-                <td><span class="math" data-latex="G_{pr}"></span></td>
-                <td>pinion&rarr;ring reduction</td>
+                <td><span class="math" data-latex="G_{2}"></span></td>
+                <td>gear ratio 2 (pinion&rarr;ring reduction)</td>
                 <td>–</td>
               </tr>
               <tr>
                 <td><span class="math" data-latex="G_{tot}"></span></td>
                 <td>
                   total reduction =
-                  <span class="math" data-latex="G_{gb} G_{pr}"></span>
+                  <span class="math" data-latex="G_{1} \cdot G_{2}"></span>
                 </td>
                 <td>–</td>
               </tr>
+              <tr>
+                <td><span class="math" data-latex="\tau_{gb,\mathrm{rated}}"></span></td>
+                <td>gearbox max torque rating</td>
+                <td>N·m</td>
+              </tr>
+              <!-- Drum geometry -->
               <tr>
                 <td><span class="math" data-latex="D_{\ell}(z)"></span></td>
                 <td>
@@ -1484,83 +1544,6 @@
                   <span class="math" data-latex="z"></span>
                 </td>
                 <td>m</td>
-              </tr>
-              <tr>
-                <td><span class="math" data-latex="v_{flow}(z)"></span></td>
-                <td>flow-limited line speed</td>
-                <td>m/s</td>
-              </tr>
-              <tr>
-                <td><span class="math" data-latex="P_{nom}"></span></td>
-                <td>total nominal electric motor power</td>
-                <td>kW</td>
-              </tr>
-              <tr>
-                <td><span class="math" data-latex="\eta_{em}"></span></td>
-                <td>electromechanical efficiency</td>
-                <td>–</td>
-              </tr>
-              <tr>
-                <td><span class="math" data-latex="P_{avail}"></span></td>
-                <td>available electric motor power</td>
-                <td>kW</td>
-              </tr>
-              <tr>
-                <td><span class="math" data-latex="T(z)"></span></td>
-                <td>operating line tension</td>
-                <td>N</td>
-              </tr>
-              <tr>
-                <td><span class="math" data-latex="v_{pwr}(z)"></span></td>
-                <td>power-limited line speed</td>
-                <td>m/s</td>
-              </tr>
-              <tr>
-                <td><span class="math" data-latex="v_{avail}(z)"></span></td>
-                <td>available line speed</td>
-                <td>m/s</td>
-              </tr>
-              <tr>
-                <td><span class="math" data-latex="W_{\mathrm{pay,sub}}"></span></td>
-                <td>payload weight in water</td>
-                <td>N</td>
-              </tr>
-              <tr>
-                <td><span class="math" data-latex="w_{c,\mathrm{sub}}"></span></td>
-                <td>cable weight in water per unit length</td>
-                <td>N/m</td>
-              </tr>
-              <tr>
-                <td><span class="math" data-latex="L"></span></td>
-                <td>max usable cable length</td>
-                <td>m</td>
-              </tr>
-              <tr>
-                <td><span class="math" data-latex="T_{\mathrm{static}}(z)"></span></td>
-                <td>static line tension</td>
-                <td>N</td>
-              </tr>
-              <tr>
-                <td>
-                  <span class="math" data-latex="\Delta T_a\!,\; \Delta T_d\!,\; \Delta T_h"></span>
-                </td>
-                <td>dynamic tension adders (accel, drag, heave)</td>
-                <td>N</td>
-              </tr>
-              <tr>
-                <td><span class="math" data-latex="\tau_{m}"></span></td>
-                <td>motor torque</td>
-                <td>N·m</td>
-              </tr>
-              <tr>
-                <td><span class="math" data-latex="\eta_{train}"></span></td>
-                <td>drivetrain efficiency</td>
-                <td>–</td>
-              </tr>
-              <tr>
-                <td><span class="math" data-latex="\eta_{mm}"></span></td>
-                <td>mechanical efficiency of motor</td>
-                <td>–</td>
               </tr>
               <tr>
                 <td><span class="math" data-latex="r_{\ell}(z)"></span></td>
@@ -1575,6 +1558,96 @@
               <tr>
                 <td><span class="math" data-latex="p_{c}"></span></td>
                 <td>cable effective pitch (≈ cable dia × packing factor)</td>
+                <td>m</td>
+              </tr>
+              <!-- Speed -->
+              <tr>
+                <td><span class="math" data-latex="v_{P}(z)"></span></td>
+                <td>power-limited line speed</td>
+                <td>m/s</td>
+              </tr>
+              <tr>
+                <td><span class="math" data-latex="v_{Q}(z)"></span></td>
+                <td>flow-limited line speed</td>
+                <td>m/s</td>
+              </tr>
+              <tr>
+                <td><span class="math" data-latex="v_{avail}(z)"></span></td>
+                <td>available line speed</td>
+                <td>m/s</td>
+              </tr>
+              <!-- Power & torque -->
+              <tr>
+                <td><span class="math" data-latex="P_{nom}"></span></td>
+                <td>total nominal electric motor power</td>
+                <td>kW</td>
+              </tr>
+              <tr>
+                <td><span class="math" data-latex="P_{avail}"></span></td>
+                <td>available electric motor power</td>
+                <td>kW</td>
+              </tr>
+              <tr>
+                <td><span class="math" data-latex="hp_{req}"></span></td>
+                <td>required horsepower</td>
+                <td>hp</td>
+              </tr>
+              <tr>
+                <td><span class="math" data-latex="hp_{sys}"></span></td>
+                <td>system horsepower (total installed)</td>
+                <td>hp</td>
+              </tr>
+              <tr>
+                <td><span class="math" data-latex="\tau_{m}"></span></td>
+                <td>motor torque</td>
+                <td>N·m</td>
+              </tr>
+              <tr>
+                <td><span class="math" data-latex="\tau_{avail}"></span></td>
+                <td>available torque at drum</td>
+                <td>N·m</td>
+              </tr>
+              <!-- Tension & cable -->
+              <tr>
+                <td><span class="math" data-latex="T(z)"></span></td>
+                <td>operating line tension</td>
+                <td>N</td>
+              </tr>
+              <tr>
+                <td><span class="math" data-latex="T_{\mathrm{static}}(z)"></span></td>
+                <td>static line tension</td>
+                <td>N</td>
+              </tr>
+              <tr>
+                <td><span class="math" data-latex="T_{req}"></span></td>
+                <td>tension required</td>
+                <td>kgf</td>
+              </tr>
+              <tr>
+                <td><span class="math" data-latex="T_{avail}"></span></td>
+                <td>tension available</td>
+                <td>kgf</td>
+              </tr>
+              <tr>
+                <td>
+                  <span class="math" data-latex="\Delta T_a\!,\; \Delta T_d\!,\; \Delta T_h"></span>
+                </td>
+                <td>dynamic tension adders (accel, drag, heave)</td>
+                <td>N</td>
+              </tr>
+              <tr>
+                <td><span class="math" data-latex="W_{\mathrm{payload}}"></span></td>
+                <td>payload weight in water</td>
+                <td>N</td>
+              </tr>
+              <tr>
+                <td><span class="math" data-latex="w_{c}"></span></td>
+                <td>cable weight in water per unit length</td>
+                <td>N/m</td>
+              </tr>
+              <tr>
+                <td><span class="math" data-latex="L"></span></td>
+                <td>max usable cable length</td>
                 <td>m</td>
               </tr>
             </tbody>
@@ -1727,7 +1800,7 @@
           found from <span class="math" data-latex="P = \tau \cdot \omega"></span>:
         </p>
         <p>
-          $$n_{\mathrm{power}} = \frac{P_{\mathrm{motor}} \cdot 60}{2\pi\,\tau_{\mathrm{motor}}}$$
+          $$\omega_{\mathrm{power}} = \frac{P_{\mathrm{motor}} \cdot 60}{2\pi\,\tau_{\mathrm{motor}}}$$
         </p>
         <small class="code-ref">analysis-data.mjs:93</small>
         <p>
@@ -1739,7 +1812,7 @@
           Motor RPM translates to line speed through the gear reduction and drum circumference:
         </p>
         <p>
-          $$v = \pi \cdot D_{\ell} \cdot \frac{n_{\mathrm{motor}}}{G_1 \cdot G_2} \qquad (\text{m/min, with } D_{\ell} \text{ in meters})$$
+          $$v = \pi \cdot D_{\ell} \cdot \frac{\omega_{\mathrm{motor}}}{G_1 \cdot G_2} \qquad (\text{m/min, with } D_{\ell} \text{ in meters})$$
         </p>
         <small class="code-ref">utils.mjs:62–66</small>
 
@@ -1748,7 +1821,7 @@
           minimum governs:
         </p>
         <p>
-          $$v_{\mathrm{avail}} = \min\!\big(v_{\mathrm{power}},\; v_{\mathrm{max\text{-}RPM}}\big)$$
+          $$v_{\mathrm{avail}} = \min\!\big(v_{P},\; v_{\mathrm{max\text{-}RPM}}\big)$$
         </p>
         <small class="code-ref">analysis-data.mjs:105</small>
 
@@ -1776,7 +1849,7 @@
           system flow is the sum across all strings:
         </p>
         <p>
-          $$Q_{\mathrm{string}} = \frac{D_{\mathrm{pump}} \cdot n_{\mathrm{e\text{-}motor}}}{3785.41} \qquad Q_{\mathrm{total}} = Q_{\mathrm{string}} \cdot N_{\mathrm{strings}}$$
+          $$Q_{\mathrm{string}} = \frac{\delta_{p} \cdot \omega_{\mathrm{e}}}{3785.41} \qquad Q_{\mathrm{total}} = Q_{\mathrm{string}} \cdot N_{\mathrm{strings}}$$
         </p>
         <small class="code-ref">utils.mjs:69 &rarr; analysis-data.mjs:54–55</small>
         <p>
@@ -1788,7 +1861,7 @@
           nameplate RPM limit:
         </p>
         <p>
-          $$n_{\mathrm{h\text{-}motor,flow}} = \min\!\left(n_{\mathrm{cap}},\;\frac{Q_{\mathrm{total}} \cdot 3785.41}{N_m \cdot D_{\mathrm{h\text{-}motor}}}\right)$$
+          $$\omega_{\mathrm{m,flow}} = \min\!\left(\omega_{\mathrm{cap}},\;\frac{Q_{\mathrm{total}} \cdot 3785.41}{N_m \cdot \delta_{m}}\right)$$
         </p>
         <small class="code-ref">utils.mjs:70 &rarr; analysis-data.mjs:127</small>
 
@@ -1796,7 +1869,7 @@
           The hydraulic motor RPM is geared down and converted to line speed at the drum:
         </p>
         <p>
-          $$v_{\mathrm{flow}} = \pi \cdot D_{\ell} \cdot \frac{n_{\mathrm{h\text{-}motor,flow}}}{G_1 \cdot G_2}$$
+          $$v_{Q} = \pi \cdot D_{\ell} \cdot \frac{\omega_{\mathrm{m,flow}}}{G_1 \cdot G_2}$$
         </p>
         <small class="code-ref">analysis-data.mjs:128</small>
 
@@ -1815,7 +1888,7 @@
 
         <p><strong>Available line speed.</strong></p>
         <p>
-          $$v_{\mathrm{avail}} = \min\!\big(v_{\mathrm{power}},\; v_{\mathrm{flow}}\big)$$
+          $$v_{\mathrm{avail}} = \min\!\big(v_{P},\; v_{Q}\big)$$
         </p>
         <small class="code-ref">analysis-data.mjs:141</small>
 
@@ -1825,7 +1898,7 @@
           pressure capacity is being used at each wrap position:
         </p>
         <p>
-          $$\Delta p = \frac{\tau_{\mathrm{h\text{-}motor}} \cdot 2\pi}{D_{\mathrm{h\text{-}motor}} \times 10^{-6}} \cdot \frac{1}{6894.76}$$
+          $$\Delta p = \frac{\tau_{\mathrm{h\text{-}motor}} \cdot 2\pi}{\delta_{m} \times 10^{-6}} \cdot \frac{1}{6894.76}$$
         </p>
         <small class="code-ref">utils.mjs:72–76 &rarr; analysis-data.mjs:125</small>
         <p>
@@ -1838,7 +1911,7 @@
           At full system pressure, the torque each hydraulic motor can deliver is:
         </p>
         <p>
-          $$\tau_{\mathrm{h\text{-}motor,max}} = \frac{\Delta p_{\mathrm{max}} \cdot 6894.76 \cdot D_{\mathrm{h\text{-}motor}} \times 10^{-6}}{2\pi}$$
+          $$\tau_{\mathrm{h\text{-}motor,max}} = \frac{\Delta p_{\mathrm{max}} \cdot 6894.76 \cdot \delta_{m} \times 10^{-6}}{2\pi}$$
         </p>
         <small class="code-ref">utils.mjs:78–81 &rarr; analysis-data.mjs:60–63</small>
         <p>
@@ -2119,7 +2192,7 @@
       <span class="theme-toggle__icon--light" aria-hidden="true">&#9728;</span>
     </button>
 
-    <div id="build-tag" style="position:fixed;bottom:4px;right:4px;font:10px monospace;color:#999;pointer-events:none;z-index:9999">html:v58 | <span id="css-ver-tag">css:?</span></div>
+    <div id="build-tag" style="position:fixed;bottom:4px;right:4px;font:10px monospace;color:#999;pointer-events:none;z-index:9999">html:v59 | <span id="css-ver-tag">css:?</span></div>
     <script>
       // Theme toggle handler
       document.getElementById('theme_toggle').addEventListener('click', function() {
