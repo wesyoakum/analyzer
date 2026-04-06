@@ -1,12 +1,12 @@
 // ===== plots/depth-profiles.mjs  Speed vs Depth & Tension vs Depth (DOM-agnostic) =====
 import { niceTicks, svgEl } from '../utils.mjs';
 
-const CANDIDATE_POWER_COLOR = '#1a5e7a'; // deep teal (Harmony)
-const CANDIDATE_FLOW_COLOR = '#d4a017'; // golden yellow (Harmony)
-const CANDIDATE_GEARBOX_COLOR = '#d4a017'; // golden yellow (Harmony)
-const EXCEED_COLOR = '#8b1a1a'; // dark crimson (Harmony)
-const TENSION_REQUIRED_COLOR = '#6b7280'; // slate gray (Harmony)
-const RATED_SPEED_COLOR = '#2c3e50'; // navy (Harmony)
+const CANDIDATE_POWER_COLOR = '#7ec8d4'; // sky blue
+const CANDIDATE_FLOW_COLOR = '#d9a528'; // golden mustard
+const CANDIDATE_GEARBOX_COLOR = '#d9a528'; // golden mustard
+const EXCEED_COLOR = '#b82025'; // dark red
+const TENSION_REQUIRED_COLOR = '#2d3142'; // dark navy
+const RATED_SPEED_COLOR = '#2d3142'; // dark navy
 const PITA_PINK = 'e056e8'; // pink
 const CLARS_BLUE = '#2163a5'; // blue
 
@@ -35,7 +35,7 @@ function getAccentColor() {
     const val = window.getComputedStyle(document.documentElement).getPropertyValue('--accent');
     if (val) return val.trim();
   }
-  return '#c23b3b';
+  return '#1a6b6a';
 }
 
 /**
@@ -861,7 +861,7 @@ function drawTensionProfile(svg, segments, depthMin, depthMax, tensionMin, tensi
         y1: sy(value),
         x2: W - MR,
         y2: sy(value),
-        stroke: '#6b7280',
+        stroke: '#2d3142',
         'stroke-width': 1
       };
       if (dash) attrs['stroke-dasharray'] = dash;
@@ -888,11 +888,11 @@ function drawTensionProfile(svg, segments, depthMin, depthMax, tensionMin, tensi
     }));
     svg.appendChild(svgEl('circle', {
       cx: barX, cy: barYTop, r: 3,
-      fill: '#9ca3af', stroke: '#6b7280', 'stroke-width': 0.5
+      fill: '#9ca3af', stroke: '#2d3142', 'stroke-width': 0.5
     }));
     const label = svgEl('text', {
       x: barX + 6, y: barYTop + 4,
-      'font-size': '10', fill: '#6b7280', 'text-anchor': 'start'
+      'font-size': '10', fill: '#2d3142', 'text-anchor': 'start'
     });
     label.textContent = `In-air: ${Math.round(airTension)} kgf`;
     svg.appendChild(label);
@@ -980,7 +980,7 @@ function drawTensionProfile(svg, segments, depthMin, depthMax, tensionMin, tensi
   const extraProfiles = Array.isArray(options.extraProfiles) ? options.extraProfiles : [];
   extraProfiles.forEach(profile => {
     if (!profile || !Array.isArray(profile.segments)) return;
-    const strokeColor = profile.color || '#d26a2b';
+    const strokeColor = profile.color || '#c8782e';
     const strokeWidth = Number.isFinite(profile.strokeWidth) ? profile.strokeWidth : 2.4;
     profile.segments.forEach(seg => {
       if (!seg || !Number.isFinite(seg.avail_tension_kgf)) return;

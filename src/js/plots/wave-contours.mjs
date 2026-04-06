@@ -2,11 +2,11 @@
 import { niceTicks, svgEl, svgPathFromPoints } from '../utils.mjs';
 
 const SEA_STATE_REGIONS = [
-  { ss: 3, tp: [3, 6], hs: [0.5, 1.25], color: 'rgba(26,94,122,0.22)' },
-  { ss: 4, tp: [5, 8], hs: [1.25, 2.5], color: 'rgba(212,160,23,0.25)' },
-  { ss: 5, tp: [6, 10], hs: [2.5, 4], color: 'rgba(61,138,138,0.25)' },
-  { ss: 6, tp: [8, 14], hs: [4, 6], color: 'rgba(194,59,59,0.22)' },
-  { ss: 7, tp: [10, 16], hs: [6, 9], color: 'rgba(94,75,138,0.22)' }
+  { ss: 3, tp: [3, 6], hs: [0.5, 1.25], color: 'rgba(126,200,212,0.25)' },
+  { ss: 4, tp: [5, 8], hs: [1.25, 2.5], color: 'rgba(217,165,40,0.25)' },
+  { ss: 5, tp: [6, 10], hs: [2.5, 4], color: 'rgba(74,157,168,0.25)' },
+  { ss: 6, tp: [8, 14], hs: [4, 6], color: 'rgba(229,84,56,0.22)' },
+  { ss: 7, tp: [10, 16], hs: [6, 9], color: 'rgba(184,32,37,0.22)' }
 ];
 
 /**
@@ -98,7 +98,7 @@ export function drawWaveAccelContours(svg, opts = {}) {
       const val = window.getComputedStyle(document.documentElement).getPropertyValue('--accent');
       if (val) return val.trim();
     }
-    return '#c23b3b';
+    return '#1a6b6a';
   })();
 
   const W = svg.viewBox.baseVal.width || svg.clientWidth || 1000;
@@ -469,7 +469,7 @@ function renderWavePlot(svg, {
       const val = window.getComputedStyle(document.documentElement).getPropertyValue('--accent');
       if (val) return val.trim();
     }
-    return '#c23b3b';
+    return '#1a6b6a';
   })();
 
 
@@ -589,7 +589,7 @@ function renderWavePlot(svg, {
     });
 
     // horizontal lines for min-displacement layer speeds
-    const minDispColor = '#d26a2b';
+    const minDispColor = '#c8782e';
     layerSpeedsMinDisp.forEach(L => {
       if (L.v_ms < Vmin - 1e-9 || L.v_ms > Vmax + 1e-9) return;
       const Y = sy(L.v_ms);
@@ -767,7 +767,7 @@ function renderWavePlot(svg, {
 
 
     // min-displacement iso-lines
-    const minDispColorH = '#d26a2b';
+    const minDispColorH = '#c8782e';
     layerSpeedsMinDisp.forEach(L => {
       if (!Number.isFinite(L.v_ms) || L.v_ms <= 0) return;
       const TmaxForLine = Math.min(Tmax, (Hmax * Math.PI) / Math.max(L.v_ms, 1e-12));
@@ -800,28 +800,28 @@ function renderWavePlot(svg, {
     if (showBreakingLimit) {
       drawReferenceCurve(
         T => (9.80665 * T * T) / (14 * Math.PI),
-        { stroke: '#8b1a1a', strokeWidth: 3, dash: '10 6', label: 'Breaking limit', labelT: Math.min(Tmax - 0.8, 11), labelOffsetY: -10 }
+        { stroke: '#b82025', strokeWidth: 3, dash: '10 6', label: 'Breaking limit', labelT: Math.min(Tmax - 0.8, 11), labelOffsetY: -10 }
       );
     }
 
     if (showPmCurve) {
       drawReferenceCurve(
         T => (0.21 * 9.80665 * T * T) / (7.54 * 7.54),
-        { stroke: '#2874a6', strokeWidth: 2.8, label: 'PM fully developed sea', labelT: Math.min(Tmax - 0.8, 12), labelOffsetY: 14 }
+        { stroke: '#4a9da8', strokeWidth: 2.8, label: 'PM fully developed sea', labelT: Math.min(Tmax - 0.8, 12), labelOffsetY: 14 }
       );
     }
 
     if (showJonswapCurve) {
       drawReferenceCurve(
         T => (0.174 * 9.80665 * T * T) / (7.54 * 7.54),
-        { stroke: '#3d8a8a', strokeWidth: 2.4, dash: '8 6', label: 'JONSWAP sea (γ≈3.3)', labelT: Math.min(Tmax - 1.2, 10), labelOffsetY: -12 }
+        { stroke: '#7ec8d4', strokeWidth: 2.4, dash: '8 6', label: 'JONSWAP sea (γ≈3.3)', labelT: Math.min(Tmax - 1.2, 10), labelOffsetY: -12 }
       );
     }
 
     if (showSmbCurve) {
       drawReferenceCurve(
         T => (0.24 * 9.80665 * T * T) / (8.1 * 8.1),
-        { stroke: '#5e4b8a', strokeWidth: 2.4, dash: '4 6', label: 'SMB sea (fetch-limited)', labelT: Math.min(Tmax - 1.0, 9.5), labelOffsetY: 12 }
+        { stroke: '#e55438', strokeWidth: 2.4, dash: '4 6', label: 'SMB sea (fetch-limited)', labelT: Math.min(Tmax - 1.0, 9.5), labelOffsetY: 12 }
       );
     }
 

@@ -18,25 +18,25 @@
   --ink-900: #2C2F3E;
   --ink-700: #3f4252;
   --ink-500: #6b6e7e;
-  --accent: #c23b3b;
-  --accent-light: #fdf0ec;
-  --accent-hover: #a13030;
+  --accent: #1a6b6a;
+  --accent-light: #e6d8c4;
+  --accent-hover: #145453;
   --surface: #f7f5f2;
   --surface-alt: #f0ede8;
-  --danger: #8b1a1a;
-  --danger-muted: #a13030;
-  --danger-light: #fdf0ec;
-  --danger-border: #c4a09a;
+  --danger: #b82025;
+  --danger-muted: #b82025;
+  --danger-light: #e6d8c4;
+  --danger-border: #c8782e;
   --btn-bg: linear-gradient(180deg, #f7f5f2 0%, #e8e3dc 100%);
   --btn-bg-hover: linear-gradient(180deg, #ffffff 0%, #ddd7ce 100%);
-  --shadow-color: rgba(44, 47, 62, 0.14);
-  --shadow-strong: rgba(44, 47, 62, 0.18);
-  --overlay: rgba(44, 47, 62, 0.40);
-  --focus-ring: rgba(194, 59, 59, 0.35);
+  --shadow-color: rgba(45, 49, 66, 0.14);
+  --shadow-strong: rgba(45, 49, 66, 0.18);
+  --overlay: rgba(45, 49, 66, 0.40);
+  --focus-ring: rgba(26, 107, 106, 0.40);
 
   --doc-serif: "Inter", "Segoe UI", system-ui, -apple-system, BlinkMacSystemFont, "Roboto", "Helvetica Neue", Arial, sans-serif;
-  --tension-low: #1a5e7a;
-  --tension-high: #d26a2b;
+  --tension-low: #1a6b6a;
+  --tension-high: #c8782e;
   /* Spacing scale */
   --space-xs: 8px;
   --space-sm: 16px;
@@ -1879,7 +1879,7 @@ th[title] {
 }
 
 .swatch.theoretical {
-  border-top-color: #6b7280;
+  border-top-color: #2d3142;
   border-top-style: dashed;
 }
 
@@ -1888,61 +1888,61 @@ th[title] {
 }
 
 .swatch.rated {
-  border-top-color: #2c3e50;
+  border-top-color: #2d3142;
 }
 
 .swatch.gray {
-  border-top-color: #6b7280;
+  border-top-color: #2d3142;
 }
 
 .swatch.light {
-  border-top-color: #9ca3af;
+  border-top-color: #4a9da8;
 }
 
 .swatch.red {
-  border-top-color: #8b1a1a;
+  border-top-color: #b82025;
 }
 
 .swatch.sea-state {
   height: 10px;
   border-top: none;
   border-radius: 2px;
-  background: rgba(61,138,138,0.30);
-  box-shadow: inset 0 0 0 1px rgba(44, 62, 80, 0.25);
+  background: rgba(26,107,106,0.25);
+  box-shadow: inset 0 0 0 1px rgba(45, 49, 66, 0.25);
 }
 
 
 .swatch.break-limit {
-  border-top-color: #8b1a1a;
+  border-top-color: #b82025;
   border-top-style: dashed;
 }
 
 .swatch.pm-curve {
-  border-top-color: #2874a6;
+  border-top-color: #4a9da8;
 }
 
 .swatch.jonswap-curve {
-  border-top-color: #3d8a8a;
+  border-top-color: #7ec8d4;
   border-top-style: dashed;
 }
 
 .swatch.smb-curve {
-  border-top-color: #5e4b8a;
+  border-top-color: #e55438;
   border-top-style: dashed;
 }
 
 .swatch.flow {
-  border-top-color: #d4a017;
+  border-top-color: #d9a528;
   border-top-style: dashed;
 }
 
 .swatch.power {
-  border-top-color: #1a5e7a;
+  border-top-color: #7ec8d4;
   border-top-style: dashed;
 }
 
 .swatch.min-disp {
-  border-top-color: #d26a2b;
+  border-top-color: #c8782e;
   border-top-style: solid;
 }
 

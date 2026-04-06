@@ -6,7 +6,7 @@ function getAccentColor() {
     const val = window.getComputedStyle(document.documentElement).getPropertyValue('--accent');
     if (val) return val.trim();
   }
-  return '#c23b3b';
+  return '#1a6b6a';
 }
 
 /**
@@ -76,7 +76,7 @@ export function drawHydraulicRpmTorque(
   dataMinDisp.sort((a, b) => a.torque - b.torque);
 
   const accent = getAccentColor();
-  const minDispColor = '#d26a2b';
+  const minDispColor = '#c8782e';
   const W = svg.viewBox.baseVal.width || svg.clientWidth || 1000;
   const H = svg.viewBox.baseVal.height || svg.clientHeight || 540;
   const ML = 70, MR = 20, MT = 20, MB = 60;
