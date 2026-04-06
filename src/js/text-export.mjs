@@ -75,7 +75,6 @@ export function buildTextSummary(model) {
   // Design
   const swl = safeRead('rated_swl_kgf');
   const speed = safeRead('rated_speed_mpm');
-  const eff = safeRead('system_efficiency');
 
   lines.push('');
   const swlStr = fmt(swl);
@@ -84,7 +83,6 @@ export function buildTextSummary(model) {
     pushIf(lines, 'Safe Working Load', `${swlStr} kgf${lbs ? ` (${lbs} lbs)` : ''}`);
   }
   pushIf(lines, 'Rated Line Speed', fmt(speed) ? `${fmt(speed)} m/min` : null);
-  pushIf(lines, 'System Efficiency', eff != null ? `${fmt(eff * 100)}%` : null);
 
   // Cable
   const cableMm = safeRead('c_mm');
@@ -199,7 +197,7 @@ export function buildTextSummary(model) {
     const motorKw = Number.isFinite(motorHp) ? motorHp * W_PER_HP / 1000 : null;
 
     lines.push('');
-    pushIf(lines, 'Electro-Mechanical Efficiency', motorEff != null ? `${fmt(motorEff * 100)}%` : null);
+    pushIf(lines, 'System Efficiency (Electric)', motorEff != null ? `${fmt(motorEff * 100)}%` : null);
     const motorPreset = selectText('electric_motor_select');
     pushIf(lines, 'Motor', motorPreset);
     pushIf(lines, 'Motor Rated Power', fmt(motorHp, 1) ? `${fmt(motorHp, 1)} HP (${fmt(motorKw, 1)} kW)` : null);
@@ -220,7 +218,7 @@ export function buildTextSummary(model) {
     const hMaxPsi = safeRead('h_max_psi');
 
     lines.push('');
-    pushIf(lines, 'Electro-Hydro-Mechanical Efficiency', hEff != null ? `${fmt(hEff * 100)}%` : null);
+    pushIf(lines, 'System Efficiency (Hydraulic)', hEff != null ? `${fmt(hEff * 100)}%` : null);
     const hMotPreset = selectText('hydraulic_motor_select');
     pushIf(lines, 'Hydraulic Motor', hMotPreset);
     const isVariable = Number.isFinite(hMotCcMin) && hMotCcMin > 0 && hMotCcMin < hMotCc;

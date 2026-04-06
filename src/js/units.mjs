@@ -43,6 +43,7 @@ export const UNIT_GROUPS = {
     internal: 'm/min',
     units: {
       'm/min':  { label: 'm/min',  factor: 1 },
+      'm/s':    { label: 'm/s',    factor: 1 / 60 },
       'ft/min': { label: 'ft/min', factor: 3.28084 },
     }
   },
@@ -124,7 +125,6 @@ export const FIELD_UNITS = {
 
 // Output spans → unit group
 export const OUTPUT_FIELD_UNITS = {
-  system_min_hp:          'power_hp',
   max_length_strength_m:  'length_m',
 };
 

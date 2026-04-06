@@ -2268,34 +2268,6 @@ function setupAutoRecompute() {
   });
 }
 
-function updateMinimumSystemHp(ratedSpeedMpm, ratedSwlKgf, efficiency) {
-  const output = /** @type {HTMLElement|null} */ (document.getElementById('system_min_hp'));
-  if (!output) return;
-
-  const validSpeed = Number.isFinite(ratedSpeedMpm) && ratedSpeedMpm > 0;
-  const validSwl = Number.isFinite(ratedSwlKgf) && ratedSwlKgf > 0;
-
-  if (!validSpeed || !validSwl) {
-    output.textContent = '–';
-    return;
-  }
-
-  const eff = Number.isFinite(efficiency) && efficiency > 0 ? efficiency : 1;
-  const force_N = ratedSwlKgf * G;
-  const speed_mps = ratedSpeedMpm / 60;
-  const base_power_W = force_N * speed_mps;
-  const base_hp = base_power_W / W_PER_HP;
-  const hp_with_eff = base_hp / eff;
-  const min_hp = hp_with_eff * 1.2;
-
-  const displayHp = fromInternal('system_min_hp', min_hp);
-  output.textContent = Number.isFinite(displayHp) ? displayHp.toFixed(1) : '–';
-}
-
-function clearMinimumSystemHp() {
-  const output = /** @type {HTMLElement|null} */ (document.getElementById('system_min_hp'));
-  if (output) output.textContent = '–';
-}
 
 function updateMaxFlowRate() {
   const output = /** @type {HTMLElement|null} */ (document.getElementById('h_max_flow_gpm'));
@@ -2544,10 +2516,6 @@ function computeAll() {
       Number.isFinite(wraps_override_input) && wraps_override_input > 0
     ) ? wraps_override_input : undefined;
 
-    const rated_speed_mpm = read('rated_speed_mpm');
-    const rated_swl_kgf = read('rated_swl_kgf');
-    const system_efficiency = read('system_efficiency');
-    updateMinimumSystemHp(rated_speed_mpm, rated_swl_kgf, system_efficiency);
     updateMaxFlowRate();
 
     syncPayloadBreakdown();
@@ -2696,7 +2664,6 @@ function computeAll() {
   } catch (e) {
     console.error(e);
     if (errBox) errBox.textContent = 'ERROR: ' + (e && e.message ? e.message : e);
-    clearMinimumSystemHp();
     lastElLayer = lastElWraps = lastHyLayer = lastHyWraps = [];
     lastDrumState = null;
     lastDepthProfileContext = null;
