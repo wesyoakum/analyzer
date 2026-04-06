@@ -911,8 +911,9 @@ async function setupProjectManager() {
   const LOCAL_PROJECTS_KEY = 'analyzer.projects.v1';
   let cachedProjects = [];
 
-  const setStatus = (message) => {
+  const setStatus = (message, loading = false) => {
     statusEl.textContent = message || '';
+    statusEl.classList.toggle('is-loading', loading);
   };
 
   const normalizeProject = (project) => {
@@ -1150,10 +1151,12 @@ async function setupProjectManager() {
     importFileInput.value = '';
     if (!file) return;
 
+    setStatus('Loading\u2026', true);
     try {
       const raw = JSON.parse(await file.text());
       const imported = toImportedProject(raw);
       if (!imported) {
+        setStatus('');
         window.alert('Selected file is not a valid project export.');
         return;
       }
@@ -1221,8 +1224,10 @@ async function setupProjectManager() {
       setStatus('');
       return;
     }
+    setStatus('Loading\u2026', true);
     const project = await getProjectById(selectedId);
     if (!project || typeof project.state !== 'object' || project.state === null) {
+      setStatus('');
       window.alert('Unable to load project.');
       return;
     }
