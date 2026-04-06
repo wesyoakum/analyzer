@@ -43,7 +43,7 @@ function readAccentColor() {
     const val = window.getComputedStyle(document.documentElement).getPropertyValue('--accent');
     if (val) return val.trim();
   }
-  return '#2c56a3';
+  return '#c23b3b';
 }
 
 function updateTorqueCheckMessages(gearboxFailed, motorFailed, maxGearboxTorqueSeen, maxMotorTorqueSeen, condition = '') {
@@ -2879,7 +2879,7 @@ function redrawPlots() {
         if (vPowerSegments.length) {
           flowSpeedProfiles.push({
             label: 'V_P',
-            color: '#9249c6',
+            color: '#1a5e7a',
             strokeWidth: 2,
             legendStrokeWidth: 2,
             strokeDasharray: '5 4',
@@ -2909,8 +2909,8 @@ function redrawPlots() {
           flowSpeedProfiles.push({
             label: 'Available speed (Min Disp)',
             inlineLabel: 'Min Disp',
-            inlineLabelColor: '#e07020',
-            color: '#e07020',
+            inlineLabelColor: '#d26a2b',
+            color: '#d26a2b',
             strokeWidth: 6.4,
             legendStrokeWidth: 6.4,
             strokeDasharray: '',
@@ -2922,7 +2922,7 @@ function redrawPlots() {
         if (minDispFlowSegments.length) {
           flowSpeedProfiles.push({
             label: 'V_Q (Min Disp)',
-            color: '#eed500',
+            color: '#d4a017',
             strokeWidth: 2,
             legendStrokeWidth: 2,
             strokeDasharray: '5 4',
@@ -2936,7 +2936,7 @@ function redrawPlots() {
         if (minDispTensionSegments.length) {
           tensionExtraProfiles.push({
             label: 'Available tension (Min Disp)',
-            color: '#e07020',
+            color: '#d26a2b',
             strokeWidth: 2.4,
             segments: minDispTensionSegments
           });

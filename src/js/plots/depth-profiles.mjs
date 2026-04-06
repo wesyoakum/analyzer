@@ -1,12 +1,12 @@
 // ===== plots/depth-profiles.mjs  Speed vs Depth & Tension vs Depth (DOM-agnostic) =====
 import { niceTicks, svgEl } from '../utils.mjs';
 
-const CANDIDATE_POWER_COLOR = '#9249c6'; // purple
-const CANDIDATE_FLOW_COLOR = '#eed500'; // yellow
-const CANDIDATE_GEARBOX_COLOR = '#eed500'; // yellow
-const EXCEED_COLOR = '#c65353'; // red
-const TENSION_REQUIRED_COLOR = '#7f8c99'; // matches legend swatch
-const RATED_SPEED_COLOR = '#888888'; // gray
+const CANDIDATE_POWER_COLOR = '#1a5e7a'; // deep teal (Harmony)
+const CANDIDATE_FLOW_COLOR = '#d4a017'; // golden yellow (Harmony)
+const CANDIDATE_GEARBOX_COLOR = '#d4a017'; // golden yellow (Harmony)
+const EXCEED_COLOR = '#8b1a1a'; // dark crimson (Harmony)
+const TENSION_REQUIRED_COLOR = '#6b7280'; // slate gray (Harmony)
+const RATED_SPEED_COLOR = '#2c3e50'; // navy (Harmony)
 const PITA_PINK = 'e056e8'; // pink
 const CLARS_BLUE = '#2163a5'; // blue
 
@@ -35,7 +35,7 @@ function getAccentColor() {
     const val = window.getComputedStyle(document.documentElement).getPropertyValue('--accent');
     if (val) return val.trim();
   }
-  return '#2c56a3';
+  return '#c23b3b';
 }
 
 /**
@@ -980,7 +980,7 @@ function drawTensionProfile(svg, segments, depthMin, depthMax, tensionMin, tensi
   const extraProfiles = Array.isArray(options.extraProfiles) ? options.extraProfiles : [];
   extraProfiles.forEach(profile => {
     if (!profile || !Array.isArray(profile.segments)) return;
-    const strokeColor = profile.color || '#e07020';
+    const strokeColor = profile.color || '#d26a2b';
     const strokeWidth = Number.isFinite(profile.strokeWidth) ? profile.strokeWidth : 2.4;
     profile.segments.forEach(seg => {
       if (!seg || !Number.isFinite(seg.avail_tension_kgf)) return;

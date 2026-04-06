@@ -12,8 +12,8 @@ const FALLBACK_COLORS = {
 };
 
 const FALLBACK_HEX = {
-  accent: '#2c56a3',
-  accentLight: '#edf2ff',
+  accent: '#c23b3b',
+  accentLight: '#fdf0ec',
   ink500: '#55637d',
   ink700: '#2f3b54',
   ink900: '#142238',

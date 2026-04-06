@@ -9,11 +9,11 @@
   --ink-900: #1e293b;
   --ink-700: #334155;
   --ink-500: #55637d;
-  --accent: #d97706;
-  --accent-light: #fffbeb;
+  --accent: #c23b3b;
+  --accent-light: #fdf0ec;
   --doc-serif: "Inter", "Segoe UI", system-ui, -apple-system, BlinkMacSystemFont, "Roboto", "Helvetica Neue", Arial, sans-serif;
-  --tension-low: #6c2bd9;
-  --tension-high: #f97316;
+  --tension-low: #1a5e7a;
+  --tension-high: #d26a2b;
   /* Spacing scale */
   --space-xs: 8px;
   --space-sm: 16px;
@@ -1773,7 +1773,7 @@ th[title] {
 .swatch {
   width: 22px;
   height: 0;
-  border-top: 2px solid #244f9e;
+  border-top: 2px solid #c23b3b;
   display: inline-block;
 }
 
@@ -1825,7 +1825,7 @@ th[title] {
 }
 
 .swatch.theoretical {
-  border-top-color: #7c8fc5;
+  border-top-color: #6b7280;
   border-top-style: dashed;
 }
 
@@ -1834,61 +1834,61 @@ th[title] {
 }
 
 .swatch.rated {
-  border-top-color: #888888;
+  border-top-color: #2c3e50;
 }
 
 .swatch.gray {
-  border-top-color: #9aa5bc;
+  border-top-color: #6b7280;
 }
 
 .swatch.light {
-  border-top-color: #c3cada;
+  border-top-color: #9ca3af;
 }
 
 .swatch.red {
-  border-top-color: #c65353;
+  border-top-color: #8b1a1a;
 }
 
 .swatch.sea-state {
   height: 10px;
   border-top: none;
   border-radius: 2px;
-  background: rgba(80,120,255,0.35);
-  box-shadow: inset 0 0 0 1px rgba(98, 109, 132, 0.35);
+  background: rgba(61,138,138,0.30);
+  box-shadow: inset 0 0 0 1px rgba(44, 62, 80, 0.25);
 }
 
 
 .swatch.break-limit {
-  border-top-color: #b42318;
+  border-top-color: #8b1a1a;
   border-top-style: dashed;
 }
 
 .swatch.pm-curve {
-  border-top-color: #175cd3;
+  border-top-color: #2874a6;
 }
 
 .swatch.jonswap-curve {
-  border-top-color: #0f766e;
+  border-top-color: #3d8a8a;
   border-top-style: dashed;
 }
 
 .swatch.smb-curve {
-  border-top-color: #7c3aed;
+  border-top-color: #5e4b8a;
   border-top-style: dashed;
 }
 
 .swatch.flow {
-  border-top-color: #eed500;
+  border-top-color: #d4a017;
   border-top-style: dashed;
 }
 
 .swatch.power {
-  border-top-color: #9249c6;
+  border-top-color: #1a5e7a;
   border-top-style: dashed;
 }
 
 .swatch.min-disp {
-  border-top-color: #e07020;
+  border-top-color: #d26a2b;
   border-top-style: solid;
 }
 
