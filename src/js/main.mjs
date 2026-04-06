@@ -1629,11 +1629,17 @@ function setupCsvDownloads() {
   Object.entries(CSV_BUTTON_SPECS).forEach(([id, spec]) => {
     const btn = q(id);
     if (!btn) return;
-    btn.addEventListener('click', () => {
+    btn.addEventListener('click', async () => {
       const rows = spec.getRows ? spec.getRows() : [];
       if (!rows || rows.length === 0) return;
       const csv = rowsToCsv(rows, spec.columns, spec.header);
-      triggerCsvDownload(csv, spec.filename ? spec.filename() : `${id}.csv`);
+      try {
+        await navigator.clipboard.writeText(csv);
+        btn.textContent = '\u2713';
+        setTimeout(() => { btn.textContent = '\u2398'; }, 1500);
+      } catch (err) {
+        triggerCsvDownload(csv, spec.filename ? spec.filename() : `${id}.csv`);
+      }
     });
   });
 

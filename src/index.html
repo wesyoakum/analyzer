@@ -4,7 +4,7 @@
   <meta charset="utf-8" />
   <title>Winch Analysis</title>
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <link rel="stylesheet" href="css/styles.css?v=55" />
+  <link rel="stylesheet" href="css/styles.css?v=56" />
   <script>
     // Apply saved theme before first paint to prevent flash
     (function() {
@@ -1179,9 +1179,9 @@
       </div>
 
       <div class="card" data-drive-scope="electric">
-        <div class="section-title">Section 3.2: Electric Layer Table</div>
-        <div class="btnbar">
-          <button id="csv_el_layer" type="button" disabled>Download CSV — Electric Layer</button>
+        <div class="table-header">
+          <div class="section-title">Section 3.2: Electric Layer Table</div>
+          <button id="csv_el_layer" class="copy-csv-btn" type="button" title="Copy table as CSV" disabled>&#x2398;</button>
         </div>
         <table>
           <thead>
@@ -1224,8 +1224,9 @@
           ></span>
         </summary>
         <div class="collapsible-body">
-          <div class="btnbar">
-            <button id="csv_el_wraps" type="button" disabled>Download CSV — Electric Wraps</button>
+          <div class="table-header">
+            <span></span>
+            <button id="csv_el_wraps" class="copy-csv-btn" type="button" title="Copy table as CSV" disabled>&#x2398;</button>
           </div>
           <table>
             <thead>
@@ -1270,9 +1271,9 @@
       </details>
 
       <div class="card" data-drive-scope="hydraulic">
-        <div class="section-title">Section 3.4: Hydraulic Layer Table</div>
-        <div class="btnbar">
-          <button id="csv_hy_layer" type="button" disabled>Download CSV — Hydraulic Layer</button>
+        <div class="table-header">
+          <div class="section-title">Section 3.4: Hydraulic Layer Table</div>
+          <button id="csv_hy_layer" class="copy-csv-btn" type="button" title="Copy table as CSV" disabled>&#x2398;</button>
         </div>
         <table>
           <thead>
@@ -1333,8 +1334,9 @@
           ></span>
         </summary>
         <div class="collapsible-body">
-          <div class="btnbar">
-            <button id="csv_hy_wraps" type="button" disabled>Download CSV — Hydraulic Wraps</button>
+          <div class="table-header">
+            <span></span>
+            <button id="csv_hy_wraps" class="copy-csv-btn" type="button" title="Copy table as CSV" disabled>&#x2398;</button>
           </div>
           <table>
             <thead>
@@ -2122,7 +2124,7 @@
       <span class="theme-toggle__icon--light" aria-hidden="true">&#9728;</span>
     </button>
 
-    <div id="build-tag" style="position:fixed;bottom:4px;right:4px;font:10px monospace;color:#999;pointer-events:none;z-index:9999">html:v55 | <span id="css-ver-tag">css:?</span></div>
+    <div id="build-tag" style="position:fixed;bottom:4px;right:4px;font:10px monospace;color:#999;pointer-events:none;z-index:9999">html:v56 | <span id="css-ver-tag">css:?</span></div>
     <script>
       // Theme toggle handler
       document.getElementById('theme_toggle').addEventListener('click', function() {
