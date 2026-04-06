@@ -112,14 +112,11 @@
                       </td>
                       <td class="units">–</td>
                     </tr>
-                    <tr>
-                      <th scope="row">
-                        <label class="param-label" for="ahc_enabled" data-code="ahc_enabled">Active Heave Compensation</label>
-                      </th>
-                      <td class="value">
-                        <input id="ahc_enabled" type="checkbox">
+                    <tr class="note">
+                      <td colspan="2" class="dim">
+                        <label for="ahc_enabled" data-code="ahc_enabled">Active Heave Compensation</label>
                       </td>
-                      <td class="units">–</td>
+                      <td class="units"><input id="ahc_enabled" type="checkbox"></td>
                     </tr>
                   </tbody>
                 </table>
@@ -496,14 +493,11 @@
                     <td class="value"><input id="gearbox_max_torque_Nm" type="number" step="100" placeholder="enter"><div id="gearbox_torque_seen_msg" class="gear-range-message" aria-live="polite"></div><div id="gearbox_torque_check_msg" class="torque-check-message" aria-live="polite"></div></td>
                     <td class="units">N·m</td>
                   </tr>
-                  <tr>
-                    <th scope="row">
-                      <label class="param-label" for="fat_brake_test" data-code="fat_brake_test">Use Brake Test</label>
-                    </th>
-                    <td class="value">
-                      <input id="fat_brake_test" type="checkbox">
+                  <tr class="note">
+                    <td colspan="2" class="dim">
+                      <label for="fat_brake_test" data-code="fat_brake_test">Use Brake Test</label>
                     </td>
-                    <td class="units">–</td>
+                    <td class="units"><input id="fat_brake_test" type="checkbox"></td>
                   </tr>
                 </tbody>
               </table>
@@ -2221,7 +2215,7 @@
       <span class="theme-toggle__icon--light" aria-hidden="true">&#9728;</span>
     </button>
 
-    <div id="build-tag" style="position:fixed;bottom:4px;right:4px;font:10px monospace;color:#999;pointer-events:none;z-index:9999">v91</div>
+    <div id="build-tag" style="position:fixed;bottom:4px;right:4px;font:10px monospace;color:#999;pointer-events:none;z-index:9999">v92</div>
     <script>
       // Theme toggle handler
       document.getElementById('theme_toggle').addEventListener('click', function() {
