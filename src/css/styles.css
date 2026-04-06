@@ -18,9 +18,9 @@
   --ink-900: #2C2F3E;
   --ink-700: #3f4252;
   --ink-500: #6b6e7e;
-  --accent: #1a6b6a;
-  --accent-light: #e6d8c4;
-  --accent-hover: #145453;
+  --accent: #0891b2;
+  --accent-light: #ecfeff;
+  --accent-hover: #066d85;
   --surface: #faf8f6;
   --surface-alt: #f5f2ef;
   --danger: #b82025;
@@ -32,7 +32,7 @@
   --shadow-color: rgba(45, 49, 66, 0.14);
   --shadow-strong: rgba(45, 49, 66, 0.18);
   --overlay: rgba(45, 49, 66, 0.40);
-  --focus-ring: rgba(26, 107, 106, 0.40);
+  --focus-ring: rgba(8, 145, 178, 0.40);
 
   --doc-serif: "Inter", "Segoe UI", system-ui, -apple-system, BlinkMacSystemFont, "Roboto", "Helvetica Neue", Arial, sans-serif;
   --tension-low: #1a6b6a;
@@ -110,6 +110,10 @@ body {
   margin: 0 auto;
   padding: var(--space-lg) var(--space-lg) var(--space-xl);
   overflow-x: clip;         /* prevent horizontal scroll without breaking sticky */
+}
+
+.sidebar-backdrop {
+  display: none;
 }
 
 .main-content {
