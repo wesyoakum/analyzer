@@ -1217,16 +1217,20 @@ async function setupProjectManager() {
     setStatus('Project deleted.');
   });
 
+  let isLoadingProject = false;
   select.addEventListener('change', async () => {
+    if (isLoadingProject) return;
     const selectedId = select.value;
     if (!selectedId) {
       nameInput.value = '';
       setStatus('');
       return;
     }
+    isLoadingProject = true;
     setStatus('Loading\u2026', true);
     const project = await getProjectById(selectedId);
     if (!project || typeof project.state !== 'object' || project.state === null) {
+      isLoadingProject = false;
       setStatus('');
       window.alert('Unable to load project.');
       return;
@@ -1235,6 +1239,8 @@ async function setupProjectManager() {
     syncPrevUnits();
     nameInput.value = project.name || '';
     computeAll();
+    select.value = selectedId;
+    isLoadingProject = false;
     setStatus('Project loaded.');
   });
 
