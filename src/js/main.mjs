@@ -2460,8 +2460,12 @@ function setupDriveModeControls() {
 function setupDynamicLoadsToggle() {
   const cb = /** @type {HTMLInputElement|null} */ (document.getElementById('dynamic_enabled'));
   const body = document.getElementById('dynamic_loads_body');
+  const accelSection = document.getElementById('section-accel-contours');
   if (!cb || !body) return;
-  const sync = () => body.classList.toggle('is-hidden', !cb.checked);
+  const sync = () => {
+    body.classList.toggle('is-hidden', !cb.checked);
+    if (accelSection) accelSection.classList.toggle('is-hidden', !cb.checked);
+  };
   cb.addEventListener('change', sync);
   sync();
 }
