@@ -54,8 +54,9 @@ export function buildComputationModel(inputs) {
 
   const hp_str_usable = h_emotor_hp * h_emotor_eff;
   const hp_tot_usable = hp_str_usable * h_strings;
-  const q_str_gpm = gpm_from_cc_rev_and_rpm(h_pump_cc, h_emotor_rpm);
-  const q_tot_gpm = q_str_gpm * h_strings;
+  const q_pump_gpm = gpm_from_cc_rev_and_rpm(h_pump_cc, h_emotor_rpm) * h_strings;
+  const q_power_gpm = (h_max_psi > 0) ? (hp_tot_usable * 1714) / h_max_psi : Infinity;
+  const q_tot_gpm = Math.min(q_pump_gpm, q_power_gpm);
   const rpm_flow_per_motor_available = Math.min(
     Number.isFinite(h_hmot_rpm_cap) && h_hmot_rpm_cap > 0 ? h_hmot_rpm_cap : Number.POSITIVE_INFINITY,
     rpm_from_gpm_and_disp(q_tot_gpm / Math.max(motors, 1), h_hmot_cc)
