@@ -2363,12 +2363,14 @@ function updateMaxFlowRate() {
   const strings = read('h_pump_strings');
   const eff = read('h_emotor_eff');
   const psi = read('h_max_psi');
-  if (hp > 0 && strings > 0 && eff > 0 && psi > 0) {
-    const gpm = (hp * strings * eff * 1714) / psi;
-    output.textContent = gpm.toFixed(1);
-  } else {
-    output.textContent = '—';
-  }
+  const pumpCc = read('h_pump_cc');
+  const motorRpm = read('h_emotor_rpm');
+  const qPower = (hp > 0 && strings > 0 && eff > 0 && psi > 0)
+    ? (hp * strings * eff * 1714) / psi : Infinity;
+  const qPump = (pumpCc > 0 && motorRpm > 0 && strings > 0)
+    ? (pumpCc * motorRpm / 3785.41) * strings : Infinity;
+  const qAvail = Math.min(qPower, qPump);
+  output.textContent = Number.isFinite(qAvail) ? qAvail.toFixed(1) : '—';
 }
 
 /**
