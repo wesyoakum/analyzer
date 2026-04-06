@@ -554,6 +554,11 @@ body {
 .worksheet--summary .note td {
   color: var(--ink-500);
 }
+
+.summary-row-excluded {
+  opacity: 0.35;
+  text-decoration: line-through;
+}
 @media (max-width: 1100px) {
   .app-shell {
     display: flex !important;
@@ -2380,6 +2385,7 @@ th[title] {
   .card-header-actions,
   .toggle-cols-btn,
   .copy-csv-btn,
+  .summary-row-excluded,
   #panel-instructions,
   #err,
   .project-controls,

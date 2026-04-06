@@ -2192,6 +2192,10 @@ function buildSummaryTable(tableEl) {
         summaryRow.appendChild(clonedUnits);
       }
 
+      summaryRow.style.cursor = 'pointer';
+      summaryRow.addEventListener('click', () => {
+        summaryRow.classList.toggle('summary-row-excluded');
+      });
       body.appendChild(summaryRow);
     });
   });
