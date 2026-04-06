@@ -29,7 +29,7 @@ const fmtHp  = (v) => formatHp(cv('power_hp', v));
  * @param {Array<Object>} rows
  * @returns {Array<Object>} sorted by layer_no ascending
  */
-export function rowsToHydraulicLayer(rows, payload_kg, cable_w_kgpm) {
+export function rowsToHydraulicLayer(rows, payload_kg, cable_w_kgpm, gr1 = 1, gr2 = 1) {
   const byLayer = new Map();
 
   // Geometry/depth pre/post
@@ -64,7 +64,9 @@ export function rowsToHydraulicLayer(rows, payload_kg, cable_w_kgpm) {
         hyd_tension_required_end_kgf: null,
         hyd_avail_tension_kgf: null,
         hyd_speed_available_mpm_min: null,
-        hyd_avail_tension_kgf_min: null
+        hyd_avail_tension_kgf_min: null,
+        hyd_gearbox_rpm: null,
+        hyd_motor_rpm: null
       });
     } else {
       const L = byLayer.get(r.layer_no);
@@ -92,6 +94,12 @@ export function rowsToHydraulicLayer(rows, payload_kg, cable_w_kgpm) {
       L.hyd_avail_tension_kgf = r.hyd_avail_tension_kgf ?? null;
       L.hyd_speed_available_mpm_min = r.hyd_speed_available_mpm_min ?? null;
       L.hyd_avail_tension_kgf_min = r.hyd_avail_tension_kgf_min ?? null;
+      // Gearbox RPM = drum RPM × GR2, Motor RPM = drum RPM × GR1 × GR2
+      const drumRpm = r.hyd_drum_rpm_available ?? 0;
+      const gr1Safe = Math.max(gr1 || 1, 1e-9);
+      const gr2Safe = Math.max(gr2 || 1, 1e-9);
+      L.hyd_gearbox_rpm = drumRpm > 0 ? +(drumRpm * gr2Safe).toFixed(1) : null;
+      L.hyd_motor_rpm = drumRpm > 0 ? +(drumRpm * gr1Safe * gr2Safe).toFixed(1) : null;
     }
     if (L && Number.isFinite(r.gearbox_torque_Nm)) {
       L.max_gearbox_torque_Nm = Number.isFinite(L.max_gearbox_torque_Nm)
@@ -188,11 +196,13 @@ export function renderHydraulicTables(hyLayers, hyWraps, tbodyLayer, tbodyWraps)
       fmtHp(r.hyd_hp_sys ?? ''),
       fmtKnm(r.hyd_tau_avail_kNm),
       fmtTrq(r.max_gearbox_torque_Nm),
+      r.hyd_gearbox_rpm != null ? formatDecimal(r.hyd_gearbox_rpm, 1) : '–',
+      r.hyd_motor_rpm != null ? formatDecimal(r.hyd_motor_rpm, 1) : '–',
       `${fmtKgf(r.hyd_tension_required_start_kgf)}-${fmtKgf(r.hyd_tension_required_end_kgf)}`,
       fmtKgf(r.hyd_avail_tension_kgf),
       r.min_avail_accel_mps2 ? formatDecimal(r.min_avail_accel_mps2, 2) : '–'
     ];
-    const detailCols = [0, 5, 6, 9, 10, 13, 14];
+    const detailCols = [0, 5, 6, 9, 10, 15, 16];
     tr.innerHTML = cells.map((v, i) =>
       detailCols.includes(i) ? `<td class="detail-col">${v}</td>` : `<td>${v}</td>`
     ).join('');
