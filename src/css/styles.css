@@ -555,9 +555,21 @@ body {
   color: var(--ink-500);
 }
 
+.worksheet--summary tbody tr {
+  cursor: pointer;
+}
+
+.worksheet--summary tbody tr:hover {
+  background: var(--accent-light, rgba(0,0,0,0.04));
+}
+
 .summary-row-excluded {
   opacity: 0.35;
   text-decoration: line-through;
+}
+
+.summary-row-excluded:hover {
+  opacity: 0.5;
 }
 @media (max-width: 1100px) {
   .app-shell {
