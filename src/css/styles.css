@@ -2340,7 +2340,7 @@ th[title] {
 
 /* ========== Print styles ========== */
 @media print {
-  /* Hide UI chrome and interactive elements */
+  /* Hide everything except app-content */
   .app-sidebar,
   .theme-toggle,
   .report-nav,
@@ -2355,7 +2355,9 @@ th[title] {
   #err,
   .project-controls,
   .tab-bar,
-  .interactive-hint {
+  .interactive-hint,
+  .page-header,
+  #build-tag {
     display: none !important;
   }
 
@@ -2383,6 +2385,13 @@ th[title] {
     position: static;
     max-height: none;
     overflow: visible;
+  }
+
+  .sheet {
+    border: none;
+    box-shadow: none;
+    padding: 0;
+    margin: 0;
   }
 
   .app-content {
@@ -2443,8 +2452,8 @@ th[title] {
     font-size: 2rem;
   }
 
-  /* Page margins and footer */
+  /* Page margins — smaller top/bottom to suppress browser headers/footers */
   @page {
-    margin: 20mm 15mm 20mm 15mm;
+    margin: 10mm 15mm 10mm 15mm;
   }
 }

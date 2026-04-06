@@ -1248,11 +1248,14 @@ document.addEventListener('DOMContentLoaded', () => {
     });
   }
 
-  // Save PDF button
+  // Save PDF button — blank the title so browsers don't print it in headers
   const pdfBtn = document.getElementById('save-pdf-btn');
   if (pdfBtn) {
     pdfBtn.addEventListener('click', () => {
+      const origTitle = document.title;
+      document.title = ' ';
       window.print();
+      document.title = origTitle;
     });
   }
 
