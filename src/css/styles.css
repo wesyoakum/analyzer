@@ -302,9 +302,22 @@ body {
 .app-sidebar__content {
   flex: 1 1 auto;
   overflow-y: auto;
+  overflow-x: hidden;
   display: flex;
   flex-direction: column;
   gap: 16px;
+}
+
+.app-sidebar__content .worksheet {
+  table-layout: fixed;
+}
+
+.app-sidebar__content .worksheet td.value {
+  width: 140px;
+}
+
+.app-sidebar__content .worksheet td.units {
+  width: 60px;
 }
 
 
