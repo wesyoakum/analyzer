@@ -744,8 +744,7 @@ body {
 .input-subsection__title {
   font-size: 14px;
   font-weight: 600;
-  letter-spacing: 0.05em;
-  text-transform: uppercase;
+  letter-spacing: 0.02em;
   color: var(--ink-700);
   margin: 0;
 }

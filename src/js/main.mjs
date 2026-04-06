@@ -901,12 +901,9 @@ async function setupProjectManager() {
   const nameInput = /** @type {HTMLInputElement|null} */ (document.getElementById('project_name'));
   const select = /** @type {HTMLSelectElement|null} */ (document.getElementById('project_select'));
   const saveNewBtn = document.getElementById('save_project_new');
-  const importBtn = document.getElementById('import_project');
-  const importFileInput = /** @type {HTMLInputElement|null} */ (document.getElementById('import_project_file'));
-  const exportBtn = document.getElementById('export_project');
   const deleteBtn = document.getElementById('delete_project');
   const statusEl = document.getElementById('project_status');
-  if (!nameInput || !select || !saveNewBtn || !importBtn || !importFileInput || !exportBtn || !deleteBtn || !statusEl) return;
+  if (!nameInput || !select || !saveNewBtn || !deleteBtn || !statusEl) return;
 
   const LOCAL_PROJECTS_KEY = 'analyzer.projects.v1';
   let cachedProjects = [];
@@ -1140,58 +1137,6 @@ async function setupProjectManager() {
 
   saveNewBtn.addEventListener('click', async () => {
     await saveProject();
-  });
-
-  importBtn.addEventListener('click', () => {
-    importFileInput.click();
-  });
-
-  importFileInput.addEventListener('change', async () => {
-    const file = importFileInput.files?.[0];
-    importFileInput.value = '';
-    if (!file) return;
-
-    setStatus('Loading\u2026', true);
-    await new Promise(r => setTimeout(r, 0));
-    try {
-      const raw = JSON.parse(await file.text());
-      const imported = toImportedProject(raw);
-      if (!imported) {
-        setStatus('');
-        window.alert('Selected file is not a valid project export.');
-        return;
-      }
-
-      applyProjectState(imported.state);
-      syncPrevUnits();
-      await new Promise(r => setTimeout(r, 0));
-      computeAll();
-      nameInput.value = imported.name;
-
-      const localImported = upsertLocalProject(imported);
-      await loadProjects();
-      select.value = localImported.id;
-      setStatus('Project imported from file and loaded.');
-    } catch (err) {
-      window.alert('Unable to import project file. Ensure it is valid JSON.');
-    }
-  });
-
-  exportBtn.addEventListener('click', async () => {
-    const selectedId = select.value;
-    if (!selectedId) {
-      window.alert('Select a saved project to export.');
-      return;
-    }
-
-    const project = await getProjectById(selectedId);
-    if (!project || typeof project.state !== 'object' || project.state === null) {
-      window.alert('Unable to export project.');
-      return;
-    }
-
-    downloadProjectJson(project);
-    setStatus('Project exported to JSON file.');
   });
 
   deleteBtn.addEventListener('click', async () => {
