@@ -25,7 +25,7 @@ import { renderDrumVisualization, clearDrumVisualization } from './drum-visual.m
 import { renderLatexFragments } from './katex-renderer.mjs';
 import { buildComputationModel } from './analysis-data.mjs';
 import { downloadSpecSheetPDF } from './spec-sheet-export.mjs';
-import { downloadTextSummary } from './text-export.mjs';
+import { buildTextSummaryLines, downloadLines } from './text-export.mjs';
 import { renderReport } from './report-renderer.mjs';
 import { initUnitSelectors, initOutputHeaderSelectors, syncPrevUnits, updateOutputHeaders, fromInternal, fromInternalForGroup, getGroupLabel, createGroupSelector, FIELD_UNITS } from './units.mjs';
 
@@ -1260,16 +1260,77 @@ document.addEventListener('DOMContentLoaded', () => {
     });
   }
 
-  // Text summary export button
+  // Text summary export button — opens preview dialog
   const textSummaryBtn = document.getElementById('export_text_summary');
-  if (textSummaryBtn) {
+  const summaryDialog = document.getElementById('summary-dialog');
+  if (textSummaryBtn && summaryDialog) {
+    const summaryList = summaryDialog.querySelector('.summary-dialog__list');
+    const confirmBtn = summaryDialog.querySelector('.summary-dialog__confirm');
+    const cancelBtn = summaryDialog.querySelector('.summary-dialog__cancel');
+    const selectAllBtn = summaryDialog.querySelector('.summary-dialog__select-all');
+
     textSummaryBtn.addEventListener('click', () => {
       try {
-        downloadTextSummary(lastComputedModel);
+        const lines = buildTextSummaryLines(lastComputedModel);
+        summaryList.innerHTML = '';
+        lines.forEach((line, i) => {
+          const isBlank = line.trim() === '';
+          const li = document.createElement('li');
+          if (isBlank) {
+            li.className = 'summary-dialog__separator';
+          } else {
+            const label = document.createElement('label');
+            const cb = document.createElement('input');
+            cb.type = 'checkbox';
+            cb.checked = true;
+            cb.dataset.idx = i;
+            label.appendChild(cb);
+            label.appendChild(document.createTextNode(' ' + line));
+            li.appendChild(label);
+          }
+          summaryList.appendChild(li);
+        });
+        summaryDialog.showModal();
       } catch (err) {
         console.error('Text summary export failed:', err);
         alert('Failed to generate summary: ' + (err.message || err));
       }
+    });
+
+    confirmBtn.addEventListener('click', () => {
+      const checkboxes = summaryList.querySelectorAll('input[type="checkbox"]');
+      const selectedIndices = new Set();
+      checkboxes.forEach(cb => { if (cb.checked) selectedIndices.add(Number(cb.dataset.idx)); });
+
+      // Rebuild lines: include checked lines and blank separators between included sections
+      const allLines = buildTextSummaryLines(lastComputedModel);
+      const filtered = [];
+      for (let i = 0; i < allLines.length; i++) {
+        if (allLines[i].trim() === '') {
+          // Include separator only if adjacent to a selected line
+          const prevSelected = i > 0 && selectedIndices.has(i - 1);
+          const nextSelected = (() => {
+            for (let j = i + 1; j < allLines.length; j++) {
+              if (allLines[j].trim() !== '') return selectedIndices.has(j);
+            }
+            return false;
+          })();
+          if (prevSelected && nextSelected) filtered.push('');
+        } else if (selectedIndices.has(i)) {
+          filtered.push(allLines[i]);
+        }
+      }
+      downloadLines(filtered);
+      summaryDialog.close();
+    });
+
+    cancelBtn.addEventListener('click', () => summaryDialog.close());
+
+    selectAllBtn.addEventListener('click', () => {
+      const checkboxes = summaryList.querySelectorAll('input[type="checkbox"]');
+      const allChecked = [...checkboxes].every(cb => cb.checked);
+      checkboxes.forEach(cb => { cb.checked = !allChecked; });
+      selectAllBtn.textContent = allChecked ? 'Select All' : 'Deselect All';
     });
   }
 
@@ -2005,18 +2066,9 @@ function updateExecutiveSummary(model, torqueChecks) {
   const rawWinchType = extractControlValue('winch_type_select');
   const winchType = rawWinchType.toLowerCase() === 'conventional' ? 'Single Drum Winch' : rawWinchType;
 
-  const gbOk = !torqueChecks?.gearboxCheckFailed;
-  const mtrOk = !torqueChecks?.motorCheckFailed;
-  const allChecksPass = gbOk && mtrOk;
-  const checkStatus = allChecksPass ? 'All torque checks pass.' : [
-    !gbOk ? 'Gearbox torque check FAILED' : '',
-    !mtrOk ? 'Motor torque check FAILED' : ''
-  ].filter(Boolean).join('. ') + '.';
-
   const parts = [];
   parts.push(`This ${systemType.toLowerCase()} ${winchType.toLowerCase()} system is rated for ${Number.isFinite(ratedSwl) ? ratedSwl.toLocaleString() : '–'} kgf SWL at ${Number.isFinite(ratedSpeed) ? ratedSpeed : '–'} m/min, with an operating depth of ${Number.isFinite(depth) ? depth.toLocaleString() : '–'} m.`);
-  parts.push(`The drum accommodates ${Number.isFinite(layers) ? layers : '–'} layers and ${Number.isFinite(cableLen) ? Math.round(cableLen).toLocaleString() : '–'} m of cable.`);
-  parts.push(checkStatus);
+  parts.push(`The drum accommodates ${Number.isFinite(cableLen) ? Math.round(cableLen).toLocaleString() : '–'} m of cable on ${Number.isFinite(layers) ? layers : '–'} layers.`);
 
   el.textContent = parts.join(' ');
 }
@@ -2192,10 +2244,6 @@ function buildSummaryTable(tableEl) {
         summaryRow.appendChild(clonedUnits);
       }
 
-      summaryRow.style.cursor = 'pointer';
-      summaryRow.addEventListener('click', () => {
-        summaryRow.classList.toggle('summary-row-excluded');
-      });
       body.appendChild(summaryRow);
     });
   });

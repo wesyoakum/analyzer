@@ -49,7 +49,7 @@ function pushIf(lines, label, value) {
  * Build a plain-text summary of all analyzer inputs.
  * @param {object|null} model - The last computed model
  */
-export function buildTextSummary(model) {
+export function buildTextSummaryLines(model) {
   const projectName = q('project_name')?.value || 'Untitled';
   const today = new Date().toLocaleDateString('en-US', {
     year: 'numeric', month: 'long', day: 'numeric',
@@ -242,7 +242,15 @@ export function buildTextSummary(model) {
 
   lines.push('');
 
-  return lines.join('\n');
+  return lines;
+}
+
+/**
+ * Build a plain-text summary of all analyzer inputs (joined string).
+ * @param {object|null} model - The last computed model
+ */
+export function buildTextSummary(model) {
+  return buildTextSummaryLines(model).join('\n');
 }
 
 /**
@@ -250,7 +258,16 @@ export function buildTextSummary(model) {
  * @param {object|null} model - The last computed model
  */
 export function downloadTextSummary(model) {
-  const text = buildTextSummary(model);
+  const lines = buildTextSummaryLines(model);
+  downloadLines(lines);
+}
+
+/**
+ * Download selected lines as a .txt file.
+ * @param {string[]} lines
+ */
+export function downloadLines(lines) {
+  const text = lines.join('\n');
   const projectName = q('project_name')?.value || 'winch';
   const safeName = projectName.replace(/[^a-zA-Z0-9_-]/g, '_').replace(/_+/g, '_');
   const now = new Date();
