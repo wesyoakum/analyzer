@@ -1219,6 +1219,7 @@ document.addEventListener('DOMContentLoaded', () => {
   setupDynamicLoadsToggle();
 
   setupCsvDownloads();
+  setupDetailColumnToggles();
 
   setupWrapTableToggleLabels();
 
@@ -1634,6 +1635,19 @@ function setupUnitConverter() {
   refreshAirWater();
   refreshMechanicalPower();
   refreshHydraulicPower();
+}
+
+function setupDetailColumnToggles() {
+  document.querySelectorAll('.toggle-cols-btn').forEach(btn => {
+    const card = btn.closest('.card');
+    if (!card) return;
+    // Default to collapsed
+    card.classList.add('detail-col-hidden');
+    btn.addEventListener('click', () => {
+      const hidden = card.classList.toggle('detail-col-hidden');
+      btn.textContent = hidden ? '+ detail' : '− detail';
+    });
+  });
 }
 
 function setupCsvDownloads() {

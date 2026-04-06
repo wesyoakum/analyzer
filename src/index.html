@@ -4,7 +4,7 @@
   <meta charset="utf-8" />
   <title>Winch Analysis</title>
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <link rel="stylesheet" href="css/styles.css?v=76" />
+  <link rel="stylesheet" href="css/styles.css?v=77" />
   <script>
     // Apply saved theme before first paint to prevent flash
     (function() {
@@ -1272,12 +1272,15 @@
       <div class="card" data-drive-scope="hydraulic" id="section-hyd-layer">
         <div class="table-header">
           <div class="section-title">Section 3.4: Hydraulic Layer Table</div>
-          <button id="csv_hy_layer" class="copy-csv-btn" type="button" title="Copy table as CSV" disabled>&#x2398;</button>
+          <div class="table-header__actions">
+            <button id="toggle_hy_layer_cols" class="toggle-cols-btn" type="button" title="Show/hide detail columns">+ detail</button>
+            <button id="csv_hy_layer" class="copy-csv-btn" type="button" title="Copy table as CSV" disabled>&#x2398;</button>
+          </div>
         </div>
         <table>
           <thead>
             <tr>
-              <th title="layer_no">L#<br>–</th>
+              <th title="layer_no" class="detail-col">L#<br>–</th>
               <th title="layer_dia_in" data-unit-group="length_in">
                 <span data-latex="D_{\ell}">D<sub>ℓ</sub></span><br><span class="th-unit">in</span>
               </th>
@@ -1286,10 +1289,10 @@
               <th title="hyd_P_required_psi" data-unit-group="pressure_psi">
                 <span data-latex="P_{req}">P<sub>req</sub></span><br><span class="th-unit">psi</span>
               </th>
-              <th title="hyd_speed_power_mpm" data-unit-group="speed_mpm">
+              <th title="hyd_speed_power_mpm" data-unit-group="speed_mpm" class="detail-col">
                 <span data-latex="v_{P}">v<sub>P</sub></span><br><span class="th-unit">m/min</span>
               </th>
-              <th title="hyd_speed_flow_mpm" data-unit-group="speed_mpm">
+              <th title="hyd_speed_flow_mpm" data-unit-group="speed_mpm" class="detail-col">
                 <span data-latex="v_{Q}">v<sub>Q</sub></span><br><span class="th-unit">m/min</span>
               </th>
               <th title="hyd_speed_available_mpm" data-unit-group="speed_mpm">
@@ -1298,10 +1301,10 @@
               <th title="hyd_hp_req" data-unit-group="power_hp">
                 <span data-latex="hp_{req}">hp<sub>req</sub></span><br><span class="th-unit">hp</span>
               </th>
-              <th title="hyd_hp_sys" data-unit-group="power_hp">
+              <th title="hyd_hp_sys" data-unit-group="power_hp" class="detail-col">
                 <span data-latex="hp_{sys}">hp<sub>sys</sub></span><br><span class="th-unit">hp</span>
               </th>
-              <th title="hyd_tau_avail_kNm" data-unit-group="torque_Nm" data-unit-prefix="k">
+              <th title="hyd_tau_avail_kNm" data-unit-group="torque_Nm" data-unit-prefix="k" class="detail-col">
                 <span data-latex="\tau_{avail}">τ<sub>avail</sub></span><br><span class="th-unit">kN·m</span>
               </th>
               <th title="max_gearbox_torque_Nm" data-unit-group="torque_Nm">
@@ -1310,10 +1313,10 @@
               <th title="hyd_tension_required_start_kgf" data-unit-group="force_kgf">
                 <span data-latex="T_{req}">T<sub>req</sub></span><br><span class="th-unit">kgf</span>
               </th>
-              <th title="hyd_avail_tension_kgf" data-unit-group="force_kgf">
+              <th title="hyd_avail_tension_kgf" data-unit-group="force_kgf" class="detail-col">
                 <span data-latex="T_{avail}">T<sub>avail</sub></span><br><span class="th-unit">kgf</span>
               </th>
-              <th title="min_avail_accel_mps2" class="dynamic-col">
+              <th title="min_avail_accel_mps2" class="dynamic-col detail-col">
                 <span data-latex="a_{min}">a<sub>min</sub></span><br>m/s²
               </th>
             </tr>
@@ -2196,7 +2199,7 @@
       <span class="theme-toggle__icon--light" aria-hidden="true">&#9728;</span>
     </button>
 
-    <div id="build-tag" style="position:fixed;bottom:4px;right:4px;font:10px monospace;color:#999;pointer-events:none;z-index:9999">v76</div>
+    <div id="build-tag" style="position:fixed;bottom:4px;right:4px;font:10px monospace;color:#999;pointer-events:none;z-index:9999">v77</div>
     <script>
       // Theme toggle handler
       document.getElementById('theme_toggle').addEventListener('click', function() {

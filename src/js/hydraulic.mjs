@@ -192,7 +192,10 @@ export function renderHydraulicTables(hyLayers, hyWraps, tbodyLayer, tbodyWraps)
       fmtKgf(r.hyd_avail_tension_kgf),
       r.min_avail_accel_mps2 ? formatDecimal(r.min_avail_accel_mps2, 2) : '–'
     ];
-    tr.innerHTML = cells.map(v => `<td>${v}</td>`).join('');
+    const detailCols = [0, 5, 6, 9, 10, 13, 14];
+    tr.innerHTML = cells.map((v, i) =>
+      detailCols.includes(i) ? `<td class="detail-col">${v}</td>` : `<td>${v}</td>`
+    ).join('');
     tbodyLayer.appendChild(tr);
   }
 

@@ -807,6 +807,33 @@ body {
   justify-content: space-between;
 }
 
+/* Detail column toggle for layer tables */
+.detail-col-hidden .detail-col {
+  display: none;
+}
+
+.toggle-cols-btn {
+  background: none;
+  border: 1px solid var(--paper-line-strong);
+  border-radius: 4px;
+  cursor: pointer;
+  font-size: 0.75rem;
+  padding: 2px 8px;
+  color: var(--ink-500);
+  transition: color 0.15s, border-color 0.15s;
+}
+
+.toggle-cols-btn:hover {
+  color: var(--accent);
+  border-color: var(--accent);
+}
+
+.table-header__actions {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
 .copy-csv-btn {
   background: none;
   border: 1px solid var(--paper-line-strong);
