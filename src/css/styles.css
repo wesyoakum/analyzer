@@ -2399,28 +2399,9 @@ th[title] {
     padding: 0;
   }
 
-  .panel {
-    break-inside: avoid-page;
-  }
-
   .card {
     box-shadow: none;
     border: none;
-    break-inside: avoid;
-    page-break-inside: avoid;
-  }
-
-  /* Page breaks before major sections */
-  #panel-performance {
-    page-break-before: always;
-  }
-
-  #panel-results {
-    page-break-before: always;
-  }
-
-  .pdf-page-break {
-    page-break-after: always;
   }
 
   /* Plots: ensure they fit page width */
