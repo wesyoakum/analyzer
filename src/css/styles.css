@@ -316,7 +316,8 @@ body {
   width: 140px;
 }
 
-.app-sidebar__content .worksheet td.units {
+.app-sidebar__content .worksheet td.units,
+.app-sidebar__content .worksheet th.units {
   width: 40px;
 }
 
