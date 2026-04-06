@@ -108,48 +108,69 @@ function updateGearRatioRanges(model) {
   const motors = Math.max(model.inputs.motors || 1, 1);
   const gr1 = model.inputs.gr1;
   const gr2 = model.inputs.gr2;
-  const motor_tmax = model.inputs.motor_tmax;
-  const motor_max_rpm = model.inputs.motor_max_rpm;
   const gearbox_max_torque = model.inputs.gearbox_max_torque_Nm;
   const rated_speed_mpm = read('rated_speed_mpm');
   const rated_swl_kgf = read('rated_swl_kgf');
 
-  const hasMotorTorque = Number.isFinite(motor_tmax) && motor_tmax > 0;
-  const hasMotorRpm = Number.isFinite(motor_max_rpm) && motor_max_rpm > 0;
   const hasRatedSpeed = Number.isFinite(rated_speed_mpm) && rated_speed_mpm > 0;
   const hasRatedSwl = Number.isFinite(rated_swl_kgf) && rated_swl_kgf > 0;
   const hasGearboxMax = Number.isFinite(gearbox_max_torque) && gearbox_max_torque > 0;
 
-  if (!hasMotorTorque && !hasMotorRpm) { clear(); return; }
-
   // Drum geometry from layer engine
   const minLayerDiaIn = model.rows[0].layer_dia_in;
   const maxLayerDiaIn = model.summary.full_drum_dia_in;
-  const minRadius_m = (minLayerDiaIn * M_PER_IN) / 2;
   const maxRadius_m = (maxLayerDiaIn * M_PER_IN) / 2;
+  const minLayerDia_m = minLayerDiaIn * M_PER_IN;
 
   // Worst-case drum torque: rated SWL at outermost layer
   const maxDrumTorque_Nm = hasRatedSwl ? (rated_swl_kgf * G * maxRadius_m) : NaN;
 
-  // --- Total GR range ---
-
-  // Lower bound from motor torque: GR_total ≥ drum_torque / (N_motors × motor_tmax)
   let grTotalMin = NaN;
-  if (hasMotorTorque && Number.isFinite(maxDrumTorque_Nm)) {
-    grTotalMin = maxDrumTorque_Nm / (motors * motor_tmax);
+  let grTotalMax = NaN;
+
+  const isHydraulic = driveModeEnabled('hydraulic');
+
+  if (isHydraulic) {
+    // --- Hydraulic gear ratio range ---
+    const hy = model.hydraulic;
+    const hMotorTorqueMax = hy.torque_per_hmotor_maxP;
+    const hasHydTorque = Number.isFinite(hMotorTorqueMax) && hMotorTorqueMax > 0;
+    const rpmAvail = hy.rpm_flow_per_motor_available;
+    const hasHydRpm = Number.isFinite(rpmAvail) && rpmAvail > 0;
+
+    if (!hasHydTorque && !hasHydRpm) { clear(); return; }
+
+    // Lower bound (torque): GR_total ≥ drum_torque / (N_motors × hyd_motor_torque_at_Pmax)
+    if (hasHydTorque && Number.isFinite(maxDrumTorque_Nm)) {
+      grTotalMin = maxDrumTorque_Nm / (motors * hMotorTorqueMax);
+    }
+    // Upper bound (speed): GR_total ≤ hyd_motor_rpm_available × π × min_layer_dia_m / rated_speed
+    if (hasHydRpm && hasRatedSpeed) {
+      grTotalMax = (rpmAvail * Math.PI * minLayerDia_m) / rated_speed_mpm;
+    }
+  } else {
+    // --- Electric gear ratio range ---
+    const motor_tmax = model.inputs.motor_tmax;
+    const motor_max_rpm = model.inputs.motor_max_rpm;
+    const hasMotorTorque = Number.isFinite(motor_tmax) && motor_tmax > 0;
+    const hasMotorRpm = Number.isFinite(motor_max_rpm) && motor_max_rpm > 0;
+
+    if (!hasMotorTorque && !hasMotorRpm) { clear(); return; }
+
+    // Lower bound from motor torque: GR_total ≥ drum_torque / (N_motors × motor_tmax)
+    if (hasMotorTorque && Number.isFinite(maxDrumTorque_Nm)) {
+      grTotalMin = maxDrumTorque_Nm / (motors * motor_tmax);
+    }
+    // Upper bound from speed: GR_total ≤ motor_max_RPM × π × min_layer_dia_m / rated_speed_mpm
+    if (hasMotorRpm && hasRatedSpeed) {
+      grTotalMax = (motor_max_rpm * Math.PI * minLayerDia_m) / rated_speed_mpm;
+    }
   }
-  // Gearbox constraint also sets a floor on GR2, which raises total GR min
-  // GR2 ≥ drum_torque / (N_motors × gearbox_max), and GR_total ≥ GR2_min (since GR1 ≥ 1)
+
+  // Gearbox constraint applies to both: GR2 ≥ drum_torque / (N_motors × gearbox_max)
   if (hasGearboxMax && Number.isFinite(maxDrumTorque_Nm)) {
     const grTotalMinGb = maxDrumTorque_Nm / (motors * gearbox_max_torque);
     grTotalMin = Number.isFinite(grTotalMin) ? Math.max(grTotalMin, grTotalMinGb) : grTotalMinGb;
-  }
-
-  // Upper bound from speed: GR_total ≤ motor_max_RPM × π × min_layer_dia_m / rated_speed_mpm
-  let grTotalMax = NaN;
-  if (hasMotorRpm && hasRatedSpeed) {
-    const minLayerDia_m = minLayerDiaIn * M_PER_IN;
-    grTotalMax = (motor_max_rpm * Math.PI * minLayerDia_m) / rated_speed_mpm;
   }
 
   // Format total range
