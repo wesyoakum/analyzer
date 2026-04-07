@@ -12,7 +12,8 @@ const SEA_STATE_REGIONS = [
 // PM fully-developed-sea envelope: T_center = sqrt(PM_T_COEFF · H_s)
 // Derived from H = 0.21·g·T² / 7.54²  →  T = √(H · 7.54² / (0.21·g))
 const PM_T_COEFF = (7.54 * 7.54) / (0.21 * 9.80665);  // ≈ 27.607
-const ENVELOPE_FRAC = 0.20;   // ±20 % band around center period
+const ENVELOPE_HI = 0.20;    // +20 % above PM center period (right side)
+const ENVELOPE_LO = 0.30;    // −30 % below PM center period (left side)
 const T_PRACTICAL_MIN = 4;    // global lower clamp (s)
 const T_PRACTICAL_MAX = 16;   // global upper clamp (s)
 
@@ -20,8 +21,8 @@ const T_PRACTICAL_MAX = 16;   // global upper clamp (s)
 function envelopeT(H) {
   const Tc = Math.sqrt(PM_T_COEFF * H);
   return {
-    lo: Math.max(T_PRACTICAL_MIN, (1 - ENVELOPE_FRAC) * Tc),
-    hi: Math.min(T_PRACTICAL_MAX, (1 + ENVELOPE_FRAC) * Tc)
+    lo: Math.max(T_PRACTICAL_MIN, (1 - ENVELOPE_LO) * Tc),
+    hi: Math.min(T_PRACTICAL_MAX, (1 + ENVELOPE_HI) * Tc)
   };
 }
 
@@ -42,8 +43,8 @@ function arcEnvelopeH(rSq, frac) {
  * to the speed iso-lines, with PM ±20 % as the side envelope.
  */
 function seaStateRegionArc(region, samples, Tmin, Tmax, Hmin, Hmax) {
-  const loFrac = 1 - ENVELOPE_FRAC;
-  const hiFrac = 1 + ENVELOPE_FRAC;
+  const loFrac = 1 - ENVELOPE_LO;
+  const hiFrac = 1 + ENVELOPE_HI;
   const rLoSq = arcRadiusSq(region.hs[0]);
   const rHiSq = arcRadiusSq(region.hs[1]);
   const rLo = Math.sqrt(rLoSq);
