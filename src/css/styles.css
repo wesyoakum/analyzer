@@ -91,9 +91,9 @@
   --ink-900: #1e2a3a;
   --ink-700: #2d3e52;
   --ink-500: #5a6a7a;
-  --accent: #c9a84c;
-  --accent-light: rgba(201, 168, 76, 0.15);
-  --accent-hover: #b8952e;
+  --accent: #2d6a8a;
+  --accent-light: rgba(45, 106, 138, 0.12);
+  --accent-hover: #1e5570;
   --surface: #f7f8fa;
   --surface-alt: #eef0f4;
   --danger: #c0392b;
@@ -105,7 +105,7 @@
   --shadow-color: rgba(30, 42, 58, 0.12);
   --shadow-strong: rgba(30, 42, 58, 0.18);
   --overlay: rgba(30, 42, 58, 0.40);
-  --focus-ring: rgba(201, 168, 76, 0.45);
+  --focus-ring: rgba(45, 106, 138, 0.40);
   --tension-low: #2d6a8a;
   --tension-high: #c9a84c;
   color-scheme: light;
