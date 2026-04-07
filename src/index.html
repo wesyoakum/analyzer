@@ -4,7 +4,7 @@
   <meta charset="utf-8" />
   <title>Winch Analysis</title>
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <link rel="stylesheet" href="css/styles.css?v=97" />
+  <link rel="stylesheet" href="css/styles.css?v=98" />
   <script>
     // Apply saved theme before first paint to prevent flash
     (function() {
@@ -930,9 +930,13 @@
                 <input id="wave_show_min_disp" type="checkbox" data-persist="off">
                 <span>Min Disp</span>
               </label>
-              <label class="plot-panel__checkbox" title="Overlay representative Douglas sea-state envelopes (PM-based ±20%)">
-                <input id="wave_speed_show_sea_states" type="checkbox">
-                <span>Sea states</span>
+              <label class="plot-panel__checkbox" title="Sea-state overlay style">
+                <select id="wave_speed_sea_state_mode" class="plot-panel__select">
+                  <option value="">Sea states off</option>
+                  <option value="rect">SS: Rectangles</option>
+                  <option value="envelope">SS: PM envelopes</option>
+                  <option value="arc" selected>SS: Arc boundaries</option>
+                </select>
               </label>
             </div>
             <div class="plotwrap">
@@ -961,9 +965,13 @@
                 <input id="wave_ht_show_min_disp" type="checkbox" data-persist="off">
                 <span>Min Disp</span>
               </label>
-              <label class="plot-panel__checkbox" title="Overlay representative Douglas sea-state envelopes (PM-based ±20%)">
-                <input id="wave_show_sea_states" type="checkbox">
-                <span>Sea states</span>
+              <label class="plot-panel__checkbox" title="Sea-state overlay style">
+                <select id="wave_ht_sea_state_mode" class="plot-panel__select">
+                  <option value="">Sea states off</option>
+                  <option value="rect">SS: Rectangles</option>
+                  <option value="envelope">SS: PM envelopes</option>
+                  <option value="arc" selected>SS: Arc boundaries</option>
+                </select>
               </label>
               <label class="plot-panel__checkbox" title="Show deep-water breaking limit curve">
                 <input id="wave_show_breaking_limit" type="checkbox">
@@ -1014,9 +1022,13 @@
             <button type="button" class="plot-settings-btn" data-plot-settings-target="plot-settings-wave-accel" aria-label="Open axis settings for acceleration vs period plot">⚙</button>
           </div>
           <div class="plot-panel__toggles" aria-label="Wave acceleration overlays">
-            <label class="plot-panel__checkbox" title="Overlay representative Douglas sea-state envelopes (PM-based ±20%)">
-              <input id="wave_accel_show_sea_states" type="checkbox">
-              <span>Sea states</span>
+            <label class="plot-panel__checkbox" title="Sea-state overlay style">
+              <select id="wave_accel_sea_state_mode" class="plot-panel__select">
+                <option value="">Sea states off</option>
+                <option value="rect">SS: Rectangles</option>
+                <option value="envelope">SS: PM envelopes</option>
+                <option value="arc" selected>SS: Arc boundaries</option>
+              </select>
             </label>
           </div>
           <div class="plotwrap">
@@ -2227,7 +2239,7 @@
       <span class="theme-toggle__icon--light" aria-hidden="true">&#9728;</span>
     </button>
 
-    <div id="build-tag" style="position:fixed;bottom:4px;right:4px;font:14px monospace;color:#999;pointer-events:none;z-index:9999">v97</div>
+    <div id="build-tag" style="position:fixed;bottom:4px;right:4px;font:14px monospace;color:#999;pointer-events:none;z-index:9999">v98</div>
     <script>
       // Theme toggle handler
       document.getElementById('theme_toggle').addEventListener('click', function() {

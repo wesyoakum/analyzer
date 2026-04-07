@@ -776,8 +776,8 @@ const PLOT_DISPLAY_SETTING_IDS = [
   'wave_tmax_height',
   'wave_hmin',
   'wave_hmax',
-  'wave_speed_show_sea_states',
-  'wave_show_sea_states',
+  'wave_speed_sea_state_mode',
+  'wave_ht_sea_state_mode',
   'wave_show_breaking_limit',
   'wave_show_pm_curve',
   'wave_show_jonswap_curve',
@@ -808,7 +808,7 @@ const PLOT_DISPLAY_SETTING_IDS = [
   'wave_accel_tmax',
   'wave_accel_amin',
   'wave_accel_amax',
-  'wave_accel_show_sea_states'
+  'wave_accel_sea_state_mode'
 ];
 
 function readElementStateValue(el) {
@@ -1496,8 +1496,8 @@ document.addEventListener('DOMContentLoaded', () => {
   });
 
   // Wave/depth/hydraulic plot controls
-  ['wave_scenario', 'wave_tmin', 'wave_tmax', 'wave_vmin', 'wave_vmax', 'wave_tmin_height', 'wave_tmax_height', 'wave_hmin', 'wave_hmax', 'wave_speed_show_sea_states', 'wave_show_sea_states', 'wave_show_breaking_limit', 'wave_show_pm_curve', 'wave_show_jonswap_curve', 'wave_show_smb_curve',
-    'wave_accel_tmin', 'wave_accel_tmax', 'wave_accel_amin', 'wave_accel_amax', 'wave_accel_show_sea_states',
+  ['wave_scenario', 'wave_tmin', 'wave_tmax', 'wave_vmin', 'wave_vmax', 'wave_tmin_height', 'wave_tmax_height', 'wave_hmin', 'wave_hmax', 'wave_speed_sea_state_mode', 'wave_ht_sea_state_mode', 'wave_show_breaking_limit', 'wave_show_pm_curve', 'wave_show_jonswap_curve', 'wave_show_smb_curve',
+    'wave_accel_tmin', 'wave_accel_tmax', 'wave_accel_amin', 'wave_accel_amax', 'wave_accel_sea_state_mode',
     'depth_xmin', 'depth_xmax', 'depth_speed_ymin', 'depth_speed_ymax',
     'depth_xmin_tension', 'depth_xmax_tension', 'depth_tension_ymin', 'depth_tension_ymax',
     'hyd_torque_xmin', 'hyd_torque_xmax', 'hyd_rpm_ymin', 'hyd_rpm_ymax',
@@ -2924,8 +2924,8 @@ function drawWavePlots() {
   const waveTmaxHeightEl = /** @type {HTMLInputElement|null} */ (document.getElementById('wave_tmax_height'));
   const waveHminEl = /** @type {HTMLInputElement|null} */ (document.getElementById('wave_hmin'));
   const waveHmaxEl = /** @type {HTMLInputElement|null} */ (document.getElementById('wave_hmax'));
-  const waveSpeedShowSeaStatesEl = /** @type {HTMLInputElement|null} */ (document.getElementById('wave_speed_show_sea_states'));
-  const waveShowSeaStatesEl = /** @type {HTMLInputElement|null} */ (document.getElementById('wave_show_sea_states'));
+  const waveSpeedSeaStateModeEl = /** @type {HTMLSelectElement|null} */ (document.getElementById('wave_speed_sea_state_mode'));
+  const waveHtSeaStateModeEl = /** @type {HTMLSelectElement|null} */ (document.getElementById('wave_ht_sea_state_mode'));
   const waveShowBreakingLimitEl = /** @type {HTMLInputElement|null} */ (document.getElementById('wave_show_breaking_limit'));
   const waveShowPmCurveEl = /** @type {HTMLInputElement|null} */ (document.getElementById('wave_show_pm_curve'));
   const waveShowJonswapCurveEl = /** @type {HTMLInputElement|null} */ (document.getElementById('wave_show_jonswap_curve'));
@@ -2953,7 +2953,8 @@ function drawWavePlots() {
       Tmax: Number.isFinite(TmaxVal) ? TmaxVal : 20,
       speedMin: Number.isFinite(speedMinVal) ? speedMinVal : undefined,
       speedMax: Number.isFinite(speedMaxVal) ? speedMaxVal : undefined,
-      showSeaStateOverlay: Boolean(waveSpeedShowSeaStatesEl?.checked),
+      showSeaStateOverlay: Boolean(waveSpeedSeaStateModeEl?.value),
+      seaStateMode: waveSpeedSeaStateModeEl?.value || 'arc',
       showMaxDisp: Boolean(q('wave_show_max_disp')?.checked),
       showMinDisp: Boolean(q('wave_show_min_disp')?.checked)
     });
@@ -2963,7 +2964,8 @@ function drawWavePlots() {
       Tmax: Number.isFinite(heightTmaxVal) ? heightTmaxVal : 20,
       Hmin: Number.isFinite(HminVal) ? HminVal : undefined,
       Hmax: Number.isFinite(HmaxVal) ? HmaxVal : 6,
-      showSeaStateOverlay: Boolean(waveShowSeaStatesEl?.checked),
+      showSeaStateOverlay: Boolean(waveHtSeaStateModeEl?.value),
+      seaStateMode: waveHtSeaStateModeEl?.value || 'arc',
       showBreakingLimit: Boolean(waveShowBreakingLimitEl?.checked),
       showPmCurve: Boolean(waveShowPmCurveEl?.checked),
       showJonswapCurve: Boolean(waveShowJonswapCurveEl?.checked),
@@ -2983,7 +2985,7 @@ function drawAccelPlot() {
     const accelTmaxEl = document.getElementById('wave_accel_tmax');
     const accelAminEl = document.getElementById('wave_accel_amin');
     const accelAmaxEl = document.getElementById('wave_accel_amax');
-    const accelShowSeaStatesEl = document.getElementById('wave_accel_show_sea_states');
+    const accelSeaStateModeEl = document.getElementById('wave_accel_sea_state_mode');
     drawWaveAccelContours(waveAccelSvg, {
       scenario: waveScenarioEl?.value || 'electric',
       elLayers: lastElLayer,
@@ -2992,7 +2994,8 @@ function drawAccelPlot() {
       Tmax: Number.isFinite(parseInput(accelTmaxEl)) ? parseInput(accelTmaxEl) : 20,
       accelMin: Number.isFinite(parseInput(accelAminEl)) ? parseInput(accelAminEl) : 0,
       accelMax: Number.isFinite(parseInput(accelAmaxEl)) ? parseInput(accelAmaxEl) : undefined,
-      showSeaStateOverlay: Boolean(accelShowSeaStatesEl?.checked)
+      showSeaStateOverlay: Boolean(accelSeaStateModeEl?.value),
+      seaStateMode: accelSeaStateModeEl?.value || 'arc'
     });
   }
 

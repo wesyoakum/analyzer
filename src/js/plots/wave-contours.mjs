@@ -2,11 +2,11 @@
 import { niceTicks, svgEl, svgPathFromPoints } from '../utils.mjs';
 
 const SEA_STATE_REGIONS = [
-  { ss: 3, hs: [0.5, 1.25], color: 'rgba(126,200,212,0.25)' },
-  { ss: 4, hs: [1.25, 2.5], color: 'rgba(217,165,40,0.25)' },
-  { ss: 5, hs: [2.5, 4], color: 'rgba(74,157,168,0.25)' },
-  { ss: 6, hs: [4, 6], color: 'rgba(229,84,56,0.22)' },
-  { ss: 7, hs: [6, 9], color: 'rgba(184,32,37,0.22)' }
+  { ss: 3, tp: [3, 6], hs: [0.5, 1.25], color: 'rgba(126,200,212,0.25)' },
+  { ss: 4, tp: [5, 8], hs: [1.25, 2.5], color: 'rgba(217,165,40,0.25)' },
+  { ss: 5, tp: [6, 10], hs: [2.5, 4], color: 'rgba(74,157,168,0.25)' },
+  { ss: 6, tp: [8, 14], hs: [4, 6], color: 'rgba(229,84,56,0.22)' },
+  { ss: 7, tp: [10, 16], hs: [6, 9], color: 'rgba(184,32,37,0.22)' }
 ];
 
 // PM fully-developed-sea envelope: T_center = sqrt(PM_T_COEFF · H_s)
@@ -92,6 +92,47 @@ function seaStateRegionTH(region, samples, Tmin, Tmax, Hmin, Hmax) {
 }
 
 /**
+ * Generate (T, H) boundary for the original rectangular sea-state boxes.
+ */
+function seaStateRegionRect(region, Tmin, Tmax, Hmin, Hmax) {
+  const leftT = Math.max(Tmin, region.tp[0]);
+  const rightT = Math.min(Tmax, region.tp[1]);
+  const lowH = Math.max(Hmin, region.hs[0]);
+  const highH = Math.min(Hmax, region.hs[1]);
+  if (rightT <= leftT || highH <= lowH) return null;
+  return [[leftT, lowH], [rightT, lowH], [rightT, highH], [leftT, highH]];
+}
+
+/**
+ * Generate (T, H) boundary for PM-based envelope curves (horizontal H cuts).
+ */
+function seaStateRegionEnvelope(region, samples, Tmin, Tmax, Hmin, Hmax) {
+  const lowH = Math.max(Hmin, region.hs[0]);
+  const highH = Math.min(Hmax, region.hs[1]);
+  if (highH <= lowH) return null;
+  const pts = [];
+  for (let i = 0; i <= samples; i++) {
+    const H = lowH + (highH - lowH) * (i / samples);
+    pts.push([Math.min(Tmax, Math.max(Tmin, envelopeT(H).hi)), H]);
+  }
+  for (let i = samples; i >= 0; i--) {
+    const H = lowH + (highH - lowH) * (i / samples);
+    pts.push([Math.max(Tmin, Math.min(Tmax, envelopeT(H).lo)), H]);
+  }
+  return pts;
+}
+
+/**
+ * Dispatch: return (T, H) boundary points for the requested sea-state mode.
+ * mode: 'rect' | 'envelope' | 'arc'
+ */
+function seaStateRegionPts(region, mode, samples, Tmin, Tmax, Hmin, Hmax) {
+  if (mode === 'rect') return seaStateRegionRect(region, Tmin, Tmax, Hmin, Hmax);
+  if (mode === 'envelope') return seaStateRegionEnvelope(region, samples, Tmin, Tmax, Hmin, Hmax);
+  return seaStateRegionTH(region, samples, Tmin, Tmax, Hmin, Hmax);
+}
+
+/**
  * Draw the wave contour plot (speed vs period with height contours).
  */
 export function drawWaveContours(svg, opts = {}) {
@@ -134,9 +175,13 @@ export function drawWaveAccelContours(svg, opts = {}) {
     accelMin = 0,
     accelMax = null,
     showSeaStateOverlay = false,
+    seaStateMode = 'arc',
     elLayers = [],
     hyLayers = []
   } = opts;
+
+  // Normalise legacy boolean → mode string
+  const ssMode = showSeaStateOverlay ? (seaStateMode || 'arc') : '';
 
   Tmin = parseNumber(Tmin);
   if (!Number.isFinite(Tmin) || Tmin <= 0) Tmin = 4;
@@ -226,11 +271,11 @@ export function drawWaveAccelContours(svg, opts = {}) {
     'text-anchor': 'middle', 'font-size': '12', fill: '#444'
   })).textContent = 'Acceleration (m/s²)';
 
-  // Sea state overlay (arc boundaries ⊥ speed iso-lines)
-  if (showSeaStateOverlay) {
+  // Sea state overlay
+  if (ssMode) {
     const overlay = svgEl('g', { 'pointer-events': 'none' });
     SEA_STATE_REGIONS.forEach(region => {
-      const thPts = seaStateRegionTH(region, 80, Tmin, Tmax, Hmin, Hmax);
+      const thPts = seaStateRegionPts(region, ssMode, 80, Tmin, Tmax, Hmin, Hmax);
       if (!thPts) return;
       const pts = thPts.map(([T, H]) => [sx(T), sy(2 * Math.PI * Math.PI * H / Math.max(T * T, 1e-9))]);
 
@@ -242,8 +287,9 @@ export function drawWaveAccelContours(svg, opts = {}) {
       }));
 
       const midH = (region.hs[0] + region.hs[1]) / 2;
-      const midEnv = envelopeT(midH);
-      const midT = (midEnv.lo + midEnv.hi) / 2;
+      const midT = ssMode === 'rect'
+        ? (region.tp[0] + region.tp[1]) / 2
+        : (envelopeT(midH).lo + envelopeT(midH).hi) / 2;
       const midA = 2 * Math.PI * Math.PI * midH / Math.max(midT * midT, 1e-9);
       if (midA >= Amin && midA <= Amax && midT >= Tmin && midT <= Tmax) {
         const label = svgEl('text', {
@@ -393,6 +439,7 @@ function renderWavePlot(svg, {
   speedMin = 0,
   speedMax = null,
   showSeaStateOverlay = false,
+  seaStateMode = 'arc',
   showBreakingLimit = false,
   showPmCurve = false,
   showJonswapCurve = false,
@@ -415,6 +462,8 @@ function renderWavePlot(svg, {
   }
 
   while (svg.firstChild) svg.removeChild(svg.firstChild);
+
+  const ssMode = showSeaStateOverlay ? (seaStateMode || 'arc') : '';
 
   const parseNumber = val => {
     const num = Number(val);
@@ -544,11 +593,11 @@ function renderWavePlot(svg, {
 
   if (mode === 'speed') {
     const drawSeaStateOverlaySpeed = () => {
-      if (!showSeaStateOverlay) return;
+      if (!ssMode) return;
       const overlay = svgEl('g', { 'pointer-events': 'none' });
 
       SEA_STATE_REGIONS.forEach(region => {
-        const thPts = seaStateRegionTH(region, 80, Tmin, Tmax, Hmin, Hmax);
+        const thPts = seaStateRegionPts(region, ssMode, 80, Tmin, Tmax, Hmin, Hmax);
         if (!thPts) return;
         const pts = thPts.map(([T, H]) => [sx(T), sy(Math.PI * H / Math.max(T, 1e-9))]);
 
@@ -560,8 +609,9 @@ function renderWavePlot(svg, {
         }));
 
         const midH = (region.hs[0] + region.hs[1]) / 2;
-        const midEnv = envelopeT(midH);
-        const midT = (midEnv.lo + midEnv.hi) / 2;
+        const midT = ssMode === 'rect'
+          ? (region.tp[0] + region.tp[1]) / 2
+          : (envelopeT(midH).lo + envelopeT(midH).hi) / 2;
         const midV = Math.PI * midH / Math.max(midT, 1e-9);
         if (midV >= Vmin && midV <= Vmax && midT >= Tmin && midT <= Tmax) {
           const label = svgEl('text', {
@@ -667,10 +717,10 @@ function renderWavePlot(svg, {
 
   } else {
     const drawSeaStateOverlay = () => {
-      if (!showSeaStateOverlay) return;
+      if (!ssMode) return;
       const overlay = svgEl('g', { 'pointer-events': 'none' });
       SEA_STATE_REGIONS.forEach(region => {
-        const thPts = seaStateRegionTH(region, 80, Tmin, Tmax, Hmin, Hmax);
+        const thPts = seaStateRegionPts(region, ssMode, 80, Tmin, Tmax, Hmin, Hmax);
         if (!thPts) return;
         const pts = thPts.map(([T, H]) => [sx(T), sy(H)]);
 
@@ -682,8 +732,9 @@ function renderWavePlot(svg, {
         }));
 
         const midH = (region.hs[0] + region.hs[1]) / 2;
-        const midEnv = envelopeT(midH);
-        const midT = (midEnv.lo + midEnv.hi) / 2;
+        const midT = ssMode === 'rect'
+          ? (region.tp[0] + region.tp[1]) / 2
+          : (envelopeT(midH).lo + envelopeT(midH).hi) / 2;
         if (midT >= Tmin && midT <= Tmax) {
           const label = svgEl('text', {
             x: sx(midT),

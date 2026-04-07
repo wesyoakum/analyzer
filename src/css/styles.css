@@ -1861,6 +1861,15 @@ th[title] {
   accent-color: var(--accent);
 }
 
+.plot-panel__select {
+  font-size: 11px;
+  padding: 1px 4px;
+  border: 1px solid var(--border, #ccc);
+  border-radius: 3px;
+  background: var(--bg, #fff);
+  color: var(--ink-700);
+}
+
 /* Dual mm / in input pair */
 .dual-input {
   display: flex;
