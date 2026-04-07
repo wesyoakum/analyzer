@@ -199,13 +199,23 @@ function seaStateRegionDiag2(region, samples, Tmin, Tmax, Hmin, Hmax) {
 /**
  * Generate (T, H) boundary for the original rectangular sea-state boxes.
  */
-function seaStateRegionRect(region, Tmin, Tmax, Hmin, Hmax) {
+function seaStateRegionRect(region, Tmin, Tmax, Hmin, Hmax, samples = 120) {
   const leftT = Math.max(Tmin, region.tp[0]);
   const rightT = Math.min(Tmax, region.tp[1]);
   const lowH = Math.max(Hmin, region.hs[0]);
   const highH = Math.min(Hmax, region.hs[1]);
   if (rightT <= leftT || highH <= lowH) return null;
-  return [[leftT, lowH], [rightT, lowH], [rightT, highH], [leftT, highH]];
+  // Dense sampling so speed/accel mappings (v=πH/T, a=2π²H/T²) stay curved
+  const pts = [];
+  for (let i = 0; i <= samples; i++) {
+    const T = leftT + (rightT - leftT) * (i / samples);
+    pts.push([T, highH]);
+  }
+  for (let i = samples; i >= 0; i--) {
+    const T = leftT + (rightT - leftT) * (i / samples);
+    pts.push([T, lowH]);
+  }
+  return pts;
 }
 
 /**
