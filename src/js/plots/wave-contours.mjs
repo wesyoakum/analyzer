@@ -92,6 +92,58 @@ function seaStateRegionDiag(region, samples, Tmin, Tmax, Hmin, Hmax) {
 }
 
 /**
+ * Like seaStateRegionDiag but with shallower diagonal boundaries:
+ *   SS_n bottom-right (tp[1], hs[0]) → SS_{n+1} bottom-left (tp[0], hs[0]).
+ * Side boundaries remain SMB ±20 %.
+ */
+function seaStateRegionDiag2(region, samples, Tmin, Tmax, Hmin, Hmax) {
+  const idx = SEA_STATE_REGIONS.indexOf(region);
+  const prev = idx > 0 ? SEA_STATE_REGIONS[idx - 1] : null;
+  const next = idx < SEA_STATE_REGIONS.length - 1 ? SEA_STATE_REGIONS[idx + 1] : null;
+
+  // Bottom diagonal: prev's bottom-right → this region's bottom-left
+  let bottomDiagT = null, diagBotHlo = region.hs[0], diagBotHhi = region.hs[0];
+  if (prev) {
+    const T1 = prev.tp[1], H1 = prev.hs[0], T2 = region.tp[0], H2 = region.hs[0];
+    diagBotHlo = H1; diagBotHhi = H2;
+    bottomDiagT = H => T1 + (H - H1) / (H2 - H1) * (T2 - T1);
+  }
+
+  // Top diagonal: this region's bottom-right → next's bottom-left
+  let topDiagT = null, diagTopHlo = region.hs[0], diagTopHhi = region.hs[1];
+  if (next) {
+    const T1 = region.tp[1], H1 = region.hs[0], T2 = next.tp[0], H2 = next.hs[0];
+    diagTopHlo = H1; diagTopHhi = H2;
+    topDiagT = H => T1 + (H - H1) / (H2 - H1) * (T2 - T1);
+  }
+
+  const Hlo = Math.max(Hmin, prev ? diagBotHlo : region.hs[0]);
+  const Hhi = Math.min(Hmax, next ? diagTopHhi : region.hs[1]);
+  if (Hhi <= Hlo) return null;
+
+  const rightPts = [];
+  const leftPts = [];
+
+  for (let i = 0; i <= samples; i++) {
+    const H = Hlo + (Hhi - Hlo) * (i / samples);
+    let Tl = 0.8 * smbT(H);
+    let Tr = 1.2 * smbT(H);
+    if (bottomDiagT && H >= diagBotHlo && H <= diagBotHhi)
+      Tl = Math.max(Tl, bottomDiagT(H));
+    if (topDiagT && H >= diagTopHlo && H <= diagTopHhi)
+      Tr = Math.min(Tr, topDiagT(H));
+    Tl = Math.max(Tl, Tmin);
+    Tr = Math.min(Tr, Tmax);
+    if (Tr <= Tl + 1e-9) continue;
+    rightPts.push([Tr, H]);
+    leftPts.push([Tl, H]);
+  }
+
+  if (rightPts.length < 2) return null;
+  return [...rightPts, ...leftPts.reverse()];
+}
+
+/**
  * Generate (T, H) boundary for the original rectangular sea-state boxes.
  */
 function seaStateRegionRect(region, Tmin, Tmax, Hmin, Hmax) {
@@ -124,11 +176,12 @@ function seaStateRegionEnvelope(region, samples, Tmin, Tmax, Hmin, Hmax) {
 
 /**
  * Dispatch: return (T, H) boundary points for the requested sea-state mode.
- * mode: 'rect' | 'envelope' | 'diag'
+ * mode: 'rect' | 'envelope' | 'diag' | 'diag2'
  */
 function seaStateRegionPts(region, mode, samples, Tmin, Tmax, Hmin, Hmax) {
   if (mode === 'rect') return seaStateRegionRect(region, Tmin, Tmax, Hmin, Hmax);
   if (mode === 'envelope') return seaStateRegionEnvelope(region, samples, Tmin, Tmax, Hmin, Hmax);
+  if (mode === 'diag2') return seaStateRegionDiag2(region, samples, Tmin, Tmax, Hmin, Hmax);
   return seaStateRegionDiag(region, samples, Tmin, Tmax, Hmin, Hmax);
 }
 
@@ -288,7 +341,7 @@ export function drawWaveAccelContours(svg, opts = {}) {
 
       const midH = (region.hs[0] + region.hs[1]) / 2;
       const midT = ssMode === 'rect' ? (region.tp[0] + region.tp[1]) / 2
-        : ssMode === 'diag' ? smbT(midH)
+        : (ssMode === 'diag' || ssMode === 'diag2') ? smbT(midH)
         : (envelopeT(midH).lo + envelopeT(midH).hi) / 2;
       const midA = 2 * Math.PI * Math.PI * midH / Math.max(midT * midT, 1e-9);
       if (midA >= Amin && midA <= Amax && midT >= Tmin && midT <= Tmax) {
