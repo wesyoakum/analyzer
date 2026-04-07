@@ -25,6 +25,72 @@ function envelopeT(H) {
   };
 }
 
+// Arc boundaries perpendicular to speed iso-lines (H = v·T/π).
+// Speed iso-lines are rays from the origin → perpendiculars are circles T²+H²=r².
+/** Radius² of arc through the PM centre at height H_b. */
+function arcRadiusSq(Hb) { return PM_T_COEFF * Hb + Hb * Hb; }
+
+/** H where envelope line T = frac·√(PM_T_COEFF·H) meets arc T²+H² = rSq. */
+function arcEnvelopeH(rSq, frac) {
+  const c = frac * frac * PM_T_COEFF;
+  return (-c + Math.sqrt(c * c + 4 * rSq)) / 2;
+}
+
+/**
+ * Trace the boundary of a sea-state region in (T, H) space using arc
+ * boundaries (perpendicular to speed iso-lines) instead of horizontal cuts.
+ * Returns array of [T, H] pairs, or null if region is invisible.
+ */
+function seaStateRegionTH(region, samples, Tmin, Tmax, Hmin, Hmax) {
+  const loFrac = 1 - ENVELOPE_FRAC;
+  const hiFrac = 1 + ENVELOPE_FRAC;
+  const rLoSq = arcRadiusSq(region.hs[0]);
+  const rHiSq = arcRadiusSq(region.hs[1]);
+  const rLo = Math.sqrt(rLoSq);
+  const rHi = Math.sqrt(rHiSq);
+
+  // H at each corner (envelope × arc intersection)
+  let H_rb = Math.max(Hmin, arcEnvelopeH(rLoSq, hiFrac));
+  let H_rt = Math.min(Hmax, arcEnvelopeH(rHiSq, hiFrac));
+  let H_lt = Math.min(Hmax, arcEnvelopeH(rHiSq, loFrac));
+  let H_lb = Math.max(Hmin, arcEnvelopeH(rLoSq, loFrac));
+  if (H_rt <= H_rb || H_lt <= H_lb) return null;
+
+  const clampT = T => Math.min(Tmax, Math.max(Tmin, T));
+  const clampH = H => Math.min(Hmax, Math.max(Hmin, H));
+  const pts = [];
+
+  // 1. Right envelope: H from H_rb → H_rt
+  for (let i = 0; i <= samples; i++) {
+    const H = H_rb + (H_rt - H_rb) * (i / samples);
+    pts.push([clampT(envelopeT(H).hi), H]);
+  }
+
+  // 2. Top arc (r = rHi): sweep angle from right to left
+  const θ_rt = Math.atan2(H_rt, clampT(envelopeT(H_rt).hi));
+  const θ_lt = Math.atan2(H_lt, clampT(envelopeT(H_lt).lo));
+  for (let i = 1; i < samples; i++) {
+    const θ = θ_rt + (θ_lt - θ_rt) * (i / samples);
+    pts.push([clampT(rHi * Math.cos(θ)), clampH(rHi * Math.sin(θ))]);
+  }
+
+  // 3. Left envelope: H from H_lt → H_lb
+  for (let i = 0; i <= samples; i++) {
+    const H = H_lt + (H_lb - H_lt) * (i / samples);
+    pts.push([clampT(envelopeT(H).lo), H]);
+  }
+
+  // 4. Bottom arc (r = rLo): sweep angle from left to right
+  const θ_lb = Math.atan2(H_lb, clampT(envelopeT(H_lb).lo));
+  const θ_rb = Math.atan2(H_rb, clampT(envelopeT(H_rb).hi));
+  for (let i = 1; i < samples; i++) {
+    const θ = θ_lb + (θ_rb - θ_lb) * (i / samples);
+    pts.push([clampT(rLo * Math.cos(θ)), clampH(rLo * Math.sin(θ))]);
+  }
+
+  return pts;
+}
+
 /**
  * Draw the wave contour plot (speed vs period with height contours).
  */
@@ -160,30 +226,13 @@ export function drawWaveAccelContours(svg, opts = {}) {
     'text-anchor': 'middle', 'font-size': '12', fill: '#444'
   })).textContent = 'Acceleration (m/s²)';
 
-  // Sea state overlay (envelope curves, not rectangles)
+  // Sea state overlay (arc boundaries ⊥ speed iso-lines)
   if (showSeaStateOverlay) {
     const overlay = svgEl('g', { 'pointer-events': 'none' });
-    const envSamples = 80;
     SEA_STATE_REGIONS.forEach(region => {
-      const lowH = Math.max(Hmin, region.hs[0]);
-      const highH = Math.min(Hmax, region.hs[1]);
-      if (highH <= lowH) return;
-
-      const pts = [];
-      // Right boundary (high-T side → lower accel): H from bottom to top
-      for (let i = 0; i <= envSamples; i++) {
-        const H = lowH + (highH - lowH) * (i / envSamples);
-        const Thi = Math.min(Tmax, Math.max(Tmin, envelopeT(H).hi));
-        const a = 2 * Math.PI * Math.PI * H / Math.max(Thi * Thi, 1e-9);
-        pts.push([sx(Thi), sy(a)]);
-      }
-      // Left boundary (low-T side → higher accel): H from top to bottom
-      for (let i = envSamples; i >= 0; i--) {
-        const H = lowH + (highH - lowH) * (i / envSamples);
-        const Tlo = Math.max(Tmin, Math.min(Tmax, envelopeT(H).lo));
-        const a = 2 * Math.PI * Math.PI * H / Math.max(Tlo * Tlo, 1e-9);
-        pts.push([sx(Tlo), sy(a)]);
-      }
+      const thPts = seaStateRegionTH(region, 80, Tmin, Tmax, Hmin, Hmax);
+      if (!thPts) return;
+      const pts = thPts.map(([T, H]) => [sx(T), sy(2 * Math.PI * Math.PI * H / Math.max(T * T, 1e-9))]);
 
       overlay.appendChild(svgEl('path', {
         d: `${svgPathFromPoints(pts)} Z`,
@@ -192,7 +241,7 @@ export function drawWaveAccelContours(svg, opts = {}) {
         'stroke-width': 1.2
       }));
 
-      const midH = (lowH + highH) / 2;
+      const midH = (region.hs[0] + region.hs[1]) / 2;
       const midEnv = envelopeT(midH);
       const midT = (midEnv.lo + midEnv.hi) / 2;
       const midA = 2 * Math.PI * Math.PI * midH / Math.max(midT * midT, 1e-9);
@@ -202,7 +251,7 @@ export function drawWaveAccelContours(svg, opts = {}) {
           'text-anchor': 'middle', 'dominant-baseline': 'middle',
           'font-size': '12', 'font-weight': '600', fill: '#27324b'
         });
-        label.textContent = `SS ${region.ss} env.`;
+        label.textContent = `SS ${region.ss}`;
         overlay.appendChild(label);
       }
     });
@@ -497,26 +546,11 @@ function renderWavePlot(svg, {
     const drawSeaStateOverlaySpeed = () => {
       if (!showSeaStateOverlay) return;
       const overlay = svgEl('g', { 'pointer-events': 'none' });
-      const samples = 80;
 
       SEA_STATE_REGIONS.forEach(region => {
-        const lowH = Math.max(Hmin, region.hs[0]);
-        const highH = Math.min(Hmax, region.hs[1]);
-        if (highH <= lowH) return;
-
-        const pts = [];
-        // Right boundary (high-T side → lower speed): H from bottom to top
-        for (let i = 0; i <= samples; i++) {
-          const H = lowH + (highH - lowH) * (i / samples);
-          const Thi = Math.min(Tmax, Math.max(Tmin, envelopeT(H).hi));
-          pts.push([sx(Thi), sy(Math.PI * H / Math.max(Thi, 1e-9))]);
-        }
-        // Left boundary (low-T side → higher speed): H from top to bottom
-        for (let i = samples; i >= 0; i--) {
-          const H = lowH + (highH - lowH) * (i / samples);
-          const Tlo = Math.max(Tmin, Math.min(Tmax, envelopeT(H).lo));
-          pts.push([sx(Tlo), sy(Math.PI * H / Math.max(Tlo, 1e-9))]);
-        }
+        const thPts = seaStateRegionTH(region, 80, Tmin, Tmax, Hmin, Hmax);
+        if (!thPts) return;
+        const pts = thPts.map(([T, H]) => [sx(T), sy(Math.PI * H / Math.max(T, 1e-9))]);
 
         overlay.appendChild(svgEl('path', {
           d: `${svgPathFromPoints(pts)} Z`,
@@ -525,7 +559,7 @@ function renderWavePlot(svg, {
           'stroke-width': 1.2
         }));
 
-        const midH = (lowH + highH) / 2;
+        const midH = (region.hs[0] + region.hs[1]) / 2;
         const midEnv = envelopeT(midH);
         const midT = (midEnv.lo + midEnv.hi) / 2;
         const midV = Math.PI * midH / Math.max(midT, 1e-9);
@@ -539,7 +573,7 @@ function renderWavePlot(svg, {
             'font-weight': '600',
             fill: '#27324b'
           });
-          label.textContent = `SS ${region.ss} env.`;
+          label.textContent = `SS ${region.ss}`;
           overlay.appendChild(label);
         }
       });
@@ -635,25 +669,10 @@ function renderWavePlot(svg, {
     const drawSeaStateOverlay = () => {
       if (!showSeaStateOverlay) return;
       const overlay = svgEl('g', { 'pointer-events': 'none' });
-      const samples = 80;
       SEA_STATE_REGIONS.forEach(region => {
-        const lowH = Math.max(Hmin, region.hs[0]);
-        const highH = Math.min(Hmax, region.hs[1]);
-        if (highH <= lowH) return;
-
-        const pts = [];
-        // Right boundary (T_hi): sweep H from bottom to top
-        for (let i = 0; i <= samples; i++) {
-          const H = lowH + (highH - lowH) * (i / samples);
-          const Thi = Math.min(Tmax, Math.max(Tmin, envelopeT(H).hi));
-          pts.push([sx(Thi), sy(H)]);
-        }
-        // Left boundary (T_lo): sweep H from top to bottom
-        for (let i = samples; i >= 0; i--) {
-          const H = lowH + (highH - lowH) * (i / samples);
-          const Tlo = Math.max(Tmin, Math.min(Tmax, envelopeT(H).lo));
-          pts.push([sx(Tlo), sy(H)]);
-        }
+        const thPts = seaStateRegionTH(region, 80, Tmin, Tmax, Hmin, Hmax);
+        if (!thPts) return;
+        const pts = thPts.map(([T, H]) => [sx(T), sy(H)]);
 
         overlay.appendChild(svgEl('path', {
           d: `${svgPathFromPoints(pts)} Z`,
@@ -662,8 +681,7 @@ function renderWavePlot(svg, {
           'stroke-width': 1.2
         }));
 
-        // Label at centroid of the envelope
-        const midH = (lowH + highH) / 2;
+        const midH = (region.hs[0] + region.hs[1]) / 2;
         const midEnv = envelopeT(midH);
         const midT = (midEnv.lo + midEnv.hi) / 2;
         if (midT >= Tmin && midT <= Tmax) {
@@ -676,7 +694,7 @@ function renderWavePlot(svg, {
             'font-weight': '600',
             fill: '#27324b'
           });
-          label.textContent = `SS ${region.ss} env.`;
+          label.textContent = `SS ${region.ss}`;
           overlay.appendChild(label);
         }
       });
