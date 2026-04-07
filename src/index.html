@@ -4,7 +4,7 @@
   <meta charset="utf-8" />
   <title>Winch Analysis</title>
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <link rel="stylesheet" href="css/styles.css?v=98" />
+  <link rel="stylesheet" href="css/styles.css?v=99" />
   <script>
     // Apply saved theme before first paint to prevent flash
     (function() {
@@ -935,7 +935,7 @@
                   <option value="">Sea states off</option>
                   <option value="rect">SS: Rectangles</option>
                   <option value="envelope">SS: PM envelopes</option>
-                  <option value="arc" selected>SS: Arc boundaries</option>
+                  <option value="diag" selected>SS: SMB diagonal</option>
                 </select>
               </label>
             </div>
@@ -970,7 +970,7 @@
                   <option value="">Sea states off</option>
                   <option value="rect">SS: Rectangles</option>
                   <option value="envelope">SS: PM envelopes</option>
-                  <option value="arc" selected>SS: Arc boundaries</option>
+                  <option value="diag" selected>SS: SMB diagonal</option>
                 </select>
               </label>
               <label class="plot-panel__checkbox" title="Show deep-water breaking limit curve">
@@ -1027,7 +1027,7 @@
                 <option value="">Sea states off</option>
                 <option value="rect">SS: Rectangles</option>
                 <option value="envelope">SS: PM envelopes</option>
-                <option value="arc" selected>SS: Arc boundaries</option>
+                <option value="diag" selected>SS: SMB diagonal</option>
               </select>
             </label>
           </div>
@@ -2239,7 +2239,7 @@
       <span class="theme-toggle__icon--light" aria-hidden="true">&#9728;</span>
     </button>
 
-    <div id="build-tag" style="position:fixed;bottom:4px;right:4px;font:14px monospace;color:#999;pointer-events:none;z-index:9999">v98</div>
+    <div id="build-tag" style="position:fixed;bottom:4px;right:4px;font:14px monospace;color:#999;pointer-events:none;z-index:9999">v99</div>
     <script>
       // Theme toggle handler
       document.getElementById('theme_toggle').addEventListener('click', function() {

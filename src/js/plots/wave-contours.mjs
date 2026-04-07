@@ -25,70 +25,70 @@ function envelopeT(H) {
   };
 }
 
-// Arc boundaries perpendicular to speed iso-lines (H = v·T/π).
-// Speed iso-lines are rays from the origin → perpendiculars are circles T²+H²=r².
-/** Radius² of arc through the PM centre at height H_b. */
-function arcRadiusSq(Hb) { return PM_T_COEFF * Hb + Hb * Hb; }
-
-/** H where envelope line T = frac·√(PM_T_COEFF·H) meets arc T²+H² = rSq. */
-function arcEnvelopeH(rSq, frac) {
-  const c = frac * frac * PM_T_COEFF;
-  return (-c + Math.sqrt(c * c + 4 * rSq)) / 2;
-}
+// SMB (Sverdrup-Munk-Bretschneider) fully-developed-sea curve: H = 0.24·g·T² / 8.1²
+const SMB_T_COEFF = (8.1 * 8.1) / (0.24 * 9.80665);  // ≈ 27.874
+function smbT(H) { return Math.sqrt(SMB_T_COEFF * Math.max(H, 0)); }
 
 /**
- * Trace the boundary of a sea-state region in (T, H) space using arc
- * boundaries (perpendicular to speed iso-lines) instead of horizontal cuts.
- * Returns array of [T, H] pairs, or null if region is invisible.
+ * Trace a sea-state region using diagonal boundary lines (connecting
+ * adjacent rectangle corners) with SMB ±20 % as the side envelope.
+ *
+ * Boundary between SS_n and SS_{n+1}:
+ *   line from SS_n bottom-right (tp[1], hs[0]) → SS_{n+1} top-left (tp[0], hs[1]).
+ * Side boundaries: T = 0.8·√(SMB_COEFF·H)  and  T = 1.2·√(SMB_COEFF·H).
  */
-function seaStateRegionTH(region, samples, Tmin, Tmax, Hmin, Hmax) {
-  const loFrac = 1 - ENVELOPE_FRAC;
-  const hiFrac = 1 + ENVELOPE_FRAC;
-  const rLoSq = arcRadiusSq(region.hs[0]);
-  const rHiSq = arcRadiusSq(region.hs[1]);
-  const rLo = Math.sqrt(rLoSq);
-  const rHi = Math.sqrt(rHiSq);
+function seaStateRegionDiag(region, samples, Tmin, Tmax, Hmin, Hmax) {
+  const idx = SEA_STATE_REGIONS.indexOf(region);
+  const prev = idx > 0 ? SEA_STATE_REGIONS[idx - 1] : null;
+  const next = idx < SEA_STATE_REGIONS.length - 1 ? SEA_STATE_REGIONS[idx + 1] : null;
 
-  // H at each corner (envelope × arc intersection)
-  let H_rb = Math.max(Hmin, arcEnvelopeH(rLoSq, hiFrac));
-  let H_rt = Math.min(Hmax, arcEnvelopeH(rHiSq, hiFrac));
-  let H_lt = Math.min(Hmax, arcEnvelopeH(rHiSq, loFrac));
-  let H_lb = Math.max(Hmin, arcEnvelopeH(rLoSq, loFrac));
-  if (H_rt <= H_rb || H_lt <= H_lb) return null;
+  // Bottom diagonal: prev's bottom-right → this region's top-left
+  // For the lowest region (SS3) there is no diagonal; use flat H = hs[0].
+  let diagBotT1, diagBotH1, diagBotT2, diagBotH2;
+  if (prev) {
+    diagBotT1 = prev.tp[1];  diagBotH1 = prev.hs[0];
+    diagBotT2 = region.tp[0]; diagBotH2 = region.hs[1];
+  }
+  const bottomDiagT = prev
+    ? H => diagBotT1 + (H - diagBotH1) / (diagBotH2 - diagBotH1) * (diagBotT2 - diagBotT1)
+    : null;
 
-  const clampT = T => Math.min(Tmax, Math.max(Tmin, T));
-  const clampH = H => Math.min(Hmax, Math.max(Hmin, H));
-  const pts = [];
+  // Top diagonal: this region's bottom-right → next's top-left
+  // For the highest region (SS7) there is no diagonal; use flat H = hs[1].
+  let diagTopT1, diagTopH1, diagTopT2, diagTopH2;
+  if (next) {
+    diagTopT1 = region.tp[1]; diagTopH1 = region.hs[0];
+    diagTopT2 = next.tp[0];   diagTopH2 = next.hs[1];
+  }
+  const topDiagT = next
+    ? H => diagTopT1 + (H - diagTopH1) / (diagTopH2 - diagTopH1) * (diagTopT2 - diagTopT1)
+    : null;
 
-  // 1. Right envelope: H from H_rb → H_rt
+  // H sweep range: spans the full diagonal extents, clipped to plot
+  const Hlo = Math.max(Hmin, prev ? diagBotH1 : region.hs[0]);
+  const Hhi = Math.min(Hmax, next ? diagTopH2 : region.hs[1]);
+  if (Hhi <= Hlo) return null;
+
+  const rightPts = [];
+  const leftPts = [];
+
   for (let i = 0; i <= samples; i++) {
-    const H = H_rb + (H_rt - H_rb) * (i / samples);
-    pts.push([clampT(envelopeT(H).hi), H]);
+    const H = Hlo + (Hhi - Hlo) * (i / samples);
+    let Tl = 0.8 * smbT(H);
+    let Tr = 1.2 * smbT(H);
+    // Bottom diagonal clips left side (region is to the right of it)
+    if (bottomDiagT) Tl = Math.max(Tl, bottomDiagT(H));
+    // Top diagonal clips right side (region is to the left of it)
+    if (topDiagT) Tr = Math.min(Tr, topDiagT(H));
+    Tl = Math.max(Tl, Tmin);
+    Tr = Math.min(Tr, Tmax);
+    if (Tr <= Tl + 1e-9) continue;
+    rightPts.push([Tr, H]);
+    leftPts.push([Tl, H]);
   }
 
-  // 2. Top arc (r = rHi): sweep angle from right to left
-  const θ_rt = Math.atan2(H_rt, clampT(envelopeT(H_rt).hi));
-  const θ_lt = Math.atan2(H_lt, clampT(envelopeT(H_lt).lo));
-  for (let i = 1; i < samples; i++) {
-    const θ = θ_rt + (θ_lt - θ_rt) * (i / samples);
-    pts.push([clampT(rHi * Math.cos(θ)), clampH(rHi * Math.sin(θ))]);
-  }
-
-  // 3. Left envelope: H from H_lt → H_lb
-  for (let i = 0; i <= samples; i++) {
-    const H = H_lt + (H_lb - H_lt) * (i / samples);
-    pts.push([clampT(envelopeT(H).lo), H]);
-  }
-
-  // 4. Bottom arc (r = rLo): sweep angle from left to right
-  const θ_lb = Math.atan2(H_lb, clampT(envelopeT(H_lb).lo));
-  const θ_rb = Math.atan2(H_rb, clampT(envelopeT(H_rb).hi));
-  for (let i = 1; i < samples; i++) {
-    const θ = θ_lb + (θ_rb - θ_lb) * (i / samples);
-    pts.push([clampT(rLo * Math.cos(θ)), clampH(rLo * Math.sin(θ))]);
-  }
-
-  return pts;
+  if (rightPts.length < 2) return null;
+  return [...rightPts, ...leftPts.reverse()];
 }
 
 /**
@@ -124,12 +124,12 @@ function seaStateRegionEnvelope(region, samples, Tmin, Tmax, Hmin, Hmax) {
 
 /**
  * Dispatch: return (T, H) boundary points for the requested sea-state mode.
- * mode: 'rect' | 'envelope' | 'arc'
+ * mode: 'rect' | 'envelope' | 'diag'
  */
 function seaStateRegionPts(region, mode, samples, Tmin, Tmax, Hmin, Hmax) {
   if (mode === 'rect') return seaStateRegionRect(region, Tmin, Tmax, Hmin, Hmax);
   if (mode === 'envelope') return seaStateRegionEnvelope(region, samples, Tmin, Tmax, Hmin, Hmax);
-  return seaStateRegionTH(region, samples, Tmin, Tmax, Hmin, Hmax);
+  return seaStateRegionDiag(region, samples, Tmin, Tmax, Hmin, Hmax);
 }
 
 /**
@@ -175,7 +175,7 @@ export function drawWaveAccelContours(svg, opts = {}) {
     accelMin = 0,
     accelMax = null,
     showSeaStateOverlay = false,
-    seaStateMode = 'arc',
+    seaStateMode = 'diag',
     elLayers = [],
     hyLayers = []
   } = opts;
@@ -287,8 +287,8 @@ export function drawWaveAccelContours(svg, opts = {}) {
       }));
 
       const midH = (region.hs[0] + region.hs[1]) / 2;
-      const midT = ssMode === 'rect'
-        ? (region.tp[0] + region.tp[1]) / 2
+      const midT = ssMode === 'rect' ? (region.tp[0] + region.tp[1]) / 2
+        : ssMode === 'diag' ? smbT(midH)
         : (envelopeT(midH).lo + envelopeT(midH).hi) / 2;
       const midA = 2 * Math.PI * Math.PI * midH / Math.max(midT * midT, 1e-9);
       if (midA >= Amin && midA <= Amax && midT >= Tmin && midT <= Tmax) {
@@ -439,7 +439,7 @@ function renderWavePlot(svg, {
   speedMin = 0,
   speedMax = null,
   showSeaStateOverlay = false,
-  seaStateMode = 'arc',
+  seaStateMode = 'diag',
   showBreakingLimit = false,
   showPmCurve = false,
   showJonswapCurve = false,
