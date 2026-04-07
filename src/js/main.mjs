@@ -1273,6 +1273,8 @@ document.addEventListener('DOMContentLoaded', () => {
 
   setupPlotSettingsDialogs();
 
+  setupPrintExclude();
+
   configureSectionFourContent();
 
   setupProjectManager();
@@ -1561,6 +1563,46 @@ function setupPlotSettingsDialogs() {
     proxy.addEventListener('change', syncToSource);
     proxy.addEventListener('input', syncToSource);
   });
+}
+
+// ---- Print-exclude: click worksheet rows to toggle them out of print ----
+const PRINT_EXCLUDE_KEY = 'winch-print-exclude';
+
+function setupPrintExclude() {
+  // Restore persisted exclusions
+  let excluded = [];
+  try { excluded = JSON.parse(localStorage.getItem(PRINT_EXCLUDE_KEY) || '[]'); } catch {}
+  excluded.forEach(id => {
+    const el = document.getElementById(id);
+    if (el) {
+      const row = el.closest('tr');
+      if (row) row.classList.add('print-exclude');
+    }
+  });
+
+  // Delegate click on all worksheet tbody rows
+  document.querySelectorAll('.worksheet tbody').forEach(tbody => {
+    tbody.addEventListener('click', (e) => {
+      // Don't toggle when user is interacting with inputs/selects/buttons
+      const target = /** @type {HTMLElement} */ (e.target);
+      if (target.closest('input, select, button, textarea, a')) return;
+
+      const row = target.closest('tr');
+      if (!row) return;
+
+      row.classList.toggle('print-exclude');
+      persistPrintExclusions();
+    });
+  });
+}
+
+function persistPrintExclusions() {
+  const ids = [];
+  document.querySelectorAll('.worksheet tbody tr.print-exclude').forEach(row => {
+    const input = row.querySelector('[id]');
+    if (input) ids.push(input.id);
+  });
+  try { localStorage.setItem(PRINT_EXCLUDE_KEY, JSON.stringify(ids)); } catch {}
 }
 
 function renderDocumentMath() {
@@ -2261,6 +2303,9 @@ function buildSummaryTable(tableEl) {
     Array.from(srcBody.rows).forEach(row => {
       // Skip rows marked to always hide from summary
       if (row.hasAttribute('data-summary-hide')) return;
+
+      // Skip rows the user has excluded from print
+      if (row.classList.contains('print-exclude')) return;
 
       // Skip rows marked to hide when their control is blank
       const hideIfBlank = row.getAttribute('data-summary-hide-if-blank');

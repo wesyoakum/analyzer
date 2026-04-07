@@ -1093,6 +1093,16 @@ body {
   display: none !important;
 }
 
+/* Row print-exclude: click a worksheet row to toggle it out of print */
+.worksheet tbody tr {
+  cursor: pointer;
+}
+.worksheet tbody tr.print-exclude {
+  opacity: 0.35;
+  text-decoration: line-through;
+  text-decoration-color: var(--ink-500);
+}
+
 .param-label {
   position: relative;
   display: inline-flex;
@@ -2529,6 +2539,11 @@ th[title] {
   .tab-bar,
   .interactive-hint,
   #build-tag {
+    display: none !important;
+  }
+
+  /* Hide rows the user has excluded from print */
+  .print-exclude {
     display: none !important;
   }
 
