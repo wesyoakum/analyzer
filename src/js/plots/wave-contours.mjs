@@ -29,6 +29,59 @@ function envelopeT(H) {
 const SMB_T_COEFF = (8.1 * 8.1) / (0.24 * 9.80665);  // ≈ 27.874
 function smbT(H) { return Math.sqrt(SMB_T_COEFF * Math.max(H, 0)); }
 
+// Arc boundaries perpendicular to speed iso-lines (H = v·T/π).
+// Speed iso-lines are rays from the origin → perpendiculars are circles T²+H²=r².
+function arcRadiusSq(Hb) { return PM_T_COEFF * Hb + Hb * Hb; }
+function arcEnvelopeH(rSq, frac) {
+  const c = frac * frac * PM_T_COEFF;
+  return (-c + Math.sqrt(c * c + 4 * rSq)) / 2;
+}
+
+/**
+ * Trace a sea-state region using arc boundaries (T²+H²=r²) perpendicular
+ * to the speed iso-lines, with PM ±20 % as the side envelope.
+ */
+function seaStateRegionArc(region, samples, Tmin, Tmax, Hmin, Hmax) {
+  const loFrac = 1 - ENVELOPE_FRAC;
+  const hiFrac = 1 + ENVELOPE_FRAC;
+  const rLoSq = arcRadiusSq(region.hs[0]);
+  const rHiSq = arcRadiusSq(region.hs[1]);
+  const rLo = Math.sqrt(rLoSq);
+  const rHi = Math.sqrt(rHiSq);
+
+  let H_rb = Math.max(Hmin, arcEnvelopeH(rLoSq, hiFrac));
+  let H_rt = Math.min(Hmax, arcEnvelopeH(rHiSq, hiFrac));
+  let H_lt = Math.min(Hmax, arcEnvelopeH(rHiSq, loFrac));
+  let H_lb = Math.max(Hmin, arcEnvelopeH(rLoSq, loFrac));
+  if (H_rt <= H_rb || H_lt <= H_lb) return null;
+
+  const clampT = T => Math.min(Tmax, Math.max(Tmin, T));
+  const clampH = H => Math.min(Hmax, Math.max(Hmin, H));
+  const pts = [];
+
+  for (let i = 0; i <= samples; i++) {
+    const H = H_rb + (H_rt - H_rb) * (i / samples);
+    pts.push([clampT(envelopeT(H).hi), H]);
+  }
+  const θ_rt = Math.atan2(H_rt, clampT(envelopeT(H_rt).hi));
+  const θ_lt = Math.atan2(H_lt, clampT(envelopeT(H_lt).lo));
+  for (let i = 1; i < samples; i++) {
+    const θ = θ_rt + (θ_lt - θ_rt) * (i / samples);
+    pts.push([clampT(rHi * Math.cos(θ)), clampH(rHi * Math.sin(θ))]);
+  }
+  for (let i = 0; i <= samples; i++) {
+    const H = H_lt + (H_lb - H_lt) * (i / samples);
+    pts.push([clampT(envelopeT(H).lo), H]);
+  }
+  const θ_lb = Math.atan2(H_lb, clampT(envelopeT(H_lb).lo));
+  const θ_rb = Math.atan2(H_rb, clampT(envelopeT(H_rb).hi));
+  for (let i = 1; i < samples; i++) {
+    const θ = θ_lb + (θ_rb - θ_lb) * (i / samples);
+    pts.push([clampT(rLo * Math.cos(θ)), clampH(rLo * Math.sin(θ))]);
+  }
+  return pts;
+}
+
 /**
  * Trace a sea-state region using diagonal boundary lines (connecting
  * adjacent rectangle corners) with SMB ±20 % as the side envelope.
@@ -176,11 +229,12 @@ function seaStateRegionEnvelope(region, samples, Tmin, Tmax, Hmin, Hmax) {
 
 /**
  * Dispatch: return (T, H) boundary points for the requested sea-state mode.
- * mode: 'rect' | 'envelope' | 'diag' | 'diag2'
+ * mode: 'rect' | 'envelope' | 'arc' | 'diag' | 'diag2'
  */
 function seaStateRegionPts(region, mode, samples, Tmin, Tmax, Hmin, Hmax) {
   if (mode === 'rect') return seaStateRegionRect(region, Tmin, Tmax, Hmin, Hmax);
   if (mode === 'envelope') return seaStateRegionEnvelope(region, samples, Tmin, Tmax, Hmin, Hmax);
+  if (mode === 'arc') return seaStateRegionArc(region, samples, Tmin, Tmax, Hmin, Hmax);
   if (mode === 'diag2') return seaStateRegionDiag2(region, samples, Tmin, Tmax, Hmin, Hmax);
   return seaStateRegionDiag(region, samples, Tmin, Tmax, Hmin, Hmax);
 }
@@ -342,7 +396,7 @@ export function drawWaveAccelContours(svg, opts = {}) {
       const midH = (region.hs[0] + region.hs[1]) / 2;
       const midT = ssMode === 'rect' ? (region.tp[0] + region.tp[1]) / 2
         : (ssMode === 'diag' || ssMode === 'diag2') ? smbT(midH)
-        : (envelopeT(midH).lo + envelopeT(midH).hi) / 2;
+        : (envelopeT(midH).lo + envelopeT(midH).hi) / 2;  // envelope & arc
       const midA = 2 * Math.PI * Math.PI * midH / Math.max(midT * midT, 1e-9);
       if (midA >= Amin && midA <= Amax && midT >= Tmin && midT <= Tmax) {
         const label = svgEl('text', {

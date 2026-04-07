@@ -4,7 +4,7 @@
   <meta charset="utf-8" />
   <title>Winch Analysis</title>
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <link rel="stylesheet" href="css/styles.css?v=102" />
+  <link rel="stylesheet" href="css/styles.css?v=103" />
   <script>
     // Apply saved theme before first paint to prevent flash
     (function() {
@@ -935,6 +935,7 @@
                   <option value="">Sea states off</option>
                   <option value="rect">SS: Rectangles</option>
                   <option value="envelope">SS: PM envelopes</option>
+                  <option value="arc">SS: PM arcs</option>
                   <option value="diag">SS: SMB diagonal (wide)</option>
                   <option value="diag2" selected>SS: SMB diagonal (narrow)</option>
                 </select>
@@ -971,6 +972,7 @@
                   <option value="">Sea states off</option>
                   <option value="rect">SS: Rectangles</option>
                   <option value="envelope">SS: PM envelopes</option>
+                  <option value="arc">SS: PM arcs</option>
                   <option value="diag">SS: SMB diagonal (wide)</option>
                   <option value="diag2" selected>SS: SMB diagonal (narrow)</option>
                 </select>
@@ -2242,7 +2244,7 @@
       <span class="theme-toggle__icon--light" aria-hidden="true">&#9728;</span>
     </button>
 
-    <div id="build-tag" style="position:fixed;bottom:4px;right:4px;font:14px monospace;color:#999;pointer-events:none;z-index:9999">v102</div>
+    <div id="build-tag" style="position:fixed;bottom:4px;right:4px;font:14px monospace;color:#999;pointer-events:none;z-index:9999">v103</div>
     <script>
       // Theme toggle handler
       document.getElementById('theme_toggle').addEventListener('click', function() {
