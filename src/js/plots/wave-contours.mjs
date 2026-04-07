@@ -283,12 +283,15 @@ export function drawWaveAccelContours(svg, opts = {}) {
     accelMax = null,
     showSeaStateOverlay = false,
     seaStateMode = 'diag',
+    seaStateModes = null,
     elLayers = [],
     hyLayers = []
   } = opts;
 
-  // Normalise legacy boolean → mode string
-  const ssMode = showSeaStateOverlay ? (seaStateMode || 'arc') : '';
+  // Normalise: support both legacy single-mode and new multi-mode
+  const ssModes = Array.isArray(seaStateModes) && seaStateModes.length
+    ? seaStateModes
+    : showSeaStateOverlay ? [seaStateMode || 'diag'] : [];
 
   Tmin = parseNumber(Tmin);
   if (!Number.isFinite(Tmin) || Tmin <= 0) Tmin = 4;
@@ -378,8 +381,8 @@ export function drawWaveAccelContours(svg, opts = {}) {
     'text-anchor': 'middle', 'font-size': '12', fill: '#444'
   })).textContent = 'Acceleration (m/s²)';
 
-  // Sea state overlay
-  if (ssMode) {
+  // Sea state overlay (supports multiple modes simultaneously)
+  ssModes.forEach(ssMode => {
     const overlay = svgEl('g', { 'pointer-events': 'none' });
     SEA_STATE_REGIONS.forEach(region => {
       const thPts = seaStateRegionPts(region, ssMode, 80, Tmin, Tmax, Hmin, Hmax);
@@ -388,7 +391,7 @@ export function drawWaveAccelContours(svg, opts = {}) {
 
       overlay.appendChild(svgEl('path', {
         d: `${svgPathFromPoints(pts)} Z`,
-        fill: region.color,
+        fill: ssModes.length > 1 ? 'none' : region.color,
         stroke: 'rgba(70, 82, 107, 0.55)',
         'stroke-width': 1.2
       }));
@@ -396,7 +399,7 @@ export function drawWaveAccelContours(svg, opts = {}) {
       const midH = (region.hs[0] + region.hs[1]) / 2;
       const midT = ssMode === 'rect' ? (region.tp[0] + region.tp[1]) / 2
         : (ssMode === 'diag' || ssMode === 'diag2') ? smbT(midH)
-        : (envelopeT(midH).lo + envelopeT(midH).hi) / 2;  // envelope & arc
+        : (envelopeT(midH).lo + envelopeT(midH).hi) / 2;
       const midA = 2 * Math.PI * Math.PI * midH / Math.max(midT * midT, 1e-9);
       if (midA >= Amin && midA <= Amax && midT >= Tmin && midT <= Tmax) {
         const label = svgEl('text', {
@@ -409,7 +412,7 @@ export function drawWaveAccelContours(svg, opts = {}) {
       }
     });
     svg.appendChild(overlay);
-  }
+  });
 
   // Acceleration contour lines: a = 2π²H / T² for H in 0.5m steps
   let contourId = 0;
@@ -547,6 +550,7 @@ function renderWavePlot(svg, {
   speedMax = null,
   showSeaStateOverlay = false,
   seaStateMode = 'diag',
+  seaStateModes = null,
   showBreakingLimit = false,
   showPmCurve = false,
   showJonswapCurve = false,
@@ -570,7 +574,9 @@ function renderWavePlot(svg, {
 
   while (svg.firstChild) svg.removeChild(svg.firstChild);
 
-  const ssMode = showSeaStateOverlay ? (seaStateMode || 'arc') : '';
+  const ssModes = Array.isArray(seaStateModes) && seaStateModes.length
+    ? seaStateModes
+    : showSeaStateOverlay ? [seaStateMode || 'diag'] : [];
 
   const parseNumber = val => {
     const num = Number(val);
@@ -700,42 +706,44 @@ function renderWavePlot(svg, {
 
   if (mode === 'speed') {
     const drawSeaStateOverlaySpeed = () => {
-      if (!ssMode) return;
-      const overlay = svgEl('g', { 'pointer-events': 'none' });
+      if (!ssModes.length) return;
+      ssModes.forEach(ssMode => {
+        const overlay = svgEl('g', { 'pointer-events': 'none' });
 
-      SEA_STATE_REGIONS.forEach(region => {
-        const thPts = seaStateRegionPts(region, ssMode, 80, Tmin, Tmax, Hmin, Hmax);
-        if (!thPts) return;
-        const pts = thPts.map(([T, H]) => [sx(T), sy(Math.PI * H / Math.max(T, 1e-9))]);
+        SEA_STATE_REGIONS.forEach(region => {
+          const thPts = seaStateRegionPts(region, ssMode, 80, Tmin, Tmax, Hmin, Hmax);
+          if (!thPts) return;
+          const pts = thPts.map(([T, H]) => [sx(T), sy(Math.PI * H / Math.max(T, 1e-9))]);
 
-        overlay.appendChild(svgEl('path', {
-          d: `${svgPathFromPoints(pts)} Z`,
-          fill: region.color,
-          stroke: 'rgba(70, 82, 107, 0.55)',
-          'stroke-width': 1.2
-        }));
+          overlay.appendChild(svgEl('path', {
+            d: `${svgPathFromPoints(pts)} Z`,
+            fill: ssModes.length > 1 ? 'none' : region.color,
+            stroke: 'rgba(70, 82, 107, 0.55)',
+            'stroke-width': 1.2
+          }));
 
-        const midH = (region.hs[0] + region.hs[1]) / 2;
-        const midT = ssMode === 'rect'
-          ? (region.tp[0] + region.tp[1]) / 2
-          : (envelopeT(midH).lo + envelopeT(midH).hi) / 2;
-        const midV = Math.PI * midH / Math.max(midT, 1e-9);
-        if (midV >= Vmin && midV <= Vmax && midT >= Tmin && midT <= Tmax) {
-          const label = svgEl('text', {
-            x: sx(midT),
-            y: sy(midV),
-            'text-anchor': 'middle',
-            'dominant-baseline': 'middle',
-            'font-size': '12',
-            'font-weight': '600',
-            fill: '#27324b'
-          });
-          label.textContent = `SS ${region.ss}`;
-          overlay.appendChild(label);
-        }
+          const midH = (region.hs[0] + region.hs[1]) / 2;
+          const midT = ssMode === 'rect' ? (region.tp[0] + region.tp[1]) / 2
+            : (ssMode === 'diag' || ssMode === 'diag2') ? smbT(midH)
+            : (envelopeT(midH).lo + envelopeT(midH).hi) / 2;
+          const midV = Math.PI * midH / Math.max(midT, 1e-9);
+          if (midV >= Vmin && midV <= Vmax && midT >= Tmin && midT <= Tmax) {
+            const label = svgEl('text', {
+              x: sx(midT),
+              y: sy(midV),
+              'text-anchor': 'middle',
+              'dominant-baseline': 'middle',
+              'font-size': '12',
+              'font-weight': '600',
+              fill: '#27324b'
+            });
+            label.textContent = `SS ${region.ss}`;
+            overlay.appendChild(label);
+          }
+        });
+
+        svg.appendChild(overlay);
       });
-
-      svg.appendChild(overlay);
     };
 
     drawSeaStateOverlaySpeed();
@@ -824,39 +832,41 @@ function renderWavePlot(svg, {
 
   } else {
     const drawSeaStateOverlay = () => {
-      if (!ssMode) return;
-      const overlay = svgEl('g', { 'pointer-events': 'none' });
-      SEA_STATE_REGIONS.forEach(region => {
-        const thPts = seaStateRegionPts(region, ssMode, 80, Tmin, Tmax, Hmin, Hmax);
-        if (!thPts) return;
-        const pts = thPts.map(([T, H]) => [sx(T), sy(H)]);
+      if (!ssModes.length) return;
+      ssModes.forEach(ssMode => {
+        const overlay = svgEl('g', { 'pointer-events': 'none' });
+        SEA_STATE_REGIONS.forEach(region => {
+          const thPts = seaStateRegionPts(region, ssMode, 80, Tmin, Tmax, Hmin, Hmax);
+          if (!thPts) return;
+          const pts = thPts.map(([T, H]) => [sx(T), sy(H)]);
 
-        overlay.appendChild(svgEl('path', {
-          d: `${svgPathFromPoints(pts)} Z`,
-          fill: region.color,
-          stroke: 'rgba(70, 82, 107, 0.55)',
-          'stroke-width': 1.2
-        }));
+          overlay.appendChild(svgEl('path', {
+            d: `${svgPathFromPoints(pts)} Z`,
+            fill: ssModes.length > 1 ? 'none' : region.color,
+            stroke: 'rgba(70, 82, 107, 0.55)',
+            'stroke-width': 1.2
+          }));
 
-        const midH = (region.hs[0] + region.hs[1]) / 2;
-        const midT = ssMode === 'rect'
-          ? (region.tp[0] + region.tp[1]) / 2
-          : (envelopeT(midH).lo + envelopeT(midH).hi) / 2;
-        if (midT >= Tmin && midT <= Tmax) {
-          const label = svgEl('text', {
-            x: sx(midT),
-            y: sy(midH),
-            'text-anchor': 'middle',
-            'dominant-baseline': 'middle',
-            'font-size': '12',
-            'font-weight': '600',
-            fill: '#27324b'
-          });
-          label.textContent = `SS ${region.ss}`;
-          overlay.appendChild(label);
-        }
+          const midH = (region.hs[0] + region.hs[1]) / 2;
+          const midT = ssMode === 'rect' ? (region.tp[0] + region.tp[1]) / 2
+            : (ssMode === 'diag' || ssMode === 'diag2') ? smbT(midH)
+            : (envelopeT(midH).lo + envelopeT(midH).hi) / 2;
+          if (midT >= Tmin && midT <= Tmax) {
+            const label = svgEl('text', {
+              x: sx(midT),
+              y: sy(midH),
+              'text-anchor': 'middle',
+              'dominant-baseline': 'middle',
+              'font-size': '12',
+              'font-weight': '600',
+              fill: '#27324b'
+            });
+            label.textContent = `SS ${region.ss}`;
+            overlay.appendChild(label);
+          }
+        });
+        svg.appendChild(overlay);
       });
-      svg.appendChild(overlay);
     };
 
     // iso-speed contour lines (H = v·T / π) for integer and half-integer speeds

@@ -2953,8 +2953,7 @@ function drawWavePlots() {
       Tmax: Number.isFinite(TmaxVal) ? TmaxVal : 20,
       speedMin: Number.isFinite(speedMinVal) ? speedMinVal : undefined,
       speedMax: Number.isFinite(speedMaxVal) ? speedMaxVal : undefined,
-      showSeaStateOverlay: Boolean(waveSpeedSeaStateModeEl?.value),
-      seaStateMode: waveSpeedSeaStateModeEl?.value || 'diag',
+      seaStateModes: waveSpeedSeaStateModeEl ? Array.from(waveSpeedSeaStateModeEl.selectedOptions).map(o => o.value).filter(Boolean) : [],
       showMaxDisp: Boolean(q('wave_show_max_disp')?.checked),
       showMinDisp: Boolean(q('wave_show_min_disp')?.checked)
     });
@@ -2964,8 +2963,7 @@ function drawWavePlots() {
       Tmax: Number.isFinite(heightTmaxVal) ? heightTmaxVal : 20,
       Hmin: Number.isFinite(HminVal) ? HminVal : undefined,
       Hmax: Number.isFinite(HmaxVal) ? HmaxVal : 6,
-      showSeaStateOverlay: Boolean(waveHtSeaStateModeEl?.value),
-      seaStateMode: waveHtSeaStateModeEl?.value || 'diag',
+      seaStateModes: waveHtSeaStateModeEl ? Array.from(waveHtSeaStateModeEl.selectedOptions).map(o => o.value).filter(Boolean) : [],
       showBreakingLimit: Boolean(waveShowBreakingLimitEl?.checked),
       showPmCurve: Boolean(waveShowPmCurveEl?.checked),
       showJonswapCurve: Boolean(waveShowJonswapCurveEl?.checked),
@@ -2994,8 +2992,7 @@ function drawAccelPlot() {
       Tmax: Number.isFinite(parseInput(accelTmaxEl)) ? parseInput(accelTmaxEl) : 20,
       accelMin: Number.isFinite(parseInput(accelAminEl)) ? parseInput(accelAminEl) : 0,
       accelMax: Number.isFinite(parseInput(accelAmaxEl)) ? parseInput(accelAmaxEl) : undefined,
-      showSeaStateOverlay: Boolean(accelSeaStateModeEl?.value),
-      seaStateMode: accelSeaStateModeEl?.value || 'diag'
+      seaStateModes: accelSeaStateModeEl ? Array.from(accelSeaStateModeEl.selectedOptions).map(o => o.value).filter(Boolean) : []
     });
   }
 

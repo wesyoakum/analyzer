@@ -4,7 +4,7 @@
   <meta charset="utf-8" />
   <title>Winch Analysis</title>
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <link rel="stylesheet" href="css/styles.css?v=103" />
+  <link rel="stylesheet" href="css/styles.css?v=104" />
   <script>
     // Apply saved theme before first paint to prevent flash
     (function() {
@@ -931,13 +931,12 @@
                 <span>Min Disp</span>
               </label>
               <label class="plot-panel__checkbox" title="Sea-state overlay style">
-                <select id="wave_speed_sea_state_mode" class="plot-panel__select">
-                  <option value="">Sea states off</option>
-                  <option value="rect">SS: Rectangles</option>
-                  <option value="envelope">SS: PM envelopes</option>
-                  <option value="arc">SS: PM arcs</option>
-                  <option value="diag">SS: SMB diagonal (wide)</option>
-                  <option value="diag2" selected>SS: SMB diagonal (narrow)</option>
+                <select id="wave_speed_sea_state_mode" class="plot-panel__select" multiple size="5" title="Ctrl/Cmd+click to select multiple">
+                  <option value="rect">Rectangles</option>
+                  <option value="envelope">PM envelopes</option>
+                  <option value="arc">PM arcs</option>
+                  <option value="diag">SMB diag (wide)</option>
+                  <option value="diag2">SMB diag (narrow)</option>
                 </select>
               </label>
             </div>
@@ -968,13 +967,12 @@
                 <span>Min Disp</span>
               </label>
               <label class="plot-panel__checkbox" title="Sea-state overlay style">
-                <select id="wave_ht_sea_state_mode" class="plot-panel__select">
-                  <option value="">Sea states off</option>
-                  <option value="rect">SS: Rectangles</option>
-                  <option value="envelope">SS: PM envelopes</option>
-                  <option value="arc">SS: PM arcs</option>
-                  <option value="diag">SS: SMB diagonal (wide)</option>
-                  <option value="diag2" selected>SS: SMB diagonal (narrow)</option>
+                <select id="wave_ht_sea_state_mode" class="plot-panel__select" multiple size="5" title="Ctrl/Cmd+click to select multiple">
+                  <option value="rect">Rectangles</option>
+                  <option value="envelope">PM envelopes</option>
+                  <option value="arc">PM arcs</option>
+                  <option value="diag">SMB diag (wide)</option>
+                  <option value="diag2">SMB diag (narrow)</option>
                 </select>
               </label>
               <label class="plot-panel__checkbox" title="Show deep-water breaking limit curve">
@@ -1027,12 +1025,12 @@
           </div>
           <div class="plot-panel__toggles" aria-label="Wave acceleration overlays">
             <label class="plot-panel__checkbox" title="Sea-state overlay style">
-              <select id="wave_accel_sea_state_mode" class="plot-panel__select">
-                <option value="">Sea states off</option>
-                <option value="rect">SS: Rectangles</option>
-                <option value="envelope">SS: PM envelopes</option>
-                <option value="diag">SS: SMB diagonal (wide)</option>
-                  <option value="diag2" selected>SS: SMB diagonal (narrow)</option>
+              <select id="wave_accel_sea_state_mode" class="plot-panel__select" multiple size="5" title="Ctrl/Cmd+click to select multiple">
+                <option value="rect">Rectangles</option>
+                <option value="envelope">PM envelopes</option>
+                <option value="arc">PM arcs</option>
+                <option value="diag">SMB diag (wide)</option>
+                <option value="diag2">SMB diag (narrow)</option>
               </select>
             </label>
           </div>
@@ -2244,7 +2242,7 @@
       <span class="theme-toggle__icon--light" aria-hidden="true">&#9728;</span>
     </button>
 
-    <div id="build-tag" style="position:fixed;bottom:4px;right:4px;font:14px monospace;color:#999;pointer-events:none;z-index:9999">v103</div>
+    <div id="build-tag" style="position:fixed;bottom:4px;right:4px;font:14px monospace;color:#999;pointer-events:none;z-index:9999">v104</div>
     <script>
       // Theme toggle handler
       document.getElementById('theme_toggle').addEventListener('click', function() {

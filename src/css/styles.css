@@ -1869,6 +1869,10 @@ th[title] {
   background: var(--bg, #fff);
   color: var(--ink-700);
 }
+.plot-panel__select[multiple] {
+  padding: 2px;
+  vertical-align: top;
+}
 
 /* Dual mm / in input pair */
 .dual-input {
