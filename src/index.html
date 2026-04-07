@@ -4,7 +4,7 @@
   <meta charset="utf-8" />
   <title>Winch Analysis</title>
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <link rel="stylesheet" href="css/styles.css?v=106" />
+  <link rel="stylesheet" href="css/styles.css?v=107" />
   <script>
     // Apply saved theme before first paint to prevent flash
     (function() {
@@ -930,15 +930,13 @@
                 <input id="wave_show_min_disp" type="checkbox" data-persist="off">
                 <span>Min Disp</span>
               </label>
-              <label class="plot-panel__checkbox" title="Sea-state overlay style">
-                <select id="wave_speed_sea_state_mode" class="plot-panel__select" multiple size="5" title="Ctrl/Cmd+click to select multiple">
-                  <option value="rect">Rectangles</option>
-                  <option value="envelope">PM envelopes</option>
-                  <option value="arc">PM arcs</option>
-                  <option value="diag">SMB diag (wide)</option>
-                  <option value="diag2">SMB diag (narrow)</option>
-                </select>
-              </label>
+              <span class="plot-panel__checkbox-group" data-group="wave_speed_ss">
+                <label class="plot-panel__checkbox"><input id="ss_speed_rect" type="checkbox" data-ss-mode="rect" data-group-id="wave_speed_ss"><span>Rect</span></label>
+                <label class="plot-panel__checkbox"><input id="ss_speed_envelope" type="checkbox" data-ss-mode="envelope" data-group-id="wave_speed_ss"><span>PM env</span></label>
+                <label class="plot-panel__checkbox"><input id="ss_speed_arc" type="checkbox" data-ss-mode="arc" data-group-id="wave_speed_ss"><span>PM arc</span></label>
+                <label class="plot-panel__checkbox"><input id="ss_speed_diag" type="checkbox" data-ss-mode="diag" data-group-id="wave_speed_ss"><span>SMB wide</span></label>
+                <label class="plot-panel__checkbox"><input id="ss_speed_diag2" type="checkbox" data-ss-mode="diag2" data-group-id="wave_speed_ss"><span>SMB narrow</span></label>
+              </span>
             </div>
             <div class="plotwrap">
               <svg id="wave_svg" viewBox="0 0 1000 540"></svg>
@@ -967,14 +965,13 @@
                 <span>Min Disp</span>
               </label>
               <label class="plot-panel__checkbox" title="Sea-state overlay style">
-                <select id="wave_ht_sea_state_mode" class="plot-panel__select" multiple size="5" title="Ctrl/Cmd+click to select multiple">
-                  <option value="rect">Rectangles</option>
-                  <option value="envelope">PM envelopes</option>
-                  <option value="arc">PM arcs</option>
-                  <option value="diag">SMB diag (wide)</option>
-                  <option value="diag2">SMB diag (narrow)</option>
-                </select>
-              </label>
+              <span class="plot-panel__checkbox-group" data-group="wave_ht_ss">
+                <label class="plot-panel__checkbox"><input id="ss_ht_rect" type="checkbox" data-ss-mode="rect" data-group-id="wave_ht_ss"><span>Rect</span></label>
+                <label class="plot-panel__checkbox"><input id="ss_ht_envelope" type="checkbox" data-ss-mode="envelope" data-group-id="wave_ht_ss"><span>PM env</span></label>
+                <label class="plot-panel__checkbox"><input id="ss_ht_arc" type="checkbox" data-ss-mode="arc" data-group-id="wave_ht_ss"><span>PM arc</span></label>
+                <label class="plot-panel__checkbox"><input id="ss_ht_diag" type="checkbox" data-ss-mode="diag" data-group-id="wave_ht_ss"><span>SMB wide</span></label>
+                <label class="plot-panel__checkbox"><input id="ss_ht_diag2" type="checkbox" data-ss-mode="diag2" data-group-id="wave_ht_ss"><span>SMB narrow</span></label>
+              </span>
               <label class="plot-panel__checkbox" title="Show deep-water breaking limit curve">
                 <input id="wave_show_breaking_limit" type="checkbox">
                 <span>Breaking limit</span>
@@ -1025,14 +1022,13 @@
           </div>
           <div class="plot-panel__toggles" aria-label="Wave acceleration overlays">
             <label class="plot-panel__checkbox" title="Sea-state overlay style">
-              <select id="wave_accel_sea_state_mode" class="plot-panel__select" multiple size="5" title="Ctrl/Cmd+click to select multiple">
-                <option value="rect">Rectangles</option>
-                <option value="envelope">PM envelopes</option>
-                <option value="arc">PM arcs</option>
-                <option value="diag">SMB diag (wide)</option>
-                <option value="diag2">SMB diag (narrow)</option>
-              </select>
-            </label>
+            <span class="plot-panel__checkbox-group" data-group="wave_accel_ss">
+                <label class="plot-panel__checkbox"><input id="ss_accel_rect" type="checkbox" data-ss-mode="rect" data-group-id="wave_accel_ss"><span>Rect</span></label>
+                <label class="plot-panel__checkbox"><input id="ss_accel_envelope" type="checkbox" data-ss-mode="envelope" data-group-id="wave_accel_ss"><span>PM env</span></label>
+                <label class="plot-panel__checkbox"><input id="ss_accel_arc" type="checkbox" data-ss-mode="arc" data-group-id="wave_accel_ss"><span>PM arc</span></label>
+                <label class="plot-panel__checkbox"><input id="ss_accel_diag" type="checkbox" data-ss-mode="diag" data-group-id="wave_accel_ss"><span>SMB wide</span></label>
+                <label class="plot-panel__checkbox"><input id="ss_accel_diag2" type="checkbox" data-ss-mode="diag2" data-group-id="wave_accel_ss"><span>SMB narrow</span></label>
+              </span>
           </div>
           <div class="plotwrap">
             <svg id="wave_svg_accel" viewBox="0 0 1000 540"></svg>
@@ -2242,7 +2238,7 @@
       <span class="theme-toggle__icon--light" aria-hidden="true">&#9728;</span>
     </button>
 
-    <div id="build-tag" style="position:fixed;bottom:4px;right:4px;font:14px monospace;color:#999;pointer-events:none;z-index:9999">v106</div>
+    <div id="build-tag" style="position:fixed;bottom:4px;right:4px;font:14px monospace;color:#999;pointer-events:none;z-index:9999">v107</div>
     <script>
       // Theme toggle handler
       document.getElementById('theme_toggle').addEventListener('click', function() {
