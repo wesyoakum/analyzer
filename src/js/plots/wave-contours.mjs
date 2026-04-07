@@ -225,14 +225,31 @@ function seaStateRegionEnvelope(region, samples, Tmin, Tmax, Hmin, Hmax) {
   const lowH = Math.max(Hmin, region.hs[0]);
   const highH = Math.min(Hmax, region.hs[1]);
   if (highH <= lowH) return null;
+  const clampT = T => Math.min(Tmax, Math.max(Tmin, T));
+  const topThi = clampT(envelopeT(highH).hi);
+  const topTlo = clampT(envelopeT(highH).lo);
+  const botThi = clampT(envelopeT(lowH).hi);
+  const botTlo = clampT(envelopeT(lowH).lo);
   const pts = [];
+  // Right side: sweep H from bottom to top
   for (let i = 0; i <= samples; i++) {
     const H = lowH + (highH - lowH) * (i / samples);
-    pts.push([Math.min(Tmax, Math.max(Tmin, envelopeT(H).hi)), H]);
+    pts.push([clampT(envelopeT(H).hi), H]);
   }
-  for (let i = samples; i >= 0; i--) {
-    const H = lowH + (highH - lowH) * (i / samples);
-    pts.push([Math.max(Tmin, Math.min(Tmax, envelopeT(H).lo)), H]);
+  // Top edge: sweep T from right to left at highH
+  for (let i = 1; i < samples; i++) {
+    const T = topThi + (topTlo - topThi) * (i / samples);
+    pts.push([T, highH]);
+  }
+  // Left side: sweep H from top to bottom
+  for (let i = 0; i <= samples; i++) {
+    const H = highH + (lowH - highH) * (i / samples);
+    pts.push([clampT(envelopeT(H).lo), H]);
+  }
+  // Bottom edge: sweep T from left to right at lowH
+  for (let i = 1; i < samples; i++) {
+    const T = botTlo + (botThi - botTlo) * (i / samples);
+    pts.push([T, lowH]);
   }
   return pts;
 }
