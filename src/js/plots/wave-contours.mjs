@@ -975,9 +975,19 @@ function renderWavePlot(svg, {
     }
 
     if (showSmbCurve) {
+      const smbFn = T => (0.24 * 9.80665 * T * T) / (8.1 * 8.1);
       drawReferenceCurve(
-        T => (0.24 * 9.80665 * T * T) / (8.1 * 8.1),
+        smbFn,
         { stroke: '#e55438', strokeWidth: 2.4, dash: '4 6', label: 'SMB sea (fetch-limited)', labelT: Math.min(Tmax - 1.0, 9.5), labelOffsetY: 12 }
+      );
+      // ±20 % envelope lines
+      drawReferenceCurve(
+        T => 0.8 * smbFn(T),
+        { stroke: '#e55438', strokeWidth: 1.2, dash: '3 5', label: 'SMB −20 %', labelT: Math.min(Tmax - 0.6, 8), labelOffsetY: -10 }
+      );
+      drawReferenceCurve(
+        T => 1.2 * smbFn(T),
+        { stroke: '#e55438', strokeWidth: 1.2, dash: '3 5', label: 'SMB +20 %', labelT: Math.min(Tmax - 0.6, 11), labelOffsetY: 10 }
       );
     }
 
