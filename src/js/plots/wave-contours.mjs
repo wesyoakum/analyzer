@@ -989,6 +989,14 @@ function renderWavePlot(svg, {
         T => 1.2 * smbFn(T),
         { stroke: '#e55438', strokeWidth: 1.2, dash: '3 5', label: 'SMB +20 %', labelT: Math.min(Tmax - 0.6, 11), labelOffsetY: 10 }
       );
+      drawReferenceCurve(
+        T => 0.7 * smbFn(T),
+        { stroke: '#e55438', strokeWidth: 1.0, dash: '2 4', label: 'SMB −30 %', labelT: Math.min(Tmax - 0.6, 7), labelOffsetY: -10 }
+      );
+      drawReferenceCurve(
+        T => 1.3 * smbFn(T),
+        { stroke: '#e55438', strokeWidth: 1.0, dash: '2 4', label: 'SMB +30 %', labelT: Math.min(Tmax - 0.6, 12), labelOffsetY: 10 }
+      );
     }
 
   }
