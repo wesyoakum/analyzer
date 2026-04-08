@@ -202,7 +202,7 @@ export function renderHydraulicTables(hyLayers, hyWraps, tbodyLayer, tbodyWraps)
       fmtKgf(r.hyd_avail_tension_kgf),
       r.min_avail_accel_mps2 ? formatDecimal(r.min_avail_accel_mps2, 2) : '–'
     ];
-    const detailCols = [0, 5, 6, 9, 10, 15, 16];
+    const detailCols = [0, 5, 6, 9, 10, 12, 13, 15, 16];
     tr.innerHTML = cells.map((v, i) =>
       detailCols.includes(i) ? `<td class="detail-col">${v}</td>` : `<td>${v}</td>`
     ).join('');
