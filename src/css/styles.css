@@ -2630,3 +2630,132 @@ th[title] {
     margin: 10mm 15mm 10mm 15mm;
   }
 }
+
+/* ── Mathcad-style calculation sheet ─────────────────────── */
+.mcad-card {
+  overflow: visible;
+}
+
+.mcad-sheet {
+  padding: var(--space-sm) var(--space-md);
+}
+
+.mcad-heading {
+  font-size: 1.1rem;
+  font-weight: 700;
+  color: var(--accent);
+  margin: 1.5em 0 0.5em;
+  padding-bottom: 0.3em;
+  border-bottom: 2px solid var(--accent);
+}
+
+.mcad-heading:first-child {
+  margin-top: 0;
+}
+
+.mcad-subheading {
+  font-size: 0.95rem;
+  font-weight: 600;
+  color: var(--ink-700);
+  margin: 1.2em 0 0.3em;
+}
+
+.mcad-line {
+  padding: 3px 0 3px 1.5em;
+  line-height: 1.7;
+}
+
+.mcad-line--result {
+  padding-left: 3em;
+  color: var(--accent);
+}
+
+.mcad-line--result .katex {
+  color: var(--accent);
+}
+
+.mcad-note {
+  font-size: 0.85rem;
+  color: var(--ink-500);
+  margin: 0.2em 0 0.2em 1.5em;
+  font-style: italic;
+}
+
+.mcad-empty {
+  color: var(--ink-500);
+  font-style: italic;
+  text-align: center;
+  padding: var(--space-lg) 0;
+}
+
+/* Toggle switch */
+.mcad-toggle {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  cursor: pointer;
+  user-select: none;
+  font-size: 0.85rem;
+}
+
+.mcad-toggle__input {
+  display: none;
+}
+
+.mcad-toggle__slider {
+  position: relative;
+  width: 40px;
+  height: 22px;
+  background: var(--surface-alt);
+  border: 1px solid var(--paper-line-strong);
+  border-radius: 11px;
+  transition: background 0.2s;
+  flex-shrink: 0;
+}
+
+.mcad-toggle__slider::after {
+  content: '';
+  position: absolute;
+  top: 2px;
+  left: 2px;
+  width: 16px;
+  height: 16px;
+  background: var(--accent);
+  border-radius: 50%;
+  transition: transform 0.2s;
+}
+
+.mcad-toggle__input:checked + .mcad-toggle__slider::after {
+  transform: translateX(18px);
+}
+
+.mcad-toggle__label {
+  font-weight: 500;
+  transition: color 0.2s;
+}
+
+.mcad-toggle__label--sym {
+  color: var(--accent);
+}
+
+.mcad-toggle__label--num {
+  color: var(--ink-500);
+}
+
+.mcad-toggle__input:checked ~ .mcad-toggle__label--num {
+  color: var(--accent);
+}
+
+.mcad-toggle__input:checked ~ .mcad-toggle__label--sym,
+.mcad-toggle__input:checked + .mcad-toggle__slider + .mcad-toggle__label--num {
+  /* handled by sibling selectors below */
+}
+
+/* When toggle is checked (numeric), flip label emphasis */
+.mcad-toggle:has(.mcad-toggle__input:checked) .mcad-toggle__label--sym {
+  color: var(--ink-500);
+}
+
+.mcad-toggle:has(.mcad-toggle__input:checked) .mcad-toggle__label--num {
+  color: var(--accent);
+}

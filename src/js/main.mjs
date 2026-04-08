@@ -24,6 +24,7 @@ import { setupComponentSelectors } from './component-selectors.mjs';
 import { renderDrumVisualization, clearDrumVisualization } from './drum-visual.mjs';
 import { renderLatexFragments } from './katex-renderer.mjs';
 import { buildComputationModel } from './analysis-data.mjs';
+import { renderMathcadSheet } from './mathcad-sheet.mjs';
 import { downloadSpecSheetPDF } from './spec-sheet-export.mjs';
 import { buildTextSummaryLines, downloadLines } from './text-export.mjs';
 import { renderReport } from './report-renderer.mjs';
@@ -1542,6 +1543,17 @@ document.addEventListener('DOMContentLoaded', () => {
     syncAhc();
   }
 
+  // Mathcad sheet symbolic/numeric toggle
+  const mcadToggle = /** @type {HTMLInputElement|null} */ (document.getElementById('mcad_mode_toggle'));
+  if (mcadToggle) {
+    mcadToggle.addEventListener('change', () => {
+      const container = document.getElementById('mathcad-sheet');
+      const mode = mcadToggle.checked ? 'numeric' : 'symbolic';
+      renderMathcadSheet(container, lastComputedModel, mode);
+      renderLatexFragments(document.body);
+    });
+  }
+
   // Initial compute
   computeAll();
 });
@@ -2018,10 +2030,10 @@ function setupPayloadBreakdownToggle() {
 
 function configureSectionFourContent() {
   const tab = /** @type {HTMLElement|null} */ (document.getElementById('tab-instructions'));
-  if (tab) tab.textContent = 'Section 4: Symbols, Calculations, and Instructions';
+  if (tab) tab.textContent = 'Section 5: Symbols, Calculations, and Reference';
 
   const title = /** @type {HTMLElement|null} */ (document.getElementById('hydraulic-core-equations-title'));
-  if (title) title.textContent = 'Section 4: Symbols, Calculations, and Instructions';
+  if (title) title.textContent = 'Section 5: Symbols, Calculations, and Reference';
 
   const equationCard = /** @type {HTMLElement|null} */ (document.getElementById('hydraulic-core-equations'));
   const exportGuideCard = /** @type {HTMLElement|null} */ (document.getElementById('preset-export-guide'));
@@ -2032,8 +2044,8 @@ function configureSectionFourContent() {
 
   if (equationCard) {
     const headings = equationCard.querySelectorAll('h3');
-    if (headings[0]) headings[0].textContent = 'Section 4.1: Symbols';
-    if (headings[1]) headings[1].textContent = 'Section 4.2: Calculations';
+    if (headings[0]) headings[0].textContent = 'Section 5.1: Symbols';
+    if (headings[1]) headings[1].textContent = 'Section 5.2: Calculations';
 
     const rows = Array.from(equationCard.querySelectorAll('tbody tr'));
     rows.forEach(row => {
@@ -2887,6 +2899,12 @@ function computeAll() {
     updateReportHeader(model);
     updateExecutiveSummary(model, torqueChecks);
     renderReport(document.getElementById('report-root'), { ...model, inputState: collectInputState() });
+
+    // Mathcad-style calculation sheet
+    const mcadMode = /** @type {HTMLInputElement|null} */ (document.getElementById('mcad_mode_toggle'));
+    const mcadContainer = document.getElementById('mathcad-sheet');
+    renderMathcadSheet(mcadContainer, model, mcadMode?.checked ? 'numeric' : 'symbolic');
+
     renderLatexFragments(document.body);
     updateOutputHeaders();
     updateCsvButtonStates();
@@ -2905,6 +2923,7 @@ function computeAll() {
     updateCsvButtonStates();
     renderInputSummary();
     renderReport(document.getElementById('report-root'), null);
+    renderMathcadSheet(document.getElementById('mathcad-sheet'), null, 'symbolic');
     renderLatexFragments(document.body);
   }
 }

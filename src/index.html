@@ -863,7 +863,8 @@
       <a class="report-nav__link" href="#panel-inputs">1 Summary</a>
       <a class="report-nav__link" href="#panel-performance">2 System Performance</a>
       <a class="report-nav__link" href="#panel-results">3 Layer Data</a>
-      <a class="report-nav__link" href="#panel-instructions">4 Calculations</a>
+      <a class="report-nav__link" href="#panel-mathcad">4 Calculation Sheet</a>
+      <a class="report-nav__link" href="#panel-instructions">5 Reference</a>
       <button id="save-pdf-btn" class="report-nav__pdf-btn" title="Save as PDF">&#128438; PDF</button>
     </nav>
     <div class="sheet">
@@ -1428,6 +1429,29 @@
       </details>
     </div>
 
+
+    <div
+      id="panel-mathcad"
+      class="panel"
+    >
+      <h2 class="section-title panel-section-title">Section 4: Calculation Sheet</h2>
+      <section class="card mcad-card">
+        <div class="card-header">
+          <h2 class="section-title">Section 4.1: Mathcad-Style Calculations</h2>
+          <div class="card-header-actions">
+            <label class="toggle-label mcad-toggle">
+              <span class="mcad-toggle__label mcad-toggle__label--sym" id="mcad_label_sym">Symbolic</span>
+              <input type="checkbox" id="mcad_mode_toggle" class="mcad-toggle__input" />
+              <span class="mcad-toggle__slider"></span>
+              <span class="mcad-toggle__label mcad-toggle__label--num" id="mcad_label_num">Values</span>
+            </label>
+          </div>
+        </div>
+        <div id="mathcad-sheet" class="mcad-sheet">
+          <p class="mcad-empty">Run analysis to see calculations.</p>
+        </div>
+      </section>
+    </div>
 
     <div
       id="panel-instructions"
@@ -2235,7 +2259,7 @@
       <span class="theme-toggle__icon--light" aria-hidden="true">&#9728;</span>
     </button>
 
-    <div id="build-tag" style="position:fixed;bottom:4px;right:4px;font:14px monospace;color:#999;pointer-events:none;z-index:9999">v118</div>
+    <div id="build-tag" style="position:fixed;bottom:4px;right:4px;font:14px monospace;color:#999;pointer-events:none;z-index:9999">v119</div>
     <script>
       // Theme toggle handler
       document.getElementById('theme_toggle').addEventListener('click', function() {
