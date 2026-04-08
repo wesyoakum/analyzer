@@ -5,7 +5,7 @@
   <meta charset="utf-8" />
   <title>Winch Analysis</title>
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <link rel="stylesheet" href="css/styles.css?v=112" />
+  <link rel="stylesheet" href="css/styles.css?v=113" />
   <script>
     // Apply saved theme before first paint to prevent flash
     (function() {
@@ -923,11 +923,11 @@
               <button type="button" class="plot-settings-btn" data-plot-settings-target="plot-settings-wave-speed" aria-label="Open axis settings for speed vs period plot">⚙</button>
             </div>
             <div class="plot-panel__toggles" aria-label="Wave speed overlays">
-              <label class="plot-panel__checkbox" title="Show max-displacement iso-lines">
+              <label class="plot-panel__checkbox" title="Show max-displacement iso-lines" data-drive-scope="hydraulic">
                 <input id="wave_show_max_disp" type="checkbox" checked data-persist="off">
                 <span>Max Disp</span>
               </label>
-              <label class="plot-panel__checkbox" title="Show min-displacement iso-lines">
+              <label class="plot-panel__checkbox" title="Show min-displacement iso-lines" data-drive-scope="hydraulic">
                 <input id="wave_show_min_disp" type="checkbox" data-persist="off">
                 <span>Min Disp</span>
               </label>
@@ -957,11 +957,11 @@
               <button type="button" class="plot-settings-btn" data-plot-settings-target="plot-settings-wave-height" aria-label="Open axis settings for wave height vs period plot">⚙</button>
             </div>
             <div class="plot-panel__toggles" aria-label="Wave height overlays">
-              <label class="plot-panel__checkbox" title="Show max-displacement iso-lines">
+              <label class="plot-panel__checkbox" title="Show max-displacement iso-lines" data-drive-scope="hydraulic">
                 <input id="wave_ht_show_max_disp" type="checkbox" checked data-persist="off">
                 <span>Max Disp</span>
               </label>
-              <label class="plot-panel__checkbox" title="Show min-displacement iso-lines">
+              <label class="plot-panel__checkbox" title="Show min-displacement iso-lines" data-drive-scope="hydraulic">
                 <input id="wave_ht_show_min_disp" type="checkbox" data-persist="off">
                 <span>Min Disp</span>
               </label>
@@ -1067,11 +1067,11 @@
               <button type="button" class="plot-settings-btn" data-plot-settings-target="plot-settings-depth-speed" aria-label="Open axis settings for speed vs depth plot">⚙</button>
             </div>
             <div class="plot-panel__toggles" aria-label="Displacement overlays">
-              <label class="plot-panel__checkbox" title="Show max-displacement curve">
+              <label class="plot-panel__checkbox" title="Show max-displacement curve" data-drive-scope="hydraulic">
                 <input id="depth_show_max_disp" type="checkbox" checked data-persist="off">
                 <span>Max Disp</span>
               </label>
-              <label class="plot-panel__checkbox" title="Show min-displacement curve">
+              <label class="plot-panel__checkbox" title="Show min-displacement curve" data-drive-scope="hydraulic">
                 <input id="depth_show_min_disp" type="checkbox" checked data-persist="off">
                 <span>Min Disp</span>
               </label>
@@ -1105,11 +1105,11 @@
               <button type="button" class="plot-settings-btn" data-plot-settings-target="plot-settings-depth-tension" aria-label="Open axis settings for tension vs depth plot">⚙</button>
             </div>
             <div class="plot-panel__toggles" aria-label="Displacement overlays">
-              <label class="plot-panel__checkbox" title="Show max-displacement curve">
+              <label class="plot-panel__checkbox" title="Show max-displacement curve" data-drive-scope="hydraulic">
                 <input id="depth_tension_show_max_disp" type="checkbox" checked data-persist="off">
                 <span>Max Disp</span>
               </label>
-              <label class="plot-panel__checkbox" title="Show min-displacement curve">
+              <label class="plot-panel__checkbox" title="Show min-displacement curve" data-drive-scope="hydraulic">
                 <input id="depth_tension_show_min_disp" type="checkbox" checked data-persist="off">
                 <span>Min Disp</span>
               </label>
@@ -1126,7 +1126,7 @@
                 </span>
                 <span>Available tension (normal / exceeded)</span>
               </div>
-              <div class="legitem"><span class="swatch min-disp"></span><span>Available tension (Min Disp)</span></div>
+              <div class="legitem" data-drive-scope="hydraulic"><span class="swatch min-disp"></span><span>Available tension (Min Disp)</span></div>
             </div>
             <p class="dim interactive-hint">Interactive: move mouse for crosshairs, click to pin a point, right-click a pin to remove it, double-click to clear all pins.</p>
           </div>
@@ -2239,7 +2239,7 @@
       <span class="theme-toggle__icon--light" aria-hidden="true">&#9728;</span>
     </button>
 
-    <div id="build-tag" style="position:fixed;bottom:4px;right:4px;font:14px monospace;color:#999;pointer-events:none;z-index:9999">v112</div>
+    <div id="build-tag" style="position:fixed;bottom:4px;right:4px;font:14px monospace;color:#999;pointer-events:none;z-index:9999">v113</div>
     <script>
       // Theme toggle handler
       document.getElementById('theme_toggle').addEventListener('click', function() {
