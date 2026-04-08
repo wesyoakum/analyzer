@@ -73,7 +73,11 @@ export function drawDepthProfiles(svgSpeed, svgTension, {
   speed_primary_label = null,
   speed_extra_profiles = [],
   tension_extra_profiles = [],
-  tension_show_max_disp = true
+  tension_show_max_disp = true,
+  rated_swl_bd_kgf = null,
+  show_swl_fd = true,
+  show_swl_bd = false,
+  show_candidates = true
 } = {}) {
   const wraps = (scenario === 'electric') ? (elWraps || []) : (hyWraps || []);
   const speedField = (scenario === 'electric')
@@ -184,10 +188,25 @@ export function drawDepthProfiles(svgSpeed, svgTension, {
   drawSpeedProfile(svgSpeed, segments, depthMin, depthMax, speedMin, speedMax, accentColor, ratedSpeedMs, {
     primaryLabel: speed_primary_label,
     extraProfiles: Array.isArray(speed_extra_profiles) ? speed_extra_profiles : [],
-    enablePins: true
+    enablePins: true,
+    showCandidates: show_candidates
   });
+
+  // Build SWL markers from toggles
+  const swlMarkers = [];
+  if (show_swl_fd && Number.isFinite(ratedSwl) && ratedSwl > 0) {
+    swlMarkers.push({ value: ratedSwl, dash: null, label: 'SWL (FD)' });
+    swlMarkers.push({ value: ratedSwl * 1.25, dash: '2 4', label: '1.25 × SWL (FD)' });
+  }
+  const bdSwl = Number.isFinite(rated_swl_bd_kgf) ? rated_swl_bd_kgf : null;
+  if (show_swl_bd && bdSwl > 0) {
+    swlMarkers.push({ value: bdSwl, dash: null, label: 'SWL (BD)' });
+    swlMarkers.push({ value: bdSwl * 1.25, dash: '2 4', label: '1.25 × SWL (BD)' });
+  }
+
   drawTensionProfile(svgTension, tension_show_max_disp ? segments : [], tensionDepthMin, tensionDepthMax, tensionMin, tensionMax, payload_kg, cable_w_kgpm, accentColor, ratedSwl, payload_air_kg, {
-    extraProfiles: Array.isArray(tension_extra_profiles) ? tension_extra_profiles : []
+    extraProfiles: Array.isArray(tension_extra_profiles) ? tension_extra_profiles : [],
+    swlMarkers
   });
 }
 
@@ -359,7 +378,9 @@ function drawSpeedProfile(svg, segments, depthMin, depthMax, speedMin, speedMax,
     }));
   });
 
-  segments.forEach(S => {
+  const showCandidates = options.showCandidates !== false;
+
+  if (showCandidates) segments.forEach(S => {
     if (!Array.isArray(S.candidate_speeds_ms)) return;
     const depthEnd = Math.min(S.depth_start, S.depth_end);
     const depthStart = Math.max(S.depth_start, S.depth_end);
@@ -848,26 +869,43 @@ function drawTensionProfile(svg, segments, depthMin, depthMax, tensionMin, tensi
     svg.appendChild(t);
   });
 
-  const ratedSwlValue = Number.isFinite(ratedSwl) ? Math.max(0, ratedSwl) : null;
-  if (Number.isFinite(ratedSwlValue)) {
-    const swlMarkers = [
-      { value: ratedSwlValue, dash: null },
-      { value: ratedSwlValue * 1.25, dash: '2 4' }
-    ];
-    swlMarkers.forEach(({ value, dash }) => {
-      if (value < tensionMin - 1e-9 || value > tensionMax + 1e-9) return;
-      const attrs = {
-        x1: ML,
-        y1: sy(value),
-        x2: W - MR,
-        y2: sy(value),
-        stroke: '#2d3142',
-        'stroke-width': 1
-      };
-      if (dash) attrs['stroke-dasharray'] = dash;
-      svg.appendChild(svgEl('line', attrs));
-    });
-  }
+  const passedMarkers = Array.isArray(options.swlMarkers) ? options.swlMarkers : [];
+  // Fall back to legacy behaviour if no explicit markers passed
+  const swlMarkersToRender = passedMarkers.length ? passedMarkers : (
+    Number.isFinite(ratedSwl) && ratedSwl > 0
+      ? [
+          { value: ratedSwl, dash: null, label: 'SWL' },
+          { value: ratedSwl * 1.25, dash: '2 4', label: '1.25 × SWL' }
+        ]
+      : []
+  );
+  swlMarkersToRender.forEach(({ value, dash, label }) => {
+    if (!Number.isFinite(value) || value < tensionMin - 1e-9 || value > tensionMax + 1e-9) return;
+    const yVal = sy(value);
+    const attrs = {
+      x1: ML,
+      y1: yVal,
+      x2: W - MR,
+      y2: yVal,
+      stroke: '#2d3142',
+      'stroke-width': 1
+    };
+    if (dash) attrs['stroke-dasharray'] = dash;
+    svg.appendChild(svgEl('line', attrs));
+    // Label
+    if (label) {
+      const labelText = `${label}: ${Math.round(value).toLocaleString()} kgf`;
+      const t = svgEl('text', {
+        x: W - MR - 4,
+        y: yVal - 4,
+        'text-anchor': 'end',
+        'font-size': '10',
+        fill: '#2d3142'
+      });
+      t.textContent = labelText;
+      svg.appendChild(t);
+    }
+  });
 
   svg.appendChild(svgEl('text', { x: ML + innerW / 2, y: H - 8, 'text-anchor': 'middle', 'font-size': '12', fill: '#444' }))
     .textContent = 'Depth (m)';

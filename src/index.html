@@ -5,7 +5,7 @@
   <meta charset="utf-8" />
   <title>Winch Analysis</title>
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <link rel="stylesheet" href="css/styles.css?v=113" />
+  <link rel="stylesheet" href="css/styles.css?v=114" />
   <script>
     // Apply saved theme before first paint to prevent flash
     (function() {
@@ -1075,6 +1075,10 @@
                 <input id="depth_show_min_disp" type="checkbox" checked data-persist="off">
                 <span>Min Disp</span>
               </label>
+              <label class="plot-panel__checkbox" title="Show candidate speed lines (Vp, VQ)">
+                <input id="depth_show_candidates" type="checkbox" checked>
+                <span>Candidates</span>
+              </label>
             </div>
             <div class="plotwrap">
               <svg id="depth_speed_svg" viewBox="0 0 1000 540"></svg>
@@ -1112,6 +1116,14 @@
               <label class="plot-panel__checkbox" title="Show min-displacement curve" data-drive-scope="hydraulic">
                 <input id="depth_tension_show_min_disp" type="checkbox" checked data-persist="off">
                 <span>Min Disp</span>
+              </label>
+              <label class="plot-panel__checkbox" title="Show SWL at full drum">
+                <input id="depth_tension_swl_fd" type="checkbox" checked>
+                <span>SWL (FD)</span>
+              </label>
+              <label class="plot-panel__checkbox" title="Show SWL at bare drum">
+                <input id="depth_tension_swl_bd" type="checkbox">
+                <span>SWL (BD)</span>
               </label>
             </div>
             <div class="plotwrap">
@@ -2239,7 +2251,7 @@
       <span class="theme-toggle__icon--light" aria-hidden="true">&#9728;</span>
     </button>
 
-    <div id="build-tag" style="position:fixed;bottom:4px;right:4px;font:14px monospace;color:#999;pointer-events:none;z-index:9999">v113</div>
+    <div id="build-tag" style="position:fixed;bottom:4px;right:4px;font:14px monospace;color:#999;pointer-events:none;z-index:9999">v114</div>
     <script>
       // Theme toggle handler
       document.getElementById('theme_toggle').addEventListener('click', function() {

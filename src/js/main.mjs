@@ -804,6 +804,9 @@ const PLOT_DISPLAY_SETTING_IDS = [
   'wave_ht_show_min_disp',
   'depth_tension_show_max_disp',
   'depth_tension_show_min_disp',
+  'depth_tension_swl_fd',
+  'depth_tension_swl_bd',
+  'depth_show_candidates',
   'wave_accel_tmin',
   'wave_accel_tmax',
   'wave_accel_amin',
@@ -889,6 +892,9 @@ function collectProjectState() {
 
 function applyProjectState(state) {
   if (!state || typeof state !== 'object') return;
+
+  // Pass 1: Set all values WITHOUT firing change events
+  const touched = [];
   Object.entries(state).forEach(([id, value]) => {
     if (id === PROJECT_STATE_PINS_KEY) return;
     const el = document.getElementById(id);
@@ -915,8 +921,17 @@ function applyProjectState(state) {
     } else if (el.tagName === 'TEXTAREA') {
       el.value = value == null ? '' : String(value);
     }
-    el.dispatchEvent(new Event('change', { bubbles: true }));
+    touched.push(el);
   });
+
+  // Sync unit selector prevUnit BEFORE change events fire so the
+  // unit-conversion handler sees the correct "old" unit and skips
+  // the spurious conversion (old === new → no-op).
+  syncPrevUnits();
+
+  // Pass 2: Fire change events now that prevUnits are in sync
+  touched.forEach(el => el.dispatchEvent(new Event('change', { bubbles: true })));
+
   applyProjectPlotPins(state[PROJECT_STATE_PINS_KEY]);
 }
 
@@ -1231,7 +1246,6 @@ async function setupProjectManager() {
       return;
     }
     applyProjectState(project.state);
-    syncPrevUnits();
     nameInput.value = project.name || '';
     // Yield again before heavy computation so spinner stays visible
     await new Promise(r => setTimeout(r, 0));
@@ -1504,7 +1518,9 @@ document.addEventListener('DOMContentLoaded', () => {
     'depth_xmin_tension', 'depth_xmax_tension', 'depth_tension_ymin', 'depth_tension_ymax',
     'hyd_torque_xmin', 'hyd_torque_xmax', 'hyd_rpm_ymin', 'hyd_rpm_ymax',
     'hyd_show_max_disp', 'hyd_show_min_disp', 'depth_show_max_disp', 'depth_show_min_disp',
-    'wave_show_max_disp', 'wave_show_min_disp', 'wave_ht_show_max_disp', 'wave_ht_show_min_disp']
+    'wave_show_max_disp', 'wave_show_min_disp', 'wave_ht_show_max_disp', 'wave_ht_show_min_disp',
+    'depth_tension_swl_fd', 'depth_tension_swl_bd', 'depth_show_candidates',
+    'depth_tension_show_max_disp', 'depth_tension_show_min_disp']
     .forEach(id => {
       const el = document.getElementById(id);
       if (!el) return;
@@ -3065,8 +3081,15 @@ function drawDepthPlots() {
     const ratedSpeedMs = Number.isFinite(ratedSpeedMpmRaw) ? ratedSpeedMpmRaw / 60 : null;
     const operatingDepthRaw = read('depth_m');
     const operatingDepth = Number.isFinite(operatingDepthRaw) ? operatingDepthRaw : null;
-    const ratedSwlRaw = read('swl_fd_kgf');
-    const ratedSwl = Number.isFinite(ratedSwlRaw) ? ratedSwlRaw : null;
+    const swlFdRaw = read('swl_fd_kgf');
+    const swlBdRaw = read('swl_bd_kgf');
+    const showSwlFd = Boolean(q('depth_tension_swl_fd')?.checked);
+    const showSwlBd = Boolean(q('depth_tension_swl_bd')?.checked);
+    const showCandidates = Boolean(q('depth_show_candidates')?.checked);
+    // Pick SWL value(s) to pass to depth profiles
+    const ratedSwl = showSwlFd && Number.isFinite(swlFdRaw) ? swlFdRaw
+                   : showSwlBd && Number.isFinite(swlBdRaw) ? swlBdRaw
+                   : null;
     const payloadRaw = read('payload_kg');
     const payloadVal = Number.isFinite(payloadRaw) ? Math.max(0, payloadRaw) : null;
     const activeScenario = getActiveScenario();
@@ -3177,6 +3200,10 @@ function drawDepthPlots() {
       rated_speed_ms: ratedSpeedMs,
       operating_depth_m: operatingDepth,
       rated_swl_kgf: ratedSwl,
+      rated_swl_bd_kgf: showSwlBd && Number.isFinite(swlBdRaw) ? swlBdRaw : null,
+      show_swl_fd: showSwlFd,
+      show_swl_bd: showSwlBd,
+      show_candidates: showCandidates,
       depth_xmin: Number.isFinite(depthXminVal) ? depthXminVal : undefined,
       depth_xmax: Number.isFinite(depthXmaxVal) ? depthXmaxVal : undefined,
       speed_ymin: Number.isFinite(depthSpeedMinVal) ? depthSpeedMinVal : undefined,
