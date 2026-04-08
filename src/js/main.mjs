@@ -3218,6 +3218,14 @@ function drawDepthPlots() {
       tension_show_max_disp: tensionShowMaxDisp
     });
 
+    // Update the HTML legend label with payload info
+    const speedLegendLabel = document.getElementById('depth_speed_legend_label');
+    if (speedLegendLabel) {
+      speedLegendLabel.textContent = Number.isFinite(payloadVal) && payloadVal > 0
+        ? `Available speed with ${formatPayloadLabel(payloadVal).replace('Payload ', '')} payload`
+        : 'Available speed';
+    }
+
   }
 
 }
