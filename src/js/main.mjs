@@ -3119,7 +3119,7 @@ function drawDepthPlots() {
     const deadEndM = Number.isFinite(read('dead_m')) ? Math.max(0, read('dead_m')) : 0;
     let tensionExtraProfiles = [];
     if (activeScenario === 'hydraulic' && lastHyWraps && lastHyWraps.length) {
-      if (depthShowMaxDisp || depthShowMinDisp) {
+      if (showCandidates && (depthShowMaxDisp || depthShowMinDisp)) {
         const vPowerSegments = buildVPowerSegments(lastHyWraps, deadEndM);
         if (vPowerSegments.length) {
           flowSpeedProfiles.push({
@@ -3133,7 +3133,7 @@ function drawDepthPlots() {
           });
         }
       }
-      if (depthShowMaxDisp) {
+      if (showCandidates && depthShowMaxDisp) {
         const maxDispFlowSegments = buildMaxDispFlowSegments(lastHyWraps, deadEndM);
         if (maxDispFlowSegments.length) {
           const accentColor = readAccentColor();
@@ -3163,7 +3163,7 @@ function drawDepthPlots() {
             segments: minDispSegments
           });
         }
-        const minDispFlowSegments = buildMinDispFlowSegments(lastHyWraps, deadEndM);
+        const minDispFlowSegments = showCandidates ? buildMinDispFlowSegments(lastHyWraps, deadEndM) : [];
         if (minDispFlowSegments.length) {
           flowSpeedProfiles.push({
             label: 'v_Q (Min Disp)',
