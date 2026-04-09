@@ -2998,6 +2998,9 @@ function setupLazyPlotObserver() {
 
 // ---- Individual plot draw functions ----
 
+/** Read checked sea-state modes from a checkbox group */
+const readSsModes = groupId => Array.from(document.querySelectorAll(`input[data-group-id="${groupId}"]:checked`)).map(el => el.dataset.ssMode);
+
 function drawWavePlots() {
   // Wave contours (optional - skip if controls/SVGs absent)
   const waveScenarioEl = /** @type {HTMLSelectElement|null} */ (document.getElementById('wave_scenario'));
@@ -3009,8 +3012,6 @@ function drawWavePlots() {
   const waveTmaxHeightEl = /** @type {HTMLInputElement|null} */ (document.getElementById('wave_tmax_height'));
   const waveHminEl = /** @type {HTMLInputElement|null} */ (document.getElementById('wave_hmin'));
   const waveHmaxEl = /** @type {HTMLInputElement|null} */ (document.getElementById('wave_hmax'));
-  /** Read checked sea-state modes from a checkbox group */
-  const readSsModes = groupId => Array.from(document.querySelectorAll(`input[data-group-id="${groupId}"]:checked`)).map(el => el.dataset.ssMode);
   const waveShowBreakingLimitEl = /** @type {HTMLInputElement|null} */ (document.getElementById('wave_show_breaking_limit'));
   const waveShowPmCurveEl = /** @type {HTMLInputElement|null} */ (document.getElementById('wave_show_pm_curve'));
   const waveShowJonswapCurveEl = /** @type {HTMLInputElement|null} */ (document.getElementById('wave_show_jonswap_curve'));
